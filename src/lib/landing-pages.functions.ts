@@ -143,24 +143,127 @@ export const saveLandingPage = createServerFn({ method: "POST" })
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
 
+    // ── Server-Pool: least-full Auswahl, nur bei Neu-Anlage
+    let assignedServer: { id: string; name: string; ip: string } | null = null;
+    if (!data.id) {
+      const { data: pool } = await context.supabase
+        .from("landing_servers")
+        .select("id, name, ip, landing_count, capacity, status")
+        .in("status", ["online", "pending"])
+        .order("landing_count", { ascending: true });
+      const free = (pool ?? []).find((s: any) => s.landing_count < s.capacity);
+      if (free) {
+        payload.server_id = free.id;
+        assignedServer = { id: free.id, name: free.name, ip: String(free.ip) };
+      }
+    }
+
+    let row: any;
     if (data.id) {
-      const { data: row, error } = await context.supabase
+      const { data: updated, error } = await context.supabase
         .from("landing_pages")
         .update(payload)
         .eq("id", data.id)
+        .select("*, landing_servers(id, name, ip)")
+        .single();
+      if (error) throw new Error(error.message);
+      row = updated;
+      if (updated?.landing_servers) {
+        assignedServer = { id: updated.landing_servers.id, name: updated.landing_servers.name, ip: String(updated.landing_servers.ip) };
+      }
+    } else {
+      const { data: inserted, error } = await context.supabase
+        .from("landing_pages")
+        .insert(payload)
         .select()
         .single();
       if (error) throw new Error(error.message);
-      return row;
+      row = inserted;
     }
-    const { data: row, error } = await context.supabase
-      .from("landing_pages")
-      .insert(payload)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+
+    // ── Cloudflare-DNS: wenn passende Zone existiert, A-Record automatisch setzen
+    let dnsStatus: "auto" | "manual" | "skipped" | "error" = "manual";
+    let dnsMessage: string | undefined;
+    if (assignedServer && data.is_published) {
+      try {
+        const { data: zones } = await context.supabase
+          .from("cloudflare_zones")
+          .select("id, domain, zone_id, cloudflare_account_id, cloudflare_accounts!inner(api_token_secret_name)")
+          .order("domain", { ascending: false });
+        const zone = (zones ?? []).find((z: any) => domain === z.domain || domain.endsWith("." + z.domain));
+        if (zone) {
+          const tokenName = (zone as any).cloudflare_accounts.api_token_secret_name;
+          const token = process.env[tokenName];
+          if (!token) {
+            dnsStatus = "error";
+            dnsMessage = `CF-Token-Secret "${tokenName}" fehlt im Server-Environment.`;
+          } else {
+            await setCloudflareARecord(token, zone.zone_id, zone.domain, domain, assignedServer.ip);
+            await context.supabase.from("landing_pages").update({ cloudflare_zone_id: zone.id }).eq("id", row.id);
+            dnsStatus = "auto";
+            dnsMessage = `A-Record für ${domain} → ${assignedServer.ip} gesetzt.`;
+          }
+        } else {
+          dnsStatus = "manual";
+          dnsMessage = `Keine CF-Zone für "${domain}" — bitte beim Registrar A-Record auf ${assignedServer.ip} setzen.`;
+        }
+      } catch (e: any) {
+        dnsStatus = "error";
+        dnsMessage = e?.message ?? String(e);
+      }
+    } else if (!assignedServer) {
+      dnsStatus = "skipped";
+      dnsMessage = "Kein Landing-Server im Pool — bitte erst unter /admin/infrastructure registrieren.";
+    }
+
+    await context.supabase.from("automation_log").insert({
+      action: data.id ? "landing.updated" : "landing.live",
+      target: domain,
+      status: dnsStatus === "error" ? "warn" : "ok",
+      actor_id: context.userId,
+      payload: { slug, server: assignedServer?.name ?? null, dns: dnsStatus, dnsMessage },
+      error: dnsStatus === "error" ? dnsMessage : null,
+    });
+
+    return { ...row, assignedServer, dnsStatus, dnsMessage };
   });
+
+// ── Cloudflare-DNS-Helper ─────────────────────────────────────────────────
+const CF_API = "https://api.cloudflare.com/client/v4";
+async function cfReq(token: string, path: string, init: RequestInit = {}): Promise<any> {
+  const res = await fetch(`${CF_API}${path}`, {
+    ...init,
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json?.success === false) {
+    const msg = json?.errors?.[0]?.message ?? `HTTP ${res.status}`;
+    throw new Error(`Cloudflare: ${msg}`);
+  }
+  return json;
+}
+async function setCloudflareARecord(token: string, zoneId: string, zoneDomain: string, fullDomain: string, ip: string) {
+  const recordName = fullDomain === zoneDomain ? "@" : fullDomain;
+  const list = await cfReq(token, `/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(fullDomain)}`);
+  const existing = list.result?.[0];
+  const body = { type: "A", name: recordName, content: ip, ttl: 1, proxied: false, comment: "managed by mb-portal landing-pool" };
+  if (existing) {
+    await cfReq(token, `/zones/${zoneId}/dns_records/${existing.id}`, { method: "PUT", body: JSON.stringify(body) });
+  } else {
+    await cfReq(token, `/zones/${zoneId}/dns_records`, { method: "POST", body: JSON.stringify(body) });
+  }
+  if (recordName === "@") {
+    const wwwName = `www.${zoneDomain}`;
+    const wwwList = await cfReq(token, `/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(wwwName)}`);
+    const wwwExisting = wwwList.result?.[0];
+    const wwwBody = { ...body, name: "www" };
+    if (wwwExisting) {
+      await cfReq(token, `/zones/${zoneId}/dns_records/${wwwExisting.id}`, { method: "PUT", body: JSON.stringify(wwwBody) });
+    } else {
+      await cfReq(token, `/zones/${zoneId}/dns_records`, { method: "POST", body: JSON.stringify(wwwBody) });
+    }
+  }
+}
 
 export const deleteLandingPage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

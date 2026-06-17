@@ -32,6 +32,7 @@ import { Route as AdminRecoveryRouteImport } from './routes/admin.recovery'
 import { Route as AdminPostRouteImport } from './routes/admin.post'
 import { Route as AdminLandingGeneratorRouteImport } from './routes/admin.landing-generator'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
+import { Route as AdminInfrastructureRouteImport } from './routes/admin.infrastructure'
 import { Route as AdminEmailTemplatesRouteImport } from './routes/admin.email-templates'
 import { Route as AdminEmailLogsRouteImport } from './routes/admin.email-logs'
 import { Route as AdminEmailCenterRouteImport } from './routes/admin.email-center'
@@ -58,12 +59,15 @@ import { Route as AdminTasksIndexRouteImport } from './routes/admin.tasks.index'
 import { Route as AdminEmployeesIndexRouteImport } from './routes/admin.employees.index'
 import { Route as AdminApplicationsIndexRouteImport } from './routes/admin.applications.index'
 import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sms-poll-cron'
+import { Route as ApiPublicLandingServerHeartbeatRouteImport } from './routes/api/public/landing-server-heartbeat'
+import { Route as ApiPublicLandingServerBootstrapRouteImport } from './routes/api/public/landing-server-bootstrap'
 import { Route as ApiPublicDomainHealthCronRouteImport } from './routes/api/public/domain-health-cron'
 import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
 import { Route as AdminEmployeesUserIdRouteImport } from './routes/admin.employees.$userId'
 import { Route as AdminAssignmentsAssignmentIdRouteImport } from './routes/admin.assignments.$assignmentId'
 import { Route as AdminApplicationsAppIdRouteImport } from './routes/admin.applications.$appId'
 import { Route as EmployeeTasksAssignmentIdRouteImport } from './routes/_employee/tasks.$assignmentId'
+import { Route as ApiPublicLandingServerFilesSplatRouteImport } from './routes/api/public/landing-server-files.$'
 import { Route as AdminTasksBuilderTemplateIdRouteImport } from './routes/admin.tasks.builder.$templateId'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
@@ -178,6 +182,11 @@ const AdminLandingGeneratorRoute = AdminLandingGeneratorRouteImport.update({
 const AdminKycRoute = AdminKycRouteImport.update({
   id: '/kyc',
   path: '/kyc',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInfrastructureRoute = AdminInfrastructureRouteImport.update({
+  id: '/infrastructure',
+  path: '/infrastructure',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminEmailTemplatesRoute = AdminEmailTemplatesRouteImport.update({
@@ -310,6 +319,18 @@ const ApiPublicSmsPollCronRoute = ApiPublicSmsPollCronRouteImport.update({
   path: '/api/public/sms-poll-cron',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLandingServerHeartbeatRoute =
+  ApiPublicLandingServerHeartbeatRouteImport.update({
+    id: '/api/public/landing-server-heartbeat',
+    path: '/api/public/landing-server-heartbeat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicLandingServerBootstrapRoute =
+  ApiPublicLandingServerBootstrapRouteImport.update({
+    id: '/api/public/landing-server-bootstrap',
+    path: '/api/public/landing-server-bootstrap',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicDomainHealthCronRoute =
   ApiPublicDomainHealthCronRouteImport.update({
     id: '/api/public/domain-health-cron',
@@ -342,6 +363,12 @@ const EmployeeTasksAssignmentIdRoute =
     id: '/$assignmentId',
     path: '/$assignmentId',
     getParentRoute: () => EmployeeTasksRoute,
+  } as any)
+const ApiPublicLandingServerFilesSplatRoute =
+  ApiPublicLandingServerFilesSplatRouteImport.update({
+    id: '/api/public/landing-server-files/$',
+    path: '/api/public/landing-server-files/$',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AdminTasksBuilderTemplateIdRoute =
   AdminTasksBuilderTemplateIdRouteImport.update({
@@ -380,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/admin/email-center': typeof AdminEmailCenterRoute
   '/admin/email-logs': typeof AdminEmailLogsRoute
   '/admin/email-templates': typeof AdminEmailTemplatesRoute
+  '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
   '/admin/post': typeof AdminPostRoute
@@ -401,11 +429,14 @@ export interface FileRoutesByFullPath {
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
+  '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
+  '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/admin/applications/': typeof AdminApplicationsIndexRoute
   '/admin/employees/': typeof AdminEmployeesIndexRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
+  '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -436,6 +467,7 @@ export interface FileRoutesByTo {
   '/admin/email-center': typeof AdminEmailCenterRoute
   '/admin/email-logs': typeof AdminEmailLogsRoute
   '/admin/email-templates': typeof AdminEmailTemplatesRoute
+  '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
   '/admin/post': typeof AdminPostRoute
@@ -457,11 +489,14 @@ export interface FileRoutesByTo {
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
+  '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
+  '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/admin/applications': typeof AdminApplicationsIndexRoute
   '/admin/employees': typeof AdminEmployeesIndexRoute
   '/admin/tasks': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
+  '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -495,6 +530,7 @@ export interface FileRoutesById {
   '/admin/email-center': typeof AdminEmailCenterRoute
   '/admin/email-logs': typeof AdminEmailLogsRoute
   '/admin/email-templates': typeof AdminEmailTemplatesRoute
+  '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
   '/admin/post': typeof AdminPostRoute
@@ -516,11 +552,14 @@ export interface FileRoutesById {
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
+  '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
+  '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/admin/applications/': typeof AdminApplicationsIndexRoute
   '/admin/employees/': typeof AdminEmployeesIndexRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
+  '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -554,6 +593,7 @@ export interface FileRouteTypes {
     | '/admin/email-center'
     | '/admin/email-logs'
     | '/admin/email-templates'
+    | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
     | '/admin/post'
@@ -575,11 +615,14 @@ export interface FileRouteTypes {
     | '/admin/employees/$userId'
     | '/api/public/applications'
     | '/api/public/domain-health-cron'
+    | '/api/public/landing-server-bootstrap'
+    | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
     | '/admin/applications/'
     | '/admin/employees/'
     | '/admin/tasks/'
     | '/admin/tasks/builder/$templateId'
+    | '/api/public/landing-server-files/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -610,6 +653,7 @@ export interface FileRouteTypes {
     | '/admin/email-center'
     | '/admin/email-logs'
     | '/admin/email-templates'
+    | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
     | '/admin/post'
@@ -631,11 +675,14 @@ export interface FileRouteTypes {
     | '/admin/employees/$userId'
     | '/api/public/applications'
     | '/api/public/domain-health-cron'
+    | '/api/public/landing-server-bootstrap'
+    | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
     | '/admin/applications'
     | '/admin/employees'
     | '/admin/tasks'
     | '/admin/tasks/builder/$templateId'
+    | '/api/public/landing-server-files/$'
   id:
     | '__root__'
     | '/'
@@ -668,6 +715,7 @@ export interface FileRouteTypes {
     | '/admin/email-center'
     | '/admin/email-logs'
     | '/admin/email-templates'
+    | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
     | '/admin/post'
@@ -689,11 +737,14 @@ export interface FileRouteTypes {
     | '/admin/employees/$userId'
     | '/api/public/applications'
     | '/api/public/domain-health-cron'
+    | '/api/public/landing-server-bootstrap'
+    | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
     | '/admin/applications/'
     | '/admin/employees/'
     | '/admin/tasks/'
     | '/admin/tasks/builder/$templateId'
+    | '/api/public/landing-server-files/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -708,7 +759,10 @@ export interface RootRouteChildren {
   AuthConfirmedRoute: typeof AuthConfirmedRoute
   ApiPublicApplicationsRoute: typeof ApiPublicApplicationsRoute
   ApiPublicDomainHealthCronRoute: typeof ApiPublicDomainHealthCronRoute
+  ApiPublicLandingServerBootstrapRoute: typeof ApiPublicLandingServerBootstrapRoute
+  ApiPublicLandingServerHeartbeatRoute: typeof ApiPublicLandingServerHeartbeatRoute
   ApiPublicSmsPollCronRoute: typeof ApiPublicSmsPollCronRoute
+  ApiPublicLandingServerFilesSplatRoute: typeof ApiPublicLandingServerFilesSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -872,6 +926,13 @@ declare module '@tanstack/react-router' {
       path: '/kyc'
       fullPath: '/admin/kyc'
       preLoaderRoute: typeof AdminKycRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/infrastructure': {
+      id: '/admin/infrastructure'
+      path: '/infrastructure'
+      fullPath: '/admin/infrastructure'
+      preLoaderRoute: typeof AdminInfrastructureRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/email-templates': {
@@ -1056,6 +1117,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSmsPollCronRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/landing-server-heartbeat': {
+      id: '/api/public/landing-server-heartbeat'
+      path: '/api/public/landing-server-heartbeat'
+      fullPath: '/api/public/landing-server-heartbeat'
+      preLoaderRoute: typeof ApiPublicLandingServerHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/landing-server-bootstrap': {
+      id: '/api/public/landing-server-bootstrap'
+      path: '/api/public/landing-server-bootstrap'
+      fullPath: '/api/public/landing-server-bootstrap'
+      preLoaderRoute: typeof ApiPublicLandingServerBootstrapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/domain-health-cron': {
       id: '/api/public/domain-health-cron'
       path: '/api/public/domain-health-cron'
@@ -1097,6 +1172,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tasks/$assignmentId'
       preLoaderRoute: typeof EmployeeTasksAssignmentIdRouteImport
       parentRoute: typeof EmployeeTasksRoute
+    }
+    '/api/public/landing-server-files/$': {
+      id: '/api/public/landing-server-files/$'
+      path: '/api/public/landing-server-files/$'
+      fullPath: '/api/public/landing-server-files/$'
+      preLoaderRoute: typeof ApiPublicLandingServerFilesSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/tasks/builder/$templateId': {
       id: '/admin/tasks/builder/$templateId'
@@ -1166,6 +1248,7 @@ interface AdminRouteChildren {
   AdminEmailCenterRoute: typeof AdminEmailCenterRoute
   AdminEmailLogsRoute: typeof AdminEmailLogsRoute
   AdminEmailTemplatesRoute: typeof AdminEmailTemplatesRoute
+  AdminInfrastructureRoute: typeof AdminInfrastructureRoute
   AdminKycRoute: typeof AdminKycRoute
   AdminLandingGeneratorRoute: typeof AdminLandingGeneratorRoute
   AdminPostRoute: typeof AdminPostRoute
@@ -1199,6 +1282,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEmailCenterRoute: AdminEmailCenterRoute,
   AdminEmailLogsRoute: AdminEmailLogsRoute,
   AdminEmailTemplatesRoute: AdminEmailTemplatesRoute,
+  AdminInfrastructureRoute: AdminInfrastructureRoute,
   AdminKycRoute: AdminKycRoute,
   AdminLandingGeneratorRoute: AdminLandingGeneratorRoute,
   AdminPostRoute: AdminPostRoute,
@@ -1236,8 +1320,21 @@ const rootRouteChildren: RootRouteChildren = {
   AuthConfirmedRoute: AuthConfirmedRoute,
   ApiPublicApplicationsRoute: ApiPublicApplicationsRoute,
   ApiPublicDomainHealthCronRoute: ApiPublicDomainHealthCronRoute,
+  ApiPublicLandingServerBootstrapRoute: ApiPublicLandingServerBootstrapRoute,
+  ApiPublicLandingServerHeartbeatRoute: ApiPublicLandingServerHeartbeatRoute,
   ApiPublicSmsPollCronRoute: ApiPublicSmsPollCronRoute,
+  ApiPublicLandingServerFilesSplatRoute: ApiPublicLandingServerFilesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
