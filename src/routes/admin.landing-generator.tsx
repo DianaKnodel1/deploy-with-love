@@ -411,6 +411,118 @@ document.addEventListener('submit', function(e){
     }
   };
 
+  // Slug-Auto-Vorschlag aus Domain/Firmenname (nur wenn leer + nicht im Edit-Mode)
+  const ensureSlug = () => {
+    if (slug || editingId) return;
+    const base = (branding.landing_domain || branding.firmenname || "").toLowerCase();
+    const auto = base.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+    if (auto) setSlug(auto);
+  };
+
+  const validateRequired = (): string | null => {
+    if (!branding.firmenname || !branding.email || !branding.api_endpoint) return "Firmenname, E-Mail und API-Endpoint sind Pflicht.";
+    if (!branding.landing_domain.trim()) return "Landing-Domain fehlt.";
+    if (branding.flow_type === "fast" && !branding.portal_url.trim()) return "Fast-Track braucht Portal-URL.";
+    if (!branding.tenant_id.trim()) return "Tenant-ID fehlt.";
+    return null;
+  };
+
+  const handleSaveLive = async () => {
+    const err = validateRequired();
+    if (err) { toast({ title: "Pflichtfelder fehlen", description: err, variant: "destructive" }); return; }
+    ensureSlug();
+    const finalSlug = slug || (branding.landing_domain || branding.firmenname).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+    if (!/^[a-z0-9-]+$/.test(finalSlug)) {
+      toast({ title: "Ungültiger Slug", description: "Nur a-z, 0-9 und -", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const b = withSeoDefaults(branding);
+      const row = await saveFn({ data: {
+        id: editingId ?? undefined,
+        slug: finalSlug,
+        domain: branding.landing_domain,
+        tenant_id: branding.tenant_id || null,
+        theme_id: themeId,
+        branding: {
+          firmenname: b.firmenname, primary_color: b.primary_color, secondary_color: b.secondary_color,
+          whatsapp_number: b.whatsapp_number, whatsapp_enabled: b.whatsapp_enabled, email: b.email,
+          telefon: b.telefon, telefon_2: b.telefon_2, strasse: b.strasse, plz: b.plz, stadt: b.stadt,
+          hrb: b.hrb, registergericht: b.registergericht, ust_id: b.ust_id, steuernummer: b.steuernummer,
+          geschaeftsfuehrer: b.geschaeftsfuehrer, impressum: b.impressum,
+          api_endpoint: b.api_endpoint, portal_url: b.portal_url, tenant_id: b.tenant_id,
+          seo_title: b.seo_title, seo_description: b.seo_description, seo_image: b.seo_image,
+        },
+        slots: slotValues,
+        flow_type: branding.flow_type,
+        source_slug: branding.source_slug || "",
+        is_published: true,
+        logo_data_url: logoDataUrl,
+        favicon_data_url: faviconDataUrl,
+      } as any });
+      setEditingId((row as any).id);
+      setSlug((row as any).slug);
+      toast({ title: "Gespeichert & live", description: `${branding.landing_domain} → DNS A-Record auf Server-1-IP setzen, dann ist die Seite in ≤60s erreichbar.` });
+      reloadLandings();
+    } catch (e: any) {
+      toast({ title: "Speichern fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditLanding = async (id: string) => {
+    try {
+      const row: any = await getFn({ data: { id } } as any);
+      setEditingId(row.id);
+      setSlug(row.slug);
+      setThemeId(row.theme_id);
+      setSlotValues(row.slots ?? {});
+      setLogoDataUrl(null); setFaviconDataUrl(null);
+      setBranding({
+        ...EMPTY,
+        ...(row.branding ?? {}),
+        landing_domain: row.domain,
+        source_slug: row.source_slug ?? "",
+        flow_type: row.flow_type,
+        tenant_id: row.tenant_id ?? row.branding?.tenant_id ?? "",
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      toast({ title: "Landing geladen", description: row.domain });
+    } catch (e: any) {
+      toast({ title: "Laden fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    }
+  };
+
+  const handleNewLanding = () => {
+    setEditingId(null); setSlug(""); setBranding(EMPTY);
+    setLogoDataUrl(null); setFaviconDataUrl(null); setSlotValues({});
+    setThemeId(THEME_LIST[0]?.id ?? "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (id: string, domain: string) => {
+    if (!confirm(`Landing "${domain}" wirklich löschen?`)) return;
+    try {
+      await delFn({ data: { id } } as any);
+      if (editingId === id) handleNewLanding();
+      toast({ title: "Gelöscht", description: domain });
+      reloadLandings();
+    } catch (e: any) {
+      toast({ title: "Löschen fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    }
+  };
+
+  const handleTogglePublished = async (id: string, next: boolean) => {
+    try {
+      await toggleFn({ data: { id, is_published: next } } as any);
+      reloadLandings();
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
+    }
+  };
+
   const apiPlaceholder = "https://portal.mb-portal.com/api/public/applications";
 
   return (
@@ -419,23 +531,96 @@ document.addEventListener('submit', function(e){
         <div>
           <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
             <Globe className="h-5 w-5" /> Landing-Page-Generator
+            {editingId && <span className="text-xs font-normal bg-primary/10 text-primary px-2 py-0.5 rounded">Bearbeiten: {slug}</span>}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Theme auswählen, Branding ausfüllen, ZIP herunterladen und per FileZilla auf deinen VPS hochladen.
+            <strong>Speichern & live schalten</strong> → Landing wird zentral auf Server 1 gehostet (kein FTP, automatisches SSL).
+            Kunde setzt DNS A-Record auf die Server-1-IP, fertig. ZIP-Download bleibt als Backup verfügbar.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowPreview((s) => !s)}
-          className="gap-2 lg:hidden"
-        >
-          <Eye className="h-4 w-4" />
-          {showPreview ? "Vorschau aus" : "Vorschau ein"}
-        </Button>
+        <div className="flex gap-2">
+          {editingId && (
+            <Button variant="outline" size="sm" onClick={handleNewLanding} className="gap-2">
+              <Plus className="h-4 w-4" /> Neue Landing
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPreview((s) => !s)}
+            className="gap-2 lg:hidden"
+          >
+            <Eye className="h-4 w-4" />
+            {showPreview ? "Vorschau aus" : "Vorschau ein"}
+          </Button>
+        </div>
       </div>
 
+      {/* Liste aller gespeicherten Landings */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center justify-between">
+            <span>Gespeicherte Landings ({landings.length})</span>
+            <Button size="sm" variant="ghost" onClick={reloadLandings} className="h-7 text-xs">↻ Aktualisieren</Button>
+          </CardTitle>
+          <CardDescription>Alle laufen auf Server 1. Klick „Bearbeiten" um eine zu laden.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {landingsLoading ? (
+            <p className="text-xs text-muted-foreground">Lade …</p>
+          ) : landings.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Noch keine Landing gespeichert. Fülle das Formular unten aus und klick „Speichern & live schalten".</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="text-muted-foreground border-b">
+                  <tr>
+                    <th className="text-left py-1.5 px-2 font-medium">Domain</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Slug</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Theme</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Flow</th>
+                    <th className="text-left py-1.5 px-2 font-medium">Status</th>
+                    <th className="text-right py-1.5 px-2 font-medium">Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {landings.map((l) => (
+                    <tr key={l.id} className="border-b last:border-0">
+                      <td className="py-1.5 px-2 font-mono">
+                        <a href={`https://${l.domain}`} target="_blank" rel="noopener" className="hover:underline inline-flex items-center gap-1">
+                          {l.domain} <LinkIcon className="h-3 w-3 opacity-50" />
+                        </a>
+                      </td>
+                      <td className="py-1.5 px-2 font-mono text-muted-foreground">{l.slug}</td>
+                      <td className="py-1.5 px-2 text-muted-foreground">{l.theme_id}</td>
+                      <td className="py-1.5 px-2">{l.flow_type === "fast" ? "⚡ Fast" : "🟡 Klassisch"}</td>
+                      <td className="py-1.5 px-2">
+                        {l.is_published ? <span className="text-emerald-600">● live</span> : <span className="text-muted-foreground">○ pausiert</span>}
+                      </td>
+                      <td className="py-1.5 px-2 text-right">
+                        <div className="inline-flex gap-1">
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleEditLanding(l.id)} title="Bearbeiten">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleTogglePublished(l.id, !l.is_published)} title={l.is_published ? "Pausieren" : "Aktivieren"}>
+                            <Power className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => handleDelete(l.id, l.domain)} title="Löschen">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <FunnelPanel />
+
 
       <div className="grid lg:grid-cols-[1fr_640px] gap-6 items-start">
         {/* LEFT: Form */}
