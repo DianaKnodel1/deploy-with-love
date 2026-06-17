@@ -96,7 +96,33 @@ function LandingGeneratorPage() {
   const [faviconDataUrl, setFaviconDataUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [lastFile, setLastFile] = useState<string | null>(null);
+  // Editor-State: welche Landing wird gerade bearbeitet (id) + slug
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [slug, setSlug] = useState<string>("");
+  const saveFn = useServerFn(saveLandingPage);
+  const listFn = useServerFn(listLandingPages);
+  const getFn = useServerFn(getLandingPage);
+  const delFn = useServerFn(deleteLandingPage);
+  const toggleFn = useServerFn(toggleLandingPublished);
+  const [landings, setLandings] = useState<any[]>([]);
+  const [landingsLoading, setLandingsLoading] = useState(true);
+
+  const reloadLandings = useCallback(async () => {
+    setLandingsLoading(true);
+    try {
+      const r = await listFn({} as any);
+      setLandings((r as any)?.rows ?? []);
+    } catch (e: any) {
+      toast({ title: "Liste laden fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setLandingsLoading(false);
+    }
+  }, [listFn, toast]);
+
+  useEffect(() => { reloadLandings(); }, [reloadLandings]);
+
   // Slot-Werte pro Theme — bei Theme-Wechsel mit Defaults vorbelegen.
   const [slotValues, setSlotValues] = useState<Record<string, string>>({});
   const currentTheme = THEME_LIST.find((t) => t.id === themeId);
