@@ -1,136 +1,168 @@
-# Zentralisierte Landing-Pages über Server 1
+# Plan: Landing-Pages vollautomatisch live schalten
 
-## Ziel
+## Was du willst (in meinen Worten)
 
-Du legst im Admin-Portal eine Landing an → **direkt live** auf Server 1, ohne ZIP, FTP oder manuellen Server-Setup pro Kunde. SSL automatisch. Sobald der Kunde seine DNS auf Server 1 zeigt, läuft die Seite unter seiner echten Domain (z.B. `digital-dgigmbh.com`).
+1. Du klickst im Portal auf **„Landing erstellen"** → wählst Theme, füllst Daten aus, lädst Logo hoch.
+2. Klick auf **„Live schalten"** → System macht automatisch:
+   - Landing in DB speichern
+   - Domain bei **Cloudflare** anlegen (DNS-Record auf den richtigen Landing-Server)
+   - Landing-Server erkennt die Domain und rendert die Page mit Auto-SSL
+3. Du kannst **jederzeit neue Landing-Server dazustellen** (Server 1a, 1b, 1c...). Das System verteilt neue Landings automatisch auf einen freien Server. Alte Landings bleiben auf ihrem alten Server.
+4. Wenn ein Server voll/kaputt ist → neuen Server registrieren, fertig.
 
-Die Bewerber-Weiterleitung auf `portal.digital-dgigmbh.com` → Mitarbeiter-Portal (Server 2) bleibt **unverändert** — das machst du heute schon über Cloudflare + Tenant-Domain-Lookup.
+Das ist genau, was dein Kollege gebaut hat (siehst du im Screenshot: **Domains / Registrars / Cloudflare / Mailers / Servers / Operations**). Wir bauen die gleiche Logik — angepasst auf dein bestehendes System.
 
 ---
 
-## Architektur
+## Architektur (neu)
 
-```text
-                       ┌─────────────────────────────┐
-                       │  Server 3 (Supabase)        │
-                       │  - DB, Auth, Storage        │
-                       │  - NEU: Tabelle             │
-                       │    public.landing_pages     │
-                       └──────────────▲──────────────┘
-                                      │
-              ┌───────────────────────┼────────────────────────┐
-              │                       │                        │
-   ┌──────────┴──────────┐  ┌─────────┴──────────┐  ┌─────────┴──────────┐
-   │ Server 1            │  │ Server 2           │  │ Admin / Browser    │
-   │ LANDINGS            │  │ PORTAL             │  │                    │
-   │                     │  │ mb-portal.com      │  │ Generiert Landings │
-   │ Caddy (Auto-SSL)    │  │ portal.<kunde>.de  │  │ -> POST in DB      │
-   │  ↓                  │  │  (TanStack Start)  │  │                    │
-   │ Bun-Renderer (3001) │  │                    │  │                    │
-   │  - liest DB         │  │                    │  │                    │
-   │  - rendert Theme    │  │                    │  │                    │
-   │                     │  │                    │  │                    │
-   │ digital-dgigmbh.com │  │                    │  │                    │
-   │ kunde-xy.de         │  │                    │  │                    │
-   │ kunde-zz.de         │  │                    │  │                    │
-   └─────────────────────┘  └────────────────────┘  └────────────────────┘
+```
+                          ┌─────────────────────────┐
+                          │   PORTAL (Server 2)     │
+                          │   mb-portal.com         │
+                          │   - Landing-Generator   │
+                          │   - Server-Pool-Verw.   │
+                          │   - Cloudflare-API      │
+                          └────────────┬────────────┘
+                                       │
+                          ┌────────────▼────────────┐
+                          │  SUPABASE (Server 3)    │
+                          │  - landing_pages        │
+                          │  - landing_servers ←NEU │
+                          │  - cloudflare_zones ←NEU│
+                          └────────────┬────────────┘
+                                       │ (anon-key read)
+              ┌────────────────────────┼────────────────────────┐
+              │                        │                        │
+      ┌───────▼────────┐      ┌────────▼───────┐      ┌────────▼───────┐
+      │ LANDING-SRV 1a │      │ LANDING-SRV 1b │      │ LANDING-SRV 1c │
+      │ Caddy + Bun    │      │ Caddy + Bun    │      │ Caddy + Bun    │
+      │ IP: x.x.x.10   │      │ IP: x.x.x.11   │      │ IP: x.x.x.12   │
+      │ ~50 Landings   │      │ ~30 Landings   │      │ ~0 Landings    │
+      └────────────────┘      └────────────────┘      └────────────────┘
 ```
 
-**Verteilung:**
-- **Server 1 (NEU/umfunktioniert):** Caddy + kleiner Bun-Service. Empfängt Requests, liest Landing-Datensatz aus DB anhand `Host`-Header, rendert das gewählte Theme mit den Slot-Werten. **Eine Codebase, beliebig viele Landings.**
-- **Server 2:** Bleibt wie er ist (Mitarbeiter-Portal).
-- **Server 3:** Bekommt 1 neue Tabelle `landing_pages` + 1 neue Spalte in `tenants` (Verknüpfung Landing ↔ Tenant für Funnel).
+---
+
+## Was du im Admin-Portal kriegst (neue UI)
+
+### 1. Tab "Server" (in `/admin/domains` oder neuer Bereich)
+Liste aller Landing-Server mit:
+- Name (z.B. "Landing-Pool-EU-1")
+- IP / Hostname
+- Status (online / offline — automatischer Health-Check alle 2 Min)
+- Anzahl gehosteter Landings
+- Kapazität (z.B. max 100) und Auslastung
+- Buttons: **„Neuen Server registrieren"**, **„Pausieren"**, **„Entfernen"**
+
+### 2. Tab "Cloudflare" (Account-Setup)
+- Cloudflare API-Token einmalig eintragen (gespeichert als Secret)
+- Account-ID
+- Test-Button: „Verbindung prüfen"
+- Liste der verwalteten Zones
+
+### 3. Landing-Generator (bestehend, erweitert)
+Neuer Button: **„Speichern & live schalten"** macht in dieser Reihenfolge:
+1. Logo/Favicon in Storage
+2. DB-Eintrag in `landing_pages` (mit `server_id` = nächster freier Server aus Pool)
+3. Cloudflare-API:
+   - Zone anlegen (falls Domain neu) → zeigt dir Nameserver für Domain-Registrar
+   - **ODER** wenn Zone schon existiert: A-Record `@` und `www` → Server-IP setzen
+4. Anzeige: „✅ Live auf https://kunde-domain.de — Cert kommt in ~30s"
+
+### 4. Tab "Operations" (Activity-Log)
+Was wurde wann automatisiert: „Landing X erstellt", „Cloudflare-Record gesetzt", „Server-Health-Check failed" — debugbar.
 
 ---
 
-## Schritt 1: Datenbank (Server 3, Migration)
+## Datenmodell
 
-Neue Tabelle `public.landing_pages`:
+**Neue Tabellen** (zusätzlich zum bestehenden `landing_pages`):
 
-| Spalte | Typ | Zweck |
-|---|---|---|
-| `id` | uuid pk | |
-| `tenant_id` | uuid → tenants.id | für Funnel-Tracking & Portal-Redirect |
-| `slug` | text unique | interne Referenz, z.B. `digital-dgi` |
-| `domain` | text unique | öffentliche Domain, z.B. `digital-dgigmbh.com` |
-| `theme_id` | text | `theme-10`, `theme-tts-consultant`, ... |
-| `branding` | jsonb | Firmenname, Farben, Adresse, Impressum etc. (heutiges `BrandingSchema`) |
-| `slots` | jsonb | Theme-Slot-Werte (Texte/Bilder pro Theme) |
-| `logo_url` / `favicon_url` | text | aus Supabase Storage |
-| `flow_type` | text | `classic` / `fast` (heute schon) |
-| `source_slug` | text | für Funnel-Tracking (heute schon) |
-| `is_published` | bool | aus/an |
-| `created_at`, `updated_at` | timestamptz | |
+```sql
+landing_servers (
+  id, name, hostname, ip, capacity, current_count,
+  status, last_health_check, created_at
+)
 
-+ neue Spalte `tenants.landing_page_id uuid` (Cross-Link).
-+ RLS: nur Admins können CRUD, anon kann `is_published=true` lesen (Server 1 nutzt anon).
-+ Trigger: bei Insert/Update `updated_at = now()`.
-+ Realtime publication für `landing_pages`, damit Server 1 Änderungen sofort sieht.
+cloudflare_zones (
+  id, domain, zone_id, account_id, status, nameservers[], created_at
+)
 
-## Schritt 2: Admin-UI im Portal anpassen
+automation_log (
+  id, action, target, status, payload, error, created_at
+)
+```
 
-`/admin/landing-generator` umbauen:
-- **Statt "ZIP herunterladen"** → Button **„Landing speichern & live schalten"**.
-- Save → schreibt in `landing_pages` (Insert oder Update bei existierender `domain`).
-- Liste vorhandener Landings auf der gleichen Seite: bearbeiten / duplizieren / depublizieren.
-- Logo/Favicon werden in Supabase Storage (`landing-assets` Bucket) hochgeladen, URLs landen in DB.
-- ZIP-Download bleibt optional als „Export" erhalten (für Backup / manuelle Hosts) — kostet uns nix.
-- Domain-Feld zeigt unter dem Input: **„DNS A-Record `digital-dgigmbh.com` → IP von Server 1 setzen, dann ist die Seite in ≤60s live (SSL automatisch)."**
-
-## Schritt 3: Server 1 — Landing-Renderer
-
-Neues Mini-Repo (oder eigener Ordner in diesem Repo unter `landing-server/`) mit:
-
-- **Caddy** als Frontproxy, `on_demand_tls` aktiviert:
-  - Akzeptiert *jede* Domain, holt Let's-Encrypt-Cert beim ersten Request.
-  - Sicherheitsfilter: Caddy ruft vor Cert-Ausstellung einen Bun-Endpoint `/_internal/ask?domain=x` auf → der prüft `SELECT 1 FROM landing_pages WHERE domain = $1 AND is_published`. Nur dann wird Cert geholt. Schutz gegen Cert-Spam.
-- **Bun-Renderer** auf Port 3001:
-  - 1 Datei `server.ts`, liest Theme-Templates aus dem Repo (`landing-themes/*` — der gleiche Code, den der ZIP-Generator heute nutzt; ich extrahiere die `applyPlaceholders` + `injectLandingConfig` Logik in ein gemeinsames Modul).
-  - Request-Flow: `Host`-Header → DB-Lookup → Template + Branding + Slots → HTML zurück.
-  - Edge-Caching im Memory (60s TTL) + Realtime-Subscription → Cache invalidiert bei Update.
-  - Assets (Logo, Favicon, `style.css`, `script.js`) werden direkt ausgeliefert (`/style.css`, `/script.js`, `/assets/logo.png` → Redirect/Proxy auf Storage-URL).
-- **Setup-Skript** `landing-server/setup.sh` analog zu `scripts/setup-server2.sh`: installiert Bun + Caddy, klont, schreibt `.env`, legt systemd-Service `landing.service` an, Caddy-Config.
-
-## Schritt 4: Bewerbungs-Endpoint
-
-Bleibt unverändert: jede generierte Landing schickt POST `https://mb-portal.com/api/public/applications` mit `tenant_id`, `flow_type`, `source_slug` — die Felder kommen jetzt aus der DB statt aus dem ZIP-Template.
-
-## Schritt 5: Onboarding pro Kunde
-
-Workflow künftig:
-1. Admin im Portal → „Neue Landing" → Theme + Branding + Domain `digital-dgigmbh.com` → **Save**.
-2. Du sagst dem Kunden: „A-Record für `digital-dgigmbh.com` auf `<IP Server 1>` setzen". (Optional `www` → Redirect auf apex via Caddy.)
-3. DNS propagiert → Caddy holt SSL automatisch → Seite ist live. Keine weitere Aktion.
-
-## Was bleibt unangetastet
-
-- Mitarbeiter-Portal (Server 2) inkl. `portal.<kunde>.de`-Routing.
-- Tenant-Auflösung, Bewerbungs-Pipeline, Funnel-Tracking.
-- Bestehender ZIP-Generator (bleibt als Fallback-Export drin).
+**Erweiterung `landing_pages`:** `server_id` (welcher Server hostet diese Landing).
 
 ---
 
-## Was ich von dir noch brauche, bevor ich baue
+## Wie ein neuer Server dazu kommt (deine Frage: „Server 1 ist nicht fest")
 
-1. **IP / Hostname für Server 1** — damit ich Setup-Skript + Doku konkret vorbereiten kann (du kannst die IP auch erst beim Deploy einsetzen, aber ich brauch zumindest „neuer Server, frische Linux-Kiste" oder „existiert schon, Distro = X").
-2. **OK für eine neue Tabelle `landing_pages`** in deiner self-hosted Supabase (Migration via `scripts/migrate.sh`).
-3. **Migration der bestehenden Landings:** Du hast aktuell pro Kunde einen eigenen Server mit den alten ZIPs. Sollen wir **(a)** alle bestehenden Landings als DB-Einträge anlegen (ich schreibe ein Importscript, du füllst die Branding-Daten ein) oder **(b)** alte Server vorerst weiterlaufen lassen und nur **neue** Landings über Server 1?
+1. Du mietest einen neuen VPS (Hetzner/Contabo/whatever).
+2. Im Portal: **„Neuen Server registrieren"** → IP eintragen.
+3. Portal zeigt dir **einen Befehl** zum Copy-Paste:
+   ```
+   curl -sSL https://mb-portal.com/api/public/server-bootstrap?token=xyz | bash
+   ```
+4. Das Script auf dem Server installiert: Bun, Caddy, lädt `server.ts` runter, legt Env-Vars an, startet systemd-Service.
+5. Server meldet sich beim Portal mit Heartbeat → erscheint als „online" in der Liste.
+6. Ab sofort werden neue Landings auf diesen Server verteilt (Round-Robin oder „least full").
 
-## Technische Detail-Notes
+**Bestehende Landings auf alten Servern:** bleiben unangetastet. Migration nur, wenn du es willst (Button „Migriere zu anderem Server").
 
-- `landing-themes/` (Templates) ziehen wir in ein npm-Workspace-Paket oder duplizieren sie in `landing-server/` — ich tendiere zu Duplikat, weil Server 1 minimal und unabhängig deploybar sein soll. Bei Theme-Änderungen: Push auf beide Repos.
-- Server 1 nutzt **anon-Key + RLS-Policy** (`SELECT auf landing_pages WHERE is_published`). Service-Role-Key bleibt auf Server 2/3.
-- Caddy `on_demand_tls` braucht im Caddyfile:
-  ```caddyfile
-  {
-    on_demand_tls {
-      ask http://127.0.0.1:3001/_internal/ask
-    }
-  }
-  :443 {
-    tls { on_demand }
-    reverse_proxy 127.0.0.1:3001
-  }
-  ```
-- Falls Kunde Cloudflare-Proxy nutzt (orange Wolke), muss er auf „DNS only" stellen oder Origin-Cert-Mode setzen — dokumentiere ich im Admin-UI als Hinweis.
-- Realtime-Channel-Name: `landing_pages:domain=...` für gezielte Cache-Invalidierung.
+---
+
+## Cloudflare-Automation (Details)
+
+Wenn du eine Landing live schaltest:
+
+**Fall A: Kunde nutzt seine eigene Domain (z.B. `bewerbung-mueller.de`)**
+- Domain liegt beim Kunden-Registrar
+- Portal kann nicht automatisch DNS setzen
+- Anzeige: **„Bitte beim Registrar einen A-Record auf X.X.X.X setzen"**
+
+**Fall B: Domain liegt schon in Cloudflare (in deinem Account)**
+- Portal nutzt Cloudflare-API → setzt A-Record automatisch
+- ✅ Sofort live
+
+**Fall C: Du registrierst Domain für Kunden**
+- Manuell beim Registrar kaufen
+- Cloudflare-Zone anlegen (Portal-Button) → Portal zeigt CF-Nameserver
+- Beim Registrar Nameserver eintragen
+- Danach: vollautomatisch wie Fall B
+
+Für **alle drei Fälle** funktioniert SSL automatisch über Caddy `on_demand_tls`.
+
+---
+
+## Technische Umsetzung (kurz, für später)
+
+- **Cloudflare-API-Client:** `src/lib/cloudflare.functions.ts` — Server-Fn die mit Bearer-Token Zones/Records verwaltet.
+- **Server-Pool-Logik:** `src/lib/landing-server-pool.functions.ts` — wählt beim Speichern den Server mit niedrigster Auslastung.
+- **Bootstrap-Endpoint:** `src/routes/api/public/server-bootstrap.ts` — generiert das Setup-Script mit eingebetteten Env-Vars (Token, Supabase-URL/Key).
+- **Heartbeat-Endpoint:** `src/routes/api/public/server-heartbeat.ts` — Server pingt alle 60s, updated `last_health_check` + `current_count`.
+- **Health-Cron:** markiert Server als offline wenn 5 Min kein Heartbeat.
+- **Admin-UI:** neuer Bereich `/admin/infrastructure` mit Tabs Servers / Cloudflare / Operations.
+- **Secrets:** `CLOUDFLARE_API_TOKEN`, `LANDING_SERVER_BOOTSTRAP_SECRET`.
+
+---
+
+## Was bleibt wie es ist
+
+- Bestehender Landing-Server-Code (`landing-server/`) — wird der Standard-Stack für jeden neuen Server im Pool.
+- Bewerbungs-API auf Server 2 — unverändert.
+- ZIP-Export — bleibt als Fallback.
+- Mitarbeiter-Portal — unverändert.
+
+---
+
+## Was ich von dir brauche, bevor ich baue
+
+1. **Cloudflare-Setup:** Hast du einen Cloudflare-Account, in den ich Kunden-Domains automatisch reinwerfen darf? Oder bleibt jede Kunden-Domain beim jeweiligen Kunden-Cloudflare-Account?
+2. **Server-Verteilung:** Soll ich „Round-Robin" (gleichmäßig verteilen) oder „Least-Full" (immer der leerste Server zuerst) nehmen? Empfehlung: **Least-Full** + 100-Landings-Cap pro Server.
+3. **Bootstrap-Security:** Einverstanden mit Token-basiertem Bootstrap (Token rotierbar, einmal generieren pro Server)?
+4. **Reihenfolge:** Baue ich zuerst (a) Server-Pool + Bootstrap, dann (b) Cloudflare-Automation? Oder umgekehrt? Empfehlung: **Server-Pool zuerst** — dann kannst du heute schon deinen ersten Server hinzufügen, Cloudflare kommt danach.
+
+Sobald du die 4 Fragen beantwortet hast, klick **„Implement plan"** und ich bau das.
