@@ -80,3 +80,23 @@ ALTER TABLE public.tenants
 
 COMMENT ON TABLE public.landing_pages IS
   'Zentrale Landings-Tabelle. Server 1 (Caddy + Bun) rendert beim Request anhand des Host-Headers.';
+
+-- ============================================================================
+-- STORAGE-BUCKET (einmalig manuell anlegen über Supabase-Studio ODER per SQL)
+-- ============================================================================
+-- public=true, damit Server 1 die Logo/Favicon-URLs ohne Auth ausliefern kann.
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('landing-assets', 'landing-assets', true)
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
+
+-- RLS auf storage.objects: nur Admins dürfen schreiben, jeder darf lesen.
+DROP POLICY IF EXISTS "landing-assets public read" ON storage.objects;
+CREATE POLICY "landing-assets public read"
+  ON storage.objects FOR SELECT TO anon, authenticated
+  USING (bucket_id = 'landing-assets');
+
+DROP POLICY IF EXISTS "landing-assets admin write" ON storage.objects;
+CREATE POLICY "landing-assets admin write"
+  ON storage.objects FOR ALL TO authenticated
+  USING (bucket_id = 'landing-assets' AND public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (bucket_id = 'landing-assets' AND public.has_role(auth.uid(), 'admin'));
