@@ -896,23 +896,50 @@ document.addEventListener('submit', function(e){
           )}
 
 
-          {/* Step 3: Build */}
-          <Card>
+          {/* Step 3: Deploy */}
+          <Card className="border-primary/40">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">3. ZIP generieren</CardTitle>
-              <CardDescription>Lade die ZIP herunter und entpacke sie auf deinem VPS.</CardDescription>
+              <CardTitle className="text-sm">3. Speichern & live schalten</CardTitle>
+              <CardDescription>
+                Landing wird zentral auf Server 1 gehostet. Caddy holt SSL automatisch, sobald die Domain auf den Server zeigt.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button onClick={handleGenerate} disabled={loading} className="gap-2 w-full sm:w-auto">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                {loading ? "Generiere…" : "Landing-Page als ZIP herunterladen"}
-              </Button>
+              <Field label="Interner Slug (a-z, 0-9, -) — leer = aus Domain generieren">
+                <Input
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                  placeholder={branding.landing_domain ? branding.landing_domain.replace(/[^a-z0-9]+/gi, "-").toLowerCase() : "z.B. digital-dgi"}
+                  disabled={!!editingId}
+                />
+              </Field>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={handleSaveLive} disabled={saving} className="gap-2">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {saving ? "Speichere…" : editingId ? "Änderungen speichern" : "Speichern & live schalten"}
+                </Button>
+                <Button variant="outline" onClick={handleGenerate} disabled={loading} className="gap-2">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  ZIP-Export (Backup)
+                </Button>
+              </div>
+              {editingId && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  Bearbeitung läuft — Änderungen sind nach „Speichern" sofort live (Renderer-Cache 60s).
+                </p>
+              )}
               {lastFile && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  Letzter Download: <span className="font-mono">{lastFile}</span>
+                  Letzter ZIP-Export: <span className="font-mono">{lastFile}</span>
                 </p>
               )}
+              <div className="text-[11px] text-muted-foreground bg-muted/40 rounded p-2 leading-relaxed">
+                <strong>DNS-Anleitung für den Kunden:</strong> A-Record <code>{branding.landing_domain || "kunde.de"}</code> → IP von Server 1.
+                Optional <code>www</code> als CNAME auf die Apex-Domain.
+                <br/>Bei Cloudflare: Proxy <strong>aus</strong> („DNS only"/graue Wolke), sonst kollidiert es mit Caddy SSL.
+              </div>
             </CardContent>
           </Card>
         </div>
