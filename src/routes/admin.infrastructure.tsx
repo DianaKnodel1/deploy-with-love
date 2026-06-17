@@ -69,14 +69,21 @@ function ServersTab() {
   const [form, setForm] = useState({ name: "", hostname: "", ip: "", capacity: 100, notes: "" });
   const [busy, setBusy] = useState(false);
   const [bootstrapFor, setBootstrapFor] = useState<{ id: string; name: string; token: string } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const reload = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const r = await list({ data: {} as any });
       setRows(r.rows);
-    } catch (e: any) { toast({ title: "Fehler", description: e.message, variant: "destructive" }); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      setLoadError(e?.message ?? String(e));
+      // kein Toast bei Migrations-Fehler — Banner zeigt das viel klarer
+      if (!/landing_servers|schema cache|relation .* does not exist/i.test(e?.message ?? "")) {
+        toast({ title: "Fehler", description: e.message, variant: "destructive" });
+      }
+    } finally { setLoading(false); }
   };
   useEffect(() => { reload(); }, []);
 
