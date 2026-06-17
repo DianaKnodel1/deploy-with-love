@@ -1022,6 +1022,9 @@ function FunnelPanel() {
       .finally(() => setLoading(false));
   }, [scope, days]);
 
+  // Erkennt fehlende Migration #1 (applications_funnel)
+  const missingMigration = !!err && /source_slug|is_test|column .* does not exist|schema cache/i.test(err);
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -1029,20 +1032,30 @@ function FunnelPanel() {
           <TrendingUp className="h-4 w-4" /> Funnel: Bewerbung → Registrierung → Onboarding
         </CardTitle>
         <CardDescription>
-          Test-Bewerbungen sind ausgeschlossen. „Registriert" = E-Mail-Match mit Profil, „Abgeschlossen" = Onboarding-Status = abgeschlossen.
+          Zeigt, wie viel Prozent deiner Bewerber sich tatsächlich registrieren und das Onboarding fertig machen — pro Landing-Page oder global pro Flow-Typ. So siehst du sofort, wo Leute abspringen. Test-Bewerbungen sind ausgeschlossen.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <Button size="sm" variant={scope === "per_slug" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setScope("per_slug")}>Pro Landing-Page</Button>
-          <Button size="sm" variant={scope === "global_flow" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setScope("global_flow")}>Global: Fast vs. Klassisch</Button>
-          <span className="ml-auto text-muted-foreground">Zeitraum:</span>
+          <Button size="sm" variant={scope === "per_slug" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setScope("per_slug")} title="Eine Zeile pro Landing-Page (gruppiert nach source_slug)">Pro Landing-Page</Button>
+          <Button size="sm" variant={scope === "global_flow" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setScope("global_flow")} title="Vergleich: Klassischer Flow (Bewerbung → E-Mail) vs. Fast-Flow (Direkt-Registrierung)">Global: Fast vs. Klassisch</Button>
+          <span className="ml-auto text-muted-foreground" title="Über welchen Zeitraum die Bewerbungen gezählt werden">Zeitraum:</span>
           {[30, 90, 180, 365].map((d) => (
-            <Button key={d} size="sm" variant={days === d ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setDays(d)}>{d}d</Button>
+            <Button key={d} size="sm" variant={days === d ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setDays(d)} title={`Letzte ${d} Tage`}>{d}d</Button>
           ))}
         </div>
         {loading ? (
           <p className="text-xs text-muted-foreground">Lade …</p>
+        ) : missingMigration ? (
+          <div className="rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-3 text-xs space-y-1.5">
+            <p className="font-medium text-amber-900 dark:text-amber-200">Funnel-Tracking noch nicht aktiv</p>
+            <p className="text-amber-800 dark:text-amber-300">
+              Der Datenbank fehlt eine Migration. Führe <code className="font-mono">supabase/manual-migrations/20260616100000_applications_funnel.sql</code> im Supabase SQL-Editor aus.
+            </p>
+            <p className="text-amber-800 dark:text-amber-300">
+              Anleitung: <code className="font-mono">docs/MIGRATIONS.md</code> (Schritt 1).
+            </p>
+          </div>
         ) : err ? (
           <p className="text-xs text-destructive">Fehler: {err}</p>
         ) : rows.length === 0 ? (
