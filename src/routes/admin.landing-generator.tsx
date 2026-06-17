@@ -463,8 +463,12 @@ document.addEventListener('submit', function(e){
       } as any });
       setEditingId((row as any).id);
       setSlug((row as any).slug);
-      toast({ title: "Gespeichert & live", description: `${branding.landing_domain} → DNS A-Record auf Server-1-IP setzen, dann ist die Seite in ≤60s erreichbar.` });
+      const r: any = row;
+      const dnsLabel = r.dnsStatus === "auto" ? "✅ DNS automatisch gesetzt" : r.dnsStatus === "manual" ? "⚠️ DNS manuell setzen" : r.dnsStatus === "skipped" ? "⚠️ Kein Server im Pool" : "❌ DNS-Fehler";
+      const serverLabel = r.assignedServer ? `Server: ${r.assignedServer.name}` : "Kein Server zugewiesen";
+      toast({ title: `Gespeichert — ${dnsLabel}`, description: `${serverLabel}. ${r.dnsMessage ?? ""}` });
       reloadLandings();
+
     } catch (e: any) {
       toast({ title: "Speichern fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
     } finally {
