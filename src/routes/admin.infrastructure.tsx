@@ -69,14 +69,21 @@ function ServersTab() {
   const [form, setForm] = useState({ name: "", hostname: "", ip: "", capacity: 100, notes: "" });
   const [busy, setBusy] = useState(false);
   const [bootstrapFor, setBootstrapFor] = useState<{ id: string; name: string; token: string } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const reload = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const r = await list({ data: {} as any });
       setRows(r.rows);
-    } catch (e: any) { toast({ title: "Fehler", description: e.message, variant: "destructive" }); }
-    finally { setLoading(false); }
+    } catch (e: any) {
+      setLoadError(e?.message ?? String(e));
+      // kein Toast bei Migrations-Fehler — Banner zeigt das viel klarer
+      if (!/landing_servers|schema cache|relation .* does not exist/i.test(e?.message ?? "")) {
+        toast({ title: "Fehler", description: e.message, variant: "destructive" });
+      }
+    } finally { setLoading(false); }
   };
   useEffect(() => { reload(); }, []);
 
@@ -152,13 +159,61 @@ function ServersTab() {
         </div>
       </CardHeader>
       <CardContent>
-        {loading ? (
+        {loadError && /landing_servers|schema cache|relation .* does not exist/i.test(loadError) ? (
+          <div className="rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 text-sm space-y-2">
+            <p className="font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" /> Datenbank-Migration fehlt
+            </p>
+            <p className="text-amber-800 dark:text-amber-300">
+              Die Tabelle <code className="font-mono">landing_servers</code> existiert noch nicht. Führe diese SQL-Datei im Supabase SQL-Editor aus:
+            </p>
+            <pre className="bg-amber-100 dark:bg-amber-900/40 p-2 rounded text-xs font-mono">supabase/manual-migrations/20260618000000_landing_infrastructure.sql</pre>
+            <p className="text-amber-800 dark:text-amber-300 text-xs">
+              Vollständige Anleitung inkl. Reihenfolge aller Migrationen: <code className="font-mono">docs/MIGRATIONS.md</code>
+            </p>
+            <Button size="sm" variant="outline" className="mt-1" onClick={reload}>
+              <RefreshCw className="w-3 h-3 mr-2" />Nochmal versuchen
+            </Button>
+          </div>
+        ) : loading ? (
           <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
         ) : rows.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Server className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Noch kein Landing-Server registriert.</p>
-            <p className="text-xs mt-1">Klicke „Server hinzufügen", um anzufangen.</p>
+          <div className="py-10 px-4 max-w-2xl mx-auto">
+            <div className="text-center mb-6">
+              <Server className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="font-medium">Noch kein Landing-Server registriert</p>
+              <p className="text-xs text-muted-foreground mt-1">So bringst du deinen ersten Server online:</p>
+            </div>
+            <ol className="space-y-3 text-sm">
+              <li className="flex gap-3">
+                <span className="flex-none w-7 h-7 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-xs">1</span>
+                <div>
+                  <p className="font-medium">VPS bestellen</p>
+                  <p className="text-xs text-muted-foreground">Hetzner Cloud, Netcup o.ä. — Ubuntu 22.04+, mind. 2 GB RAM, öffentliche IPv4.</p>
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex-none w-7 h-7 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-xs">2</span>
+                <div>
+                  <p className="font-medium">Hier oben „Server hinzufügen" klicken</p>
+                  <p className="text-xs text-muted-foreground">Name, Hostname, IP, Kapazität eintragen → Anlegen.</p>
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex-none w-7 h-7 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-xs">3</span>
+                <div>
+                  <p className="font-medium">One-Liner per SSH auf dem VPS ausführen</p>
+                  <p className="text-xs text-muted-foreground">Der Befehl wird dir nach „Anlegen" angezeigt. Installiert Bun + Caddy + Renderer in ~1 Minute.</p>
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex-none w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center justify-center text-xs">✓</span>
+                <div>
+                  <p className="font-medium">Fertig — Status springt automatisch auf „Online"</p>
+                  <p className="text-xs text-muted-foreground">Ab dann kannst du Landings über den Landing-Generator hier hosten.</p>
+                </div>
+              </li>
+            </ol>
           </div>
         ) : (
           <Table>
