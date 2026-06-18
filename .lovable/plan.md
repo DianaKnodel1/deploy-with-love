@@ -1,132 +1,105 @@
-# Plan: Dritter Bewerbungs-Modus „Vermittlung" (Broker / AZB-Style)
+# Offene Punkte – haarscharf durchgegangen
 
-Ziel: Drei Flow-Modi pro Landing, alle vollständig über das Portal konfigurierbar – ohne Calendly-Konfig im Code anfassen zu müssen.
+Stand des Codes: Broker-Grundgerüst steht (Migration-Datei, Partner-CRUD, `/bewerbung/verbinden`, Webhook-Empfang, Landing-Generator-Picker). **Das eigentliche „Drum-herum" ist noch lückenhaft.** Hier alles, was offen ist – sortiert nach Wichtigkeit.
 
-## 1. Die drei Modi (Auswahl pro Landing-Page)
+## A. Broker-Flow: harte Lücken (Code existiert, aber unvollständig)
 
-| Modus | Verhalten nach „Bewerbung absenden" |
-|---|---|
-| **Klassisch** | Bewerbung landet im Portal, Status `pending`, Admin akzeptiert manuell, danach E-Mail mit Registrierungslink. (heute schon vorhanden) |
-| **Fast Track** | Bewerbung wird automatisch akzeptiert, Bewerber wird sofort zu `/register?email=…` weitergeleitet. (heute schon vorhanden) |
-| **Vermittlung** *(neu, AZB-Style)* | Bewerbung wird gespeichert (`booking_status='pending'`), Bewerber sieht Zwischenseite „Wir verbinden Sie mit **[Partnerfirma]**" → klickt „Jetzt Termin buchen" → Calendly mit vorausgefüllten Daten → nach Buchung Webhook → Status `scheduled` → Calendly schickt Einladungs-Mail mit Link auf `portal.<tenant>/register?email=…&app=…`. |
+1. **Migrationen noch nicht ausgeführt** (manuell)
+   - `20260618100000_calendly_integration.sql`
+   - `20260619000000_broker_flow.sql`
+   - Ohne diese laufen Webhook, Partner-CRUD und `booking_status` ins Leere.
 
-Auswahl im Landing-Generator als 3-Kachel-Picker (heute 2 Kacheln).
+2. **Calendly-Webhook → keine Bestätigungsmail**
+   `calendly-webhook.ts` setzt nur `booking_status='scheduled'`. Es wird **keine** Mail an den Bewerber ausgelöst (Plan-Punkt 7 + E). Fehlt:
+   - Trigger „broker_invitation"-Template bei `invitee.created`
+   - Reschedule-Mail bei `invitee.canceled`
 
-## 2. Alles im Portal konfigurierbar
+3. **E-Mail-Template `broker_invitation` existiert nicht**
+   - Kein Seed, kein Eintrag in `email_templates`, kein Edge-Function-Aufruf.
+   - Variablen wie `{{partner_firma}}`, `{{calendly_link}}`, `{{portal_url}}` müssen verdrahtet werden.
 
-### A) Globale Calendly-Accounts (`/admin/calendly` – existiert bereits)
-- Account-Name (z.B. „Sabine Schneider")
-- Calendly-User-URI (optional)
-- Webhook Signing Key
-- Webhook-URL zum Kopieren
+4. **Bewerber-Liste & -Detail zeigen `booking_status` nicht**
+   - Keine Badge-Spalte in `admin.applications.index.tsx`
+   - Kein Filter „Nur gebuchte / no_show / cancelled"
+   - Detail-View zeigt keinen Calendly-Event-Link, kein Termin-Datum, keine Reschedule/Cancel-URL
 
-### B) Partner-Firmen (`/admin/partner-firmen` – **neu**)
-Damit dieselbe Partnerfirma auf mehreren Landings wiederverwendet werden kann.
-Felder pro Partner:
-- Firmenname (z.B. „Equal Experts Germany GmbH")
-- Logo (Upload)
-- Calendly-Buchungslink (`https://calendly.com/sabine-schneider/bewerbung`)
-- Calendly-Account-Referenz (für Webhook-Verifikation)
-- Portal-Ziel-URL (Registrierung) – z.B. `https://portal.digital-dgigmbh.com/register`
-- E-Mail-Absender-Name (für Einladungsmail)
-- Texte für Zwischenseite (Headline, Subline, Button-Label) – mit Defaults
+5. **Landing-Tabelle zeigt Vermittlung nicht**
+   `admin.landing-generator.tsx` Zeile 624 kennt nur `fast` und `classic` Badges. „🤝 Vermittlung" fehlt.
 
-### C) Landing-Page-Editor (`/admin/landing-generator` – erweitern)
-- Flow-Modus: Klassisch / Fast Track / **Vermittlung**
-- Bei „Vermittlung":
-  - Partner-Firma auswählen (Dropdown aus B)
-  - Override: eigener Calendly-Link, eigener Firmenname, eigenes Logo (optional)
-  - Loader-Dauer (ms), 0 = nur Button
-  - Toggle „Einladungs-E-Mail aktiv" (Mail kommt aus Portal, nicht Calendly)
-  - Toggle „Auch klassische Mitarbeiter-Registrierung erlauben" (für später)
+6. **FunnelPanel: Broker-Stufen fehlen komplett**
+   `landing-funnel.functions.ts` hat keine Broker-Logik. Stufen „Zwischenseite gesehen → Calendly geöffnet → gebucht" sind nicht messbar.
 
-### D) Bewerber-Liste (`/admin/applications` – erweitern)
-- Neue Spalte **Buchungs-Status** mit Badges: `pending` / `scheduled` (mit Datum) / `cancelled` / `no_show` / `completed`
-- Filter nach Buchungs-Status
-- In Bewerber-Detail: Calendly-Event-Link, Termin-Datum, Reschedule/Cancel-URL
+7. **Sidebar-Eintrag „Partner-Firmen"** prüfen
+   `admin.vermittlung.tsx` und `admin.partner-companies.tsx` existieren — aber im `AdminLayout` ist nur ein Eintrag verlinkt. Doppelte/fehlende Navigation klären.
 
-### E) Funnel-Panel (`FunnelPanel`) – erweitern
-Neue Stufe für Vermittlung-Landings:
-```text
-Bewerbung gesendet → Zwischenseite gesehen → Calendly geöffnet → Termin gebucht → Registriert → Onboarding
-```
+8. **Tracking „Zwischenseite gesehen / Calendly geöffnet"**
+   Aktuell kein Event-Log auf `/bewerbung/verbinden`. Ohne das ist Funnel-Panel sinnlos.
 
-### F) E-Mail-Templates (`/admin/email-templates`)
-Neues Template **„Vermittlungs-Einladung"** (was AZB als „Markus Schuster"-Mail verschickt, Screenshot 3): Variablen `{{bewerber_vorname}}`, `{{partner_firma}}`, `{{calendly_link}}`, `{{portal_url}}`. Wird ausgelöst, sobald Bewerbung mit Vermittlungs-Flow eingeht.
+## B. Setup-/Doku-Lücken (du musst es einmal tun)
 
-## 3. End-to-End-Ablauf „Vermittlung"
+9. Calendly-Account anlegen → Signing Key in `/admin/calendly` eintragen
+10. Webhook-URL in Calendly registrieren (`/api/public/calendly-webhook`)
+11. Mindestens eine Partner-Firma in `/admin/partner-firmen` anlegen
+12. End-to-End-Test: Bewerbung → Zwischenseite → Calendly → `scheduled` im Admin
 
-```text
-[Landing /jobs/xyz]
-   │ submit
-   ▼
-POST /api/public/applications
-   │ flow_type='broker' → insert application (booking_status='pending')
-   │ E-Mail-Queue: Vermittlungs-Einladung an Bewerber
-   ▼
-Redirect → /bewerbung/verbinden?app=<id>&landing=<slug>&first_name=…
-   │ Loader-Modal: „Wir verbinden Sie mit [Partnerfirma]"
-   │ Auto-Redirect (oder Button) nach n ms
-   ▼
-Calendly mit ?first_name=…&email=…&utm_content=<application_id>
-   │ Bewerber bucht Slot
-   ▼
-Calendly-Webhook → /api/public/calendly-webhook
-   │ HMAC-Verify, matche utm_content → application
-   │ UPDATE booking_status='scheduled', scheduled_at=…
-   ▼
-[Optional jetzt:] Bestätigungs-Mail mit Registrierungslink
-   ▼
-Nach Termin: Bewerber klickt Portal-Link → /register?email=…&app=…
-   │ Registrierung im Tenant-Portal, Application wird mit User verknüpft
-```
+## C. KI-Interview „drum-herum" (alles außer der Sprach-Engine)
 
-## 4. Was bauen wir konkret (Code-Tasks)
+Wenn ElevenAgents später eingestöpselt wird, muss das Drum-herum bereits stehen:
 
-1. **DB-Migration** `20260619000000_broker_flow.sql`
-   - `applications.flow_type` Check erweitern um `'broker'`
-   - Neue Tabelle `partner_companies` (id, tenant_id, name, logo_url, calendly_url, calendly_account_id, portal_register_url, intro_headline, intro_subline, button_label, created_at) + GRANTs + RLS (admin-only schreiben, anon SELECT nur safe Felder via View `partner_companies_public`)
-   - `landing_pages.partner_company_id` FK + Override-Felder (bereits da: `calendly_url`, `intermediate_company_name`, …)
-   - Neues E-Mail-Template Seed: `broker_invitation`
+13. **DB-Schema `interview_sessions`**
+    - `id, application_id, partner_company_id, status (pending/in_progress/completed/failed), started_at, ended_at, duration_sec, transcript jsonb, audio_url, ai_score int, ai_summary text, ai_flags jsonb`
+    - GRANTs + RLS (admin lesen, anon nur eigenes via Token)
 
-2. **Server-Functions** `src/lib/partner-companies.functions.ts` – CRUD wie `calendly.functions.ts`
+14. **Storage-Bucket `interview-audio`** (privat, signed URLs)
 
-3. **Admin-UI** `src/routes/admin.partner-companies.tsx` – Liste + Wizard (mit Logo-Upload via existierender Storage)
+15. **Bewerber-Einstiegspunkt definieren**
+    - Variante A: Direkt nach Bewerbung absenden, vor Calendly (Vorqualifizierung)
+    - Variante B: Statt Calendly (KI = der Termin)
+    - Variante C: Nach Calendly-Termin, asynchrone Hausaufgabe
+    → **Frage an dich: Welche Variante?**
 
-4. **Landing-Generator** – 3-Kachel-Picker, Vermittlungs-Sektion mit Partner-Dropdown + Overrides, Validierung („Vermittlung braucht Partner ODER Calendly-URL")
+16. **Bewerber-Route `/interview/[token]`**
+    - Token-basierter Zugang (keine Login-Pflicht)
+    - Mic-Permission, Vorab-Briefing-Bildschirm, Start-Button, Live-Status, Beenden-Button
+    - Platzhalter-Box wo später der `useConversation`-Hook reinkommt
 
-5. **`/api/public/applications`** – `flow_type='broker'` Branch:
-   - Insert mit `booking_status='pending'`
-   - Trigger Vermittlungs-Einladungs-Mail (bestehende Email-Pipeline)
-   - Return `redirect_url: /bewerbung/verbinden?…`
+17. **Admin-Konfiguration Interview-Persona**
+    - Pro Partner-Firma oder pro Landing: `interview_prompt` (Systemprompt), `interview_questions` (Leitfragen), `interview_voice_id`, `interview_duration_max_min`
+    - UI in `/admin/partner-firmen` als zusätzliche Tabs
 
-6. **`/bewerbung/verbinden`** – bereits gebaut, nur: Partner-Firma aus `partner_company_id` joinen statt nur aus Landing-Branding lesen.
+18. **Admin-Auswertung im Bewerber-Detail**
+    - Tab „Interview" mit: Audio-Player, Transcript-Reader (Bewerber/KI farblich), KI-Zusammenfassung, Score, Red-Flags, Empfehlung „Einstellen / Ablehnen / Weiter"
 
-7. **`/api/public/calendly-webhook`** – bereits gebaut, ergänzen:
-   - Bei `invitee.created` Bestätigungs-Mail mit Portal-Link senden
-   - Bei `invitee.canceled` → Reschedule-Mail
+19. **E-Mail-Template `interview_invitation`**
+    - Mit eindeutigem Token-Link
 
-8. **Bewerber-Liste & Detail** – Buchungs-Status-Spalte, Filter, Detail-Card mit Calendly-Daten
+20. **Edge-Function `interview-evaluate`**
+    - Wird vom KI-Interview-Ende getriggert → schickt Transcript an LLM → speichert `ai_summary, ai_score, ai_flags`
 
-9. **FunnelPanel** – Broker-Funnel-Stufen + Drop-off-Anzeige
+21. **Secrets-Slots vorbereiten** (noch keine Werte)
+    - `ELEVENLABS_API_KEY` als geplanter Secret-Name dokumentieren
 
-10. **Sidebar** – „Partner-Firmen" unter „Calendly"
+22. **Funnel-Stufe ergänzen**: „Interview gestartet → abgeschlossen → bewertet"
 
-## 5. Was wir NICHT in diesem Schritt bauen
+## D. Optionales Feintuning
 
-- KI-Chat-Interview „Sabine Schneider" (kommt als nächster Schritt nach erfolgreichem Calendly-Flow)
-- ElevenLabs Voice
-- Eigenes Buchungsmodul (Calendly-Ersatz)
-- White-Label-Domain für die Zwischenseite (läuft erstmal auf Tenant-Portal-Domain)
-
-## 6. Was du danach selbst tun musst
-
-1. Migration via Supabase SQL Editor ausführen
-2. Unter `/admin/calendly` Signing Key eintragen + Webhook in Calendly registrieren
-3. Unter `/admin/partner-firmen` mindestens eine Partnerfirma anlegen
-4. In bestehender oder neuer Landing den Modus „Vermittlung" wählen + Partner zuweisen
-5. End-to-End testen: Bewerbung absenden → Zwischenseite → Calendly → Webhook prüft in `/admin/applications` durch
+23. Whitelabel: Zwischenseite `/bewerbung/verbinden` aktuell auf Tenant-Portal-Domain — soll sie auf Landing-Domain laufen?
+24. DSGVO-Hinweis auf Zwischenseite + Interview-Start („Gespräch wird aufgezeichnet")
+25. Limit Interview pro Bewerber (genau 1 Versuch?)
 
 ---
 
-Sag Bescheid wenn der Plan so passt, dann setze ich um. Falls du Punkte streichen/ergänzen willst (z.B. „Partner-Firmen brauche ich nicht, immer nur 1 pro Landing direkt eintragen"), sag es jetzt – das verkleinert den Build deutlich.
+## Vorschlag Reihenfolge
+
+**Block 1 – Broker fertig machen** (Punkte 1–8): erst hier sauber zu Ende.
+**Block 2 – Setup** (9–12): du machst es manuell, ich liefere Klick-Anleitung.
+**Block 3 – Interview-Schale** (13–22): komplettes Drumherum mit Platzhalter für die Voice-Engine.
+**Block 4 – ElevenAgents einstecken** (zum Schluss, separat).
+
+---
+
+**Bitte beantworte vor Implementierung:**
+
+- (a) Soll ich **Block 1 komplett** in einem Rutsch fertigbauen oder die Punkte einzeln?
+- (b) Welche **Interview-Variante (A/B/C in Punkt 15)** willst du?
+- (c) Punkt 23: Zwischenseite auf Landing-Domain oder Portal-Domain belassen?
