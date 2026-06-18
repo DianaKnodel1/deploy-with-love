@@ -50,6 +50,9 @@ type Branding = {
   tenant_id: string;
   flow_type: "classic" | "fast";
   source_slug: string;
+  calendly_url: string;
+  intermediate_company_name: string;
+  redirect_delay_ms: number;
   seo_title: string;
   seo_description: string;
   seo_image: string;
@@ -81,6 +84,9 @@ const EMPTY: Branding = {
   tenant_id: "",
   flow_type: "classic",
   source_slug: "",
+  calendly_url: "",
+  intermediate_company_name: "",
+  redirect_delay_ms: 2500,
   seo_title: "",
   seo_description: "",
   seo_image: "",
