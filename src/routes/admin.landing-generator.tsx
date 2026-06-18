@@ -48,11 +48,12 @@ type Branding = {
   supabase_url: string;
   supabase_anon_key: string;
   tenant_id: string;
-  flow_type: "classic" | "fast";
+  flow_type: "classic" | "fast" | "broker";
   source_slug: string;
   calendly_url: string;
   intermediate_company_name: string;
   redirect_delay_ms: number;
+  partner_company_id: string;
   seo_title: string;
   seo_description: string;
   seo_image: string;
@@ -87,6 +88,7 @@ const EMPTY: Branding = {
   calendly_url: "",
   intermediate_company_name: "",
   redirect_delay_ms: 2500,
+  partner_company_id: "",
   seo_title: "",
   seo_description: "",
   seo_image: "",
