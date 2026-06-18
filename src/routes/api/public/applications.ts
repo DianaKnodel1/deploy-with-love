@@ -70,20 +70,30 @@ export const Route = createFileRoute("/api/public/applications")({
           } catch { /* ignore parse errors */ }
         }
 
-        // Calendly-Flow: Lookup pro source_slug ob für diese Landing ein
-        // Calendly-Link hinterlegt ist → dann statt direkt zu /register
-        // erst auf Zwischenseite + Terminbuchung weiterleiten.
+        // Broker-Flow: Partner-Firma auf der Landing → AZB-Stil Inline-Erfolg.
+        // Calendly-Flow (legacy, ohne Partner-Firma): direkter Calendly-Link auf der Landing.
         let calendlyOnLanding: string | null = null;
+        let partner: any = null;
         if (d.source_slug) {
           const { data: lp } = await supabaseAdmin
             .from("landing_pages")
-            .select("calendly_url")
+            .select("calendly_url, partner_company_id")
             .eq("source_slug", d.source_slug)
             .eq("is_published", true)
             .maybeSingle();
           calendlyOnLanding = (lp as any)?.calendly_url ?? null;
+          const partnerId = (lp as any)?.partner_company_id ?? null;
+          if (partnerId) {
+            const { data: pc } = await supabaseAdmin
+              .from("partner_companies")
+              .select("name, logo_url, calendly_url, portal_register_url, intro_headline, intro_subline, button_label")
+              .eq("id", partnerId)
+              .maybeSingle();
+            partner = pc ?? null;
+          }
         }
-        const useCalendly = !!calendlyOnLanding && !d.is_test;
+        const isBroker = d.flow_type === "broker" && !!partner && !d.is_test;
+        const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test;
 
         const { data: inserted, error } = await supabaseAdmin.from("applications").insert({
           full_name: displayName,
@@ -97,7 +107,7 @@ export const Route = createFileRoute("/api/public/applications")({
           flow_type: d.flow_type ?? "classic",
           source_slug: d.source_slug ?? null,
           is_test: !!d.is_test,
-          booking_status: useCalendly ? "pending" : "none",
+          booking_status: (isBroker || useCalendly) ? "pending" : "none",
         } as any).select("id").single();
         if (error) {
           console.error("[applications] insert error:", error);
@@ -106,18 +116,37 @@ export const Route = createFileRoute("/api/public/applications")({
         const appId = (inserted as any)?.id ?? "";
 
         let redirect_url: string | null = null;
-        if (useCalendly && d.portal_url && d.source_slug) {
+        let broker_block: any = null;
+
+        if (isBroker) {
+          const parts = d.full_name.trim().split(/\s+/);
+          const firstName = parts[0] ?? "";
+          const lastName = parts.slice(1).join(" ");
+          const base = String(partner.calendly_url || "").trim();
+          const sep = base.includes("?") ? "&" : "?";
+          const qs = new URLSearchParams({
+            name: d.full_name, email: d.email,
+            first_name: firstName, last_name: lastName,
+            utm_content: appId, utm_source: d.source_slug ?? "",
+          }).toString();
+          broker_block = {
+            partner_name: partner.name,
+            partner_logo: partner.logo_url ?? null,
+            calendly_url: base ? `${base}${sep}${qs}` : "",
+            button_label: partner.button_label || "Jetzt Termin buchen",
+            intro_headline: partner.intro_headline ?? null,
+            intro_subline: partner.intro_subline ?? null,
+            portal_register_url: partner.portal_register_url ?? null,
+          };
+        } else if (useCalendly && d.portal_url && d.source_slug) {
           const base = d.portal_url.replace(/\/+$/, "");
           const parts = d.full_name.trim().split(/\s+/);
           const firstName = parts[0] ?? "";
           const lastName = parts.slice(1).join(" ");
           const qs = new URLSearchParams({
-            app: appId,
-            landing: d.source_slug,
-            first_name: firstName,
-            last_name: lastName,
-            email: d.email,
-            phone: d.phone ?? "",
+            app: appId, landing: d.source_slug,
+            first_name: firstName, last_name: lastName,
+            email: d.email, phone: d.phone ?? "",
           }).toString();
           redirect_url = `${base}/bewerbung/verbinden?${qs}`;
         } else if (isFast && d.portal_url) {
@@ -125,46 +154,27 @@ export const Route = createFileRoute("/api/public/applications")({
           redirect_url = `${base}/register?email=${encodeURIComponent(d.email)}&fast=1`;
         }
 
-        // Fast-Track: Backup-Einladungsmail senden, falls der Bewerber den
-        // Register-Tab schließt. Fehler nicht hart durchreichen.
         if (isFast && resolvedTenantId && redirect_url && !d.is_test) {
-          // Drip-Doppelmail verhindern: bestehende queued/sending Rows für
-          // diese E-Mail im Tenant als skipped markieren (Backup-Mail unten
-          // übernimmt die Einladung).
           try {
-            await supabaseAdmin
-              .from("invite_resend_queue")
+            await supabaseAdmin.from("invite_resend_queue")
               .update({ status: "skipped", last_error: "fast_track_accept" } as any)
               .eq("tenant_id", resolvedTenantId)
               .eq("email", d.email.toLowerCase())
               .in("status", ["queued", "sending"]);
-          } catch (e) {
-            console.warn("[applications fast] skip drip queue:", e);
-          }
+          } catch (e) { console.warn("[applications fast] skip drip queue:", e); }
           try {
             const parts = d.full_name.trim().split(/\s+/);
             const firstName = parts[0] ?? "";
             const lastName = parts.slice(1).join(" ");
-            const { error: mailErr } = await supabaseAdmin.functions.invoke(
-              "send-invitation-email",
-              {
-                body: {
-                  to: d.email,
-                  fullName: d.full_name,
-                  firstName,
-                  lastName,
-                  registrationLink: redirect_url,
-                  tenantId: resolvedTenantId,
-                },
-              },
-            );
+            const { error: mailErr } = await supabaseAdmin.functions.invoke("send-invitation-email", {
+              body: { to: d.email, fullName: d.full_name, firstName, lastName, registrationLink: redirect_url, tenantId: resolvedTenantId },
+            });
             if (mailErr) console.warn("[applications fast] invitation mail:", mailErr);
-          } catch (e) {
-            console.warn("[applications fast] invitation mail error:", e);
-          }
+          } catch (e) { console.warn("[applications fast] invitation mail error:", e); }
         }
 
-        return json({ success: true, flow_type: d.flow_type ?? "classic", redirect_url });
+        return json({ success: true, flow_type: d.flow_type ?? "classic", redirect_url, broker: broker_block });
+
 
       },
     },

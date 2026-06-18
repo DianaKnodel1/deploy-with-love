@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as BewerbungVerbindenRouteImport } from './routes/bewerbung.verbinden'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
+import { Route as AdminVermittlungRouteImport } from './routes/admin.vermittlung'
 import { Route as AdminUploadsRouteImport } from './routes/admin.uploads'
 import { Route as AdminTransactionsRouteImport } from './routes/admin.transactions'
 import { Route as AdminTenantsRouteImport } from './routes/admin.tenants'
@@ -127,6 +128,11 @@ const AuthConfirmedRoute = AuthConfirmedRouteImport.update({
   id: '/auth/confirmed',
   path: '/auth/confirmed',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVermittlungRoute = AdminVermittlungRouteImport.update({
+  id: '/vermittlung',
+  path: '/vermittlung',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminUploadsRoute = AdminUploadsRouteImport.update({
   id: '/uploads',
@@ -448,6 +454,7 @@ export interface FileRoutesByFullPath {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin/': typeof AdminIndexRoute
@@ -512,6 +519,7 @@ export interface FileRoutesByTo {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin': typeof AdminIndexRoute
@@ -579,6 +587,7 @@ export interface FileRoutesById {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin/': typeof AdminIndexRoute
@@ -646,6 +655,7 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
     | '/admin/'
@@ -710,6 +720,7 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
     | '/admin'
@@ -776,6 +787,7 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
     | '/admin/'
@@ -894,6 +906,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/confirmed'
       preLoaderRoute: typeof AuthConfirmedRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/vermittlung': {
+      id: '/admin/vermittlung'
+      path: '/vermittlung'
+      fullPath: '/admin/vermittlung'
+      preLoaderRoute: typeof AdminVermittlungRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/uploads': {
       id: '/admin/uploads'
@@ -1343,6 +1362,7 @@ interface AdminRouteChildren {
   AdminTenantsRoute: typeof AdminTenantsRoute
   AdminTransactionsRoute: typeof AdminTransactionsRoute
   AdminUploadsRoute: typeof AdminUploadsRoute
+  AdminVermittlungRoute: typeof AdminVermittlungRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminApplicationsAppIdRoute: typeof AdminApplicationsAppIdRoute
   AdminAssignmentsAssignmentIdRoute: typeof AdminAssignmentsAssignmentIdRoute
@@ -1379,6 +1399,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTenantsRoute: AdminTenantsRoute,
   AdminTransactionsRoute: AdminTransactionsRoute,
   AdminUploadsRoute: AdminUploadsRoute,
+  AdminVermittlungRoute: AdminVermittlungRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminApplicationsAppIdRoute: AdminApplicationsAppIdRoute,
   AdminAssignmentsAssignmentIdRoute: AdminAssignmentsAssignmentIdRoute,
