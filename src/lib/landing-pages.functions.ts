@@ -46,6 +46,11 @@ const SaveInput = z.object({
   flow_type: z.enum(["classic", "fast"]).default("classic"),
   source_slug: z.string().max(120).default(""),
   is_published: z.boolean().default(true),
+  // Calendly-Integration (optional pro Landing)
+  calendly_url: z.string().max(500).default(""),
+  intermediate_company_name: z.string().max(160).default(""),
+  intermediate_logo_url: z.string().max(500).default(""),
+  redirect_delay_ms: z.number().int().min(0).max(60000).default(2500),
   // Optional: Data-URLs für Logo/Favicon — werden in Storage gelegt
   logo_data_url: z.string().max(15_000_000).nullable().optional(),
   favicon_data_url: z.string().max(1_000_000).nullable().optional(),
