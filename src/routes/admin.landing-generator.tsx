@@ -817,7 +817,7 @@ document.addEventListener('submit', function(e){
               {/* Flow-Typ */}
               <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
                 <Label className="text-xs font-semibold">Bewerbungs-Flow</Label>
-                <div className="grid sm:grid-cols-2 gap-2">
+                <div className="grid sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setBranding((b) => ({ ...b, flow_type: "classic" }))}
@@ -845,17 +845,65 @@ document.addEventListener('submit', function(e){
                   >
                     <div className="font-semibold mb-1">⚡ Fast-Track</div>
                     <p className="text-muted-foreground text-[11px]">
-                      Bewerbung wird sofort <code>akzeptiert</code>. Pop-up: „Vielen Dank, Sie werden zum Mitarbeiter-Portal weitergeleitet" + Auto-Redirect nach 3 Sek. zu <code>portal_url/register</code>. <strong>Portal-URL ist Pflicht.</strong>
+                      Bewerbung wird sofort <code>akzeptiert</code> + Auto-Redirect zu <code>portal_url/register</code>. <strong>Portal-URL Pflicht.</strong>
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBranding((b) => ({ ...b, flow_type: "broker" }))}
+                    className={cn(
+                      "text-left rounded-md border-2 p-3 transition-all text-xs",
+                      branding.flow_type === "broker"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40",
+                    )}
+                  >
+                    <div className="font-semibold mb-1">🤝 Vermittlung</div>
+                    <p className="text-muted-foreground text-[11px]">
+                      AZB-Style: „Sie werden mit <em>[Partner]</em> verbunden" → Calendly-Termin → Webhook setzt <code>scheduled</code>. <strong>Partner-Firma oder Calendly-Link Pflicht.</strong>
                     </p>
                   </button>
                 </div>
               </div>
 
-              {/* Calendly-Zwischenseite */}
+              {/* Vermittlung: Partner-Firma wählen */}
+              {branding.flow_type === "broker" && (
+                <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-3">
+                  <Label className="text-xs font-semibold">🤝 Vermittlungs-Konfiguration</Label>
+                  <Field label="Partner-Firma">
+                    <select
+                      className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                      value={branding.partner_company_id}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        const p = partners.find((x) => x.id === id);
+                        setBranding((b) => ({
+                          ...b,
+                          partner_company_id: id,
+                          calendly_url: p?.calendly_url ?? b.calendly_url,
+                          intermediate_company_name: p?.name ?? b.intermediate_company_name,
+                        }));
+                      }}
+                    >
+                      <option value="">— eigene Konfiguration unten —</option>
+                      {partners.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Verwalten unter <a href="/admin/partner-companies" className="underline">/admin/partner-companies</a>. Auswahl füllt Calendly-Link + Firmenname unten automatisch.
+                    </p>
+                  </Field>
+                </div>
+              )}
+
+              {/* Calendly-Zwischenseite (broker oder optional) */}
               <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
-                <Label className="text-xs font-semibold">📅 Calendly-Bewerbungsgespräch (optional)</Label>
+                <Label className="text-xs font-semibold">
+                  📅 Calendly-Zwischenseite {branding.flow_type === "broker" ? "(Pflicht für Vermittlung)" : "(optional)"}
+                </Label>
                 <p className="text-[11px] text-muted-foreground">
-                  Wenn gesetzt: Nach Bewerbung erscheint Zwischenseite „Sie werden mit [Firma] verbunden…" → automatische Weiterleitung zu Calendly mit vorausgefüllten Daten. Termin wird per Webhook im Portal als „Termin gebucht" sichtbar (Konfiguration unter <code>/admin/calendly</code>).
+                  Konfiguration des Webhooks unter <code>/admin/calendly</code>. Bei <strong>Vermittlung</strong> aus Partner-Firma vorausgefüllt.
                 </p>
                 <Field label="Calendly-Buchungslink">
                   <Input
@@ -888,6 +936,7 @@ document.addEventListener('submit', function(e){
                   </p>
                 </Field>
               </div>
+
             </CardContent>
           </Card>
 
