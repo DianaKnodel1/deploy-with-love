@@ -437,6 +437,7 @@ document.addEventListener('submit', function(e){
     if (!branding.firmenname || !branding.email || !branding.api_endpoint) return "Firmenname, E-Mail und API-Endpoint sind Pflicht.";
     if (!branding.landing_domain.trim()) return "Landing-Domain fehlt.";
     if (branding.flow_type === "fast" && !branding.portal_url.trim()) return "Fast-Track braucht Portal-URL.";
+    if (branding.flow_type === "broker" && !branding.calendly_url.trim()) return "Vermittlung braucht entweder eine Partner-Firma oder einen Calendly-Link.";
     if (!branding.tenant_id.trim()) return "Tenant-ID fehlt.";
     return null;
   };
@@ -476,6 +477,7 @@ document.addEventListener('submit', function(e){
         intermediate_company_name: branding.intermediate_company_name || "",
         intermediate_logo_url: "",
         redirect_delay_ms: Number(branding.redirect_delay_ms ?? 2500),
+        partner_company_id: branding.partner_company_id || null,
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
       } as any });
@@ -512,6 +514,7 @@ document.addEventListener('submit', function(e){
         calendly_url: row.calendly_url ?? "",
         intermediate_company_name: row.intermediate_company_name ?? "",
         redirect_delay_ms: row.redirect_delay_ms ?? 2500,
+        partner_company_id: row.partner_company_id ?? "",
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
