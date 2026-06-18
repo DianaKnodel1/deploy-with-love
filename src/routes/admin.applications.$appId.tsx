@@ -188,6 +188,52 @@ function AdminApplicationDetailPage() {
         </CardContent>
       </Card>
 
+      {(app as any).booking_status && (app as any).booking_status !== "none" && (
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              🤝 Vermittlung / Termin
+            </p>
+            <InfoRow label="Flow" value={(app as any).flow_type === "broker" ? "Vermittlung" : ((app as any).flow_type ?? "–")} />
+            <InfoRow
+              label="Buchungs-Status"
+              value={
+                {
+                  pending: "⏳ Termin offen",
+                  scheduled: "📅 Gebucht",
+                  cancelled: "✖ Abgesagt",
+                  no_show: "👻 No-Show",
+                  completed: "✔ Wahrgenommen",
+                }[(app as any).booking_status as string] ?? (app as any).booking_status
+              }
+            />
+            {(app as any).scheduled_at && (
+              <InfoRow
+                label="Termin"
+                value={new Date((app as any).scheduled_at).toLocaleString("de-DE", {
+                  weekday: "short", day: "2-digit", month: "2-digit", year: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })}
+              />
+            )}
+            {(app as any).calendly_event_uri && (
+              <div className="flex justify-between text-sm gap-2">
+                <span className="text-muted-foreground shrink-0">Calendly-Event</span>
+                <a
+                  href={(app as any).calendly_event_uri}
+                  target="_blank"
+                  rel="noopener"
+                  className="text-foreground font-mono text-xs underline truncate"
+                  title={(app as any).calendly_event_uri}
+                >
+                  Im Calendly öffnen ↗
+                </a>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {app.status !== "akzeptiert" && app.status !== "abgelehnt" && (
         <div className="flex gap-2">
           <Button variant="destructive" size="sm" onClick={rejectApplication}>

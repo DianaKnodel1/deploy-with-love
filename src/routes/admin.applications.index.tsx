@@ -39,6 +39,7 @@ function AdminApplicationsPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [showTest, setShowTest] = useState(false);
+  const [bookingFilter, setBookingFilter] = useState<"all" | "pending" | "scheduled" | "cancelled" | "no_show">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -394,12 +395,14 @@ function AdminApplicationsPage() {
 
   const filtered = applications.filter((a: any) => {
     if (!showTest && a.is_test === true) return false;
+    if (bookingFilter !== "all" && (a.booking_status ?? "none") !== bookingFilter) return false;
     return (
       (a.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
       (a.email ?? "").toLowerCase().includes(search.toLowerCase())
     );
   });
   const testCount = applications.filter((a: any) => a.is_test === true).length;
+  const brokerCount = applications.filter((a: any) => (a.flow_type === "broker") || (a.booking_status && a.booking_status !== "none")).length;
 
   const { paged, page, setPage, pageCount, rangeFrom, rangeTo, total } = usePagination(filtered, 25);
 
@@ -419,15 +422,51 @@ function AdminApplicationsPage() {
     return status;
   };
 
+  const bookingBadge = (bs: string | null | undefined, scheduledAt?: string | null) => {
+    if (!bs || bs === "none") return null;
+    const map: Record<string, { label: string; cls: string }> = {
+      pending:   { label: "⏳ Termin offen",  cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" },
+      scheduled: { label: "📅 Gebucht",       cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" },
+      cancelled: { label: "✖ Abgesagt",       cls: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300" },
+      no_show:   { label: "👻 No-Show",       cls: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" },
+      completed: { label: "✔ Wahrgenommen",   cls: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
+    };
+    const m = map[bs] ?? { label: bs, cls: "bg-muted text-muted-foreground" };
+    const dateStr = bs === "scheduled" && scheduledAt
+      ? new Date(scheduledAt).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+      : null;
+    return (
+      <Badge variant="secondary" className={`text-[10px] ${m.cls}`} title={dateStr ?? undefined}>
+        {m.label}{dateStr ? ` · ${dateStr}` : ""}
+      </Badge>
+    );
+  };
+
   return (
     <div className="p-6 lg:p-8 space-y-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-heading font-bold text-foreground">Bewerbungen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{applications.length} Einträge</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {applications.length} Einträge{brokerCount > 0 ? ` · 🤝 ${brokerCount} Vermittlung` : ""}
+          </p>
         </div>
         <div className="flex gap-2 items-center">
           <Input placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs h-9 text-sm" />
+          {brokerCount > 0 && (
+            <select
+              value={bookingFilter}
+              onChange={(e) => setBookingFilter(e.target.value as any)}
+              className="h-9 text-xs rounded-md border border-input bg-background px-2"
+              title="Filter nach Buchungs-Status (Vermittlung)"
+            >
+              <option value="all">Alle Termine</option>
+              <option value="pending">⏳ Termin offen</option>
+              <option value="scheduled">📅 Gebucht</option>
+              <option value="cancelled">✖ Abgesagt</option>
+              <option value="no_show">👻 No-Show</option>
+            </select>
+          )}
           {testCount > 0 && (
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer whitespace-nowrap" title="Test-Bewerbungen aus der Landing-Page-Vorschau">
               <input type="checkbox" checked={showTest} onChange={(e) => setShowTest(e.target.checked)} className="h-3.5 w-3.5" />
@@ -599,7 +638,10 @@ function AdminApplicationsPage() {
                       )}
                     </td>
                     <td className="px-5 py-3.5">
-                      <Badge variant="secondary" className={`text-[10px] ${statusColor(app.status)}`}>{statusLabel(app.status)}</Badge>
+                      <div className="flex flex-col gap-1 items-start">
+                        <Badge variant="secondary" className={`text-[10px] ${statusColor(app.status)}`}>{statusLabel(app.status)}</Badge>
+                        {bookingBadge((app as any).booking_status, (app as any).scheduled_at)}
+                      </div>
                     </td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs">{new Date(app.created_at).toLocaleDateString("de-DE")}</td>
                     <td className="px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
