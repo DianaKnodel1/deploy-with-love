@@ -1,83 +1,141 @@
+# Plan: Calendly-Bewerbungsflow (wie AZB-Personal → Equal Experts)
 
-# Fix-Paket: Migrations, Funnel, Infrastruktur-UX
+## Ziel
 
-## Problem heute
+Den Conversion-starken Flow deines Kollegen 1:1 nachbauen:
 
-1. **Schema-Cache-Fehler**: `landing_servers` und `landing_pages` existieren in der DB nicht — Migrationen `20260617…landing_pages.sql`, `20260618…landing_infrastructure.sql` und `20260616100000_applications_funnel.sql` sind noch nicht eingespielt.
-2. **Funnel-Panel** zeigt rohen SQL-Error (`column applications.source_slug does not exist`) statt eines verständlichen Hinweises.
-3. **Server-Anlegen-Dialog** schließt einfach, ohne den Bootstrap-Befehl (`curl … | sudo bash`) prominent zu zeigen — du wüsstest also nicht, was du als Nächstes auf dem VPS tun musst.
+```text
+Bewerbungsformular abschicken
+   ↓
+Loader-Modal "Ihre Daten werden verarbeitet…"
+   ↓
+Zwischenseite "Sie werden mit [Firma] verbunden" + "Jetzt Termin buchen"
+   ↓
+Calendly (mit vorausgefüllten Daten: first_name, last_name, email, phone)
+   ↓
+Nach Buchung → Webhook trifft uns → Application-Status "Termin gebucht"
+   ↓
+Bewerber kommt per Calendly-Bestätigungsmail/Confirmation zurück zur Registrierung
+```
+
+Das KI-Interview (Sabine-Schneider-Style) bauen wir bewusst **erst danach** in einem eigenen Schritt — siehe "Nicht in diesem Schritt".
 
 ---
 
-## 1) Migrations-Guide
+## Was gebaut wird
 
-Neue Datei `docs/MIGRATIONS.md` mit klarer Reihenfolge:
+### 1. Datenbankschema erweitern (neue Migration)
 
-```
-1. supabase/manual-migrations/20260616100000_applications_funnel.sql
-2. supabase/manual-migrations/20260617000000_landing_pages.sql
-3. supabase/manual-migrations/20260618000000_landing_infrastructure.sql
-```
+Neue Migration `supabase/manual-migrations/20260618100000_calendly_integration.sql`:
 
-Anleitung: Supabase Dashboard → SQL Editor → einfügen → Run. Für jede Migration:
-- was sie tut (1 Satz)
-- woran man erkennt, dass sie erfolgreich war (Check-Query)
+**Tabelle `landing_pages` erweitern:**
+- `calendly_url text` — Calendly Booking-Link pro Landing (z.B. `https://calendly.com/sabine-schneider/bewerbung`)
+- `intermediate_company_name text` — Anzeigename für Zwischenseite ("Equal Experts Germany GmbH")
+- `intermediate_logo_url text` — optional Firmenlogo
+- `redirect_delay_ms int default 2500` — wie lange Loader angezeigt wird (0 = manueller Button)
 
-Außerdem: Im Infrastruktur-Panel **oben einen Banner** „Migration fehlt — hier klicken für Anleitung", **wenn** der Tabellen-Fehler auftritt.
+**Tabelle `applications` erweitern:**
+- `calendly_event_uri text` — Calendly Event-URI (eindeutig pro Buchung)
+- `calendly_invitee_uri text`
+- `scheduled_at timestamptz` — gebuchter Termin
+- `booking_status text default 'pending'` — `pending` | `scheduled` | `cancelled` | `no_show` | `completed`
 
-## 2) Funnel-Panel fehlertolerant
+**Neue Tabelle `calendly_accounts` (pro Tenant):**
+- `id`, `tenant_id`, `display_name`, `calendly_user_uri`, `webhook_signing_key` (für Signatur-Verifikation), `personal_access_token` (verschlüsselt, optional für API), `created_at`
 
-`src/routes/admin.landing-generator.tsx` (Funnel-Block):
-- Fehler abfangen: wenn die DB `source_slug`/`is_test` nicht kennt → freundliche Karte:
-  > „Funnel-Tracking noch nicht aktiv. Migration `20260616100000_applications_funnel.sql` ausführen, dann erscheinen hier Konversionsraten."
-- Kein roter SQL-Text mehr für Nicht-Techies.
-- Tooltip am Titel „Funnel: Bewerbung → Registrierung → Onboarding" mit Klartext-Erklärung („Zeigt, wie viel Prozent der Bewerber sich registrieren und das Onboarding fertig machen. Hilft zu sehen, wo Leute abspringen.").
-- Tooltip am Zeitraum (30d/90d…): „Über welchen Zeitraum die Konversionsraten gerechnet werden."
+Mit GRANTs + RLS + `docs/MIGRATIONS.md` Update.
 
-## 3) Infrastruktur-UX
+### 2. Zwischenseite — neue Route `/bewerbung/verbinden`
 
-**A. Bootstrap-Modal nach „Anlegen"**
+Datei: `src/routes/bewerbung.verbinden.tsx` (öffentlich, kein Login)
 
-Neue Komponente in `src/routes/admin.infrastructure.tsx`:
-- Nach erfolgreichem `createLandingServer` öffnet sich ein Modal:
-  - Schritt 1: „Logg dich per SSH auf deinen VPS (`{ip}`) ein."
-  - Schritt 2: Großer Code-Block mit dem One-Liner + **Copy-Button**.
-  - Schritt 3: „Warte ~60s. Der Status springt automatisch von `pending` auf `online`."
-- Sicherheitshinweis: „Der Token ist nur einmal vollständig sichtbar. Du kannst ihn jederzeit über die Server-Zeile rotieren."
+- Liest Query-Parameter: `?landing=<slug>&first_name=&last_name=&email=&phone=`
+- Lädt Landing-Page-Daten per public Server-Function `getLandingPublicFn`
+- Zeigt:
+  - Loader-Modal mit Spinner (wie AZB)
+  - Text: "Ihre Daten werden verarbeitet… Bitte schließen Sie nicht das Fenster"
+  - Nach `redirect_delay_ms` automatisch zur Calendly-URL mit angehängten Query-Params (`?first_name=…&last_name=…&email=…&a1=phone`)
+- Im Hintergrund: POST an `/api/public/applications-prebook` → erzeugt `application`-Eintrag mit `booking_status='pending'`, gibt `application_id` zurück, hängt sie als `?utm_source=lovable&app_id=<uuid>` an Calendly-URL (Custom Question im Calendly-Event füllt dann später Webhook-Daten zurück)
+- Fallback: Falls Calendly nicht konfiguriert → Hinweis "Bitte HR kontaktieren"
 
-**B. Copy-Button in der Server-Zeile**
+### 3. Bewerbungsformular-Submit anpassen
 
-In der Server-Liste (für jeden Server):
-- Status-Badge (pending/online/offline/paused)
-- Button „Bootstrap-Befehl kopieren" (öffnet dasselbe Modal mit aktuellem Token)
-- Button „Token rotieren" (ruft `rotateBootstrapToken` auf)
-- Button „Pausieren / Löschen"
+In `src/components/landing/ApplicationForm.tsx` (bzw. dem aktuellen Submit-Handler in `admin.landing-generator.tsx`-Preview und der echten Public-Landing):
 
-**C. Klares Empty-State-Onboarding**
+- Submit-Logik: statt direkt `/register?email=…` zu redirecten → wenn Landing `calendly_url` gesetzt hat, leite zu `/bewerbung/verbinden?landing=<slug>&first_name=…` weiter
+- Wenn `calendly_url` leer → bisheriger Flow bleibt (Fast/Classic)
 
-Wenn kein Server existiert:
-- 3-Schritte-Karte: „1. VPS bestellen → 2. Hier ‚Server hinzufügen' → 3. One-Liner auf VPS ausführen"
-- Link zum Migrations-Guide, falls die Tabelle gar nicht da ist.
+### 4. Calendly-Webhook empfangen
+
+Neue öffentliche Route: `src/routes/api/public/calendly-webhook.ts`
+
+- POST-Endpoint mit HMAC-SHA256 Signatur-Verifikation (`Calendly-Webhook-Signature` Header, `webhook_signing_key` aus `calendly_accounts`)
+- Events:
+  - `invitee.created` → `applications.booking_status = 'scheduled'`, `scheduled_at`, `calendly_event_uri`, `calendly_invitee_uri` setzen; Matching über Email + neueste `pending` Application des Tenants
+  - `invitee.canceled` → `booking_status = 'cancelled'`
+- Schreibt `automation_log` Eintrag (Audit)
+- Stabile URL für Calendly: `https://project--1fa4f177-7059-471c-8755-648e9cbc6047.lovable.app/api/public/calendly-webhook`
+
+### 5. Admin-UI: Calendly konfigurieren
+
+**Neue Route:** `src/routes/admin.calendly.tsx`
+- Liste aller `calendly_accounts` des Tenants
+- "Neuen Account hinzufügen": Display-Name, Calendly-Username/URI, Webhook-Signing-Key
+- Anleitung: Wie Webhook in Calendly registrieren (mit Copy-Button für Webhook-URL)
+
+**In `admin.landing-generator.tsx`:**
+- Neues Feld im Landing-Editor: "Calendly-Buchungslink" (Dropdown der Accounts ODER Direkteingabe URL)
+- Felder: `intermediate_company_name`, `intermediate_logo_url`, `redirect_delay_ms`
+- Vorschau-Button: "Zwischenseite ansehen"
+
+**In `admin.applications.index.tsx`:**
+- Neue Spalte/Filter: `booking_status` mit Badge (gelb=pending, grün=scheduled, rot=cancelled)
+- Spalte `scheduled_at` mit Datum/Uhrzeit
+- Filter "Nur Termin gebucht"
+
+### 6. Funnel-Statistik erweitern (`FunnelPanel`)
+
+In `admin.landing-generator.tsx` → FunnelPanel:
+- Neue Stufe einbauen: **Bewerbung → Termin gebucht → Registrierung → Onboarding**
+- Drop-off zwischen "Bewerbung" und "Termin gebucht" sichtbar machen (das ist die Stelle, an der dein Kollege gewinnt)
+
+---
+
+## Reihenfolge der Implementierung
+
+1. Migration schreiben + `docs/MIGRATIONS.md` updaten
+2. Webhook-Route + `applications-prebook` API
+3. Zwischenseite `/bewerbung/verbinden`
+4. Submit-Anpassung im Bewerbungsformular
+5. Admin-UI: `calendly_accounts` + Landing-Felder
+6. Applications-Liste erweitern (booking_status)
+7. FunnelPanel-Stufe ergänzen
+
+Jeder Schritt einzeln testbar. Du musst nur einmal in Calendly den Webhook eintragen (URL kopieren), den Rest erledigt der Code.
+
+---
+
+## Was du als User tun musst
+
+1. **Migration ausführen** (in Supabase SQL Editor, wie in `docs/MIGRATIONS.md`)
+2. **In Calendly:** Webhook anlegen mit der Lovable-URL → Signing-Key in Admin → Calendly eintragen
+3. **Pro Landing:** Calendly-Link + Firmenname für Zwischenseite eintragen
+4. **Testen:** Bewerbung absenden → Loader → Calendly → Termin buchen → in Admin als "scheduled" sehen
+
+---
+
+## Nicht in diesem Schritt (bewusst später)
+
+- **KI-Interview-Chat (Sabine Schneider Persona)** — kommt als Schritt 2, sobald Calendly-Flow live ist und du echte Drop-off-Zahlen siehst
+- **ElevenLabs Voice / TTS** — kommt mit Schritt 2
+- **Eigener Kalender** statt Calendly — nur wenn Calendly-Kosten/Limits stören
 
 ---
 
 ## Technische Details
 
-**Geänderte Dateien**
-- `src/routes/admin.landing-generator.tsx` — Funnel-Block: Try/Catch + Migrations-Hint, Tooltips.
-- `src/routes/admin.infrastructure.tsx` — Bootstrap-Modal-State, Empty-State, Buttons pro Zeile, Migrations-Banner bei Tabellen-Fehler.
-- `src/lib/landing-servers.functions.ts` — kleine Hilfsfunktion `getBootstrapCommand({ baseUrl, token })` (rein clientseitig nutzbar, gibt den `curl`-String zurück, damit Modal und Zeilen-Button denselben String zeigen).
-
-**Neue Dateien**
-- `docs/MIGRATIONS.md` — Schritt-für-Schritt-Anleitung für alle 3 Migrationen + Check-Queries.
-- `src/components/admin/LandingServerBootstrapDialog.tsx` — wiederverwendbares Modal (3-Schritt-Anleitung, Copy, Status-Hinweis).
-
-**Keine Schema-Änderungen.** Alles, was an der DB fehlt, ist in den drei vorhandenen Migrations-Dateien — die werden vom User per SQL-Editor angewendet.
-
----
-
-## Out of scope (mache ich NICHT in diesem Schritt)
-
-- Cloudflare-Account-UI verbessern (kommt in Folge-Iteration)
-- Automatischer Tabellen-Existenz-Check als globales Health-Panel
-- Funnel-Tracking inhaltlich erweitern (nur fehlertolerant machen)
+- **Calendly-Pre-fill Format:** `https://calendly.com/<user>/<event>?first_name=X&last_name=Y&email=Z&a1=PHONE&utm_source=lovable&utm_content=<application_id>` — Calendly liefert `utm_content` im Webhook im `tracking`-Feld zurück → exakte Application-Zuordnung statt nur Email-Matching
+- **Signatur-Verifikation:** `crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))` mit HMAC-SHA256 über raw body
+- **Idempotenz:** Webhook prüft `calendly_event_uri` (UNIQUE) → doppelte Zustellung wird ignoriert
+- **RLS:** `calendly_accounts` und `applications.booking_status` über Tenant-Scope; Webhook nutzt `supabaseAdmin` (verifizierte Quelle)
+- **Vorhandene Server-Fn-Konvention:** `src/lib/calendly.functions.ts` (Admin-CRUD), `src/lib/applications.functions.ts` erweitern für `booking_status`-Updates
