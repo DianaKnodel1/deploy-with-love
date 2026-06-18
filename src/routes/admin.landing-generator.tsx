@@ -10,6 +10,7 @@ import {
   deleteLandingPage,
   toggleLandingPublished,
 } from "@/lib/landing-pages.functions";
+import { listPartnerCompanies } from "@/lib/partner-companies.functions";
 import { THEME_LIST, THEMES } from "@/lib/landing-themes";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,11 +49,12 @@ type Branding = {
   supabase_url: string;
   supabase_anon_key: string;
   tenant_id: string;
-  flow_type: "classic" | "fast";
+  flow_type: "classic" | "fast" | "broker";
   source_slug: string;
   calendly_url: string;
   intermediate_company_name: string;
   redirect_delay_ms: number;
+  partner_company_id: string;
   seo_title: string;
   seo_description: string;
   seo_image: string;
@@ -87,6 +89,7 @@ const EMPTY: Branding = {
   calendly_url: "",
   intermediate_company_name: "",
   redirect_delay_ms: 2500,
+  partner_company_id: "",
   seo_title: "",
   seo_description: "",
   seo_image: "",
@@ -114,6 +117,11 @@ function LandingGeneratorPage() {
   const toggleFn = useServerFn(toggleLandingPublished);
   const [landings, setLandings] = useState<any[]>([]);
   const [landingsLoading, setLandingsLoading] = useState(true);
+  const listPartnersFn = useServerFn(listPartnerCompanies);
+  const [partners, setPartners] = useState<Array<{ id: string; name: string; calendly_url: string; logo_url: string | null }>>([]);
+  useEffect(() => {
+    listPartnersFn({} as any).then((r: any) => setPartners(r?.rows ?? [])).catch(() => {});
+  }, [listPartnersFn]);
 
   const reloadLandings = useCallback(async () => {
     setLandingsLoading(true);
@@ -429,6 +437,7 @@ document.addEventListener('submit', function(e){
     if (!branding.firmenname || !branding.email || !branding.api_endpoint) return "Firmenname, E-Mail und API-Endpoint sind Pflicht.";
     if (!branding.landing_domain.trim()) return "Landing-Domain fehlt.";
     if (branding.flow_type === "fast" && !branding.portal_url.trim()) return "Fast-Track braucht Portal-URL.";
+    if (branding.flow_type === "broker" && !branding.calendly_url.trim()) return "Vermittlung braucht entweder eine Partner-Firma oder einen Calendly-Link.";
     if (!branding.tenant_id.trim()) return "Tenant-ID fehlt.";
     return null;
   };
@@ -468,6 +477,7 @@ document.addEventListener('submit', function(e){
         intermediate_company_name: branding.intermediate_company_name || "",
         intermediate_logo_url: "",
         redirect_delay_ms: Number(branding.redirect_delay_ms ?? 2500),
+        partner_company_id: branding.partner_company_id || null,
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
       } as any });
@@ -504,6 +514,7 @@ document.addEventListener('submit', function(e){
         calendly_url: row.calendly_url ?? "",
         intermediate_company_name: row.intermediate_company_name ?? "",
         redirect_delay_ms: row.redirect_delay_ms ?? 2500,
+        partner_company_id: row.partner_company_id ?? "",
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
@@ -809,7 +820,7 @@ document.addEventListener('submit', function(e){
               {/* Flow-Typ */}
               <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
                 <Label className="text-xs font-semibold">Bewerbungs-Flow</Label>
-                <div className="grid sm:grid-cols-2 gap-2">
+                <div className="grid sm:grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setBranding((b) => ({ ...b, flow_type: "classic" }))}
@@ -837,17 +848,65 @@ document.addEventListener('submit', function(e){
                   >
                     <div className="font-semibold mb-1">⚡ Fast-Track</div>
                     <p className="text-muted-foreground text-[11px]">
-                      Bewerbung wird sofort <code>akzeptiert</code>. Pop-up: „Vielen Dank, Sie werden zum Mitarbeiter-Portal weitergeleitet" + Auto-Redirect nach 3 Sek. zu <code>portal_url/register</code>. <strong>Portal-URL ist Pflicht.</strong>
+                      Bewerbung wird sofort <code>akzeptiert</code> + Auto-Redirect zu <code>portal_url/register</code>. <strong>Portal-URL Pflicht.</strong>
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBranding((b) => ({ ...b, flow_type: "broker" }))}
+                    className={cn(
+                      "text-left rounded-md border-2 p-3 transition-all text-xs",
+                      branding.flow_type === "broker"
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40",
+                    )}
+                  >
+                    <div className="font-semibold mb-1">🤝 Vermittlung</div>
+                    <p className="text-muted-foreground text-[11px]">
+                      AZB-Style: „Sie werden mit <em>[Partner]</em> verbunden" → Calendly-Termin → Webhook setzt <code>scheduled</code>. <strong>Partner-Firma oder Calendly-Link Pflicht.</strong>
                     </p>
                   </button>
                 </div>
               </div>
 
-              {/* Calendly-Zwischenseite */}
+              {/* Vermittlung: Partner-Firma wählen */}
+              {branding.flow_type === "broker" && (
+                <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-3">
+                  <Label className="text-xs font-semibold">🤝 Vermittlungs-Konfiguration</Label>
+                  <Field label="Partner-Firma">
+                    <select
+                      className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                      value={branding.partner_company_id}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        const p = partners.find((x) => x.id === id);
+                        setBranding((b) => ({
+                          ...b,
+                          partner_company_id: id,
+                          calendly_url: p?.calendly_url ?? b.calendly_url,
+                          intermediate_company_name: p?.name ?? b.intermediate_company_name,
+                        }));
+                      }}
+                    >
+                      <option value="">— eigene Konfiguration unten —</option>
+                      {partners.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Verwalten unter <a href="/admin/partner-companies" className="underline">/admin/partner-companies</a>. Auswahl füllt Calendly-Link + Firmenname unten automatisch.
+                    </p>
+                  </Field>
+                </div>
+              )}
+
+              {/* Calendly-Zwischenseite (broker oder optional) */}
               <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
-                <Label className="text-xs font-semibold">📅 Calendly-Bewerbungsgespräch (optional)</Label>
+                <Label className="text-xs font-semibold">
+                  📅 Calendly-Zwischenseite {branding.flow_type === "broker" ? "(Pflicht für Vermittlung)" : "(optional)"}
+                </Label>
                 <p className="text-[11px] text-muted-foreground">
-                  Wenn gesetzt: Nach Bewerbung erscheint Zwischenseite „Sie werden mit [Firma] verbunden…" → automatische Weiterleitung zu Calendly mit vorausgefüllten Daten. Termin wird per Webhook im Portal als „Termin gebucht" sichtbar (Konfiguration unter <code>/admin/calendly</code>).
+                  Konfiguration des Webhooks unter <code>/admin/calendly</code>. Bei <strong>Vermittlung</strong> aus Partner-Firma vorausgefüllt.
                 </p>
                 <Field label="Calendly-Buchungslink">
                   <Input
@@ -880,6 +939,7 @@ document.addEventListener('submit', function(e){
                   </p>
                 </Field>
               </div>
+
             </CardContent>
           </Card>
 

@@ -31,6 +31,7 @@ import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
 import { Route as AdminRemindersRouteImport } from './routes/admin.reminders'
 import { Route as AdminRecoveryRouteImport } from './routes/admin.recovery'
 import { Route as AdminPostRouteImport } from './routes/admin.post'
+import { Route as AdminPartnerCompaniesRouteImport } from './routes/admin.partner-companies'
 import { Route as AdminLandingGeneratorRouteImport } from './routes/admin.landing-generator'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
 import { Route as AdminInfrastructureRouteImport } from './routes/admin.infrastructure'
@@ -180,6 +181,11 @@ const AdminRecoveryRoute = AdminRecoveryRouteImport.update({
 const AdminPostRoute = AdminPostRouteImport.update({
   id: '/post',
   path: '/post',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPartnerCompaniesRoute = AdminPartnerCompaniesRouteImport.update({
+  id: '/partner-companies',
+  path: '/partner-companies',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLandingGeneratorRoute = AdminLandingGeneratorRouteImport.update({
@@ -430,6 +436,7 @@ export interface FileRoutesByFullPath {
   '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
+  '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
   '/admin/post': typeof AdminPostRoute
   '/admin/recovery': typeof AdminRecoveryRoute
   '/admin/reminders': typeof AdminRemindersRoute
@@ -493,6 +500,7 @@ export interface FileRoutesByTo {
   '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
+  '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
   '/admin/post': typeof AdminPostRoute
   '/admin/recovery': typeof AdminRecoveryRoute
   '/admin/reminders': typeof AdminRemindersRoute
@@ -559,6 +567,7 @@ export interface FileRoutesById {
   '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
+  '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
   '/admin/post': typeof AdminPostRoute
   '/admin/recovery': typeof AdminRecoveryRoute
   '/admin/reminders': typeof AdminRemindersRoute
@@ -625,6 +634,7 @@ export interface FileRouteTypes {
     | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
+    | '/admin/partner-companies'
     | '/admin/post'
     | '/admin/recovery'
     | '/admin/reminders'
@@ -688,6 +698,7 @@ export interface FileRouteTypes {
     | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
+    | '/admin/partner-companies'
     | '/admin/post'
     | '/admin/recovery'
     | '/admin/reminders'
@@ -753,6 +764,7 @@ export interface FileRouteTypes {
     | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
+    | '/admin/partner-companies'
     | '/admin/post'
     | '/admin/recovery'
     | '/admin/reminders'
@@ -958,6 +970,13 @@ declare module '@tanstack/react-router' {
       path: '/post'
       fullPath: '/admin/post'
       preLoaderRoute: typeof AdminPostRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/partner-companies': {
+      id: '/admin/partner-companies'
+      path: '/partner-companies'
+      fullPath: '/admin/partner-companies'
+      preLoaderRoute: typeof AdminPartnerCompaniesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/landing-generator': {
@@ -1312,6 +1331,7 @@ interface AdminRouteChildren {
   AdminInfrastructureRoute: typeof AdminInfrastructureRoute
   AdminKycRoute: typeof AdminKycRoute
   AdminLandingGeneratorRoute: typeof AdminLandingGeneratorRoute
+  AdminPartnerCompaniesRoute: typeof AdminPartnerCompaniesRoute
   AdminPostRoute: typeof AdminPostRoute
   AdminRecoveryRoute: typeof AdminRecoveryRoute
   AdminRemindersRoute: typeof AdminRemindersRoute
@@ -1347,6 +1367,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInfrastructureRoute: AdminInfrastructureRoute,
   AdminKycRoute: AdminKycRoute,
   AdminLandingGeneratorRoute: AdminLandingGeneratorRoute,
+  AdminPartnerCompaniesRoute: AdminPartnerCompaniesRoute,
   AdminPostRoute: AdminPostRoute,
   AdminRecoveryRoute: AdminRecoveryRoute,
   AdminRemindersRoute: AdminRemindersRoute,

@@ -1,141 +1,132 @@
-# Plan: Calendly-Bewerbungsflow (wie AZB-Personal → Equal Experts)
+# Plan: Dritter Bewerbungs-Modus „Vermittlung" (Broker / AZB-Style)
 
-## Ziel
+Ziel: Drei Flow-Modi pro Landing, alle vollständig über das Portal konfigurierbar – ohne Calendly-Konfig im Code anfassen zu müssen.
 
-Den Conversion-starken Flow deines Kollegen 1:1 nachbauen:
+## 1. Die drei Modi (Auswahl pro Landing-Page)
 
+| Modus | Verhalten nach „Bewerbung absenden" |
+|---|---|
+| **Klassisch** | Bewerbung landet im Portal, Status `pending`, Admin akzeptiert manuell, danach E-Mail mit Registrierungslink. (heute schon vorhanden) |
+| **Fast Track** | Bewerbung wird automatisch akzeptiert, Bewerber wird sofort zu `/register?email=…` weitergeleitet. (heute schon vorhanden) |
+| **Vermittlung** *(neu, AZB-Style)* | Bewerbung wird gespeichert (`booking_status='pending'`), Bewerber sieht Zwischenseite „Wir verbinden Sie mit **[Partnerfirma]**" → klickt „Jetzt Termin buchen" → Calendly mit vorausgefüllten Daten → nach Buchung Webhook → Status `scheduled` → Calendly schickt Einladungs-Mail mit Link auf `portal.<tenant>/register?email=…&app=…`. |
+
+Auswahl im Landing-Generator als 3-Kachel-Picker (heute 2 Kacheln).
+
+## 2. Alles im Portal konfigurierbar
+
+### A) Globale Calendly-Accounts (`/admin/calendly` – existiert bereits)
+- Account-Name (z.B. „Sabine Schneider")
+- Calendly-User-URI (optional)
+- Webhook Signing Key
+- Webhook-URL zum Kopieren
+
+### B) Partner-Firmen (`/admin/partner-firmen` – **neu**)
+Damit dieselbe Partnerfirma auf mehreren Landings wiederverwendet werden kann.
+Felder pro Partner:
+- Firmenname (z.B. „Equal Experts Germany GmbH")
+- Logo (Upload)
+- Calendly-Buchungslink (`https://calendly.com/sabine-schneider/bewerbung`)
+- Calendly-Account-Referenz (für Webhook-Verifikation)
+- Portal-Ziel-URL (Registrierung) – z.B. `https://portal.digital-dgigmbh.com/register`
+- E-Mail-Absender-Name (für Einladungsmail)
+- Texte für Zwischenseite (Headline, Subline, Button-Label) – mit Defaults
+
+### C) Landing-Page-Editor (`/admin/landing-generator` – erweitern)
+- Flow-Modus: Klassisch / Fast Track / **Vermittlung**
+- Bei „Vermittlung":
+  - Partner-Firma auswählen (Dropdown aus B)
+  - Override: eigener Calendly-Link, eigener Firmenname, eigenes Logo (optional)
+  - Loader-Dauer (ms), 0 = nur Button
+  - Toggle „Einladungs-E-Mail aktiv" (Mail kommt aus Portal, nicht Calendly)
+  - Toggle „Auch klassische Mitarbeiter-Registrierung erlauben" (für später)
+
+### D) Bewerber-Liste (`/admin/applications` – erweitern)
+- Neue Spalte **Buchungs-Status** mit Badges: `pending` / `scheduled` (mit Datum) / `cancelled` / `no_show` / `completed`
+- Filter nach Buchungs-Status
+- In Bewerber-Detail: Calendly-Event-Link, Termin-Datum, Reschedule/Cancel-URL
+
+### E) Funnel-Panel (`FunnelPanel`) – erweitern
+Neue Stufe für Vermittlung-Landings:
 ```text
-Bewerbungsformular abschicken
-   ↓
-Loader-Modal "Ihre Daten werden verarbeitet…"
-   ↓
-Zwischenseite "Sie werden mit [Firma] verbunden" + "Jetzt Termin buchen"
-   ↓
-Calendly (mit vorausgefüllten Daten: first_name, last_name, email, phone)
-   ↓
-Nach Buchung → Webhook trifft uns → Application-Status "Termin gebucht"
-   ↓
-Bewerber kommt per Calendly-Bestätigungsmail/Confirmation zurück zur Registrierung
+Bewerbung gesendet → Zwischenseite gesehen → Calendly geöffnet → Termin gebucht → Registriert → Onboarding
 ```
 
-Das KI-Interview (Sabine-Schneider-Style) bauen wir bewusst **erst danach** in einem eigenen Schritt — siehe "Nicht in diesem Schritt".
+### F) E-Mail-Templates (`/admin/email-templates`)
+Neues Template **„Vermittlungs-Einladung"** (was AZB als „Markus Schuster"-Mail verschickt, Screenshot 3): Variablen `{{bewerber_vorname}}`, `{{partner_firma}}`, `{{calendly_link}}`, `{{portal_url}}`. Wird ausgelöst, sobald Bewerbung mit Vermittlungs-Flow eingeht.
+
+## 3. End-to-End-Ablauf „Vermittlung"
+
+```text
+[Landing /jobs/xyz]
+   │ submit
+   ▼
+POST /api/public/applications
+   │ flow_type='broker' → insert application (booking_status='pending')
+   │ E-Mail-Queue: Vermittlungs-Einladung an Bewerber
+   ▼
+Redirect → /bewerbung/verbinden?app=<id>&landing=<slug>&first_name=…
+   │ Loader-Modal: „Wir verbinden Sie mit [Partnerfirma]"
+   │ Auto-Redirect (oder Button) nach n ms
+   ▼
+Calendly mit ?first_name=…&email=…&utm_content=<application_id>
+   │ Bewerber bucht Slot
+   ▼
+Calendly-Webhook → /api/public/calendly-webhook
+   │ HMAC-Verify, matche utm_content → application
+   │ UPDATE booking_status='scheduled', scheduled_at=…
+   ▼
+[Optional jetzt:] Bestätigungs-Mail mit Registrierungslink
+   ▼
+Nach Termin: Bewerber klickt Portal-Link → /register?email=…&app=…
+   │ Registrierung im Tenant-Portal, Application wird mit User verknüpft
+```
+
+## 4. Was bauen wir konkret (Code-Tasks)
+
+1. **DB-Migration** `20260619000000_broker_flow.sql`
+   - `applications.flow_type` Check erweitern um `'broker'`
+   - Neue Tabelle `partner_companies` (id, tenant_id, name, logo_url, calendly_url, calendly_account_id, portal_register_url, intro_headline, intro_subline, button_label, created_at) + GRANTs + RLS (admin-only schreiben, anon SELECT nur safe Felder via View `partner_companies_public`)
+   - `landing_pages.partner_company_id` FK + Override-Felder (bereits da: `calendly_url`, `intermediate_company_name`, …)
+   - Neues E-Mail-Template Seed: `broker_invitation`
+
+2. **Server-Functions** `src/lib/partner-companies.functions.ts` – CRUD wie `calendly.functions.ts`
+
+3. **Admin-UI** `src/routes/admin.partner-companies.tsx` – Liste + Wizard (mit Logo-Upload via existierender Storage)
+
+4. **Landing-Generator** – 3-Kachel-Picker, Vermittlungs-Sektion mit Partner-Dropdown + Overrides, Validierung („Vermittlung braucht Partner ODER Calendly-URL")
+
+5. **`/api/public/applications`** – `flow_type='broker'` Branch:
+   - Insert mit `booking_status='pending'`
+   - Trigger Vermittlungs-Einladungs-Mail (bestehende Email-Pipeline)
+   - Return `redirect_url: /bewerbung/verbinden?…`
+
+6. **`/bewerbung/verbinden`** – bereits gebaut, nur: Partner-Firma aus `partner_company_id` joinen statt nur aus Landing-Branding lesen.
+
+7. **`/api/public/calendly-webhook`** – bereits gebaut, ergänzen:
+   - Bei `invitee.created` Bestätigungs-Mail mit Portal-Link senden
+   - Bei `invitee.canceled` → Reschedule-Mail
+
+8. **Bewerber-Liste & Detail** – Buchungs-Status-Spalte, Filter, Detail-Card mit Calendly-Daten
+
+9. **FunnelPanel** – Broker-Funnel-Stufen + Drop-off-Anzeige
+
+10. **Sidebar** – „Partner-Firmen" unter „Calendly"
+
+## 5. Was wir NICHT in diesem Schritt bauen
+
+- KI-Chat-Interview „Sabine Schneider" (kommt als nächster Schritt nach erfolgreichem Calendly-Flow)
+- ElevenLabs Voice
+- Eigenes Buchungsmodul (Calendly-Ersatz)
+- White-Label-Domain für die Zwischenseite (läuft erstmal auf Tenant-Portal-Domain)
+
+## 6. Was du danach selbst tun musst
+
+1. Migration via Supabase SQL Editor ausführen
+2. Unter `/admin/calendly` Signing Key eintragen + Webhook in Calendly registrieren
+3. Unter `/admin/partner-firmen` mindestens eine Partnerfirma anlegen
+4. In bestehender oder neuer Landing den Modus „Vermittlung" wählen + Partner zuweisen
+5. End-to-End testen: Bewerbung absenden → Zwischenseite → Calendly → Webhook prüft in `/admin/applications` durch
 
 ---
 
-## Was gebaut wird
-
-### 1. Datenbankschema erweitern (neue Migration)
-
-Neue Migration `supabase/manual-migrations/20260618100000_calendly_integration.sql`:
-
-**Tabelle `landing_pages` erweitern:**
-- `calendly_url text` — Calendly Booking-Link pro Landing (z.B. `https://calendly.com/sabine-schneider/bewerbung`)
-- `intermediate_company_name text` — Anzeigename für Zwischenseite ("Equal Experts Germany GmbH")
-- `intermediate_logo_url text` — optional Firmenlogo
-- `redirect_delay_ms int default 2500` — wie lange Loader angezeigt wird (0 = manueller Button)
-
-**Tabelle `applications` erweitern:**
-- `calendly_event_uri text` — Calendly Event-URI (eindeutig pro Buchung)
-- `calendly_invitee_uri text`
-- `scheduled_at timestamptz` — gebuchter Termin
-- `booking_status text default 'pending'` — `pending` | `scheduled` | `cancelled` | `no_show` | `completed`
-
-**Neue Tabelle `calendly_accounts` (pro Tenant):**
-- `id`, `tenant_id`, `display_name`, `calendly_user_uri`, `webhook_signing_key` (für Signatur-Verifikation), `personal_access_token` (verschlüsselt, optional für API), `created_at`
-
-Mit GRANTs + RLS + `docs/MIGRATIONS.md` Update.
-
-### 2. Zwischenseite — neue Route `/bewerbung/verbinden`
-
-Datei: `src/routes/bewerbung.verbinden.tsx` (öffentlich, kein Login)
-
-- Liest Query-Parameter: `?landing=<slug>&first_name=&last_name=&email=&phone=`
-- Lädt Landing-Page-Daten per public Server-Function `getLandingPublicFn`
-- Zeigt:
-  - Loader-Modal mit Spinner (wie AZB)
-  - Text: "Ihre Daten werden verarbeitet… Bitte schließen Sie nicht das Fenster"
-  - Nach `redirect_delay_ms` automatisch zur Calendly-URL mit angehängten Query-Params (`?first_name=…&last_name=…&email=…&a1=phone`)
-- Im Hintergrund: POST an `/api/public/applications-prebook` → erzeugt `application`-Eintrag mit `booking_status='pending'`, gibt `application_id` zurück, hängt sie als `?utm_source=lovable&app_id=<uuid>` an Calendly-URL (Custom Question im Calendly-Event füllt dann später Webhook-Daten zurück)
-- Fallback: Falls Calendly nicht konfiguriert → Hinweis "Bitte HR kontaktieren"
-
-### 3. Bewerbungsformular-Submit anpassen
-
-In `src/components/landing/ApplicationForm.tsx` (bzw. dem aktuellen Submit-Handler in `admin.landing-generator.tsx`-Preview und der echten Public-Landing):
-
-- Submit-Logik: statt direkt `/register?email=…` zu redirecten → wenn Landing `calendly_url` gesetzt hat, leite zu `/bewerbung/verbinden?landing=<slug>&first_name=…` weiter
-- Wenn `calendly_url` leer → bisheriger Flow bleibt (Fast/Classic)
-
-### 4. Calendly-Webhook empfangen
-
-Neue öffentliche Route: `src/routes/api/public/calendly-webhook.ts`
-
-- POST-Endpoint mit HMAC-SHA256 Signatur-Verifikation (`Calendly-Webhook-Signature` Header, `webhook_signing_key` aus `calendly_accounts`)
-- Events:
-  - `invitee.created` → `applications.booking_status = 'scheduled'`, `scheduled_at`, `calendly_event_uri`, `calendly_invitee_uri` setzen; Matching über Email + neueste `pending` Application des Tenants
-  - `invitee.canceled` → `booking_status = 'cancelled'`
-- Schreibt `automation_log` Eintrag (Audit)
-- Stabile URL für Calendly: `https://project--1fa4f177-7059-471c-8755-648e9cbc6047.lovable.app/api/public/calendly-webhook`
-
-### 5. Admin-UI: Calendly konfigurieren
-
-**Neue Route:** `src/routes/admin.calendly.tsx`
-- Liste aller `calendly_accounts` des Tenants
-- "Neuen Account hinzufügen": Display-Name, Calendly-Username/URI, Webhook-Signing-Key
-- Anleitung: Wie Webhook in Calendly registrieren (mit Copy-Button für Webhook-URL)
-
-**In `admin.landing-generator.tsx`:**
-- Neues Feld im Landing-Editor: "Calendly-Buchungslink" (Dropdown der Accounts ODER Direkteingabe URL)
-- Felder: `intermediate_company_name`, `intermediate_logo_url`, `redirect_delay_ms`
-- Vorschau-Button: "Zwischenseite ansehen"
-
-**In `admin.applications.index.tsx`:**
-- Neue Spalte/Filter: `booking_status` mit Badge (gelb=pending, grün=scheduled, rot=cancelled)
-- Spalte `scheduled_at` mit Datum/Uhrzeit
-- Filter "Nur Termin gebucht"
-
-### 6. Funnel-Statistik erweitern (`FunnelPanel`)
-
-In `admin.landing-generator.tsx` → FunnelPanel:
-- Neue Stufe einbauen: **Bewerbung → Termin gebucht → Registrierung → Onboarding**
-- Drop-off zwischen "Bewerbung" und "Termin gebucht" sichtbar machen (das ist die Stelle, an der dein Kollege gewinnt)
-
----
-
-## Reihenfolge der Implementierung
-
-1. Migration schreiben + `docs/MIGRATIONS.md` updaten
-2. Webhook-Route + `applications-prebook` API
-3. Zwischenseite `/bewerbung/verbinden`
-4. Submit-Anpassung im Bewerbungsformular
-5. Admin-UI: `calendly_accounts` + Landing-Felder
-6. Applications-Liste erweitern (booking_status)
-7. FunnelPanel-Stufe ergänzen
-
-Jeder Schritt einzeln testbar. Du musst nur einmal in Calendly den Webhook eintragen (URL kopieren), den Rest erledigt der Code.
-
----
-
-## Was du als User tun musst
-
-1. **Migration ausführen** (in Supabase SQL Editor, wie in `docs/MIGRATIONS.md`)
-2. **In Calendly:** Webhook anlegen mit der Lovable-URL → Signing-Key in Admin → Calendly eintragen
-3. **Pro Landing:** Calendly-Link + Firmenname für Zwischenseite eintragen
-4. **Testen:** Bewerbung absenden → Loader → Calendly → Termin buchen → in Admin als "scheduled" sehen
-
----
-
-## Nicht in diesem Schritt (bewusst später)
-
-- **KI-Interview-Chat (Sabine Schneider Persona)** — kommt als Schritt 2, sobald Calendly-Flow live ist und du echte Drop-off-Zahlen siehst
-- **ElevenLabs Voice / TTS** — kommt mit Schritt 2
-- **Eigener Kalender** statt Calendly — nur wenn Calendly-Kosten/Limits stören
-
----
-
-## Technische Details
-
-- **Calendly-Pre-fill Format:** `https://calendly.com/<user>/<event>?first_name=X&last_name=Y&email=Z&a1=PHONE&utm_source=lovable&utm_content=<application_id>` — Calendly liefert `utm_content` im Webhook im `tracking`-Feld zurück → exakte Application-Zuordnung statt nur Email-Matching
-- **Signatur-Verifikation:** `crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))` mit HMAC-SHA256 über raw body
-- **Idempotenz:** Webhook prüft `calendly_event_uri` (UNIQUE) → doppelte Zustellung wird ignoriert
-- **RLS:** `calendly_accounts` und `applications.booking_status` über Tenant-Scope; Webhook nutzt `supabaseAdmin` (verifizierte Quelle)
-- **Vorhandene Server-Fn-Konvention:** `src/lib/calendly.functions.ts` (Admin-CRUD), `src/lib/applications.functions.ts` erweitern für `booking_status`-Updates
+Sag Bescheid wenn der Plan so passt, dann setze ich um. Falls du Punkte streichen/ergänzen willst (z.B. „Partner-Firmen brauche ich nicht, immer nur 1 pro Landing direkt eintragen"), sag es jetzt – das verkleinert den Build deutlich.
