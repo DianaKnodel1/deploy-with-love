@@ -18,6 +18,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as EmployeeRouteImport } from './routes/_employee'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as BewerbungVerbindenRouteImport } from './routes/bewerbung.verbinden'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
 import { Route as AdminUploadsRouteImport } from './routes/admin.uploads'
 import { Route as AdminTransactionsRouteImport } from './routes/admin.transactions'
@@ -62,6 +63,7 @@ import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sm
 import { Route as ApiPublicLandingServerHeartbeatRouteImport } from './routes/api/public/landing-server-heartbeat'
 import { Route as ApiPublicLandingServerBootstrapRouteImport } from './routes/api/public/landing-server-bootstrap'
 import { Route as ApiPublicDomainHealthCronRouteImport } from './routes/api/public/domain-health-cron'
+import { Route as ApiPublicCalendlyWebhookRouteImport } from './routes/api/public/calendly-webhook'
 import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
 import { Route as AdminEmployeesUserIdRouteImport } from './routes/admin.employees.$userId'
 import { Route as AdminAssignmentsAssignmentIdRouteImport } from './routes/admin.assignments.$assignmentId'
@@ -113,6 +115,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const BewerbungVerbindenRoute = BewerbungVerbindenRouteImport.update({
+  id: '/bewerbung/verbinden',
+  path: '/bewerbung/verbinden',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthConfirmedRoute = AuthConfirmedRouteImport.update({
   id: '/auth/confirmed',
@@ -337,6 +344,12 @@ const ApiPublicDomainHealthCronRoute =
     path: '/api/public/domain-health-cron',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCalendlyWebhookRoute =
+  ApiPublicCalendlyWebhookRouteImport.update({
+    id: '/api/public/calendly-webhook',
+    path: '/api/public/calendly-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicApplicationsRoute = ApiPublicApplicationsRouteImport.update({
   id: '/api/public/applications',
   path: '/api/public/applications',
@@ -422,12 +435,14 @@ export interface FileRoutesByFullPath {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin/': typeof AdminIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
+  '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -482,12 +497,14 @@ export interface FileRoutesByTo {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin': typeof AdminIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
+  '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -545,12 +562,14 @@ export interface FileRoutesById {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin/': typeof AdminIndexRoute
   '/_employee/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
+  '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -608,12 +627,14 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/uploads'
     | '/auth/confirmed'
+    | '/bewerbung/verbinden'
     | '/admin/'
     | '/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
     | '/api/public/applications'
+    | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -668,12 +689,14 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/uploads'
     | '/auth/confirmed'
+    | '/bewerbung/verbinden'
     | '/admin'
     | '/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
     | '/api/public/applications'
+    | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -730,12 +753,14 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/uploads'
     | '/auth/confirmed'
+    | '/bewerbung/verbinden'
     | '/admin/'
     | '/_employee/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
     | '/api/public/applications'
+    | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -757,7 +782,9 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AuthConfirmedRoute: typeof AuthConfirmedRoute
+  BewerbungVerbindenRoute: typeof BewerbungVerbindenRoute
   ApiPublicApplicationsRoute: typeof ApiPublicApplicationsRoute
+  ApiPublicCalendlyWebhookRoute: typeof ApiPublicCalendlyWebhookRoute
   ApiPublicDomainHealthCronRoute: typeof ApiPublicDomainHealthCronRoute
   ApiPublicLandingServerBootstrapRoute: typeof ApiPublicLandingServerBootstrapRoute
   ApiPublicLandingServerHeartbeatRoute: typeof ApiPublicLandingServerHeartbeatRoute
@@ -829,6 +856,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/bewerbung/verbinden': {
+      id: '/bewerbung/verbinden'
+      path: '/bewerbung/verbinden'
+      fullPath: '/bewerbung/verbinden'
+      preLoaderRoute: typeof BewerbungVerbindenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/confirmed': {
       id: '/auth/confirmed'
@@ -1138,6 +1172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDomainHealthCronRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/calendly-webhook': {
+      id: '/api/public/calendly-webhook'
+      path: '/api/public/calendly-webhook'
+      fullPath: '/api/public/calendly-webhook'
+      preLoaderRoute: typeof ApiPublicCalendlyWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/applications': {
       id: '/api/public/applications'
       path: '/api/public/applications'
@@ -1318,7 +1359,9 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AuthConfirmedRoute: AuthConfirmedRoute,
+  BewerbungVerbindenRoute: BewerbungVerbindenRoute,
   ApiPublicApplicationsRoute: ApiPublicApplicationsRoute,
+  ApiPublicCalendlyWebhookRoute: ApiPublicCalendlyWebhookRoute,
   ApiPublicDomainHealthCronRoute: ApiPublicDomainHealthCronRoute,
   ApiPublicLandingServerBootstrapRoute: ApiPublicLandingServerBootstrapRoute,
   ApiPublicLandingServerHeartbeatRoute: ApiPublicLandingServerHeartbeatRoute,
