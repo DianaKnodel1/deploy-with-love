@@ -43,7 +43,7 @@ const SaveInput = z.object({
   theme_id: z.string().min(1).max(40),
   branding: BrandingSchema,
   slots: z.record(z.string(), z.string().max(20_000)).default({}),
-  flow_type: z.enum(["classic", "fast"]).default("classic"),
+  flow_type: z.enum(["classic", "fast", "broker"]).default("classic"),
   source_slug: z.string().max(120).default(""),
   is_published: z.boolean().default(true),
   // Calendly-Integration (optional pro Landing)
@@ -51,6 +51,7 @@ const SaveInput = z.object({
   intermediate_company_name: z.string().max(160).default(""),
   intermediate_logo_url: z.string().max(500).default(""),
   redirect_delay_ms: z.number().int().min(0).max(60000).default(2500),
+  partner_company_id: z.string().uuid().nullable().optional(),
   // Optional: Data-URLs für Logo/Favicon — werden in Storage gelegt
   logo_data_url: z.string().max(15_000_000).nullable().optional(),
   favicon_data_url: z.string().max(1_000_000).nullable().optional(),
@@ -148,6 +149,7 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       intermediate_company_name: data.intermediate_company_name || null,
       intermediate_logo_url: data.intermediate_logo_url || null,
       redirect_delay_ms: data.redirect_delay_ms ?? 2500,
+      partner_company_id: data.partner_company_id ?? null,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
