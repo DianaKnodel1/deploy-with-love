@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutGrid, FileText, Users, ClipboardList, CheckSquare, CalendarDays, Wallet, LogOut, MessageCircle, RotateCcw, History, Settings, Phone, Mail, Mailbox, Search, ShieldCheck, LayoutDashboard, Globe, Upload, Server, CalendarClock, Handshake } from "lucide-react";
+import { LayoutGrid, FileText, Users, ClipboardList, CheckSquare, CalendarDays, Wallet, LogOut, MessageCircle, RotateCcw, History, Settings, Phone, Mail, Mailbox, Search, ShieldCheck, LayoutDashboard, Globe, Upload, Server, CalendarClock, Handshake, BarChart3 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AdminCommandPalette } from "@/components/AdminCommandPalette";
 import { useAdminBadges } from "@/hooks/use-admin-badges";
@@ -75,6 +75,12 @@ const navGroups: NavGroup[] = [
       { title: "Übersicht", url: "/admin/vermittlung", icon: Handshake, end: true },
       { title: "Partner-Firmen", url: "/admin/partner-companies", icon: Handshake },
       { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
+    ],
+  },
+  {
+    label: "Auswertung",
+    items: [
+      { title: "Statistiken", url: "/admin/statistiken", icon: BarChart3 },
     ],
   },
   {

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateLandingZip } from "@/lib/landing-generator.functions";
-import { getLandingFunnel } from "@/lib/landing-funnel.functions";
+
 import {
   listLandingPages,
   getLandingPage,
@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Globe, Loader2, CheckCircle2, Eye, ExternalLink, TrendingUp, Save, Trash2, Power, Pencil, Plus, ExternalLink as LinkIcon } from "lucide-react";
+import { Download, Globe, Loader2, CheckCircle2, Eye, ExternalLink, Save, Trash2, Power, Pencil, Plus, ExternalLink as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/landing-generator")({
@@ -647,7 +647,8 @@ document.addEventListener('submit', function(e){
         </CardContent>
       </Card>
 
-      <FunnelPanel />
+
+
 
 
       <div className="grid lg:grid-cols-[1fr_640px] gap-6 items-start">
@@ -872,7 +873,12 @@ document.addEventListener('submit', function(e){
               {/* Vermittlung: Partner-Firma wählen */}
               {branding.flow_type === "broker" && (
                 <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-3">
-                  <Label className="text-xs font-semibold">🤝 Vermittlungs-Konfiguration</Label>
+                  <div>
+                    <Label className="text-xs font-semibold">🤝 Vermittlungs-Konfiguration</Label>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Verknüpft diese Landing mit einer <strong>Partner-Firma</strong> (separate Verwaltung unter <a href="/admin/partner-companies" className="underline">Vermittlung → Partner-Firmen</a>). Daraus werden automatisch Firmenname, Logo, Calendly-Link und Portal-Register-URL für den Erfolgsblock („Wir verbinden Sie mit …") gezogen. Die Felder unten überschreiben die Partner-Werte falls gesetzt.
+                    </p>
+                  </div>
                   <Field label="Partner-Firma">
                     <select
                       className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
@@ -888,14 +894,11 @@ document.addEventListener('submit', function(e){
                         }));
                       }}
                     >
-                      <option value="">— eigene Konfiguration unten —</option>
+                      <option value="">— keine, manuell unten ausfüllen —</option>
                       {partners.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Verwalten unter <a href="/admin/partner-companies" className="underline">/admin/partner-companies</a>. Auswahl füllt Calendly-Link + Firmenname unten automatisch.
-                    </p>
                   </Field>
                 </div>
               )}
@@ -903,10 +906,10 @@ document.addEventListener('submit', function(e){
               {/* Calendly-Zwischenseite (broker oder optional) */}
               <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
                 <Label className="text-xs font-semibold">
-                  📅 Calendly-Zwischenseite {branding.flow_type === "broker" ? "(Pflicht für Vermittlung)" : "(optional)"}
+                  📅 Calendly-Buchung {branding.flow_type === "broker" ? "(Pflicht für Vermittlung)" : "(optional)"}
                 </Label>
                 <p className="text-[11px] text-muted-foreground">
-                  Konfiguration des Webhooks unter <code>/admin/calendly</code>. Bei <strong>Vermittlung</strong> aus Partner-Firma vorausgefüllt.
+                  Nach erfolgreicher Bewerbung erscheint inline auf der Landing der Erfolgsblock mit Button „Jetzt Termin buchen". Calendly öffnet in einem neuen Tab — <strong>keine</strong> automatische Weiterleitung. Webhook-Konfiguration unter <a href="/admin/calendly" className="underline">Vermittlung → Calendly</a>.
                 </p>
                 <Field label="Calendly-Buchungslink">
                   <Input
@@ -915,27 +918,14 @@ document.addEventListener('submit', function(e){
                     placeholder="https://calendly.com/sabine-schneider/bewerbung"
                   />
                 </Field>
-                <Field label="Firmenname auf Zwischenseite">
+                <Field label="Firmenname auf Erfolgsblock">
                   <Input
                     value={branding.intermediate_company_name}
                     onChange={set("intermediate_company_name")}
                     placeholder={branding.firmenname || "z.B. Equal Experts Germany GmbH"}
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    „Sie werden mit <strong>{branding.intermediate_company_name || branding.firmenname || "[Firma]"}</strong> verbunden…" — leer = Firmenname.
-                  </p>
-                </Field>
-                <Field label="Weiterleitungs-Delay (ms)">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={60000}
-                    step={500}
-                    value={branding.redirect_delay_ms}
-                    onChange={(e) => setBranding((b) => ({ ...b, redirect_delay_ms: Number(e.target.value) || 0 }))}
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    2500 = 2,5 Sek. Loader, dann Auto-Redirect. 0 = manueller Button „Jetzt Termin buchen".
+                    „Wir verbinden Sie mit <strong>{branding.intermediate_company_name || branding.firmenname || "[Firma]"}</strong>" — leer = Firmenname.
                   </p>
                 </Field>
               </div>
@@ -1111,95 +1101,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Label className="text-xs">{label}</Label>
       {children}
     </div>
-  );
-}
-
-type FunnelRow = { key: string; label: string; bewerbungen: number; registriert: number; abgeschlossen: number; conv_reg: number; conv_done: number };
-
-function FunnelPanel() {
-  const fn = useServerFn(getLandingFunnel);
-  const [scope, setScope] = useState<"per_slug" | "global_flow">("per_slug");
-  const [days, setDays] = useState(90);
-  const [rows, setRows] = useState<FunnelRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    setErr(null);
-    fn({ data: { scope, days } as any })
-      .then((r: any) => { setRows(r.rows ?? []); if (r.error) setErr(r.error); })
-      .catch((e: any) => setErr(e?.message ?? "Fehler"))
-      .finally(() => setLoading(false));
-  }, [scope, days]);
-
-  // Erkennt fehlende Migration #1 (applications_funnel)
-  const missingMigration = !!err && /source_slug|is_test|column .* does not exist|schema cache/i.test(err);
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <TrendingUp className="h-4 w-4" /> Funnel: Bewerbung → Registrierung → Onboarding
-        </CardTitle>
-        <CardDescription>
-          Zeigt, wie viel Prozent deiner Bewerber sich tatsächlich registrieren und das Onboarding fertig machen — pro Landing-Page oder global pro Flow-Typ. So siehst du sofort, wo Leute abspringen. Test-Bewerbungen sind ausgeschlossen.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <Button size="sm" variant={scope === "per_slug" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setScope("per_slug")} title="Eine Zeile pro Landing-Page (gruppiert nach source_slug)">Pro Landing-Page</Button>
-          <Button size="sm" variant={scope === "global_flow" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setScope("global_flow")} title="Vergleich: Klassischer Flow (Bewerbung → E-Mail) vs. Fast-Flow (Direkt-Registrierung)">Global: Fast vs. Klassisch</Button>
-          <span className="ml-auto text-muted-foreground" title="Über welchen Zeitraum die Bewerbungen gezählt werden">Zeitraum:</span>
-          {[30, 90, 180, 365].map((d) => (
-            <Button key={d} size="sm" variant={days === d ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setDays(d)} title={`Letzte ${d} Tage`}>{d}d</Button>
-          ))}
-        </div>
-        {loading ? (
-          <p className="text-xs text-muted-foreground">Lade …</p>
-        ) : missingMigration ? (
-          <div className="rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-3 text-xs space-y-1.5">
-            <p className="font-medium text-amber-900 dark:text-amber-200">Funnel-Tracking noch nicht aktiv</p>
-            <p className="text-amber-800 dark:text-amber-300">
-              Der Datenbank fehlt eine Migration. Führe <code className="font-mono">supabase/manual-migrations/20260616100000_applications_funnel.sql</code> im Supabase SQL-Editor aus.
-            </p>
-            <p className="text-amber-800 dark:text-amber-300">
-              Anleitung: <code className="font-mono">docs/MIGRATIONS.md</code> (Schritt 1).
-            </p>
-          </div>
-        ) : err ? (
-          <p className="text-xs text-destructive">Fehler: {err}</p>
-        ) : rows.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Noch keine Bewerbungen im Zeitraum (oder kein <code>source_slug</code> gesetzt).</p>
-        ) : (
-          <div className="overflow-x-auto -mx-1">
-            <table className="w-full text-xs">
-              <thead className="text-muted-foreground border-b">
-                <tr>
-                  <th className="text-left py-1.5 px-2 font-medium">{scope === "global_flow" ? "Flow" : "Landing / Slug"}</th>
-                  <th className="text-right py-1.5 px-2 font-medium">Bewerbungen</th>
-                  <th className="text-right py-1.5 px-2 font-medium">Registriert</th>
-                  <th className="text-right py-1.5 px-2 font-medium">Abgeschlossen</th>
-                  <th className="text-right py-1.5 px-2 font-medium">Reg-%</th>
-                  <th className="text-right py-1.5 px-2 font-medium">Done-%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.key} className="border-b last:border-0">
-                    <td className="py-1.5 px-2 font-mono truncate max-w-[280px]" title={r.label}>{r.label}</td>
-                    <td className="text-right py-1.5 px-2 font-semibold">{r.bewerbungen}</td>
-                    <td className="text-right py-1.5 px-2">{r.registriert}</td>
-                    <td className="text-right py-1.5 px-2">{r.abgeschlossen}</td>
-                    <td className="text-right py-1.5 px-2 text-emerald-700 dark:text-emerald-300">{r.conv_reg}%</td>
-                    <td className="text-right py-1.5 px-2 text-primary">{r.conv_done}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }
