@@ -25,6 +25,7 @@ import { Route as AdminUploadsRouteImport } from './routes/admin.uploads'
 import { Route as AdminTransactionsRouteImport } from './routes/admin.transactions'
 import { Route as AdminTenantsRouteImport } from './routes/admin.tenants'
 import { Route as AdminTeamLeaderSettingsRouteImport } from './routes/admin.team-leader-settings'
+import { Route as AdminStatistikenRouteImport } from './routes/admin.statistiken'
 import { Route as AdminSmsRouteImport } from './routes/admin.sms'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminRevisionsRouteImport } from './routes/admin.revisions'
@@ -152,6 +153,11 @@ const AdminTenantsRoute = AdminTenantsRouteImport.update({
 const AdminTeamLeaderSettingsRoute = AdminTeamLeaderSettingsRouteImport.update({
   id: '/team-leader-settings',
   path: '/team-leader-settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStatistikenRoute = AdminStatistikenRouteImport.update({
+  id: '/statistiken',
+  path: '/statistiken',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSmsRoute = AdminSmsRouteImport.update({
@@ -450,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/admin/revisions': typeof AdminRevisionsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sms': typeof AdminSmsRoute
+  '/admin/statistiken': typeof AdminStatistikenRoute
   '/admin/team-leader-settings': typeof AdminTeamLeaderSettingsRoute
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
@@ -515,6 +522,7 @@ export interface FileRoutesByTo {
   '/admin/revisions': typeof AdminRevisionsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sms': typeof AdminSmsRoute
+  '/admin/statistiken': typeof AdminStatistikenRoute
   '/admin/team-leader-settings': typeof AdminTeamLeaderSettingsRoute
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
@@ -583,6 +591,7 @@ export interface FileRoutesById {
   '/admin/revisions': typeof AdminRevisionsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/sms': typeof AdminSmsRoute
+  '/admin/statistiken': typeof AdminStatistikenRoute
   '/admin/team-leader-settings': typeof AdminTeamLeaderSettingsRoute
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
@@ -651,6 +660,7 @@ export interface FileRouteTypes {
     | '/admin/revisions'
     | '/admin/settings'
     | '/admin/sms'
+    | '/admin/statistiken'
     | '/admin/team-leader-settings'
     | '/admin/tenants'
     | '/admin/transactions'
@@ -716,6 +726,7 @@ export interface FileRouteTypes {
     | '/admin/revisions'
     | '/admin/settings'
     | '/admin/sms'
+    | '/admin/statistiken'
     | '/admin/team-leader-settings'
     | '/admin/tenants'
     | '/admin/transactions'
@@ -783,6 +794,7 @@ export interface FileRouteTypes {
     | '/admin/revisions'
     | '/admin/settings'
     | '/admin/sms'
+    | '/admin/statistiken'
     | '/admin/team-leader-settings'
     | '/admin/tenants'
     | '/admin/transactions'
@@ -940,6 +952,13 @@ declare module '@tanstack/react-router' {
       path: '/team-leader-settings'
       fullPath: '/admin/team-leader-settings'
       preLoaderRoute: typeof AdminTeamLeaderSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/statistiken': {
+      id: '/admin/statistiken'
+      path: '/statistiken'
+      fullPath: '/admin/statistiken'
+      preLoaderRoute: typeof AdminStatistikenRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/sms': {
@@ -1358,6 +1377,7 @@ interface AdminRouteChildren {
   AdminRevisionsRoute: typeof AdminRevisionsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSmsRoute: typeof AdminSmsRoute
+  AdminStatistikenRoute: typeof AdminStatistikenRoute
   AdminTeamLeaderSettingsRoute: typeof AdminTeamLeaderSettingsRoute
   AdminTenantsRoute: typeof AdminTenantsRoute
   AdminTransactionsRoute: typeof AdminTransactionsRoute
@@ -1395,6 +1415,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminRevisionsRoute: AdminRevisionsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSmsRoute: AdminSmsRoute,
+  AdminStatistikenRoute: AdminStatistikenRoute,
   AdminTeamLeaderSettingsRoute: AdminTeamLeaderSettingsRoute,
   AdminTenantsRoute: AdminTenantsRoute,
   AdminTransactionsRoute: AdminTransactionsRoute,

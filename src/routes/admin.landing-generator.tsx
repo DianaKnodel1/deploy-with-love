@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateLandingZip } from "@/lib/landing-generator.functions";
-import { getLandingFunnel } from "@/lib/landing-funnel.functions";
+
 import {
   listLandingPages,
   getLandingPage,
@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Globe, Loader2, CheckCircle2, Eye, ExternalLink, TrendingUp, Save, Trash2, Power, Pencil, Plus, ExternalLink as LinkIcon } from "lucide-react";
+import { Download, Globe, Loader2, CheckCircle2, Eye, ExternalLink, Save, Trash2, Power, Pencil, Plus, ExternalLink as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/landing-generator")({
@@ -647,7 +647,8 @@ document.addEventListener('submit', function(e){
         </CardContent>
       </Card>
 
-      <FunnelPanel />
+
+
 
 
       <div className="grid lg:grid-cols-[1fr_640px] gap-6 items-start">
@@ -872,7 +873,12 @@ document.addEventListener('submit', function(e){
               {/* Vermittlung: Partner-Firma wählen */}
               {branding.flow_type === "broker" && (
                 <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-3">
-                  <Label className="text-xs font-semibold">🤝 Vermittlungs-Konfiguration</Label>
+                  <div>
+                    <Label className="text-xs font-semibold">🤝 Vermittlungs-Konfiguration</Label>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Verknüpft diese Landing mit einer <strong>Partner-Firma</strong> (separate Verwaltung unter <a href="/admin/partner-companies" className="underline">Vermittlung → Partner-Firmen</a>). Daraus werden automatisch Firmenname, Logo, Calendly-Link und Portal-Register-URL für den Erfolgsblock („Wir verbinden Sie mit …") gezogen. Die Felder unten überschreiben die Partner-Werte falls gesetzt.
+                    </p>
+                  </div>
                   <Field label="Partner-Firma">
                     <select
                       className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
@@ -888,14 +894,11 @@ document.addEventListener('submit', function(e){
                         }));
                       }}
                     >
-                      <option value="">— eigene Konfiguration unten —</option>
+                      <option value="">— keine, manuell unten ausfüllen —</option>
                       {partners.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Verwalten unter <a href="/admin/partner-companies" className="underline">/admin/partner-companies</a>. Auswahl füllt Calendly-Link + Firmenname unten automatisch.
-                    </p>
                   </Field>
                 </div>
               )}
@@ -903,10 +906,10 @@ document.addEventListener('submit', function(e){
               {/* Calendly-Zwischenseite (broker oder optional) */}
               <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
                 <Label className="text-xs font-semibold">
-                  📅 Calendly-Zwischenseite {branding.flow_type === "broker" ? "(Pflicht für Vermittlung)" : "(optional)"}
+                  📅 Calendly-Buchung {branding.flow_type === "broker" ? "(Pflicht für Vermittlung)" : "(optional)"}
                 </Label>
                 <p className="text-[11px] text-muted-foreground">
-                  Konfiguration des Webhooks unter <code>/admin/calendly</code>. Bei <strong>Vermittlung</strong> aus Partner-Firma vorausgefüllt.
+                  Nach erfolgreicher Bewerbung erscheint inline auf der Landing der Erfolgsblock mit Button „Jetzt Termin buchen". Calendly öffnet in einem neuen Tab — <strong>keine</strong> automatische Weiterleitung. Webhook-Konfiguration unter <a href="/admin/calendly" className="underline">Vermittlung → Calendly</a>.
                 </p>
                 <Field label="Calendly-Buchungslink">
                   <Input
@@ -915,27 +918,14 @@ document.addEventListener('submit', function(e){
                     placeholder="https://calendly.com/sabine-schneider/bewerbung"
                   />
                 </Field>
-                <Field label="Firmenname auf Zwischenseite">
+                <Field label="Firmenname auf Erfolgsblock">
                   <Input
                     value={branding.intermediate_company_name}
                     onChange={set("intermediate_company_name")}
                     placeholder={branding.firmenname || "z.B. Equal Experts Germany GmbH"}
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    „Sie werden mit <strong>{branding.intermediate_company_name || branding.firmenname || "[Firma]"}</strong> verbunden…" — leer = Firmenname.
-                  </p>
-                </Field>
-                <Field label="Weiterleitungs-Delay (ms)">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={60000}
-                    step={500}
-                    value={branding.redirect_delay_ms}
-                    onChange={(e) => setBranding((b) => ({ ...b, redirect_delay_ms: Number(e.target.value) || 0 }))}
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    2500 = 2,5 Sek. Loader, dann Auto-Redirect. 0 = manueller Button „Jetzt Termin buchen".
+                    „Wir verbinden Sie mit <strong>{branding.intermediate_company_name || branding.firmenname || "[Firma]"}</strong>" — leer = Firmenname.
                   </p>
                 </Field>
               </div>
