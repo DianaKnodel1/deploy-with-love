@@ -464,6 +464,10 @@ document.addEventListener('submit', function(e){
         flow_type: branding.flow_type,
         source_slug: branding.source_slug || "",
         is_published: true,
+        calendly_url: branding.calendly_url || "",
+        intermediate_company_name: branding.intermediate_company_name || "",
+        intermediate_logo_url: "",
+        redirect_delay_ms: Number(branding.redirect_delay_ms ?? 2500),
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
       } as any });
@@ -497,6 +501,9 @@ document.addEventListener('submit', function(e){
         source_slug: row.source_slug ?? "",
         flow_type: row.flow_type,
         tenant_id: row.tenant_id ?? row.branding?.tenant_id ?? "",
+        calendly_url: row.calendly_url ?? "",
+        intermediate_company_name: row.intermediate_company_name ?? "",
+        redirect_delay_ms: row.redirect_delay_ms ?? 2500,
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
