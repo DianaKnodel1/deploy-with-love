@@ -144,6 +144,10 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       flow_type: data.flow_type,
       source_slug: data.source_slug || null,
       is_published: data.is_published,
+      calendly_url: data.calendly_url || null,
+      intermediate_company_name: data.intermediate_company_name || null,
+      intermediate_logo_url: data.intermediate_logo_url || null,
+      redirect_delay_ms: data.redirect_delay_ms ?? 2500,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
