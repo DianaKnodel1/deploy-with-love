@@ -70,7 +70,22 @@ export const Route = createFileRoute("/api/public/applications")({
           } catch { /* ignore parse errors */ }
         }
 
-        const { error } = await supabaseAdmin.from("applications").insert({
+        // Calendly-Flow: Lookup pro source_slug ob für diese Landing ein
+        // Calendly-Link hinterlegt ist → dann statt direkt zu /register
+        // erst auf Zwischenseite + Terminbuchung weiterleiten.
+        let calendlyOnLanding: string | null = null;
+        if (d.source_slug) {
+          const { data: lp } = await supabaseAdmin
+            .from("landing_pages")
+            .select("calendly_url")
+            .eq("source_slug", d.source_slug)
+            .eq("is_published", true)
+            .maybeSingle();
+          calendlyOnLanding = (lp as any)?.calendly_url ?? null;
+        }
+        const useCalendly = !!calendlyOnLanding && !d.is_test;
+
+        const { data: inserted, error } = await supabaseAdmin.from("applications").insert({
           full_name: displayName,
           email: d.email,
           phone: d.phone ?? null,
@@ -82,13 +97,30 @@ export const Route = createFileRoute("/api/public/applications")({
           flow_type: d.flow_type ?? "classic",
           source_slug: d.source_slug ?? null,
           is_test: !!d.is_test,
-        } as any);
+          booking_status: useCalendly ? "pending" : "none",
+        } as any).select("id").single();
         if (error) {
           console.error("[applications] insert error:", error);
           return json({ error: "Could not save application" }, 500);
         }
+        const appId = (inserted as any)?.id ?? "";
+
         let redirect_url: string | null = null;
-        if (isFast && d.portal_url) {
+        if (useCalendly && d.portal_url && d.source_slug) {
+          const base = d.portal_url.replace(/\/+$/, "");
+          const parts = d.full_name.trim().split(/\s+/);
+          const firstName = parts[0] ?? "";
+          const lastName = parts.slice(1).join(" ");
+          const qs = new URLSearchParams({
+            app: appId,
+            landing: d.source_slug,
+            first_name: firstName,
+            last_name: lastName,
+            email: d.email,
+            phone: d.phone ?? "",
+          }).toString();
+          redirect_url = `${base}/bewerbung/verbinden?${qs}`;
+        } else if (isFast && d.portal_url) {
           const base = d.portal_url.replace(/\/+$/, "");
           redirect_url = `${base}/register?email=${encodeURIComponent(d.email)}&fast=1`;
         }
