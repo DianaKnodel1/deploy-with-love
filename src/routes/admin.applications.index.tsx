@@ -447,10 +447,26 @@ function AdminApplicationsPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-heading font-bold text-foreground">Bewerbungen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{applications.length} Einträge</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {applications.length} Einträge{brokerCount > 0 ? ` · 🤝 ${brokerCount} Vermittlung` : ""}
+          </p>
         </div>
         <div className="flex gap-2 items-center">
           <Input placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs h-9 text-sm" />
+          {brokerCount > 0 && (
+            <select
+              value={bookingFilter}
+              onChange={(e) => setBookingFilter(e.target.value as any)}
+              className="h-9 text-xs rounded-md border border-input bg-background px-2"
+              title="Filter nach Buchungs-Status (Vermittlung)"
+            >
+              <option value="all">Alle Termine</option>
+              <option value="pending">⏳ Termin offen</option>
+              <option value="scheduled">📅 Gebucht</option>
+              <option value="cancelled">✖ Abgesagt</option>
+              <option value="no_show">👻 No-Show</option>
+            </select>
+          )}
           {testCount > 0 && (
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer whitespace-nowrap" title="Test-Bewerbungen aus der Landing-Page-Vorschau">
               <input type="checkbox" checked={showTest} onChange={(e) => setShowTest(e.target.checked)} className="h-3.5 w-3.5" />
