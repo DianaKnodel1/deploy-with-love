@@ -70,11 +70,17 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Vermittlung",
+    items: [
+      { title: "Übersicht", url: "/admin/vermittlung", icon: Handshake, end: true },
+      { title: "Partner-Firmen", url: "/admin/partner-companies", icon: Handshake },
+      { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
+    ],
+  },
+  {
     label: "System",
     items: [
       { title: "Landing-Generator", url: "/admin/landing-generator", icon: Globe },
-      { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
-      { title: "Partner-Firmen", url: "/admin/partner-companies", icon: Handshake },
       { title: "Infrastruktur", url: "/admin/infrastructure", icon: Server },
       { title: "Domains", url: "/admin/domains", icon: Globe },
       { title: "Einstellungen", url: "/admin/settings", icon: Settings },
