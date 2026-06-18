@@ -65,6 +65,31 @@ SELECT to_regclass('public.landing_servers')       AS landing_servers,
 
 Alle vier Spalten müssen einen Wert haben.
 
+### 4. `20260618100000_calendly_integration.sql`
+
+**Was sie tut:** Fügt `landing_pages` die Calendly-Felder hinzu
+(`calendly_url`, `intermediate_company_name`, `intermediate_logo_url`,
+`redirect_delay_ms`), erweitert `applications` um Buchungs-Tracking
+(`booking_status`, `scheduled_at`, `calendly_event_uri`,
+`calendly_invitee_uri`) und erstellt `calendly_accounts` für die
+Webhook-Signatur-Verifikation pro Tenant.
+
+**Check-Query:**
+
+```sql
+SELECT to_regclass('public.calendly_accounts') AS calendly_accounts,
+       (SELECT count(*) FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='applications'
+          AND column_name IN ('booking_status','scheduled_at','calendly_event_uri'))
+        AS application_cols,
+       (SELECT count(*) FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='landing_pages'
+          AND column_name IN ('calendly_url','intermediate_company_name','redirect_delay_ms'))
+        AS landing_cols;
+```
+
+`calendly_accounts` ≠ NULL, beide Counts = 3.
+
 ---
 
 ## Typische Fehlermeldungen
