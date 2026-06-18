@@ -40,6 +40,7 @@ import { Route as AdminEmailCenterRouteImport } from './routes/admin.email-cente
 import { Route as AdminDomainsRouteImport } from './routes/admin.domains'
 import { Route as AdminContractsRouteImport } from './routes/admin.contracts'
 import { Route as AdminChatRouteImport } from './routes/admin.chat'
+import { Route as AdminCalendlyRouteImport } from './routes/admin.calendly'
 import { Route as AdminAppointmentsRouteImport } from './routes/admin.appointments'
 import { Route as AdminAiSettingsRouteImport } from './routes/admin.ai-settings'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
@@ -224,6 +225,11 @@ const AdminContractsRoute = AdminContractsRouteImport.update({
 const AdminChatRoute = AdminChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCalendlyRoute = AdminCalendlyRouteImport.update({
+  id: '/calendly',
+  path: '/calendly',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAppointmentsRoute = AdminAppointmentsRouteImport.update({
@@ -414,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
   '/admin/domains': typeof AdminDomainsRoute
@@ -476,6 +483,7 @@ export interface FileRoutesByTo {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
   '/admin/domains': typeof AdminDomainsRoute
@@ -541,6 +549,7 @@ export interface FileRoutesById {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
   '/admin/domains': typeof AdminDomainsRoute
@@ -606,6 +615,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
     | '/admin/domains'
@@ -668,6 +678,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
     | '/admin/domains'
@@ -732,6 +743,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
     | '/admin/domains'
@@ -1011,6 +1023,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminChatRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/calendly': {
+      id: '/admin/calendly'
+      path: '/calendly'
+      fullPath: '/admin/calendly'
+      preLoaderRoute: typeof AdminCalendlyRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/appointments': {
       id: '/admin/appointments'
       path: '/appointments'
@@ -1283,6 +1302,7 @@ interface AdminRouteChildren {
   AdminActivityRoute: typeof AdminActivityRoute
   AdminAiSettingsRoute: typeof AdminAiSettingsRoute
   AdminAppointmentsRoute: typeof AdminAppointmentsRoute
+  AdminCalendlyRoute: typeof AdminCalendlyRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminDomainsRoute: typeof AdminDomainsRoute
@@ -1317,6 +1337,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminActivityRoute: AdminActivityRoute,
   AdminAiSettingsRoute: AdminAiSettingsRoute,
   AdminAppointmentsRoute: AdminAppointmentsRoute,
+  AdminCalendlyRoute: AdminCalendlyRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminDomainsRoute: AdminDomainsRoute,
