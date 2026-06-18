@@ -39,6 +39,7 @@ function AdminApplicationsPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [showTest, setShowTest] = useState(false);
+  const [bookingFilter, setBookingFilter] = useState<"all" | "pending" | "scheduled" | "cancelled" | "no_show">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -394,12 +395,14 @@ function AdminApplicationsPage() {
 
   const filtered = applications.filter((a: any) => {
     if (!showTest && a.is_test === true) return false;
+    if (bookingFilter !== "all" && (a.booking_status ?? "none") !== bookingFilter) return false;
     return (
       (a.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
       (a.email ?? "").toLowerCase().includes(search.toLowerCase())
     );
   });
   const testCount = applications.filter((a: any) => a.is_test === true).length;
+  const brokerCount = applications.filter((a: any) => (a.flow_type === "broker") || (a.booking_status && a.booking_status !== "none")).length;
 
   const { paged, page, setPage, pageCount, rangeFrom, rangeTo, total } = usePagination(filtered, 25);
 
@@ -417,6 +420,26 @@ function AdminApplicationsPage() {
     if (status === "abgelehnt") return "Abgelehnt";
     if (status === "neu" || status === "eingegangen") return "Neu";
     return status;
+  };
+
+  const bookingBadge = (bs: string | null | undefined, scheduledAt?: string | null) => {
+    if (!bs || bs === "none") return null;
+    const map: Record<string, { label: string; cls: string }> = {
+      pending:   { label: "⏳ Termin offen",  cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" },
+      scheduled: { label: "📅 Gebucht",       cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" },
+      cancelled: { label: "✖ Abgesagt",       cls: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300" },
+      no_show:   { label: "👻 No-Show",       cls: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300" },
+      completed: { label: "✔ Wahrgenommen",   cls: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
+    };
+    const m = map[bs] ?? { label: bs, cls: "bg-muted text-muted-foreground" };
+    const dateStr = bs === "scheduled" && scheduledAt
+      ? new Date(scheduledAt).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+      : null;
+    return (
+      <Badge variant="secondary" className={`text-[10px] ${m.cls}`} title={dateStr ?? undefined}>
+        {m.label}{dateStr ? ` · ${dateStr}` : ""}
+      </Badge>
+    );
   };
 
   return (

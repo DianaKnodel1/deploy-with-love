@@ -621,7 +621,7 @@ document.addEventListener('submit', function(e){
                       </td>
                       <td className="py-1.5 px-2 font-mono text-muted-foreground">{l.slug}</td>
                       <td className="py-1.5 px-2 text-muted-foreground">{l.theme_id}</td>
-                      <td className="py-1.5 px-2">{l.flow_type === "fast" ? "⚡ Fast" : "🟡 Klassisch"}</td>
+                      <td className="py-1.5 px-2">{l.flow_type === "fast" ? "⚡ Fast" : l.flow_type === "broker" ? "🤝 Vermittlung" : "🟡 Klassisch"}</td>
                       <td className="py-1.5 px-2">
                         {l.is_published ? <span className="text-emerald-600">● live</span> : <span className="text-muted-foreground">○ pausiert</span>}
                       </td>
