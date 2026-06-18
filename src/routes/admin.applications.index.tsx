@@ -638,7 +638,10 @@ function AdminApplicationsPage() {
                       )}
                     </td>
                     <td className="px-5 py-3.5">
-                      <Badge variant="secondary" className={`text-[10px] ${statusColor(app.status)}`}>{statusLabel(app.status)}</Badge>
+                      <div className="flex flex-col gap-1 items-start">
+                        <Badge variant="secondary" className={`text-[10px] ${statusColor(app.status)}`}>{statusLabel(app.status)}</Badge>
+                        {bookingBadge((app as any).booking_status, (app as any).scheduled_at)}
+                      </div>
                     </td>
                     <td className="px-5 py-3.5 text-muted-foreground text-xs">{new Date(app.created_at).toLocaleDateString("de-DE")}</td>
                     <td className="px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
