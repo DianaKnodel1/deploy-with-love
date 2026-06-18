@@ -17,7 +17,7 @@ const Schema = z.object({
   city: z.string().trim().max(120).optional().nullable(),
   message: z.string().trim().max(2000).optional().nullable(),
   tenant_id: z.string().uuid().optional().nullable(),
-  flow_type: z.enum(["classic", "fast"]).optional().default("classic"),
+  flow_type: z.enum(["classic", "fast", "broker"]).optional().default("classic"),
   portal_url: z.string().url().max(500).optional().nullable(),
   source_slug: z.string().trim().max(120).optional().nullable(),
   is_test: z.coerce.boolean().optional().default(false),
