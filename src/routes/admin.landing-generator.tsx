@@ -10,6 +10,7 @@ import {
   deleteLandingPage,
   toggleLandingPublished,
 } from "@/lib/landing-pages.functions";
+import { listPartnerCompanies } from "@/lib/partner-companies.functions";
 import { THEME_LIST, THEMES } from "@/lib/landing-themes";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -116,6 +117,11 @@ function LandingGeneratorPage() {
   const toggleFn = useServerFn(toggleLandingPublished);
   const [landings, setLandings] = useState<any[]>([]);
   const [landingsLoading, setLandingsLoading] = useState(true);
+  const listPartnersFn = useServerFn(listPartnerCompanies);
+  const [partners, setPartners] = useState<Array<{ id: string; name: string; calendly_url: string; logo_url: string | null }>>([]);
+  useEffect(() => {
+    listPartnersFn({} as any).then((r: any) => setPartners(r?.rows ?? [])).catch(() => {});
+  }, [listPartnersFn]);
 
   const reloadLandings = useCallback(async () => {
     setLandingsLoading(true);
