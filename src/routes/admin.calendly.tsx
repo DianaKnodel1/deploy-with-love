@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { FormEvent } from "react";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ function AdminCalendlyPage() {
   const portalOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const webhookUrl = `${portalOrigin}/api/public/calendly-webhook`;
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleSave(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
