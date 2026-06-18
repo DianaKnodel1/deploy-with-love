@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutGrid, FileText, Users, ClipboardList, CheckSquare, CalendarDays, Wallet, LogOut, MessageCircle, RotateCcw, History, Settings, Phone, Mail, Mailbox, Search, ShieldCheck, LayoutDashboard, Globe, Upload, Server } from "lucide-react";
+import { LayoutGrid, FileText, Users, ClipboardList, CheckSquare, CalendarDays, Wallet, LogOut, MessageCircle, RotateCcw, History, Settings, Phone, Mail, Mailbox, Search, ShieldCheck, LayoutDashboard, Globe, Upload, Server, CalendarClock } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AdminCommandPalette } from "@/components/AdminCommandPalette";
 import { useAdminBadges } from "@/hooks/use-admin-badges";
@@ -73,6 +73,7 @@ const navGroups: NavGroup[] = [
     label: "System",
     items: [
       { title: "Landing-Generator", url: "/admin/landing-generator", icon: Globe },
+      { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
       { title: "Infrastruktur", url: "/admin/infrastructure", icon: Server },
       { title: "Domains", url: "/admin/domains", icon: Globe },
       { title: "Einstellungen", url: "/admin/settings", icon: Settings },

@@ -50,6 +50,9 @@ type Branding = {
   tenant_id: string;
   flow_type: "classic" | "fast";
   source_slug: string;
+  calendly_url: string;
+  intermediate_company_name: string;
+  redirect_delay_ms: number;
   seo_title: string;
   seo_description: string;
   seo_image: string;
@@ -81,6 +84,9 @@ const EMPTY: Branding = {
   tenant_id: "",
   flow_type: "classic",
   source_slug: "",
+  calendly_url: "",
+  intermediate_company_name: "",
+  redirect_delay_ms: 2500,
   seo_title: "",
   seo_description: "",
   seo_image: "",
@@ -458,6 +464,10 @@ document.addEventListener('submit', function(e){
         flow_type: branding.flow_type,
         source_slug: branding.source_slug || "",
         is_published: true,
+        calendly_url: branding.calendly_url || "",
+        intermediate_company_name: branding.intermediate_company_name || "",
+        intermediate_logo_url: "",
+        redirect_delay_ms: Number(branding.redirect_delay_ms ?? 2500),
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
       } as any });
@@ -491,6 +501,9 @@ document.addEventListener('submit', function(e){
         source_slug: row.source_slug ?? "",
         flow_type: row.flow_type,
         tenant_id: row.tenant_id ?? row.branding?.tenant_id ?? "",
+        calendly_url: row.calendly_url ?? "",
+        intermediate_company_name: row.intermediate_company_name ?? "",
+        redirect_delay_ms: row.redirect_delay_ms ?? 2500,
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
@@ -828,6 +841,44 @@ document.addEventListener('submit', function(e){
                     </p>
                   </button>
                 </div>
+              </div>
+
+              {/* Calendly-Zwischenseite */}
+              <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                <Label className="text-xs font-semibold">📅 Calendly-Bewerbungsgespräch (optional)</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Wenn gesetzt: Nach Bewerbung erscheint Zwischenseite „Sie werden mit [Firma] verbunden…" → automatische Weiterleitung zu Calendly mit vorausgefüllten Daten. Termin wird per Webhook im Portal als „Termin gebucht" sichtbar (Konfiguration unter <code>/admin/calendly</code>).
+                </p>
+                <Field label="Calendly-Buchungslink">
+                  <Input
+                    value={branding.calendly_url}
+                    onChange={set("calendly_url")}
+                    placeholder="https://calendly.com/sabine-schneider/bewerbung"
+                  />
+                </Field>
+                <Field label="Firmenname auf Zwischenseite">
+                  <Input
+                    value={branding.intermediate_company_name}
+                    onChange={set("intermediate_company_name")}
+                    placeholder={branding.firmenname || "z.B. Equal Experts Germany GmbH"}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    „Sie werden mit <strong>{branding.intermediate_company_name || branding.firmenname || "[Firma]"}</strong> verbunden…" — leer = Firmenname.
+                  </p>
+                </Field>
+                <Field label="Weiterleitungs-Delay (ms)">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={60000}
+                    step={500}
+                    value={branding.redirect_delay_ms}
+                    onChange={(e) => setBranding((b) => ({ ...b, redirect_delay_ms: Number(e.target.value) || 0 }))}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    2500 = 2,5 Sek. Loader, dann Auto-Redirect. 0 = manueller Button „Jetzt Termin buchen".
+                  </p>
+                </Field>
               </div>
             </CardContent>
           </Card>

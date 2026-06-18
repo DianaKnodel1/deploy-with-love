@@ -18,6 +18,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as EmployeeRouteImport } from './routes/_employee'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as BewerbungVerbindenRouteImport } from './routes/bewerbung.verbinden'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
 import { Route as AdminUploadsRouteImport } from './routes/admin.uploads'
 import { Route as AdminTransactionsRouteImport } from './routes/admin.transactions'
@@ -39,6 +40,7 @@ import { Route as AdminEmailCenterRouteImport } from './routes/admin.email-cente
 import { Route as AdminDomainsRouteImport } from './routes/admin.domains'
 import { Route as AdminContractsRouteImport } from './routes/admin.contracts'
 import { Route as AdminChatRouteImport } from './routes/admin.chat'
+import { Route as AdminCalendlyRouteImport } from './routes/admin.calendly'
 import { Route as AdminAppointmentsRouteImport } from './routes/admin.appointments'
 import { Route as AdminAiSettingsRouteImport } from './routes/admin.ai-settings'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
@@ -62,6 +64,7 @@ import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sm
 import { Route as ApiPublicLandingServerHeartbeatRouteImport } from './routes/api/public/landing-server-heartbeat'
 import { Route as ApiPublicLandingServerBootstrapRouteImport } from './routes/api/public/landing-server-bootstrap'
 import { Route as ApiPublicDomainHealthCronRouteImport } from './routes/api/public/domain-health-cron'
+import { Route as ApiPublicCalendlyWebhookRouteImport } from './routes/api/public/calendly-webhook'
 import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
 import { Route as AdminEmployeesUserIdRouteImport } from './routes/admin.employees.$userId'
 import { Route as AdminAssignmentsAssignmentIdRouteImport } from './routes/admin.assignments.$assignmentId'
@@ -113,6 +116,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const BewerbungVerbindenRoute = BewerbungVerbindenRouteImport.update({
+  id: '/bewerbung/verbinden',
+  path: '/bewerbung/verbinden',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthConfirmedRoute = AuthConfirmedRouteImport.update({
   id: '/auth/confirmed',
@@ -217,6 +225,11 @@ const AdminContractsRoute = AdminContractsRouteImport.update({
 const AdminChatRoute = AdminChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCalendlyRoute = AdminCalendlyRouteImport.update({
+  id: '/calendly',
+  path: '/calendly',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAppointmentsRoute = AdminAppointmentsRouteImport.update({
@@ -337,6 +350,12 @@ const ApiPublicDomainHealthCronRoute =
     path: '/api/public/domain-health-cron',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCalendlyWebhookRoute =
+  ApiPublicCalendlyWebhookRouteImport.update({
+    id: '/api/public/calendly-webhook',
+    path: '/api/public/calendly-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicApplicationsRoute = ApiPublicApplicationsRouteImport.update({
   id: '/api/public/applications',
   path: '/api/public/applications',
@@ -401,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
   '/admin/domains': typeof AdminDomainsRoute
@@ -422,12 +442,14 @@ export interface FileRoutesByFullPath {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin/': typeof AdminIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
+  '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -461,6 +483,7 @@ export interface FileRoutesByTo {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
   '/admin/domains': typeof AdminDomainsRoute
@@ -482,12 +505,14 @@ export interface FileRoutesByTo {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin': typeof AdminIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
+  '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -524,6 +549,7 @@ export interface FileRoutesById {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
   '/admin/domains': typeof AdminDomainsRoute
@@ -545,12 +571,14 @@ export interface FileRoutesById {
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
+  '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin/': typeof AdminIndexRoute
   '/_employee/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
+  '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -587,6 +615,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
     | '/admin/domains'
@@ -608,12 +637,14 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/uploads'
     | '/auth/confirmed'
+    | '/bewerbung/verbinden'
     | '/admin/'
     | '/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
     | '/api/public/applications'
+    | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -647,6 +678,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
     | '/admin/domains'
@@ -668,12 +700,14 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/uploads'
     | '/auth/confirmed'
+    | '/bewerbung/verbinden'
     | '/admin'
     | '/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
     | '/api/public/applications'
+    | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -709,6 +743,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
     | '/admin/domains'
@@ -730,12 +765,14 @@ export interface FileRouteTypes {
     | '/admin/transactions'
     | '/admin/uploads'
     | '/auth/confirmed'
+    | '/bewerbung/verbinden'
     | '/admin/'
     | '/_employee/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
     | '/api/public/applications'
+    | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -757,7 +794,9 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AuthConfirmedRoute: typeof AuthConfirmedRoute
+  BewerbungVerbindenRoute: typeof BewerbungVerbindenRoute
   ApiPublicApplicationsRoute: typeof ApiPublicApplicationsRoute
+  ApiPublicCalendlyWebhookRoute: typeof ApiPublicCalendlyWebhookRoute
   ApiPublicDomainHealthCronRoute: typeof ApiPublicDomainHealthCronRoute
   ApiPublicLandingServerBootstrapRoute: typeof ApiPublicLandingServerBootstrapRoute
   ApiPublicLandingServerHeartbeatRoute: typeof ApiPublicLandingServerHeartbeatRoute
@@ -829,6 +868,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/bewerbung/verbinden': {
+      id: '/bewerbung/verbinden'
+      path: '/bewerbung/verbinden'
+      fullPath: '/bewerbung/verbinden'
+      preLoaderRoute: typeof BewerbungVerbindenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/confirmed': {
       id: '/auth/confirmed'
@@ -975,6 +1021,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/admin/chat'
       preLoaderRoute: typeof AdminChatRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/calendly': {
+      id: '/admin/calendly'
+      path: '/calendly'
+      fullPath: '/admin/calendly'
+      preLoaderRoute: typeof AdminCalendlyRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/appointments': {
@@ -1138,6 +1191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDomainHealthCronRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/calendly-webhook': {
+      id: '/api/public/calendly-webhook'
+      path: '/api/public/calendly-webhook'
+      fullPath: '/api/public/calendly-webhook'
+      preLoaderRoute: typeof ApiPublicCalendlyWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/applications': {
       id: '/api/public/applications'
       path: '/api/public/applications'
@@ -1242,6 +1302,7 @@ interface AdminRouteChildren {
   AdminActivityRoute: typeof AdminActivityRoute
   AdminAiSettingsRoute: typeof AdminAiSettingsRoute
   AdminAppointmentsRoute: typeof AdminAppointmentsRoute
+  AdminCalendlyRoute: typeof AdminCalendlyRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminDomainsRoute: typeof AdminDomainsRoute
@@ -1276,6 +1337,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminActivityRoute: AdminActivityRoute,
   AdminAiSettingsRoute: AdminAiSettingsRoute,
   AdminAppointmentsRoute: AdminAppointmentsRoute,
+  AdminCalendlyRoute: AdminCalendlyRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminDomainsRoute: AdminDomainsRoute,
@@ -1318,7 +1380,9 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AuthConfirmedRoute: AuthConfirmedRoute,
+  BewerbungVerbindenRoute: BewerbungVerbindenRoute,
   ApiPublicApplicationsRoute: ApiPublicApplicationsRoute,
+  ApiPublicCalendlyWebhookRoute: ApiPublicCalendlyWebhookRoute,
   ApiPublicDomainHealthCronRoute: ApiPublicDomainHealthCronRoute,
   ApiPublicLandingServerBootstrapRoute: ApiPublicLandingServerBootstrapRoute,
   ApiPublicLandingServerHeartbeatRoute: ApiPublicLandingServerHeartbeatRoute,
@@ -1328,13 +1392,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
