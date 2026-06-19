@@ -282,7 +282,7 @@ function BootstrapDialog({ server, onClose }: { server: { id: string; name: stri
   const [clean, setClean] = useState(false);
   const qs = `token=${server.token}${clean ? "&clean=1" : ""}`;
   const bootstrapUrl = `${origin}/api/public/landing-server-bootstrap?${qs}`;
-  const cmd = `tmp=$(mktemp); trap 'rm -f "$tmp"' EXIT; curl -fsSL "${bootstrapUrl}" -o "$tmp" && grep -q '^#!/usr/bin/env bash' "$tmp" || { echo "Bootstrap konnte nicht geladen werden (Fehler/HTML statt Script)."; head -n 3 "$tmp"; exit 1; }; if [ "$(id -u)" -eq 0 ]; then bash "$tmp"; else sudo bash "$tmp"; fi`;
+  const cmd = `tmp=$(mktemp); trap 'rm -f "$tmp"' EXIT; if curl -fsSL "${bootstrapUrl}" -o "$tmp" && grep -q '^#!/usr/bin/env bash' "$tmp"; then if [ "$(id -u)" -eq 0 ]; then bash "$tmp"; else sudo bash "$tmp"; fi; else echo "Bootstrap konnte nicht geladen werden (Fehler/HTML statt Script)."; [ -s "$tmp" ] && head -n 3 "$tmp"; fi`;
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
