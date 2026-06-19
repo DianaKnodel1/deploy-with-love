@@ -412,7 +412,7 @@ function CloudflareTab() {
                       }}><CheckCircle2 className="w-4 h-4 mr-1" />Verify</Button>
                       <Button size="sm" variant="outline" disabled={working === r.id} onClick={async () => {
                         setWorking(r.id);
-                        try { const s = await sync({ data: { account_id: r.id } }); toast({ title: "Zonen synchronisiert", description: `${s.count} Zonen` }); }
+                        try { const s = await sync({ data: { account_id: r.id } }); toast({ title: "Zonen synchronisiert", description: `${s.count} von ${s.found ?? s.count} Zonen gespeichert` }); }
                         catch (e: any) { toast({ title: "Sync fehlgeschlagen", description: e.message, variant: "destructive" }); }
                         finally { setWorking(null); }
                       }}><RefreshCw className="w-4 h-4 mr-1" />Sync Zonen</Button>
