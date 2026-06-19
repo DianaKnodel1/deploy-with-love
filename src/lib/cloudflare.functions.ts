@@ -1,5 +1,5 @@
 // Cloudflare-Integration: Accounts/Zones verwalten + A-Records setzen.
-// Token liegt als env-var (Name siehe cloudflare_accounts.api_token_secret_name).
+// API-Token wird pro Account in cloudflare_accounts.api_token gespeichert.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
