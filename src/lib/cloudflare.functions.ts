@@ -244,7 +244,7 @@ export const syncCloudflareZones = createServerFn({ method: "POST" })
       actor_id: context.userId,
       payload: { count: upserted },
     });
-    return { count: upserted };
+    return { count: upserted, found: zones.length };
   });
 
 // Setzt A-Record @ und www auf die Server-IP.
