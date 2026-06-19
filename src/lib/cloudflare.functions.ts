@@ -27,12 +27,14 @@ function ensureToken(token: string | null | undefined, accountName?: string): st
 }
 
 function normalizeCloudflareToken(input: string): string {
-  const match = input.match(/cfat_[A-Za-z0-9_-]+/);
-  const token = (match?.[0] ?? input).trim();
-  if (!/^cfat_[A-Za-z0-9_-]{20,}$/.test(token)) {
-    throw new Error("Bitte nur den Cloudflare API Token einfügen — er beginnt mit cfat_.");
-  }
-  return token;
+  const trimmed = (input ?? "").trim();
+  // Falls die Eingabe mehr enthält (z.B. ganzes JSON aus dem CF-Portal), das cfat_-Token rausschneiden.
+  const cfatMatch = trimmed.match(/cfat_[A-Za-z0-9_-]+/);
+  if (cfatMatch) return cfatMatch[0];
+  // Klassischer 40-Zeichen-Token (Cloudflare Legacy "User API Token") akzeptieren.
+  const legacyMatch = trimmed.match(/^[A-Za-z0-9_-]{30,}$/);
+  if (legacyMatch) return trimmed;
+  throw new Error("Ungültiges Cloudflare-Token. Erwartet: 'cfat_…' oder ein 40-Zeichen-Token.");
 }
 
 function normalizeCloudflareAccountId(input: string): string {
@@ -153,9 +155,21 @@ export const verifyCloudflareToken = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
-    const token = ensureToken(acc.api_token, acc.name);
-    const ok = await cfFetch(token, "/user/tokens/verify");
-    return { ok: true, status: ok?.result?.status ?? "active", name: acc.name };
+    const raw = (acc.api_token ?? "").trim();
+    if (!raw) throw new Error(`Kein Token gespeichert für "${acc.name}". Bitte über "Token" eintragen.`);
+    // Token kann mit "cfat_" beginnen ODER ein klassischer 40-Zeichen-Token sein.
+    const cfatMatch = raw.match(/cfat_[A-Za-z0-9_-]+/);
+    const token = cfatMatch ? cfatMatch[0] : raw;
+    const res = await fetch(`${CF_API}/user/tokens/verify`, {
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    const json: any = await res.json().catch(() => ({}));
+    if (!res.ok || json?.success === false) {
+      const errors = Array.isArray(json?.errors) ? json.errors : [];
+      const msg = errors.map((e: any) => [e?.code, e?.message].filter(Boolean).join(": ")).filter(Boolean).join("; ") || `HTTP ${res.status}`;
+      throw new Error(`Cloudflare-API: ${msg} (Token-Länge: ${token.length}, Prefix: ${token.slice(0, 8)}…)`);
+    }
+    return { ok: true, status: json?.result?.status ?? "active", name: acc.name };
   });
 
 // Sync: listet alle Zonen des Accounts und schreibt sie in cloudflare_zones
