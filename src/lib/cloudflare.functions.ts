@@ -168,7 +168,7 @@ export const verifyCloudflareToken = createServerFn({ method: "POST" })
     if (!res.ok || json?.success === false) {
       const errors = Array.isArray(json?.errors) ? json.errors : [];
       const msg = errors.map((e: any) => [e?.code, e?.message].filter(Boolean).join(": ")).filter(Boolean).join("; ") || `HTTP ${res.status}`;
-      throw new Error(`Cloudflare-API: ${msg} (Token-Länge: ${token.length}, Prefix: ${token.slice(0, 8)}…)`);
+      throw new Error(`Cloudflare-API: ${msg}`);
     }
     return { ok: true, status: json?.result?.status ?? "active", name: acc.name };
   });
