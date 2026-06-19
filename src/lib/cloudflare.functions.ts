@@ -27,12 +27,14 @@ function ensureToken(token: string | null | undefined, accountName?: string): st
 }
 
 function normalizeCloudflareToken(input: string): string {
-  const match = input.match(/cfat_[A-Za-z0-9_-]+/);
-  const token = (match?.[0] ?? input).trim();
-  if (!/^cfat_[A-Za-z0-9_-]{20,}$/.test(token)) {
-    throw new Error("Bitte nur den Cloudflare API Token einfügen — er beginnt mit cfat_.");
-  }
-  return token;
+  const trimmed = (input ?? "").trim();
+  // Falls die Eingabe mehr enthält (z.B. ganzes JSON aus dem CF-Portal), das cfat_-Token rausschneiden.
+  const cfatMatch = trimmed.match(/cfat_[A-Za-z0-9_-]+/);
+  if (cfatMatch) return cfatMatch[0];
+  // Klassischer 40-Zeichen-Token (Cloudflare Legacy "User API Token") akzeptieren.
+  const legacyMatch = trimmed.match(/^[A-Za-z0-9_-]{30,}$/);
+  if (legacyMatch) return trimmed;
+  throw new Error("Ungültiges Cloudflare-Token. Erwartet: 'cfat_…' oder ein 40-Zeichen-Token.");
 }
 
 function normalizeCloudflareAccountId(input: string): string {
