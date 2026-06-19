@@ -22,7 +22,8 @@ function ensureToken(token: string | null | undefined, accountName?: string): st
   if (!token || !token.trim()) {
     throw new Error(`Cloudflare-Token fehlt für "${accountName ?? "Account"}". Bitte im Portal eintragen.`);
   }
-  return token.trim();
+  const trimmed = token.trim();
+  return trimmed.includes("cfat_") ? normalizeCloudflareToken(trimmed) : trimmed;
 }
 
 function normalizeCloudflareToken(input: string): string {
