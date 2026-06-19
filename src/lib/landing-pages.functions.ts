@@ -199,15 +199,15 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       try {
         const { data: zones } = await context.supabase
           .from("cloudflare_zones")
-          .select("id, domain, zone_id, cloudflare_account_id, cloudflare_accounts!inner(api_token_secret_name)")
+          .select("id, domain, zone_id, cloudflare_account_id, cloudflare_accounts!inner(api_token, name)")
           .order("domain", { ascending: false });
         const zone = (zones ?? []).find((z: any) => domain === z.domain || domain.endsWith("." + z.domain));
         if (zone) {
-          const tokenName = (zone as any).cloudflare_accounts.api_token_secret_name;
-          const token = process.env[tokenName];
+          const acc = (zone as any).cloudflare_accounts;
+          const token = acc?.api_token?.trim();
           if (!token) {
             dnsStatus = "error";
-            dnsMessage = `CF-Token-Secret "${tokenName}" fehlt im Server-Environment.`;
+            dnsMessage = `Cloudflare-API-Token fehlt für Account "${acc?.name ?? "unbekannt"}". Bitte im Admin-Portal hinterlegen.`;
           } else {
             await setCloudflareARecord(token, zone.zone_id, zone.domain, domain, assignedServer.ip);
             await context.supabase.from("landing_pages").update({ cloudflare_zone_id: zone.id }).eq("id", row.id);
