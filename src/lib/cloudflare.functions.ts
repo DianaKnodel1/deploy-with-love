@@ -190,10 +190,21 @@ export const syncCloudflareZones = createServerFn({ method: "POST" })
     let page = 1;
     const zones: any[] = [];
     while (true) {
-      const res = await cfFetch(token, `/zones?account.id=${acc.account_id}&per_page=50&page=${page}`);
-      zones.push(...(res.result ?? []));
-      if (page >= (res.result_info?.total_pages ?? 1)) break;
+      // Account-scoped tokens: list ALL zones the token can see (no account filter,
+      // because the token itself is already scoped to the account).
+      const res = await cfFetch(token, `/zones?per_page=50&page=${page}`);
+      const batch = (res.result ?? []) as any[];
+      zones.push(...batch);
+      const totalPages = res.result_info?.total_pages ?? 1;
+      if (page >= totalPages || batch.length === 0) break;
       page++;
+    }
+    if (zones.length === 0) {
+      throw new Error(
+        `Cloudflare lieferte 0 Zonen für Account "${acc.name}" (${acc.account_id}). ` +
+          `Prüfe: (1) Token-Permissions enthalten "Zone → Read" für "All zones from an account" (oder spezifische Zonen), ` +
+          `(2) im Cloudflare-Account sind tatsächlich Domains/Zonen angelegt.`,
+      );
     }
 
     let upserted = 0;
