@@ -147,7 +147,7 @@ export const deleteCloudflareAccount = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Testet den Token: GET /user/tokens/verify
+// Testet den Token über den Account-spezifischen Verify-Endpunkt.
 export const verifyCloudflareToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
@@ -209,20 +209,33 @@ export const syncCloudflareZones = createServerFn({ method: "POST" })
 
     let upserted = 0;
     for (const z of zones) {
-      const { error: upErr } = await context.supabase
+      const domain = String(z.name ?? "").trim().toLowerCase();
+      if (!domain || !z.id) {
+        throw new Error(`Cloudflare lieferte eine ungültige Zone: ${JSON.stringify({ id: z.id, name: z.name })}`);
+      }
+
+      const payload = {
+        cloudflare_account_id: acc.id,
+        domain,
+        zone_id: z.id,
+        status: z.status ?? "active",
+        nameservers: z.name_servers ?? [],
+        last_synced_at: new Date().toISOString(),
+      };
+
+      const { data: existing, error: findErr } = await context.supabase
         .from("cloudflare_zones")
-        .upsert(
-          {
-            cloudflare_account_id: acc.id,
-            domain: String(z.name).toLowerCase(),
-            zone_id: z.id,
-            status: z.status,
-            nameservers: z.name_servers ?? [],
-            last_synced_at: new Date().toISOString(),
-          },
-          { onConflict: "domain" },
-        );
-      if (!upErr) upserted++;
+        .select("id")
+        .eq("domain", domain)
+        .maybeSingle();
+      if (findErr) throw new Error(`Zone "${domain}" konnte nicht geprüft werden: ${findErr.message}`);
+
+      const { error: writeErr } = existing
+        ? await context.supabase.from("cloudflare_zones").update(payload).eq("id", existing.id)
+        : await context.supabase.from("cloudflare_zones").insert(payload);
+      if (writeErr) throw new Error(`Zone "${domain}" konnte nicht gespeichert werden: ${writeErr.message}`);
+
+      upserted++;
     }
     await context.supabase.from("automation_log").insert({
       action: "cf.zones.sync",
