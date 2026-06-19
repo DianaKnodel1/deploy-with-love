@@ -22,7 +22,26 @@ function ensureToken(token: string | null | undefined, accountName?: string): st
   if (!token || !token.trim()) {
     throw new Error(`Cloudflare-Token fehlt für "${accountName ?? "Account"}". Bitte im Portal eintragen.`);
   }
-  return token.trim();
+  const trimmed = token.trim();
+  return trimmed.includes("cfat_") ? normalizeCloudflareToken(trimmed) : trimmed;
+}
+
+function normalizeCloudflareToken(input: string): string {
+  const match = input.match(/cfat_[A-Za-z0-9_-]+/);
+  const token = (match?.[0] ?? input).trim();
+  if (!/^cfat_[A-Za-z0-9_-]{20,}$/.test(token)) {
+    throw new Error("Bitte nur den Cloudflare API Token einfügen — er beginnt mit cfat_.");
+  }
+  return token;
+}
+
+function normalizeCloudflareAccountId(input: string): string {
+  const match = input.match(/[a-f0-9]{32}/i);
+  const accountId = (match?.[0] ?? input).trim().toLowerCase();
+  if (!/^[a-f0-9]{32}$/.test(accountId)) {
+    throw new Error("Bitte die 32-stellige Cloudflare Account-ID einfügen.");
+  }
+  return accountId;
 }
 
 async function cfFetch(token: string, path: string, init: RequestInit = {}): Promise<any> {
@@ -36,7 +55,8 @@ async function cfFetch(token: string, path: string, init: RequestInit = {}): Pro
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json?.success === false) {
-    const msg = json?.errors?.[0]?.message ?? `HTTP ${res.status}`;
+    const errors = Array.isArray(json?.errors) ? json.errors : [];
+    const msg = errors.map((e: any) => [e?.code, e?.message].filter(Boolean).join(": ")).filter(Boolean).join("; ") || `HTTP ${res.status}`;
     throw new Error(`Cloudflare-API: ${msg}`);
   }
   return json;
@@ -57,8 +77,8 @@ export const listCloudflareAccounts = createServerFn({ method: "GET" })
 
 const CreateAccountInput = z.object({
   name: z.string().min(1).max(120),
-  account_id: z.string().min(8).max(128),
-  api_token: z.string().min(20, "Token zu kurz").max(400),
+  account_id: z.string().min(8).max(512),
+  api_token: z.string().min(20, "Token zu kurz").max(1000),
   is_default: z.boolean().default(false),
 });
 
@@ -67,12 +87,17 @@ export const createCloudflareAccount = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => CreateAccountInput.parse(i))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    const cleanData = {
+      ...data,
+      account_id: normalizeCloudflareAccountId(data.account_id),
+      api_token: normalizeCloudflareToken(data.api_token),
+    };
     if (data.is_default) {
       await context.supabase.from("cloudflare_accounts").update({ is_default: false }).neq("id", "00000000-0000-0000-0000-000000000000");
     }
     const { data: row, error } = await context.supabase
       .from("cloudflare_accounts")
-      .insert(data)
+      .insert(cleanData)
       .select()
       .single();
     if (error) throw new Error(error.message);
@@ -82,7 +107,7 @@ export const createCloudflareAccount = createServerFn({ method: "POST" })
 const UpdateAccountInput = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(120).optional(),
-  api_token: z.string().min(20).max(400).optional(),
+  api_token: z.string().min(20).max(1000).optional(),
   is_default: z.boolean().optional(),
 });
 
@@ -92,6 +117,7 @@ export const updateCloudflareAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     const { id, ...patch } = data;
+    if (patch.api_token) patch.api_token = normalizeCloudflareToken(patch.api_token);
     if (patch.is_default) {
       await context.supabase.from("cloudflare_accounts").update({ is_default: false }).neq("id", id);
     }
