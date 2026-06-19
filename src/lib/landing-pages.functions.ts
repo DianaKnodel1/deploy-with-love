@@ -241,14 +241,24 @@ export const saveLandingPage = createServerFn({ method: "POST" })
 
 // ── Cloudflare-DNS-Helper ─────────────────────────────────────────────────
 const CF_API = "https://api.cloudflare.com/client/v4";
+function normalizeCloudflareToken(input: string): string {
+  const trimmed = (input ?? "").trim();
+  const cfatMatch = trimmed.match(/cfat_[A-Za-z0-9_-]+/);
+  if (cfatMatch) return cfatMatch[0];
+  const legacyMatch = trimmed.match(/^[A-Za-z0-9_-]{30,}$/);
+  if (legacyMatch) return trimmed;
+  throw new Error("Ungültiges Cloudflare-Token. Bitte Token im Admin-Portal neu speichern.");
+}
 async function cfReq(token: string, path: string, init: RequestInit = {}): Promise<any> {
+  const cleanToken = normalizeCloudflareToken(token);
   const res = await fetch(`${CF_API}${path}`, {
     ...init,
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
+    headers: { Authorization: `Bearer ${cleanToken}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json?.success === false) {
-    const msg = json?.errors?.[0]?.message ?? `HTTP ${res.status}`;
+    const errors = Array.isArray(json?.errors) ? json.errors : [];
+    const msg = errors.map((e: any) => [e?.code, e?.message].filter(Boolean).join(": ")).filter(Boolean).join("; ") || `HTTP ${res.status}`;
     throw new Error(`Cloudflare: ${msg}`);
   }
   return json;
