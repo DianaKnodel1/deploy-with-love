@@ -267,13 +267,33 @@ function ServerRow({ row, onTogglePause, onDelete, onRotate, onShowBootstrap }: 
 
 function BootstrapDialog({ server, onClose }: { server: { id: string; name: string; token: string }; onClose: () => void }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const cmd = `curl -sSL "${origin}/api/public/landing-server-bootstrap?token=${server.token}" | sudo bash`;
+  const [clean, setClean] = useState(false);
+  const qs = `token=${server.token}${clean ? "&clean=1" : ""}`;
+  const cmd = `curl -sSL "${origin}/api/public/landing-server-bootstrap?${qs}" | sudo bash`;
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>Server „{server.name}" einrichten</DialogTitle></DialogHeader>
         <div className="space-y-3 text-sm">
-          <p>Logge dich per SSH auf den frischen Server ein (Ubuntu/Debian, root oder mit sudo) und führe diesen Befehl aus:</p>
+          <p>Logge dich per SSH auf den Server ein (Ubuntu/Debian, root oder mit sudo) und führe diesen Befehl aus:</p>
+
+          <label className="flex items-start gap-2 rounded-md border p-3 bg-muted/40 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={clean}
+              onChange={(e) => setClean(e.target.checked)}
+            />
+            <div>
+              <div className="font-medium">Clean Install — vorhandene Installation vorher entfernen</div>
+              <div className="text-xs text-muted-foreground">
+                Stoppt &amp; entfernt vorhandene Webserver (nginx, apache, alte Caddy-Configs, alte landing-server-Services),
+                räumt die Ports 80/443/3001 frei und löscht <code className="font-mono">/opt/landing-server</code>.
+                Nutze das nur, wenn auf dem Server nichts mehr Wichtiges läuft.
+              </div>
+            </div>
+          </label>
+
           <div className="relative">
             <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre-wrap break-all">{cmd}</pre>
             <Button size="sm" variant="ghost" className="absolute top-1 right-1" onClick={() => navigator.clipboard.writeText(cmd)}>

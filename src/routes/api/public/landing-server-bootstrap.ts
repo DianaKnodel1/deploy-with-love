@@ -14,6 +14,7 @@ export const Route = createFileRoute("/api/public/landing-server-bootstrap")({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const token = url.searchParams.get("token") ?? "";
+        const clean = url.searchParams.get("clean") === "1";
         if (!token || token.length < 20) {
           return new Response("# fehlender token", { status: 400 });
         }
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/api/public/landing-server-bootstrap")({
           supabaseKey,
           portalOrigin,
           acmeEmail,
+          clean,
         });
 
         // Log Bootstrap-Abruf
@@ -72,13 +74,54 @@ function renderScript(p: {
   supabaseKey: string;
   portalOrigin: string;
   acmeEmail: string;
+  clean: boolean;
 }): string {
   const SERVER_FILES = `${p.portalOrigin}/api/public/landing-server-files`;
+  const cleanBlock = p.clean
+    ? `
+echo "[bootstrap] 0/7 CLEAN: vorhandene Installation entfernen …"
+systemctl stop landing-server.service 2>/dev/null || true
+systemctl stop landing-heartbeat.service 2>/dev/null || true
+systemctl stop landing.service 2>/dev/null || true
+systemctl stop caddy 2>/dev/null || true
+systemctl stop nginx 2>/dev/null || true
+systemctl stop apache2 2>/dev/null || true
+systemctl stop httpd 2>/dev/null || true
+systemctl disable landing-server.service 2>/dev/null || true
+systemctl disable landing-heartbeat.service 2>/dev/null || true
+systemctl disable landing.service 2>/dev/null || true
+systemctl disable nginx 2>/dev/null || true
+systemctl disable apache2 2>/dev/null || true
+systemctl disable httpd 2>/dev/null || true
+rm -f /etc/systemd/system/landing-server.service
+rm -f /etc/systemd/system/landing-heartbeat.service
+rm -f /etc/systemd/system/landing.service
+rm -rf /etc/systemd/system/caddy.service.d
+systemctl daemon-reload
+# Verzeichnisse / alte Renderer plattmachen
+rm -rf /opt/landing-server /opt/apps/landing-server
+rm -rf /etc/caddy/Caddyfile.d /etc/caddy/conf.d
+rm -f  /etc/caddy/Caddyfile
+# Ports 80/443/3001 erzwungen freiräumen (laufende Prozesse killen)
+for P in 80 443 3001; do
+  PIDS=\$(ss -lptnH "sport = :\$P" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u || true)
+  for PID in \$PIDS; do kill -9 "\$PID" 2>/dev/null || true; done
+done
+# Optional vorhandene Pakete entfernen (apache/nginx) — Caddy bleibt, wird gleich neu konfiguriert
+if command -v apt-get >/dev/null; then
+  apt-get remove -y -qq nginx nginx-common apache2 apache2-bin 2>/dev/null || true
+  apt-get autoremove -y -qq 2>/dev/null || true
+fi
+# Alten landing-User entfernen (wird gleich neu angelegt)
+id -u landing >/dev/null 2>&1 && userdel -r landing 2>/dev/null || true
+echo "[bootstrap]   ✓ Server geputzt"
+`
+    : "";
   return `#!/usr/bin/env bash
 # ────────────────────────────────────────────────────────────────────────────
 # Landing-Server Bootstrap — generiert von ${p.portalOrigin}
 # Server: ${p.serverName}  (id=${p.serverId})
-# Idempotent: kann mehrfach ausgeführt werden.
+# Idempotent: kann mehrfach ausgeführt werden.${p.clean ? "\n# CLEAN-Modus: bestehende Webserver/Services werden vorher entfernt." : ""}
 # ────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 trap 'echo "[bootstrap] ❌ Fehler in Zeile $LINENO" >&2' ERR
@@ -93,6 +136,7 @@ SUPABASE_URL=${shellEscape(p.supabaseUrl)}
 SUPABASE_PUBLISHABLE_KEY=${shellEscape(p.supabaseKey)}
 ACME_EMAIL=${shellEscape(p.acmeEmail)}
 SERVER_FILES_BASE=${shellEscape(SERVER_FILES)}
+${cleanBlock}
 
 echo "[bootstrap] 1/7 Pakete aktualisieren …"
 export DEBIAN_FRONTEND=noninteractive
