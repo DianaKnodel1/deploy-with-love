@@ -14,6 +14,7 @@ export const Route = createFileRoute("/api/public/landing-server-bootstrap")({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const token = url.searchParams.get("token") ?? "";
+        const clean = url.searchParams.get("clean") === "1";
         if (!token || token.length < 20) {
           return new Response("# fehlender token", { status: 400 });
         }
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/api/public/landing-server-bootstrap")({
           supabaseKey,
           portalOrigin,
           acmeEmail,
+          clean,
         });
 
         // Log Bootstrap-Abruf
