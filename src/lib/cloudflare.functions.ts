@@ -18,10 +18,11 @@ async function requireAdmin(ctx: { supabase: any; userId: string }) {
   if (!data) throw new Error("Nicht autorisiert");
 }
 
-function getToken(secretName: string): string {
-  const token = process.env[secretName];
-  if (!token) throw new Error(`Cloudflare-Token fehlt: bitte Secret "${secretName}" anlegen.`);
-  return token;
+function ensureToken(token: string | null | undefined, accountName?: string): string {
+  if (!token || !token.trim()) {
+    throw new Error(`Cloudflare-Token fehlt für "${accountName ?? "Account"}". Bitte im Portal eintragen.`);
+  }
+  return token.trim();
 }
 
 async function cfFetch(token: string, path: string, init: RequestInit = {}): Promise<any> {
@@ -57,7 +58,7 @@ export const listCloudflareAccounts = createServerFn({ method: "GET" })
 const CreateAccountInput = z.object({
   name: z.string().min(1).max(120),
   account_id: z.string().min(8).max(128),
-  api_token_secret_name: z.string().regex(/^[A-Z_][A-Z0-9_]*$/, "Nur Großbuchstaben, Ziffern, Underscores").max(120).default("CLOUDFLARE_API_TOKEN"),
+  api_token: z.string().min(20, "Token zu kurz").max(400),
   is_default: z.boolean().default(false),
 });
 
@@ -72,6 +73,32 @@ export const createCloudflareAccount = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase
       .from("cloudflare_accounts")
       .insert(data)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+const UpdateAccountInput = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(120).optional(),
+  api_token: z.string().min(20).max(400).optional(),
+  is_default: z.boolean().optional(),
+});
+
+export const updateCloudflareAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => UpdateAccountInput.parse(i))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { id, ...patch } = data;
+    if (patch.is_default) {
+      await context.supabase.from("cloudflare_accounts").update({ is_default: false }).neq("id", id);
+    }
+    const { data: row, error } = await context.supabase
+      .from("cloudflare_accounts")
+      .update(patch)
+      .eq("id", id)
       .select()
       .single();
     if (error) throw new Error(error.message);
@@ -96,11 +123,11 @@ export const verifyCloudflareToken = createServerFn({ method: "POST" })
     await requireAdmin(context);
     const { data: acc, error } = await context.supabase
       .from("cloudflare_accounts")
-      .select("api_token_secret_name, account_id, name")
+      .select("api_token, account_id, name")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
-    const token = getToken(acc.api_token_secret_name);
+    const token = ensureToken(acc.api_token, acc.name);
     const ok = await cfFetch(token, "/user/tokens/verify");
     return { ok: true, status: ok?.result?.status ?? "active", name: acc.name };
   });
@@ -113,11 +140,11 @@ export const syncCloudflareZones = createServerFn({ method: "POST" })
     await requireAdmin(context);
     const { data: acc, error } = await context.supabase
       .from("cloudflare_accounts")
-      .select("id, account_id, api_token_secret_name")
+      .select("id, account_id, api_token, name")
       .eq("id", data.account_id)
       .single();
     if (error) throw new Error(error.message);
-    const token = getToken(acc.api_token_secret_name);
+    const token = ensureToken(acc.api_token, acc.name);
 
     let page = 1;
     const zones: any[] = [];
@@ -173,15 +200,15 @@ export const setLandingDnsRecord = createServerFn({ method: "POST" })
     // Zone in DB suchen — entweder exakt oder per Suffix-Match (Subdomain → Apex)
     const { data: zoneRows } = await context.supabase
       .from("cloudflare_zones")
-      .select("id, domain, zone_id, cloudflare_account_id, cloudflare_accounts!inner(api_token_secret_name)")
+      .select("id, domain, zone_id, cloudflare_account_id, cloudflare_accounts!inner(api_token, name)")
       .order("domain", { ascending: false });
 
     const zone = (zoneRows ?? []).find((z: any) => domain === z.domain || domain.endsWith("." + z.domain));
     if (!zone) {
       throw new Error(`Keine Cloudflare-Zone für "${domain}" gefunden. Erst Zonen syncen oder Domain in CF anlegen.`);
     }
-    const tokenName = (zone as any).cloudflare_accounts.api_token_secret_name;
-    const token = getToken(tokenName);
+    const acc = (zone as any).cloudflare_accounts;
+    const token = ensureToken(acc.api_token, acc.name);
 
     // Welcher record-name? "@" für apex, sonst die Subdomain-Komponente.
     const recordName = domain === zone.domain ? "@" : domain;

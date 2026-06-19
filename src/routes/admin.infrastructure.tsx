@@ -20,6 +20,7 @@ import {
 import {
   listCloudflareAccounts,
   createCloudflareAccount,
+  updateCloudflareAccount,
   deleteCloudflareAccount,
   verifyCloudflareToken,
   syncCloudflareZones,
@@ -298,6 +299,7 @@ function CloudflareTab() {
   const { toast } = useToast();
   const list = useServerFn(listCloudflareAccounts);
   const create = useServerFn(createCloudflareAccount);
+  const update = useServerFn(updateCloudflareAccount);
   const del = useServerFn(deleteCloudflareAccount);
   const verify = useServerFn(verifyCloudflareToken);
   const sync = useServerFn(syncCloudflareZones);
@@ -305,9 +307,11 @@ function CloudflareTab() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openNew, setOpenNew] = useState(false);
-  const [form, setForm] = useState({ name: "", account_id: "", api_token_secret_name: "CLOUDFLARE_API_TOKEN", is_default: false });
+  const [form, setForm] = useState({ name: "", account_id: "", api_token: "", is_default: false });
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
+  const [editFor, setEditFor] = useState<{ id: string; name: string } | null>(null);
+  const [editToken, setEditToken] = useState("");
 
   const reload = async () => {
     setLoading(true);
@@ -323,7 +327,20 @@ function CloudflareTab() {
       await create({ data: form });
       toast({ title: "CF-Account angelegt" });
       setOpenNew(false);
-      setForm({ name: "", account_id: "", api_token_secret_name: "CLOUDFLARE_API_TOKEN", is_default: false });
+      setForm({ name: "", account_id: "", api_token: "", is_default: false });
+      reload();
+    } catch (e: any) { toast({ title: "Fehler", description: e.message, variant: "destructive" }); }
+    finally { setBusy(false); }
+  };
+
+  const onSaveToken = async () => {
+    if (!editFor) return;
+    setBusy(true);
+    try {
+      await update({ data: { id: editFor.id, api_token: editToken } });
+      toast({ title: "Token aktualisiert" });
+      setEditFor(null);
+      setEditToken("");
       reload();
     } catch (e: any) { toast({ title: "Fehler", description: e.message, variant: "destructive" }); }
     finally { setBusy(false); }
@@ -336,8 +353,7 @@ function CloudflareTab() {
           <CardTitle className="text-base">Wie funktioniert's?</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-2 text-muted-foreground">
-          <p>Jeder Cloudflare-Account, in dem Kunden-Domains liegen, wird hier 1× hinterlegt. Der API-Token wird NICHT in der Datenbank gespeichert — er liegt als Server-Secret (env-var). Du legst ihn über Lovable Cloud → Secrets an.</p>
-          <p><strong>Standardname:</strong> <code>CLOUDFLARE_API_TOKEN</code>. Für mehrere Accounts vergibst du eigene Namen, z.B. <code>CF_TOKEN_DGI</code>.</p>
+          <p>Jeder Cloudflare-Account, in dem Kunden-Domains liegen, wird hier 1× hinterlegt. Der API-Token wird direkt im Portal eingetragen — beliebig viele Accounts möglich, jederzeit änderbar.</p>
           <p><strong>Berechtigungen des Tokens:</strong> Zone → Read, DNS → Edit (für alle relevanten Zonen).</p>
         </CardContent>
       </Card>
@@ -355,11 +371,15 @@ function CloudflareTab() {
               <div className="space-y-3">
                 <div><Label>Name (intern)</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="DGI Holding" /></div>
                 <div><Label>Cloudflare Account-ID</Label><Input value={form.account_id} onChange={(e) => setForm({ ...form, account_id: e.target.value })} placeholder="aus CF-Dashboard → Übersicht rechts" /></div>
-                <div><Label>Secret-Name des API-Tokens</Label><Input value={form.api_token_secret_name} onChange={(e) => setForm({ ...form, api_token_secret_name: e.target.value.toUpperCase() })} placeholder="CLOUDFLARE_API_TOKEN" /></div>
+                <div>
+                  <Label>API-Token</Label>
+                  <Input type="password" value={form.api_token} onChange={(e) => setForm({ ...form, api_token: e.target.value })} placeholder="cfat_…" autoComplete="off" />
+                  <p className="text-xs text-muted-foreground mt-1">Benötigt Zone:Read + DNS:Edit. Wird im Portal gespeichert.</p>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpenNew(false)}>Abbrechen</Button>
-                <Button onClick={onCreate} disabled={busy || !form.name || !form.account_id}>
+                <Button onClick={onCreate} disabled={busy || !form.name || !form.account_id || !form.api_token}>
                   {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Anlegen
                 </Button>
               </DialogFooter>
@@ -371,14 +391,19 @@ function CloudflareTab() {
             <div className="text-center py-8 text-muted-foreground"><Cloud className="w-10 h-10 mx-auto mb-2 opacity-50" />Noch kein CF-Account.</div>
           ) : (
             <Table>
-              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Account-ID</TableHead><TableHead>Token-Secret</TableHead><TableHead className="text-right">Aktionen</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Account-ID</TableHead><TableHead>Token</TableHead><TableHead className="text-right">Aktionen</TableHead></TableRow></TableHeader>
               <TableBody>
                 {rows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.name}{r.is_default && <Badge className="ml-2" variant="outline">Default</Badge>}</TableCell>
                     <TableCell className="font-mono text-xs">{r.account_id}</TableCell>
-                    <TableCell className="font-mono text-xs">{r.api_token_secret_name}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {r.api_token ? <Badge variant="outline">gesetzt</Badge> : <Badge variant="destructive">fehlt</Badge>}
+                    </TableCell>
                     <TableCell className="text-right space-x-1">
+                      <Button size="sm" variant="outline" onClick={() => { setEditFor({ id: r.id, name: r.name }); setEditToken(""); }}>
+                        <KeyRound className="w-4 h-4 mr-1" />Token
+                      </Button>
                       <Button size="sm" variant="outline" disabled={working === r.id} onClick={async () => {
                         setWorking(r.id);
                         try { const v = await verify({ data: { id: r.id } }); toast({ title: "Token gültig", description: `Status: ${v.status}` }); }
@@ -403,6 +428,23 @@ function CloudflareTab() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!editFor} onOpenChange={(o) => { if (!o) { setEditFor(null); setEditToken(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>API-Token ändern — {editFor?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Label>Neuer API-Token</Label>
+            <Input type="password" value={editToken} onChange={(e) => setEditToken(e.target.value)} placeholder="cfat_…" autoComplete="off" />
+            <p className="text-xs text-muted-foreground">Der alte Token wird überschrieben.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditFor(null); setEditToken(""); }}>Abbrechen</Button>
+            <Button onClick={onSaveToken} disabled={busy || editToken.length < 20}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
