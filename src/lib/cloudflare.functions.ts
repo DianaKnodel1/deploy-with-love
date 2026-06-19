@@ -22,8 +22,7 @@ function ensureToken(token: string | null | undefined, accountName?: string): st
   if (!token || !token.trim()) {
     throw new Error(`Cloudflare-Token fehlt für "${accountName ?? "Account"}". Bitte im Portal eintragen.`);
   }
-  const trimmed = token.trim();
-  return trimmed.includes("cfat_") ? normalizeCloudflareToken(trimmed) : trimmed;
+  return normalizeCloudflareToken(token);
 }
 
 function normalizeCloudflareToken(input: string): string {
@@ -74,7 +73,12 @@ export const listCloudflareAccounts = createServerFn({ method: "GET" })
       .select("*")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
-    return { rows: data ?? [] };
+    return {
+      rows: (data ?? []).map((row: any) => ({
+        ...row,
+        api_token: Boolean(row.api_token),
+      })),
+    };
   });
 
 const CreateAccountInput = z.object({
@@ -155,12 +159,9 @@ export const verifyCloudflareToken = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
-    const raw = (acc.api_token ?? "").trim();
-    if (!raw) throw new Error(`Kein Token gespeichert für "${acc.name}". Bitte über "Token" eintragen.`);
-    // Token kann mit "cfat_" beginnen ODER ein klassischer 40-Zeichen-Token sein.
-    const cfatMatch = raw.match(/cfat_[A-Za-z0-9_-]+/);
-    const token = cfatMatch ? cfatMatch[0] : raw;
-    const res = await fetch(`${CF_API}/user/tokens/verify`, {
+    const token = ensureToken(acc.api_token, acc.name);
+    const accountId = normalizeCloudflareAccountId(acc.account_id);
+    const res = await fetch(`${CF_API}/accounts/${accountId}/tokens/verify`, {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     });
     const json: any = await res.json().catch(() => ({}));
