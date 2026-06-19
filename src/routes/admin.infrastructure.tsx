@@ -265,11 +265,24 @@ function ServerRow({ row, onTogglePause, onDelete, onRotate, onShowBootstrap }: 
   );
 }
 
+function getPublicBootstrapOrigin(): string {
+  if (typeof window === "undefined") return "";
+  const { hostname, origin } = window.location;
+
+  const previewMatch = hostname.match(/^id-preview--([0-9a-f-]{36})\.lovable\.app$/i);
+  const internalMatch = hostname.match(/^([0-9a-f-]{36})\.lovableproject\.com$/i);
+  const projectId = previewMatch?.[1] ?? internalMatch?.[1];
+
+  if (projectId) return `https://project--${projectId}-dev.lovable.app`;
+  return origin;
+}
+
 function BootstrapDialog({ server, onClose }: { server: { id: string; name: string; token: string }; onClose: () => void }) {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const origin = getPublicBootstrapOrigin();
   const [clean, setClean] = useState(false);
   const qs = `token=${server.token}${clean ? "&clean=1" : ""}`;
-  const cmd = `curl -sSL "${origin}/api/public/landing-server-bootstrap?${qs}" | sudo bash`;
+  const bootstrapUrl = `${origin}/api/public/landing-server-bootstrap?${qs}`;
+  const cmd = `tmp=$(mktemp); trap 'rm -f "$tmp"' EXIT; curl -fsSL "${bootstrapUrl}" -o "$tmp" && grep -q '^#!/usr/bin/env bash' "$tmp" || { echo "Bootstrap konnte nicht geladen werden (Fehler/HTML statt Script)."; head -n 3 "$tmp"; exit 1; }; if [ "$(id -u)" -eq 0 ]; then bash "$tmp"; else sudo bash "$tmp"; fi`;
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
