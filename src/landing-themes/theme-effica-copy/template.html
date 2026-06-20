@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{seo_title}}</title>
+<meta name="description" content="{{seo_description}}" />
+<meta property="og:title" content="{{seo_title}}" />
+<meta property="og:description" content="{{seo_description}}" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://{{landing_domain}}/" />
+<meta property="og:image" content="{{seo_image}}" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="canonical" href="https://{{landing_domain}}/" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="site-header">
+  <div class="container header-row">
+    <a href="#start" class="logo">
+      <span class="logo-mark">⚡</span>
+      <span class="logo-text">{{firmenname}}</span>
+    </a>
+    <button id="burger" class="burger" aria-label="Menü öffnen">
+      <span></span><span></span><span></span>
+    </button>
+    <nav id="nav-links" class="nav-links">
+      <a href="#leistungen">Leistungen</a>
+      <a href="#ueber-uns">Über uns</a>
+      <a href="#testimonials">Referenzen</a>
+      <a href="#faq">FAQ</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="{{portal_url}}" class="btn btn-ghost" target="_blank" rel="noopener">Login</a>
+      <a href="#kontakt" class="btn btn-primary">Erstgespräch →</a>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ HERO ═══ -->
+<section id="start" class="hero">
+  <div class="container hero-inner">
+    <div class="hero-content" data-animate>
+      <span class="badge">{{hero_badge}}</span>
+      <h1>{{hero_title}}</h1>
+      <p class="lead">{{hero_subtitle}}</p>
+      <div class="hero-ctas">
+        <a href="#kontakt" class="btn btn-primary btn-lg">{{hero_cta_primary}}</a>
+        <a href="#leistungen" class="btn btn-outline btn-lg">{{hero_cta_secondary}}</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><strong>{{stat_1_num}}</strong><span>{{stat_1_lbl}}</span></div>
+        <div class="hstat-sep"></div>
+        <div class="hstat"><strong>{{stat_2_num}}</strong><span>{{stat_2_lbl}}</span></div>
+        <div class="hstat-sep"></div>
+        <div class="hstat"><strong>{{stat_3_num}}</strong><span>{{stat_3_lbl}}</span></div>
+      </div>
+    </div>
+    <div class="hero-visual" data-animate>
+      <div class="hero-img-wrap">
+        <img src="{{hero_image_url}}" alt="KI & Automatisierung" class="hero-img" />
+        <div class="hero-glow"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEISTUNGEN ═══ -->
+<section id="leistungen" class="services">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <p class="section-label">Leistungen</p>
+      <h2>{{services_title}}</h2>
+      <p class="section-sub">{{services_subtitle}}</p>
+    </div>
+    <div class="svc-grid">
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{svc_1_icon}}</div>
+        <h3>{{svc_1_title}}</h3>
+        <p>{{svc_1_body}}</p>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{svc_2_icon}}</div>
+        <h3>{{svc_2_title}}</h3>
+        <p>{{svc_2_body}}</p>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{svc_3_icon}}</div>
+        <h3>{{svc_3_title}}</h3>
+        <p>{{svc_3_body}}</p>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{svc_4_icon}}</div>
+        <h3>{{svc_4_title}}</h3>
+        <p>{{svc_4_body}}</p>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{svc_5_icon}}</div>
+        <h3>{{svc_5_title}}</h3>
+        <p>{{svc_5_body}}</p>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{svc_6_icon}}</div>
+        <h3>{{svc_6_title}}</h3>
+        <p>{{svc_6_body}}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ÜBER UNS ═══ -->
+<section id="ueber-uns" class="about">
+  <div class="container about-grid">
+    <div class="about-img-wrap" data-animate>
+      <img src="{{about_image_url}}" alt="Unser Team" class="about-img" />
+      <div class="about-badge-card">
+        <span class="about-badge-num">100%</span>
+        <span class="about-badge-lbl">Festpreis</span>
+      </div>
+    </div>
+    <div class="about-content" data-animate>
+      <p class="section-label">Über uns</p>
+      <h2>{{about_title}}</h2>
+      <div class="about-body" data-multiline="{{about_body}}"></div>
+      <a href="#kontakt" class="btn btn-primary btn-lg" style="margin-top:28px">Jetzt Gespräch vereinbaren →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section id="testimonials" class="testimonials">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <p class="section-label">Referenzen</p>
+      <h2>{{testimonials_title}}</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"{{t1_quote}}"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">{{t1_name}}</div>
+          <div>
+            <strong>{{t1_name}}</strong>
+            <span>{{t1_role}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"{{t2_quote}}"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">{{t2_name}}</div>
+          <div>
+            <strong>{{t2_name}}</strong>
+            <span>{{t2_role}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-quote">"{{t3_quote}}"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">{{t3_name}}</div>
+          <div>
+            <strong>{{t3_name}}</strong>
+            <span>{{t3_role}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq" class="faq">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <p class="section-label">FAQ</p>
+      <h2>{{faq_title}}</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item" data-animate>
+        <summary>{{faq_1_q}}</summary>
+        <p>{{faq_1_a}}</p>
+      </details>
+      <details class="faq-item" data-animate>
+        <summary>{{faq_2_q}}</summary>
+        <p>{{faq_2_a}}</p>
+      </details>
+      <details class="faq-item" data-animate>
+        <summary>{{faq_3_q}}</summary>
+        <p>{{faq_3_a}}</p>
+      </details>
+      <details class="faq-item" data-animate>
+        <summary>{{faq_4_q}}</summary>
+        <p>{{faq_4_a}}</p>
+      </details>
+      <details class="faq-item" data-animate>
+        <summary>{{faq_5_q}}</summary>
+        <p>{{faq_5_a}}</p>
+      </details>
+      <details class="faq-item" data-animate>
+        <summary>{{faq_6_q}}</summary>
+        <p>{{faq_6_a}}</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ KONTAKT / CTA ═══ -->
+<section id="kontakt" class="contact">
+  <div class="container contact-grid">
+    <div class="contact-info" data-animate>
+      <p class="section-label">Kontakt</p>
+      <h2>{{cta_title}}</h2>
+      <p class="lead">{{cta_body}}</p>
+      <ul class="contact-details">
+        <li><span class="ci-icon">✉</span><a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a></li>
+        <li><span class="ci-icon">📞</span><a href="tel:{{kontakt_telefon}}">{{kontakt_telefon}}</a></li>
+        <li><span class="ci-icon">📍</span><span data-multiline="{{adresse}}"></span></li>
+      </ul>
+      <a href="{{portal_url}}" class="btn btn-outline btn-lg" target="_blank" rel="noopener" style="margin-top:24px">Zum Kunden-Portal →</a>
+    </div>
+    <div class="contact-form-wrap" data-animate>
+      <form id="application-form" class="lead-form">
+        <h3>Erstgespräch vereinbaren</h3>
+        <div class="form-row">
+          <label>Vorname<input name="first_name" placeholder="Max" required /></label>
+          <label>Nachname<input name="last_name" placeholder="Mustermann" required /></label>
+        </div>
+        <label>Unternehmen<input name="company" placeholder="Muster GmbH" /></label>
+        <label>E-Mail<input type="email" name="email" placeholder="max@firma.de" required /></label>
+        <label>Telefon<input name="phone" placeholder="+49 170 ..." required /></label>
+        <label>Wie können wir Ihnen helfen?<textarea name="message" rows="3" placeholder="Kurze Beschreibung Ihres Anliegens …"></textarea></label>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Kostenloses Gespräch anfragen →</button>
+        <p id="form-status" class="status"></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <p class="footer-logo"><span class="logo-mark">⚡</span> {{firmenname}}</p>
+      <p class="footer-tagline">KI-Beratung &amp; Workflow-Automatisierung für den Mittelstand.</p>
+      <p>✉ <a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a><br/>📞 {{kontakt_telefon}}</p>
+    </div>
+    <div>
+      <h5>Leistungen</h5>
+      <a href="#leistungen">KI-Strategie</a>
+      <a href="#leistungen">Workflow-Automatisierung</a>
+      <a href="#leistungen">Tool-Integration</a>
+      <a href="#leistungen">Schulung &amp; Adoption</a>
+    </div>
+    <div>
+      <h5>Unternehmen</h5>
+      <a href="#ueber-uns">Über uns</a>
+      <a href="#testimonials">Referenzen</a>
+      <a href="#faq">FAQ</a>
+      <a href="#kontakt">Kontakt</a>
+      <a href="{{portal_url}}" target="_blank" rel="noopener">Kunden-Portal</a>
+    </div>
+    <div>
+      <h5>Rechtliches</h5>
+      <a href="{{impressum_url}}">Impressum</a>
+      <a href="{{datenschutz_url}}">Datenschutz</a>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <p>© <span id="year"></span> {{firmenname}}. Alle Rechte vorbehalten.</p>
+  </div>
+</footer>
+
+<!-- ═══ LEGAL SECTIONS ═══ -->
+<section id="impressum" class="legal">
+  <div class="container">
+    <a href="#start" class="legal-close">← zurück</a>
+    <h2>Impressum</h2>
+    <h3>Angaben gemäß § 5 TMG</h3>
+    <p data-multiline="{{adresse}}"></p>
+    <h3>Kontakt</h3>
+    <p>Telefon: {{kontakt_telefon}}<br/>E-Mail: {{kontakt_email}}</p>
+  </div>
+</section>
+
+<section id="datenschutz" class="legal">
+  <div class="container">
+    <a href="#start" class="legal-close">← zurück</a>
+    <h2>Datenschutzerklärung</h2>
+    <h3>1. Verantwortliche Stelle</h3>
+    <p data-multiline="{{adresse}}"></p>
+    <p>E-Mail: {{kontakt_email}}</p>
+    <h3>2. Erhobene Daten</h3>
+    <p>Beim Besuch der Website werden technisch notwendige Logfiles erfasst (IP-Adresse, Uhrzeit, Browser). Diese werden nach spätestens 7 Tagen gelöscht.</p>
+    <h3>3. Kontaktformular</h3>
+    <p>Angaben im Formular werden ausschließlich zur Bearbeitung Ihrer Anfrage verwendet und nicht an Dritte weitergegeben.</p>
+    <h3>4. Ihre Rechte</h3>
+    <ul>
+      <li>Auskunft (Art. 15 DSGVO)</li>
+      <li>Berichtigung (Art. 16 DSGVO)</li>
+      <li>Löschung (Art. 17 DSGVO)</li>
+      <li>Einschränkung der Verarbeitung (Art. 18 DSGVO)</li>
+      <li>Datenübertragbarkeit (Art. 20 DSGVO)</li>
+      <li>Widerspruch (Art. 21 DSGVO)</li>
+    </ul>
+    <h3>5. Beschwerderecht</h3>
+    <p>Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren.</p>
+  </div>
+</section>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="script.js"></script>
+</body>
+</html>
