@@ -261,8 +261,11 @@ em { font-style: italic; color: var(--accent); font-weight: 400; }
   border-bottom: 1px solid var(--border);
   color: var(--muted-fg);
 }
-.service-row.active { color: var(--fg); }
-.srv-num { font-size: 0.7rem; letter-spacing: 0.18em; color: var(--accent); }
+.service-row { cursor: pointer; transition: color .2s, padding-left .2s; position: relative; }
+.service-row:hover { color: var(--fg); padding-left: 0.5rem; }
+.service-row.active { color: var(--fg); padding-left: 0.5rem; }
+.service-row.active::before { content: ""; position: absolute; left: -1rem; top: 50%; transform: translateY(-50%); width: 6px; height: 32px; background: var(--accent); border-radius: 3px; }
+.srv-num { font-size: 0.7rem; letter-spacing: 0.18em; color: var(--accent); transition: color .2s; }
 .srv-name { font-family: 'Playfair Display', serif; font-size: 1.35rem; }
 .service-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
 .service-detail h3 { margin-top: 1rem; font-size: 1.85rem; }
