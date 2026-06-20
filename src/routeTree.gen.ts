@@ -17,6 +17,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as EmployeeRouteImport } from './routes/_employee'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BewerbungIndexRouteImport } from './routes/bewerbung.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as BewerbungVerbindenRouteImport } from './routes/bewerbung.verbinden'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
@@ -69,6 +70,7 @@ import { Route as ApiPublicLandingServerBootstrapRouteImport } from './routes/ap
 import { Route as ApiPublicDomainHealthCronRouteImport } from './routes/api/public/domain-health-cron'
 import { Route as ApiPublicCalendlyWebhookRouteImport } from './routes/api/public/calendly-webhook'
 import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
+import { Route as ApiPublicApplicationLookupRouteImport } from './routes/api/public/application-lookup'
 import { Route as AdminEmployeesUserIdRouteImport } from './routes/admin.employees.$userId'
 import { Route as AdminAssignmentsAssignmentIdRouteImport } from './routes/admin.assignments.$assignmentId'
 import { Route as AdminApplicationsAppIdRouteImport } from './routes/admin.applications.$appId'
@@ -113,6 +115,11 @@ const EmployeeRoute = EmployeeRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BewerbungIndexRoute = BewerbungIndexRouteImport.update({
+  id: '/bewerbung/',
+  path: '/bewerbung/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -379,6 +386,12 @@ const ApiPublicApplicationsRoute = ApiPublicApplicationsRouteImport.update({
   path: '/api/public/applications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicApplicationLookupRoute =
+  ApiPublicApplicationLookupRouteImport.update({
+    id: '/api/public/application-lookup',
+    path: '/api/public/application-lookup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminEmployeesUserIdRoute = AdminEmployeesUserIdRouteImport.update({
   id: '/employees/$userId',
   path: '/employees/$userId',
@@ -465,10 +478,12 @@ export interface FileRoutesByFullPath {
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin/': typeof AdminIndexRoute
+  '/bewerbung/': typeof BewerbungIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
@@ -531,10 +546,12 @@ export interface FileRoutesByTo {
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin': typeof AdminIndexRoute
+  '/bewerbung': typeof BewerbungIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
@@ -600,10 +617,12 @@ export interface FileRoutesById {
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
   '/admin/': typeof AdminIndexRoute
+  '/bewerbung/': typeof BewerbungIndexRoute
   '/_employee/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
@@ -669,10 +688,12 @@ export interface FileRouteTypes {
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
     | '/admin/'
+    | '/bewerbung/'
     | '/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/api/public/application-lookup'
     | '/api/public/applications'
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
@@ -735,10 +756,12 @@ export interface FileRouteTypes {
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
     | '/admin'
+    | '/bewerbung'
     | '/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/api/public/application-lookup'
     | '/api/public/applications'
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
@@ -803,10 +826,12 @@ export interface FileRouteTypes {
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
     | '/admin/'
+    | '/bewerbung/'
     | '/_employee/tasks/$assignmentId'
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/api/public/application-lookup'
     | '/api/public/applications'
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
@@ -831,6 +856,8 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   AuthConfirmedRoute: typeof AuthConfirmedRoute
   BewerbungVerbindenRoute: typeof BewerbungVerbindenRoute
+  BewerbungIndexRoute: typeof BewerbungIndexRoute
+  ApiPublicApplicationLookupRoute: typeof ApiPublicApplicationLookupRoute
   ApiPublicApplicationsRoute: typeof ApiPublicApplicationsRoute
   ApiPublicCalendlyWebhookRoute: typeof ApiPublicCalendlyWebhookRoute
   ApiPublicDomainHealthCronRoute: typeof ApiPublicDomainHealthCronRoute
@@ -896,6 +923,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bewerbung/': {
+      id: '/bewerbung/'
+      path: '/bewerbung'
+      fullPath: '/bewerbung/'
+      preLoaderRoute: typeof BewerbungIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -1262,6 +1296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicApplicationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/application-lookup': {
+      id: '/api/public/application-lookup'
+      path: '/api/public/application-lookup'
+      fullPath: '/api/public/application-lookup'
+      preLoaderRoute: typeof ApiPublicApplicationLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/employees/$userId': {
       id: '/admin/employees/$userId'
       path: '/employees/$userId'
@@ -1444,6 +1485,8 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   AuthConfirmedRoute: AuthConfirmedRoute,
   BewerbungVerbindenRoute: BewerbungVerbindenRoute,
+  BewerbungIndexRoute: BewerbungIndexRoute,
+  ApiPublicApplicationLookupRoute: ApiPublicApplicationLookupRoute,
   ApiPublicApplicationsRoute: ApiPublicApplicationsRoute,
   ApiPublicCalendlyWebhookRoute: ApiPublicCalendlyWebhookRoute,
   ApiPublicDomainHealthCronRoute: ApiPublicDomainHealthCronRoute,
