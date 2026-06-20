@@ -3,101 +3,497 @@
   "name": "HomeOfficeCareer — Dateneingabe & Prozessprüfung",
   "description": "1:1-Replik der HomeOfficeCareer-Landing: Inter Font, grünes Farbschema (#10b981), gelber Highlight-Underline. 15 Sektionen mit AnnouncementBar, Hero, TrustStripe, WhyHomeOffice, JobDetails, DailyTasks, ProcessSteps, ThreeModels, Stats, Testimonials, Comparison, TrustReasons, FAQ, FinalCTA und Footer.",
   "slots": [
-    { "key": "announcement_text", "label": "Banner-Text oben", "type": "text", "default": "Aktuelle Stelle: Dateneingabe & Prozessprüfung — Minijob, Teilzeit oder Vollzeit. Bewerbung in 2 Minuten." },
-    { "key": "nav_email_hours", "label": "Nav: Geschäftszeiten", "type": "text", "default": "Mo–Fr, 9:00–17:00 Uhr" },
-
-    { "key": "hero_chip", "label": "Hero-Chip", "type": "text", "default": "Aktuelle Stelle: Dateneingabe & Prozessprüfung · Minijob · Teilzeit · Vollzeit" },
-    { "key": "hero_title_pre", "label": "Hero-Titel (vor Highlight)", "type": "text", "default": "Arbeite von zuhause —" },
-    { "key": "hero_title_highlight", "label": "Hero-Titel (gelb unterstrichen)", "type": "text", "default": "flexibel & planbar." },
-    { "key": "hero_subtitle", "label": "Hero-Untertitel", "type": "longtext", "default": "Wir suchen aktuell für <strong>Dateneingabe & Prozessprüfung</strong> — als <strong>Minijob</strong>, <strong>Teilzeit</strong> oder <strong>Vollzeit</strong>. Verdienst von <strong>603 € bis 4.200 € im Monat</strong> (Minijob 603 €, Teilzeit ca. 1.650 €, Vollzeit ab 3.100 € — bis 4.200 € mit Zusatzaufträgen). Komplett von zu Hause, ohne Vorkenntnisse, ohne Lebenslauf." },
-    { "key": "hero_cta_primary", "label": "Hero-CTA primär", "type": "text", "default": "Jetzt bewerben" },
-    { "key": "hero_cta_secondary", "label": "Hero-CTA sekundär", "type": "text", "default": "Mehr zur Stelle erfahren" },
-    { "key": "hero_image_url", "label": "Hero-Bild URL (quadratisch)", "type": "text", "default": "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1280&q=80" },
-    { "key": "hero_badge_trustscore", "label": "Trustscore (Hero-Karte)", "type": "text", "default": "4,8" },
-    { "key": "hero_badge_reviews", "label": "Bewertungen (Hero-Karte)", "type": "text", "default": "1.247" },
-    { "key": "hero_badge_pay", "label": "Verdienst (Hero-Karte)", "type": "text", "default": "603 € – 4.200 €" },
-
-    { "key": "stat_1_v", "label": "Stat 1 Zahl", "type": "text", "default": "8.420+" },
-    { "key": "stat_1_l", "label": "Stat 1 Label", "type": "text", "default": "vermittelte Bewerber" },
-    { "key": "stat_2_v", "label": "Stat 2 Zahl", "type": "text", "default": "180+" },
-    { "key": "stat_2_l", "label": "Stat 2 Label", "type": "text", "default": "verifizierte Partner" },
-    { "key": "stat_3_v", "label": "Stat 3 Zahl", "type": "text", "default": "4,8 ★" },
-    { "key": "stat_3_l", "label": "Stat 3 Label", "type": "text", "default": "Trustscore (1.247 Bewertungen)" },
-    { "key": "stat_4_v", "label": "Stat 4 Zahl", "type": "text", "default": "100 %" },
-    { "key": "stat_4_l", "label": "Stat 4 Label", "type": "text", "default": "ohne Vorkosten" },
-
-    { "key": "why_chip", "label": "Warum-Home-Office Chip", "type": "text", "default": "Warum Home-Office?" },
-    { "key": "why_title", "label": "Warum-Home-Office Titel", "type": "text", "default": "Schluss mit dem Pendeln. Willkommen im echten Leben." },
-    { "key": "why_subtitle", "label": "Warum-Home-Office Untertitel", "type": "longtext", "default": "Das alte Büromodell passt nicht mehr in die heutige Zeit. Es geht besser — und für hunderttausende Deutsche ist es längst Alltag." },
-
-    { "key": "job_title", "label": "Job-Sektion Titel", "type": "text", "default": "Dateneingabe & Prozessprüfung" },
-    { "key": "job_subtitle", "label": "Job-Sektion Untertitel", "type": "text", "default": "Minijob, Teilzeit oder Vollzeit (Home-Office)" },
-    { "key": "job_description", "label": "Job-Beschreibung", "type": "longtext", "default": "Du erfasst und prüfst Daten für unsere Partner-Unternehmen — strukturiert, einfach erlernbar und in deinem eigenen Tempo. Komplett von zu Hause aus, in dem Umfang, der zu dir passt: als Minijob, in Teilzeit oder Vollzeit." },
-    { "key": "job_image_url", "label": "Arbeitsplatz-Bild URL", "type": "text", "default": "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=1280&q=80" },
-
-    { "key": "tasks_title", "label": "Aufgaben-Titel", "type": "text", "default": "Vielfältige Aufgaben — eine entspannte Routine." },
-    { "key": "tasks_subtitle", "label": "Aufgaben-Untertitel", "type": "longtext", "default": "Als Mitarbeiter/in für Dateneingabe & Prozessprüfung arbeitest du an unterschiedlichen Aufgaben — abwechslungsreich, einfach erlernbar und in deinem eigenen Tempo." },
-
-    { "key": "process_title", "label": "Prozess-Titel", "type": "text", "default": "So einfach kommst du ins Home-Office." },
-    { "key": "process_subtitle", "label": "Prozess-Untertitel", "type": "longtext", "default": "Kein Bewerbungsmarathon. Wir machen den Prozess so einfach wie möglich — damit du schnell starten kannst." },
-
-    { "key": "model_minijob_pay", "label": "Minijob: Verdienst", "type": "text", "default": "603 €/Monat" },
-    { "key": "model_minijob_hours", "label": "Minijob: Stunden", "type": "text", "default": "ca. 10 Std./Woche" },
-    { "key": "model_minijob_note", "label": "Minijob: Hinweis", "type": "text", "default": "steuerfrei (Minijob-Maximum)" },
-    { "key": "model_minijob_desc", "label": "Minijob: Beschreibung", "type": "longtext", "default": "Volle Ausschöpfung der 2026er Minijob-Grenze: 603 € steuerfrei pro Monat bei rund 10 Stunden pro Woche. Ideal neben Familie, Studium oder einem Hauptjob." },
-    { "key": "model_teilzeit_pay", "label": "Teilzeit: Verdienst", "type": "text", "default": "ca. 1.650 €/Monat" },
-    { "key": "model_teilzeit_hours", "label": "Teilzeit: Stunden", "type": "text", "default": "ca. 25–30 Std./Woche" },
-    { "key": "model_teilzeit_note", "label": "Teilzeit: Hinweis", "type": "text", "default": "sozialversicherungspflichtig" },
-    { "key": "model_teilzeit_desc", "label": "Teilzeit: Beschreibung", "type": "longtext", "default": "Solider Verdienst mit voller Sozialversicherung. Bei rund 25–30 Stunden pro Woche bleibt Raum für Familie, Hobbys oder Weiterbildung." },
-    { "key": "model_vollzeit_pay", "label": "Vollzeit: Verdienst", "type": "text", "default": "3.100 €/Monat" },
-    { "key": "model_vollzeit_hours", "label": "Vollzeit: Stunden", "type": "text", "default": "38–40 Std./Woche" },
-    { "key": "model_vollzeit_note", "label": "Vollzeit: Hinweis", "type": "text", "default": "bis 4.200 € mit Zusatzaufträgen" },
-    { "key": "model_vollzeit_desc", "label": "Vollzeit: Beschreibung", "type": "longtext", "default": "Festes Vollzeit-Einkommen mit Aufstockungs-Option: Wer regelmäßig zusätzliche Aufträge übernimmt, kommt auf bis zu 4.200 € pro Monat." },
-
-    { "key": "bigstats_title", "label": "Big-Stats Titel", "type": "text", "default": "Tausende haben es schon gewagt." },
-    { "key": "bigstats_subtitle", "label": "Big-Stats Untertitel", "type": "text", "default": "Echte Ergebnisse. Echte Menschen. Geprüfte Zahlen." },
-
-    { "key": "testi_title", "label": "Testimonials Titel", "type": "text", "default": "Was unsere Community wirklich denkt." },
-    { "key": "testi_subtitle", "label": "Testimonials Untertitel", "type": "text", "default": "Echte Bewerber, echte Geschichten — keine bezahlten Influencer." },
-    { "key": "testi_1_name", "label": "Testimonial 1: Name", "type": "text", "default": "Sarah M." },
-    { "key": "testi_1_role", "label": "Testimonial 1: Rolle", "type": "text", "default": "Minijob · Dateneingabe · München" },
-    { "key": "testi_1_since", "label": "Testimonial 1: Dauer", "type": "text", "default": "Seit 8 Monaten dabei" },
-    { "key": "testi_1_quote", "label": "Testimonial 1: Zitat", "type": "longtext", "default": "Rund 10 Stunden pro Woche von zu Hause, dafür die vollen 603 € Minijob — steuerfrei. Perfekt für die Zeit mit den Kindern, endlich keine Stresswege mehr morgens." },
-    { "key": "testi_1_img", "label": "Testimonial 1: Foto-URL", "type": "text", "default": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80" },
-    { "key": "testi_2_name", "label": "Testimonial 2: Name", "type": "text", "default": "Thomas K." },
-    { "key": "testi_2_role", "label": "Testimonial 2: Rolle", "type": "text", "default": "Teilzeit · Prozessprüfung · Berlin" },
-    { "key": "testi_2_since", "label": "Testimonial 2: Dauer", "type": "text", "default": "Seit 5 Monaten dabei" },
-    { "key": "testi_2_quote", "label": "Testimonial 2: Zitat", "type": "longtext", "default": "Endlich eine Plattform, die transparent ist. Mit ca. 28 Stunden in der Woche komme ich auf rund 1.650 € im Monat — und kann mir den Tag trotzdem selbst einteilen. Mein Ansprechpartner hat sich von Anfang an persönlich gemeldet." },
-    { "key": "testi_2_img", "label": "Testimonial 2: Foto-URL", "type": "text", "default": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" },
-    { "key": "testi_3_name", "label": "Testimonial 3: Name", "type": "text", "default": "Lisa W." },
-    { "key": "testi_3_role", "label": "Testimonial 3: Rolle", "type": "text", "default": "Vollzeit · Datenpflege · Hamburg" },
-    { "key": "testi_3_since", "label": "Testimonial 3: Dauer", "type": "text", "default": "Seit 1 Jahr dabei" },
-    { "key": "testi_3_quote", "label": "Testimonial 3: Zitat", "type": "longtext", "default": "Vollzeit von zu Hause: 3.100 € im Monat, mit ein paar Zusatzaufträgen letztens sogar 3.700 €. Mehr als im alten Bürojob, ohne Pendeln. Die Bewerbung war super einfach und nach einer Woche stand die Einarbeitung." },
-    { "key": "testi_3_img", "label": "Testimonial 3: Foto-URL", "type": "text", "default": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80" },
-
-    { "key": "compare_title", "label": "Vergleich Titel", "type": "text", "default": "Warum wir uns von anderen unterscheiden." },
-    { "key": "compare_us_label", "label": "Vergleich: Wir-Label", "type": "text", "default": "HomeOfficeCareer" },
-
-    { "key": "trust_title", "label": "Vertrauen Titel", "type": "text", "default": "Sechs Gründe, warum du uns vertrauen kannst." },
-    { "key": "trust_subtitle", "label": "Vertrauen Untertitel", "type": "text", "default": "Transparenz und Seriosität sind keine Marketing-Versprechen, sondern unser Geschäftsmodell." },
-
-    { "key": "faq_title", "label": "FAQ Titel", "type": "text", "default": "Du hast Fragen? Wir haben Antworten." },
-    { "key": "faq_1_q", "label": "FAQ 1 Frage", "type": "text", "default": "Ist die Bewerbung wirklich kostenlos?" },
-    { "key": "faq_1_a", "label": "FAQ 1 Antwort", "type": "longtext", "default": "Ja. Die Bewerbung und der gesamte Prozess sind und bleiben für dich 100 % kostenlos. Es gibt keine Vorkosten, keine Gebühren und keine versteckten Abos." },
-    { "key": "faq_2_q", "label": "FAQ 2 Frage", "type": "text", "default": "Brauche ich Vorkenntnisse?" },
-    { "key": "faq_2_a", "label": "FAQ 2 Antwort", "type": "longtext", "default": "Nein. Die Tätigkeit ist so aufgebaut, dass du ohne Vorkenntnisse starten kannst. Die Einarbeitung erfolgt komplett online und in deinem eigenen Tempo." },
-    { "key": "faq_3_q", "label": "FAQ 3 Frage", "type": "text", "default": "Wie schnell kann ich anfangen?" },
-    { "key": "faq_3_a", "label": "FAQ 3 Antwort", "type": "longtext", "default": "In der Regel meldet sich dein persönlicher Ansprechpartner innerhalb von 24 Stunden. Nach der Prüfung deiner Angaben (1–3 Werktage) kannst du meist innerhalb einer Woche starten." },
-    { "key": "faq_4_q", "label": "FAQ 4 Frage", "type": "text", "default": "Welche Ausstattung brauche ich?" },
-    { "key": "faq_4_a", "label": "FAQ 4 Antwort", "type": "longtext", "default": "Ein Laptop oder PC mit stabiler Internetverbindung reicht aus. Spezielle Hardware oder Software musst du nicht anschaffen." },
-    { "key": "faq_5_q", "label": "FAQ 5 Frage", "type": "text", "default": "Kann ich die Arbeitszeit selbst bestimmen?" },
-    { "key": "faq_5_a", "label": "FAQ 5 Antwort", "type": "longtext", "default": "Im Minijob und in der Teilzeit teilst du dir deine Zeit weitgehend selbst ein. In der Vollzeit gibt es einen festen Stundenrahmen, aber keine starren Bürozeiten." },
-
-    { "key": "final_cta_title", "label": "Final CTA Titel", "type": "text", "default": "Sichere dir die Dateneingabe & Prozessprüfung-Stelle." },
-    { "key": "final_cta_body", "label": "Final CTA Body", "type": "longtext", "default": "Über 8.000 Menschen haben bereits ihren Schritt ins Home-Office gemacht. Du brauchst nur 2 Minuten — und keine Angst vor Bürokratie." },
-    { "key": "final_cta_button", "label": "Final CTA Button", "type": "text", "default": "Jetzt kostenlos bewerben" },
-
-    { "key": "impressum_url", "label": "Impressum URL", "type": "text", "default": "/impressum" },
-    { "key": "datenschutz_url", "label": "Datenschutz URL", "type": "text", "default": "/datenschutz" }
+    {
+      "key": "announcement_text",
+      "label": "Banner-Text oben",
+      "type": "text",
+      "default": "Aktuelle Stelle: Dateneingabe & Prozessprüfung — Minijob, Teilzeit oder Vollzeit. Bewerbung in 2 Minuten."
+    },
+    {
+      "key": "nav_email_hours",
+      "label": "Nav: Geschäftszeiten",
+      "type": "text",
+      "default": "Mo–Fr, 9:00–17:00 Uhr"
+    },
+    {
+      "key": "hero_chip",
+      "label": "Hero-Chip",
+      "type": "text",
+      "default": "Aktuelle Stelle: Dateneingabe & Prozessprüfung · Minijob · Teilzeit · Vollzeit"
+    },
+    {
+      "key": "hero_title_pre",
+      "label": "Hero-Titel (vor Highlight)",
+      "type": "text",
+      "default": "Arbeite von zuhause —"
+    },
+    {
+      "key": "hero_title_highlight",
+      "label": "Hero-Titel (gelb unterstrichen)",
+      "type": "text",
+      "default": "flexibel & planbar."
+    },
+    {
+      "key": "hero_subtitle",
+      "label": "Hero-Untertitel",
+      "type": "longtext",
+      "default": "Wir suchen aktuell für <strong>Dateneingabe & Prozessprüfung</strong> — als <strong>Minijob</strong>, <strong>Teilzeit</strong> oder <strong>Vollzeit</strong>. Verdienst von <strong>603 € bis 4.200 € im Monat</strong> (Minijob 603 €, Teilzeit ca. 1.650 €, Vollzeit ab 3.100 € — bis 4.200 € mit Zusatzaufträgen). Komplett von zu Hause, ohne Vorkenntnisse, ohne Lebenslauf."
+    },
+    {
+      "key": "hero_cta_primary",
+      "label": "Hero-CTA primär",
+      "type": "text",
+      "default": "Jetzt bewerben"
+    },
+    {
+      "key": "hero_cta_secondary",
+      "label": "Hero-CTA sekundär",
+      "type": "text",
+      "default": "Mehr zur Stelle erfahren"
+    },
+    {
+      "key": "hero_image_url",
+      "label": "Hero-Bild URL (quadratisch)",
+      "type": "text",
+      "default": "assets/hero-workspace.jpg"
+    },
+    {
+      "key": "hero_badge_trustscore",
+      "label": "Trustscore (Hero-Karte)",
+      "type": "text",
+      "default": "4,8"
+    },
+    {
+      "key": "hero_badge_reviews",
+      "label": "Bewertungen (Hero-Karte)",
+      "type": "text",
+      "default": "1.247"
+    },
+    {
+      "key": "hero_badge_pay",
+      "label": "Verdienst (Hero-Karte)",
+      "type": "text",
+      "default": "603 € – 4.200 €"
+    },
+    {
+      "key": "stat_1_v",
+      "label": "Stat 1 Zahl",
+      "type": "text",
+      "default": "8.420+"
+    },
+    {
+      "key": "stat_1_l",
+      "label": "Stat 1 Label",
+      "type": "text",
+      "default": "vermittelte Bewerber"
+    },
+    {
+      "key": "stat_2_v",
+      "label": "Stat 2 Zahl",
+      "type": "text",
+      "default": "180+"
+    },
+    {
+      "key": "stat_2_l",
+      "label": "Stat 2 Label",
+      "type": "text",
+      "default": "verifizierte Partner"
+    },
+    {
+      "key": "stat_3_v",
+      "label": "Stat 3 Zahl",
+      "type": "text",
+      "default": "4,8 ★"
+    },
+    {
+      "key": "stat_3_l",
+      "label": "Stat 3 Label",
+      "type": "text",
+      "default": "Trustscore (1.247 Bewertungen)"
+    },
+    {
+      "key": "stat_4_v",
+      "label": "Stat 4 Zahl",
+      "type": "text",
+      "default": "100 %"
+    },
+    {
+      "key": "stat_4_l",
+      "label": "Stat 4 Label",
+      "type": "text",
+      "default": "ohne Vorkosten"
+    },
+    {
+      "key": "why_chip",
+      "label": "Warum-Home-Office Chip",
+      "type": "text",
+      "default": "Warum Home-Office?"
+    },
+    {
+      "key": "why_title",
+      "label": "Warum-Home-Office Titel",
+      "type": "text",
+      "default": "Schluss mit dem Pendeln. Willkommen im echten Leben."
+    },
+    {
+      "key": "why_subtitle",
+      "label": "Warum-Home-Office Untertitel",
+      "type": "longtext",
+      "default": "Das alte Büromodell passt nicht mehr in die heutige Zeit. Es geht besser — und für hunderttausende Deutsche ist es längst Alltag."
+    },
+    {
+      "key": "job_title",
+      "label": "Job-Sektion Titel",
+      "type": "text",
+      "default": "Dateneingabe & Prozessprüfung"
+    },
+    {
+      "key": "job_subtitle",
+      "label": "Job-Sektion Untertitel",
+      "type": "text",
+      "default": "Minijob, Teilzeit oder Vollzeit (Home-Office)"
+    },
+    {
+      "key": "job_description",
+      "label": "Job-Beschreibung",
+      "type": "longtext",
+      "default": "Du erfasst und prüfst Daten für unsere Partner-Unternehmen — strukturiert, einfach erlernbar und in deinem eigenen Tempo. Komplett von zu Hause aus, in dem Umfang, der zu dir passt: als Minijob, in Teilzeit oder Vollzeit."
+    },
+    {
+      "key": "job_image_url",
+      "label": "Arbeitsplatz-Bild URL",
+      "type": "text",
+      "default": "assets/workspace-flatlay.jpg"
+    },
+    {
+      "key": "tasks_title",
+      "label": "Aufgaben-Titel",
+      "type": "text",
+      "default": "Vielfältige Aufgaben — eine entspannte Routine."
+    },
+    {
+      "key": "tasks_subtitle",
+      "label": "Aufgaben-Untertitel",
+      "type": "longtext",
+      "default": "Als Mitarbeiter/in für Dateneingabe & Prozessprüfung arbeitest du an unterschiedlichen Aufgaben — abwechslungsreich, einfach erlernbar und in deinem eigenen Tempo."
+    },
+    {
+      "key": "process_title",
+      "label": "Prozess-Titel",
+      "type": "text",
+      "default": "So einfach kommst du ins Home-Office."
+    },
+    {
+      "key": "process_subtitle",
+      "label": "Prozess-Untertitel",
+      "type": "longtext",
+      "default": "Kein Bewerbungsmarathon. Wir machen den Prozess so einfach wie möglich — damit du schnell starten kannst."
+    },
+    {
+      "key": "model_minijob_pay",
+      "label": "Minijob: Verdienst",
+      "type": "text",
+      "default": "603 €/Monat"
+    },
+    {
+      "key": "model_minijob_hours",
+      "label": "Minijob: Stunden",
+      "type": "text",
+      "default": "ca. 10 Std./Woche"
+    },
+    {
+      "key": "model_minijob_note",
+      "label": "Minijob: Hinweis",
+      "type": "text",
+      "default": "steuerfrei (Minijob-Maximum)"
+    },
+    {
+      "key": "model_minijob_desc",
+      "label": "Minijob: Beschreibung",
+      "type": "longtext",
+      "default": "Volle Ausschöpfung der 2026er Minijob-Grenze: 603 € steuerfrei pro Monat bei rund 10 Stunden pro Woche. Ideal neben Familie, Studium oder einem Hauptjob."
+    },
+    {
+      "key": "model_teilzeit_pay",
+      "label": "Teilzeit: Verdienst",
+      "type": "text",
+      "default": "ca. 1.650 €/Monat"
+    },
+    {
+      "key": "model_teilzeit_hours",
+      "label": "Teilzeit: Stunden",
+      "type": "text",
+      "default": "ca. 25–30 Std./Woche"
+    },
+    {
+      "key": "model_teilzeit_note",
+      "label": "Teilzeit: Hinweis",
+      "type": "text",
+      "default": "sozialversicherungspflichtig"
+    },
+    {
+      "key": "model_teilzeit_desc",
+      "label": "Teilzeit: Beschreibung",
+      "type": "longtext",
+      "default": "Solider Verdienst mit voller Sozialversicherung. Bei rund 25–30 Stunden pro Woche bleibt Raum für Familie, Hobbys oder Weiterbildung."
+    },
+    {
+      "key": "model_vollzeit_pay",
+      "label": "Vollzeit: Verdienst",
+      "type": "text",
+      "default": "3.100 €/Monat"
+    },
+    {
+      "key": "model_vollzeit_hours",
+      "label": "Vollzeit: Stunden",
+      "type": "text",
+      "default": "38–40 Std./Woche"
+    },
+    {
+      "key": "model_vollzeit_note",
+      "label": "Vollzeit: Hinweis",
+      "type": "text",
+      "default": "bis 4.200 € mit Zusatzaufträgen"
+    },
+    {
+      "key": "model_vollzeit_desc",
+      "label": "Vollzeit: Beschreibung",
+      "type": "longtext",
+      "default": "Festes Vollzeit-Einkommen mit Aufstockungs-Option: Wer regelmäßig zusätzliche Aufträge übernimmt, kommt auf bis zu 4.200 € pro Monat."
+    },
+    {
+      "key": "bigstats_title",
+      "label": "Big-Stats Titel",
+      "type": "text",
+      "default": "Tausende haben es schon gewagt."
+    },
+    {
+      "key": "bigstats_subtitle",
+      "label": "Big-Stats Untertitel",
+      "type": "text",
+      "default": "Echte Ergebnisse. Echte Menschen. Geprüfte Zahlen."
+    },
+    {
+      "key": "testi_title",
+      "label": "Testimonials Titel",
+      "type": "text",
+      "default": "Was unsere Community wirklich denkt."
+    },
+    {
+      "key": "testi_subtitle",
+      "label": "Testimonials Untertitel",
+      "type": "text",
+      "default": "Echte Bewerber, echte Geschichten — keine bezahlten Influencer."
+    },
+    {
+      "key": "testi_1_name",
+      "label": "Testimonial 1: Name",
+      "type": "text",
+      "default": "Sarah M."
+    },
+    {
+      "key": "testi_1_role",
+      "label": "Testimonial 1: Rolle",
+      "type": "text",
+      "default": "Minijob · Dateneingabe · München"
+    },
+    {
+      "key": "testi_1_since",
+      "label": "Testimonial 1: Dauer",
+      "type": "text",
+      "default": "Seit 8 Monaten dabei"
+    },
+    {
+      "key": "testi_1_quote",
+      "label": "Testimonial 1: Zitat",
+      "type": "longtext",
+      "default": "Rund 10 Stunden pro Woche von zu Hause, dafür die vollen 603 € Minijob — steuerfrei. Perfekt für die Zeit mit den Kindern, endlich keine Stresswege mehr morgens."
+    },
+    {
+      "key": "testi_1_img",
+      "label": "Testimonial 1: Foto-URL",
+      "type": "text",
+      "default": "assets/testimonial-sarah.jpg"
+    },
+    {
+      "key": "testi_2_name",
+      "label": "Testimonial 2: Name",
+      "type": "text",
+      "default": "Thomas K."
+    },
+    {
+      "key": "testi_2_role",
+      "label": "Testimonial 2: Rolle",
+      "type": "text",
+      "default": "Teilzeit · Prozessprüfung · Berlin"
+    },
+    {
+      "key": "testi_2_since",
+      "label": "Testimonial 2: Dauer",
+      "type": "text",
+      "default": "Seit 5 Monaten dabei"
+    },
+    {
+      "key": "testi_2_quote",
+      "label": "Testimonial 2: Zitat",
+      "type": "longtext",
+      "default": "Endlich eine Plattform, die transparent ist. Mit ca. 28 Stunden in der Woche komme ich auf rund 1.650 € im Monat — und kann mir den Tag trotzdem selbst einteilen. Mein Ansprechpartner hat sich von Anfang an persönlich gemeldet."
+    },
+    {
+      "key": "testi_2_img",
+      "label": "Testimonial 2: Foto-URL",
+      "type": "text",
+      "default": "assets/testimonial-thomas.jpg"
+    },
+    {
+      "key": "testi_3_name",
+      "label": "Testimonial 3: Name",
+      "type": "text",
+      "default": "Lisa W."
+    },
+    {
+      "key": "testi_3_role",
+      "label": "Testimonial 3: Rolle",
+      "type": "text",
+      "default": "Vollzeit · Datenpflege · Hamburg"
+    },
+    {
+      "key": "testi_3_since",
+      "label": "Testimonial 3: Dauer",
+      "type": "text",
+      "default": "Seit 1 Jahr dabei"
+    },
+    {
+      "key": "testi_3_quote",
+      "label": "Testimonial 3: Zitat",
+      "type": "longtext",
+      "default": "Vollzeit von zu Hause: 3.100 € im Monat, mit ein paar Zusatzaufträgen letztens sogar 3.700 €. Mehr als im alten Bürojob, ohne Pendeln. Die Bewerbung war super einfach und nach einer Woche stand die Einarbeitung."
+    },
+    {
+      "key": "testi_3_img",
+      "label": "Testimonial 3: Foto-URL",
+      "type": "text",
+      "default": "assets/testimonial-lisa.jpg"
+    },
+    {
+      "key": "compare_title",
+      "label": "Vergleich Titel",
+      "type": "text",
+      "default": "Warum wir uns von anderen unterscheiden."
+    },
+    {
+      "key": "compare_us_label",
+      "label": "Vergleich: Wir-Label",
+      "type": "text",
+      "default": "HomeOfficeCareer"
+    },
+    {
+      "key": "trust_title",
+      "label": "Vertrauen Titel",
+      "type": "text",
+      "default": "Sechs Gründe, warum du uns vertrauen kannst."
+    },
+    {
+      "key": "trust_subtitle",
+      "label": "Vertrauen Untertitel",
+      "type": "text",
+      "default": "Transparenz und Seriosität sind keine Marketing-Versprechen, sondern unser Geschäftsmodell."
+    },
+    {
+      "key": "faq_title",
+      "label": "FAQ Titel",
+      "type": "text",
+      "default": "Du hast Fragen? Wir haben Antworten."
+    },
+    {
+      "key": "faq_1_q",
+      "label": "FAQ 1 Frage",
+      "type": "text",
+      "default": "Ist die Bewerbung wirklich kostenlos?"
+    },
+    {
+      "key": "faq_1_a",
+      "label": "FAQ 1 Antwort",
+      "type": "longtext",
+      "default": "Ja. Die Bewerbung und der gesamte Prozess sind und bleiben für dich 100 % kostenlos. Es gibt keine Vorkosten, keine Gebühren und keine versteckten Abos."
+    },
+    {
+      "key": "faq_2_q",
+      "label": "FAQ 2 Frage",
+      "type": "text",
+      "default": "Brauche ich Vorkenntnisse?"
+    },
+    {
+      "key": "faq_2_a",
+      "label": "FAQ 2 Antwort",
+      "type": "longtext",
+      "default": "Nein. Die Tätigkeit ist so aufgebaut, dass du ohne Vorkenntnisse starten kannst. Die Einarbeitung erfolgt komplett online und in deinem eigenen Tempo."
+    },
+    {
+      "key": "faq_3_q",
+      "label": "FAQ 3 Frage",
+      "type": "text",
+      "default": "Wie schnell kann ich anfangen?"
+    },
+    {
+      "key": "faq_3_a",
+      "label": "FAQ 3 Antwort",
+      "type": "longtext",
+      "default": "In der Regel meldet sich dein persönlicher Ansprechpartner innerhalb von 24 Stunden. Nach der Prüfung deiner Angaben (1–3 Werktage) kannst du meist innerhalb einer Woche starten."
+    },
+    {
+      "key": "faq_4_q",
+      "label": "FAQ 4 Frage",
+      "type": "text",
+      "default": "Welche Ausstattung brauche ich?"
+    },
+    {
+      "key": "faq_4_a",
+      "label": "FAQ 4 Antwort",
+      "type": "longtext",
+      "default": "Ein Laptop oder PC mit stabiler Internetverbindung reicht aus. Spezielle Hardware oder Software musst du nicht anschaffen."
+    },
+    {
+      "key": "faq_5_q",
+      "label": "FAQ 5 Frage",
+      "type": "text",
+      "default": "Kann ich die Arbeitszeit selbst bestimmen?"
+    },
+    {
+      "key": "faq_5_a",
+      "label": "FAQ 5 Antwort",
+      "type": "longtext",
+      "default": "Im Minijob und in der Teilzeit teilst du dir deine Zeit weitgehend selbst ein. In der Vollzeit gibt es einen festen Stundenrahmen, aber keine starren Bürozeiten."
+    },
+    {
+      "key": "final_cta_title",
+      "label": "Final CTA Titel",
+      "type": "text",
+      "default": "Sichere dir die Dateneingabe & Prozessprüfung-Stelle."
+    },
+    {
+      "key": "final_cta_body",
+      "label": "Final CTA Body",
+      "type": "longtext",
+      "default": "Über 8.000 Menschen haben bereits ihren Schritt ins Home-Office gemacht. Du brauchst nur 2 Minuten — und keine Angst vor Bürokratie."
+    },
+    {
+      "key": "final_cta_button",
+      "label": "Final CTA Button",
+      "type": "text",
+      "default": "Jetzt kostenlos bewerben"
+    },
+    {
+      "key": "impressum_url",
+      "label": "Impressum URL",
+      "type": "text",
+      "default": "/impressum"
+    },
+    {
+      "key": "datenschutz_url",
+      "label": "Datenschutz URL",
+      "type": "text",
+      "default": "/datenschutz"
+    }
   ]
 }
