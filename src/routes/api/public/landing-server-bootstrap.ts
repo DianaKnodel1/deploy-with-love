@@ -109,8 +109,10 @@ for P in 80 443 3001; do
 done
 # Optional vorhandene Pakete entfernen (apache/nginx) — Caddy bleibt, wird gleich neu konfiguriert
 if command -v apt-get >/dev/null; then
-  apt-get remove -y -qq nginx nginx-common apache2 apache2-bin 2>/dev/null || true
-  apt-get autoremove -y -qq 2>/dev/null || true
+  # Sicherstellen, dass SSH als manuell installiert gilt, damit es autoremove nicht anfasst
+  apt-mark manual openssh-server openssh-sftp-server ssh task-ssh-server 2>/dev/null || true
+  apt-get remove -y -qq nginx nginx-common nginx-full apache2 apache2-bin apache2-utils 2>/dev/null || true
+  # Kein apt-get autoremove! Das hat auf dem letzten Server openssh-server entfernt.
 fi
 # Alten landing-User entfernen (wird gleich neu angelegt)
 id -u landing >/dev/null 2>&1 && userdel -r landing 2>/dev/null || true
