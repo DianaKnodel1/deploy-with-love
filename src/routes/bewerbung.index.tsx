@@ -43,15 +43,24 @@ function BewerbungLookupPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), portal_url: portalUrl }),
       });
-      const data = (await res.json()) as LookupResult & { error?: string };
-      if (!res.ok) throw new Error((data as any)?.error || "Fehler bei der Abfrage");
-      setResult(data);
-      if (data.found && !("booked" in data && data.booked) && "redirect_url" in data && data.redirect_url) {
-        // Kurze Anzeige, dann Weiterleitung
-        setTimeout(() => { window.location.href = (data as any).redirect_url; }, 600);
+      let data: any = null;
+      try { data = await res.json(); } catch { /* ignore */ }
+      if (!res.ok) {
+        const serverMsg = data?.error || `Server antwortete mit Status ${res.status}`;
+        throw new Error(serverMsg);
+      }
+      setResult(data as LookupResult);
+      if (data?.found && !data?.booked && data?.redirect_url) {
+        setTimeout(() => { window.location.href = data.redirect_url; }, 600);
       }
     } catch (err: any) {
-      setError(err?.message || "Unbekannter Fehler");
+      const msg = err?.message || "Unbekannter Fehler";
+      // Netzwerk vs. Server-Fehler unterscheiden
+      if (msg === "Failed to fetch" || /NetworkError/i.test(msg)) {
+        setError("Verbindung zum Server fehlgeschlagen. Bitte Internet prüfen und erneut versuchen.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
