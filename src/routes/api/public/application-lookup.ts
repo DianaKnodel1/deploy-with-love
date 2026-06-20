@@ -30,9 +30,12 @@ export const Route = createFileRoute("/api/public/application-lookup")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
         let payload: unknown;
-        try { payload = await request.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+        try { payload = await request.json(); } catch { return json({ error: "Ungültige Anfrage (JSON konnte nicht gelesen werden)." }, 400); }
         const parsed = Schema.safeParse(payload);
-        if (!parsed.success) return json({ error: "Validation failed" }, 400);
+        if (!parsed.success) {
+          const first = parsed.error.issues[0];
+          return json({ error: `Ungültige E-Mail-Adresse: ${first?.message ?? "bitte prüfen"}` }, 400);
+        }
 
         const email = parsed.data.email.toLowerCase();
 
@@ -46,11 +49,15 @@ export const Route = createFileRoute("/api/public/application-lookup")({
 
         if (error) {
           console.error("[application-lookup]", error);
-          return json({ error: "Lookup failed" }, 500);
+          return json({ error: `Datenbank-Abfrage fehlgeschlagen: ${error.message || "unbekannter Fehler"}` }, 500);
         }
         const app = (apps ?? [])[0] as any;
         if (!app) {
-          return json({ found: false, message: "Zu dieser E-Mail liegt uns keine Bewerbung vor." });
+          return json({
+            found: false,
+            reason: "no_application",
+            message: `Zu der E-Mail-Adresse "${email}" liegt uns keine Bewerbung vor. Bitte prüfe die Schreibweise – verwende die exakte Adresse, mit der du dich beworben hast. Falls du dich noch nicht beworben hast, mach das zuerst über die Landing-Page.`,
+          });
         }
 
         // Landing-Info holen, um zu prüfen ob Calendly verfügbar ist
