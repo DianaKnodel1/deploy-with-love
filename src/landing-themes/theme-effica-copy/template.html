@@ -209,13 +209,20 @@
       <h2>{{testimonials_title}}</h2>
       <p>{{testimonials_subtitle}}</p>
     </div>
-    <div class="cards-grid testimonials">
-      <article class="tcard"><div class="quote">"</div><p>{{t1_q}}</p><div class="tfoot"><div class="avatar">{{t1_initials}}</div><div><div class="tn">{{t1_n}}</div><div class="tr">{{t1_r}}</div></div></div></article>
-      <article class="tcard"><div class="quote">"</div><p>{{t2_q}}</p><div class="tfoot"><div class="avatar">{{t2_initials}}</div><div><div class="tn">{{t2_n}}</div><div class="tr">{{t2_r}}</div></div></div></article>
-      <article class="tcard"><div class="quote">"</div><p>{{t3_q}}</p><div class="tfoot"><div class="avatar">{{t3_initials}}</div><div><div class="tn">{{t3_n}}</div><div class="tr">{{t3_r}}</div></div></div></article>
-      <article class="tcard"><div class="quote">"</div><p>{{t4_q}}</p><div class="tfoot"><div class="avatar">{{t4_initials}}</div><div><div class="tn">{{t4_n}}</div><div class="tr">{{t4_r}}</div></div></div></article>
-      <article class="tcard"><div class="quote">"</div><p>{{t5_q}}</p><div class="tfoot"><div class="avatar">{{t5_initials}}</div><div><div class="tn">{{t5_n}}</div><div class="tr">{{t5_r}}</div></div></div></article>
-      <article class="tcard"><div class="quote">"</div><p>{{t6_q}}</p><div class="tfoot"><div class="avatar">{{t6_initials}}</div><div><div class="tn">{{t6_n}}</div><div class="tr">{{t6_r}}</div></div></div></article>
+    <div class="carousel" data-carousel>
+      <button class="carousel-btn prev" data-carousel-prev aria-label="Vorherige">‹</button>
+      <div class="carousel-viewport">
+        <div class="carousel-track" data-carousel-track>
+          <article class="tcard"><div class="quote">"</div><p>{{t1_q}}</p><div class="tfoot"><div class="avatar">{{t1_initials}}</div><div><div class="tn">{{t1_n}}</div><div class="tr">{{t1_r}}</div></div></div></article>
+          <article class="tcard"><div class="quote">"</div><p>{{t2_q}}</p><div class="tfoot"><div class="avatar">{{t2_initials}}</div><div><div class="tn">{{t2_n}}</div><div class="tr">{{t2_r}}</div></div></div></article>
+          <article class="tcard"><div class="quote">"</div><p>{{t3_q}}</p><div class="tfoot"><div class="avatar">{{t3_initials}}</div><div><div class="tn">{{t3_n}}</div><div class="tr">{{t3_r}}</div></div></div></article>
+          <article class="tcard"><div class="quote">"</div><p>{{t4_q}}</p><div class="tfoot"><div class="avatar">{{t4_initials}}</div><div><div class="tn">{{t4_n}}</div><div class="tr">{{t4_r}}</div></div></div></article>
+          <article class="tcard"><div class="quote">"</div><p>{{t5_q}}</p><div class="tfoot"><div class="avatar">{{t5_initials}}</div><div><div class="tn">{{t5_n}}</div><div class="tr">{{t5_r}}</div></div></div></article>
+          <article class="tcard"><div class="quote">"</div><p>{{t6_q}}</p><div class="tfoot"><div class="avatar">{{t6_initials}}</div><div><div class="tn">{{t6_n}}</div><div class="tr">{{t6_r}}</div></div></div></article>
+        </div>
+      </div>
+      <button class="carousel-btn next" data-carousel-next aria-label="Nächste">›</button>
+      <div class="carousel-dots" data-carousel-dots></div>
     </div>
   </div>
 </section>
@@ -228,17 +235,21 @@
       <h2>{{pricing_title}}</h2>
       <p>{{pricing_subtitle}}</p>
     </div>
+    <div class="pricing-toggle" data-pricing-toggle>
+      <button class="pt-btn active" data-period="monthly">Monatlich</button>
+      <button class="pt-btn" data-period="yearly">Jährlich <span class="pt-save">-20%</span></button>
+    </div>
     <div class="pricing-grid">
       <article class="price-card">
         <h3>{{p1_n}}</h3><p class="pdesc">{{p1_d}}</p>
-        <div class="price"><div class="pamount">{{p1_price}}€</div><div class="pper">pro Monat</div></div>
+        <div class="price"><div class="pamount" data-price="{{p1_price}}">{{p1_price}}€</div><div class="pper" data-per>pro Monat</div></div>
         <ul><li>{{p1_f1}}</li><li>{{p1_f2}}</li><li>{{p1_f3}}</li><li>{{p1_f4}}</li></ul>
         <a href="#cta" class="btn btn-outline btn-full">{{p1_cta}}</a>
       </article>
       <article class="price-card highlight">
         <span class="ribbon">Empfohlen</span>
         <h3>{{p2_n}}</h3><p class="pdesc">{{p2_d}}</p>
-        <div class="price"><div class="pamount">{{p2_price}}€</div><div class="pper">pro Monat</div></div>
+        <div class="price"><div class="pamount" data-price="{{p2_price}}">{{p2_price}}€</div><div class="pper" data-per>pro Monat</div></div>
         <ul><li>{{p2_f1}}</li><li>{{p2_f2}}</li><li>{{p2_f3}}</li><li>{{p2_f4}}</li><li>{{p2_f5}}</li><li>{{p2_f6}}</li></ul>
         <a href="#cta" class="btn btn-primary btn-full">{{p2_cta}}</a>
       </article>
