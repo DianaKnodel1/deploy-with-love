@@ -262,10 +262,21 @@ curl -sS -X POST "$HEARTBEAT_URL" \
   -H 'Content-Type: application/json' \
   -d "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"agent_version\\":\\"1.0.0\\"}" || true
 
+# Sicherstellen, dass SSH weiterhin erreichbar ist (hat autoremove zuvor entfernt)
+if command -v systemctl >/dev/null 2>&1; then
+  if ! systemctl is-active ssh >/dev/null 2>&1 && ! systemctl is-active sshd >/dev/null 2>&1; then
+    echo "[bootstrap] SSH-Dienst nicht aktiv — wird neu installiert/gestartet ..."
+    apt-get update -qq
+    apt-get install -y -qq openssh-server 2>/dev/null || true
+    systemctl enable --now ssh 2>/dev/null || systemctl enable --now sshd 2>/dev/null || true
+  fi
+fi
+
 echo ""
 echo "✅ Landing-Server bereit."
 echo "   - Renderer:  systemctl status landing-server"
 echo "   - Heartbeat: systemctl status landing-heartbeat"
 echo "   - Logs:      journalctl -u landing-server -f"
+echo "   - SSH:       systemctl status ssh || systemctl status sshd"
 `;
 }
