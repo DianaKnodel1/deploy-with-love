@@ -12,313 +12,425 @@
 <meta property="og:image" content="{{seo_image}}" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="canonical" href="https://{{landing_domain}}/" />
+<link rel="icon" href="assets/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- ===== HEADER ===== -->
+<!-- ===== ANNOUNCEMENT BAR ===== -->
+<div class="announcement">
+  <div class="container announce-row">
+    <span class="announce-text">
+      <span class="sparkle">✦</span>
+      <strong>Aktuelle Stelle:</strong> {{announcement_text}}
+    </span>
+    <a href="{{application_url}}" class="announce-cta">Jetzt bewerben →</a>
+  </div>
+</div>
+
+<!-- ===== HEADER / NAV ===== -->
 <header class="site-header" id="start">
   <div class="container header-row">
     <a href="#start" class="logo">
-      <div class="logo-icon">✦</div>
-      <span class="logo-text">{{firmenname}}</span>
+      <span class="logo-icon">⌂</span>
+      <span class="logo-text"><span class="logo-accent">HomeOffice</span>Career</span>
     </a>
     <button id="burger" class="burger" aria-label="Menü öffnen">☰</button>
     <nav id="nav-links" class="nav-links">
-      <a href="#ueber-uns">Über uns</a>
-      <a href="#leistungen">Leistungen</a>
-      <a href="#referenzen">Referenzen</a>
+      <a href="#stelle">Die Stelle</a>
+      <a href="#prozess">Wie es funktioniert</a>
+      <a href="#vertrauen">Über uns</a>
       <a href="#faq">FAQ</a>
-      <a href="#kontakt">Kontakt</a>
     </nav>
     <div class="nav-cta-group">
-      <a href="#kontakt" class="btn btn-primary nav-cta">Jetzt starten →</a>
-      <a href="{{portal_url}}" class="btn btn-ghost nav-cta" target="_blank" rel="noopener">Login</a>
+      <div class="nav-mail">
+        <div class="nav-mail-hours">{{nav_email_hours}}</div>
+        <div class="nav-mail-addr">{{kontakt_email}}</div>
+      </div>
+      <a href="{{application_url}}" class="btn btn-primary nav-cta">Jetzt bewerben →</a>
     </div>
   </div>
 </header>
 
 <!-- ===== HERO ===== -->
 <section class="hero">
-  <div class="hero-bg-shapes" aria-hidden="true">
-    <div class="shape shape-1"></div>
-    <div class="shape shape-2"></div>
-    <div class="shape shape-3"></div>
-  </div>
-  <div class="container hero-inner" data-animate>
-    <span class="badge">{{hero_badge}}</span>
-    <h1>{{hero_title}}</h1>
-    <p class="hero-sub">{{hero_subtitle}}</p>
-    <div class="hero-ctas">
-      <a href="#kontakt" class="btn btn-primary btn-lg">{{hero_cta_primary}}</a>
-      <a href="#leistungen" class="btn btn-outline btn-lg">{{hero_cta_secondary}}</a>
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="container hero-inner">
+    <div class="hero-text">
+      <span class="chip">
+        <span class="pulse"></span>
+        {{hero_chip}}
+      </span>
+      <h1 class="hero-title">
+        {{hero_title_pre}} <span class="highlight-underline">{{hero_title_highlight}}</span>
+      </h1>
+      <p class="hero-sub">{{hero_subtitle}}</p>
+      <div class="hero-ctas">
+        <a href="{{application_url}}" class="btn btn-primary btn-lg">{{hero_cta_primary}} →</a>
+        <a href="#stelle" class="btn btn-ghost btn-lg">{{hero_cta_secondary}}</a>
+      </div>
+      <div class="hero-trust">
+        <span>✓ Bewerbung in 2 Min.</span>
+        <span>✓ 100 % kostenlos</span>
+        <span>✓ Kein Lebenslauf</span>
+      </div>
     </div>
-    <div class="hero-preview">
-      <div class="browser-mock">
-        <div class="browser-bar">
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          <div class="browser-url">{{landing_domain}}</div>
+    <div class="hero-visual">
+      <div class="hero-image-wrap">
+        <img src="{{hero_image_url}}" alt="Frau arbeitet entspannt im Home-Office" loading="eager" />
+      </div>
+      <div class="hero-badges">
+        <div class="hero-badge">
+          <div class="hero-badge-label">★ TRUSTSCORE</div>
+          <div class="hero-badge-value">{{hero_badge_trustscore}}<span class="muted">/5</span></div>
+          <div class="hero-badge-meta">★★★★★ <span class="muted">{{hero_badge_reviews}}</span></div>
         </div>
-        <div class="browser-body">
-          <img src="{{hero_image_url}}" alt="Website Vorschau" class="preview-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-          <div class="preview-placeholder" style="display:none">
-            <div class="placeholder-content">
-              <div class="ph-bar ph-bar--wide"></div>
-              <div class="ph-bar ph-bar--medium"></div>
-              <div class="ph-bar ph-bar--short"></div>
-              <div class="ph-grid">
-                <div class="ph-card"></div>
-                <div class="ph-card"></div>
-                <div class="ph-card"></div>
-              </div>
-            </div>
-          </div>
+        <div class="hero-badge">
+          <div class="hero-badge-label">✦ VERDIENST</div>
+          <div class="hero-badge-value-sm">{{hero_badge_pay}}</div>
+          <div class="hero-badge-meta">pro Monat · Minijob bis Vollzeit</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===== ÜBER UNS ===== -->
-<section id="ueber-uns" class="about">
-  <div class="container about-grid" data-animate>
-    <div class="about-visual">
-      <div class="about-card">
-        <div class="about-icon">🚀</div>
-        <div class="about-stat-grid">
-          <div class="about-stat"><strong>{{stat_1_num}}</strong><span>{{stat_1_lbl}}</span></div>
-          <div class="about-stat"><strong>{{stat_2_num}}</strong><span>{{stat_2_lbl}}</span></div>
-          <div class="about-stat"><strong>{{stat_3_num}}</strong><span>{{stat_3_lbl}}</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="about-content">
-      <div class="section-label">Über uns</div>
-      <h2>{{about_title}}</h2>
-      <p>{{about_body}}</p>
-      <a href="#kontakt" class="btn btn-primary">Gespräch vereinbaren →</a>
-    </div>
-  </div>
-</section>
-
-<!-- ===== LEISTUNGEN ===== -->
-<section id="leistungen" class="services">
+<!-- ===== TRUST STRIPE (Stats + Features) ===== -->
+<section class="trust-stripe">
   <div class="container">
-    <div class="section-head" data-animate>
-      <div class="section-label">Leistungen</div>
-      <h2>{{services_title}}</h2>
-      <p>{{services_subtitle}}</p>
+    <div class="stats-card">
+      <div class="stat"><div class="stat-v">{{stat_1_v}}</div><div class="stat-l">{{stat_1_l}}</div></div>
+      <div class="stat"><div class="stat-v">{{stat_2_v}}</div><div class="stat-l">{{stat_2_l}}</div></div>
+      <div class="stat"><div class="stat-v">{{stat_3_v}}</div><div class="stat-l">{{stat_3_l}}</div></div>
+      <div class="stat"><div class="stat-v">{{stat_4_v}}</div><div class="stat-l">{{stat_4_l}}</div></div>
     </div>
-    <div class="services-grid">
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_1_icon}}</div>
-        <h3>{{service_1_title}}</h3>
-        <p>{{service_1_body}}</p>
+    <div class="features-grid">
+      <div class="feature"><div class="feature-icon">✓</div><div><div class="feature-t">100 % kostenlos</div><div class="feature-d">Keine Vorkosten, keine Abos</div></div></div>
+      <div class="feature"><div class="feature-icon">🔒</div><div><div class="feature-t">DSGVO-konform</div><div class="feature-d">Deine Daten sind geschützt</div></div></div>
+      <div class="feature"><div class="feature-icon">💬</div><div><div class="feature-t">Persönlicher Kontakt</div><div class="feature-d">Per E-Mail erreichbar — feste Ansprechperson</div></div></div>
+      <div class="feature"><div class="feature-icon">⏱</div><div><div class="feature-t">Antwort in 24 Stunden</div><div class="feature-d">Keine endlosen Wartezeiten</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHY HOME OFFICE ===== -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="chip">{{why_chip}}</span>
+      <h2>{{why_title}}</h2>
+      <p>{{why_subtitle}}</p>
+    </div>
+    <div class="compare-grid">
+      <div class="compare-card compare-bad">
+        <div class="compare-label">Das alte Modell</div>
+        <h3>Klassischer 9-to-5 Bürojob</h3>
+        <ul class="compare-list">
+          <li><span class="x">✗</span>Pendeln, Stau, ständige Hetze morgens</li>
+          <li><span class="x">✗</span>Starre Bürozeiten ohne Flexibilität</li>
+          <li><span class="x">✗</span>Wenig Zeit für Familie und Hobbys</li>
+        </ul>
       </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_2_icon}}</div>
-        <h3>{{service_2_title}}</h3>
-        <p>{{service_2_body}}</p>
-      </div>
-      <div class="service-card service-card--featured" data-animate>
-        <div class="service-icon">{{service_3_icon}}</div>
-        <h3>{{service_3_title}}</h3>
-        <p>{{service_3_body}}</p>
-      </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_4_icon}}</div>
-        <h3>{{service_4_title}}</h3>
-        <p>{{service_4_body}}</p>
-      </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_5_icon}}</div>
-        <h3>{{service_5_title}}</h3>
-        <p>{{service_5_body}}</p>
-      </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_6_icon}}</div>
-        <h3>{{service_6_title}}</h3>
-        <p>{{service_6_body}}</p>
+      <div class="compare-card compare-good">
+        <div class="compare-label accent">Der bessere Weg</div>
+        <h3>Flexible Heimarbeit</h3>
+        <ul class="compare-list">
+          <li><span class="ok">✓</span>Arbeite, wo du dich wohlfühlst</li>
+          <li><span class="ok">✓</span>Teile dir deine Zeit selbst ein</li>
+          <li><span class="ok">✓</span>Mehr Lebensqualität — jeden Tag</li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===== PROZESS ===== -->
-<section class="process">
+<!-- ===== JOB DETAILS ===== -->
+<section id="stelle" class="section section-surface">
+  <div class="container job-grid">
+    <div>
+      <span class="chip">Stelle ist aktuell offen</span>
+      <h2 class="job-title">{{job_title}}</h2>
+      <div class="job-sub">{{job_subtitle}}</div>
+      <p class="job-desc">{{job_description}}</p>
+      <ul class="check-list">
+        <li><span class="ok">✓</span>Drei Modelle: Minijob (ca. 10 Std.), Teilzeit (ca. 28 Std.) oder Vollzeit (38–40 Std.)</li>
+        <li><span class="ok">✓</span>Verdienst von 603 € (Minijob) bis 4.200 €/Monat (Vollzeit + Zusatzaufträge)</li>
+        <li><span class="ok">✓</span>Kein Lebenslauf, kein Anschreiben</li>
+        <li><span class="ok">✓</span>Einarbeitung komplett online — ohne Vorkenntnisse</li>
+      </ul>
+      <div class="facts-grid">
+        <div class="fact"><div class="fact-l">Arbeitszeit</div><div class="fact-v">8–40 Std./Woche</div></div>
+        <div class="fact"><div class="fact-l">Verdienst</div><div class="fact-v">603 € – 4.200 €/Monat</div></div>
+        <div class="fact"><div class="fact-l">Arbeitsort</div><div class="fact-v">100 % Home-Office</div></div>
+        <div class="fact"><div class="fact-l">Voraussetzungen</div><div class="fact-v">Ohne Vorkenntnisse</div></div>
+      </div>
+      <div class="hero-ctas">
+        <a href="{{application_url}}" class="btn btn-primary">Jetzt bewerben →</a>
+        <a href="#prozess" class="btn btn-ghost">Stellenbeschreibung lesen</a>
+      </div>
+    </div>
+    <div class="job-image-wrap">
+      <img src="{{job_image_url}}" alt="Aufgeräumter Arbeitsplatz im Home-Office" loading="lazy" />
+    </div>
+  </div>
+</section>
+
+<!-- ===== DAILY TASKS ===== -->
+<section class="section">
   <div class="container">
-    <div class="section-head" data-animate>
-      <div class="section-label">Ablauf</div>
+    <div class="section-head">
+      <span class="chip">So sieht dein Alltag aus</span>
+      <h2>{{tasks_title}}</h2>
+      <p>{{tasks_subtitle}}</p>
+    </div>
+    <div class="tasks-grid">
+      <div class="task-card"><div class="task-num">1</div><h3>Dateneingabe</h3><p>Erfasse strukturierte Daten in moderne Systeme.</p></div>
+      <div class="task-card"><div class="task-num">2</div><h3>Prozessprüfung</h3><p>Kontrolliere Abläufe nach klaren Vorgaben.</p></div>
+      <div class="task-card"><div class="task-num">3</div><h3>Qualitätskontrolle</h3><p>Prüfe Ergebnisse auf Vollständigkeit & Korrektheit.</p></div>
+      <div class="task-card"><div class="task-num">4</div><h3>Datenpflege</h3><p>Halte Datenbanken aktuell und konsistent.</p></div>
+      <div class="task-card"><div class="task-num">5</div><h3>Freigabeprozesse</h3><p>Bestätige Vorgänge nach festgelegten Kriterien.</p></div>
+      <div class="task-card"><div class="task-num">6</div><h3>Dokumentation</h3><p>Halte Ergebnisse sauber und nachvollziehbar fest.</p></div>
+    </div>
+    <p class="tasks-note">Welche Aufgaben du übernimmst, klären wir individuell mit dir nach der Einarbeitung.</p>
+  </div>
+</section>
+
+<!-- ===== PROCESS STEPS ===== -->
+<section id="prozess" class="section section-surface">
+  <div class="container">
+    <div class="section-head">
+      <span class="chip">In 3 Schritten zum Job</span>
       <h2>{{process_title}}</h2>
+      <p>{{process_subtitle}}</p>
     </div>
-    <div class="process-steps">
-      <div class="process-step" data-animate>
-        <div class="process-num">01</div>
-        <div class="process-content">
-          <h4>{{step_1_title}}</h4>
-          <p>{{step_1_body}}</p>
-        </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-head"><div class="step-num">1</div><span class="step-dur">≈ 2 Min.</span></div>
+        <h3>Bewerbung absenden</h3>
+        <p>Fülle das kurze Formular aus — dauert nur 2 Minuten. Kein Lebenslauf, kein Anschreiben.</p>
       </div>
-      <div class="process-step" data-animate>
-        <div class="process-num">02</div>
-        <div class="process-content">
-          <h4>{{step_2_title}}</h4>
-          <p>{{step_2_body}}</p>
-        </div>
+      <div class="step-card">
+        <div class="step-head"><div class="step-num">2</div><span class="step-dur">1–3 Werktage</span></div>
+        <h3>Profil wird geprüft</h3>
+        <p>Wir prüfen deine Angaben und melden uns persönlich bei dir — meist innerhalb von 24 Stunden.</p>
       </div>
-      <div class="process-step" data-animate>
-        <div class="process-num">03</div>
-        <div class="process-content">
-          <h4>{{step_3_title}}</h4>
-          <p>{{step_3_body}}</p>
-        </div>
+      <div class="step-card">
+        <div class="step-head"><div class="step-num">3</div><span class="step-dur">Innerhalb 1 Woche</span></div>
+        <h3>Einstieg & Einarbeitung</h3>
+        <p>Du bekommst die Einarbeitungsunterlagen und kannst direkt von zu Hause starten.</p>
       </div>
-      <div class="process-step" data-animate>
-        <div class="process-num">04</div>
-        <div class="process-content">
-          <h4>{{step_4_title}}</h4>
-          <p>{{step_4_body}}</p>
-        </div>
+    </div>
+    <div class="center-cta">
+      <a href="{{application_url}}" class="btn btn-primary">Mit Schritt 1 starten →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== THREE MODELS ===== -->
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="chip">Realistisch — kein Hype</span>
+      <h2>Drei Modelle. Du wählst, was zu dir passt.</h2>
+      <p>Dieselbe Tätigkeit, drei zeitliche Umfänge — vom steuerfreien Minijob bis zur Vollzeit mit Aufstockungs-Option.</p>
+    </div>
+    <div class="models-grid">
+      <div class="model-card">
+        <div class="model-tag">Einstieg</div>
+        <h3>Minijob</h3>
+        <div class="model-hours">{{model_minijob_hours}}</div>
+        <div class="model-pay">{{model_minijob_pay}}</div>
+        <div class="model-note">{{model_minijob_note}}</div>
+        <div class="model-bar"><div class="model-fill" style="width:15%"></div></div>
+        <div class="model-bar-labels"><span>0 €</span><span>bis 4.200 € möglich</span></div>
+        <p>{{model_minijob_desc}}</p>
+        <a href="{{application_url}}" class="btn btn-ghost btn-block">Auf Minijob bewerben →</a>
       </div>
+      <div class="model-card model-card--featured">
+        <div class="model-ribbon">Beliebteste Wahl</div>
+        <div class="model-tag">Beliebt</div>
+        <h3>Teilzeit</h3>
+        <div class="model-hours">{{model_teilzeit_hours}}</div>
+        <div class="model-pay">{{model_teilzeit_pay}}</div>
+        <div class="model-note">{{model_teilzeit_note}}</div>
+        <div class="model-bar"><div class="model-fill" style="width:50%"></div></div>
+        <div class="model-bar-labels"><span>0 €</span><span>bis 4.200 € möglich</span></div>
+        <p>{{model_teilzeit_desc}}</p>
+        <a href="{{application_url}}" class="btn btn-primary btn-block">Auf Teilzeit bewerben →</a>
+      </div>
+      <div class="model-card">
+        <div class="model-tag">Maximales Einkommen</div>
+        <h3>Vollzeit</h3>
+        <div class="model-hours">{{model_vollzeit_hours}}</div>
+        <div class="model-pay">{{model_vollzeit_pay}}</div>
+        <div class="model-note">{{model_vollzeit_note}}</div>
+        <div class="model-bar"><div class="model-fill" style="width:100%"></div></div>
+        <div class="model-bar-labels"><span>0 €</span><span>bis 4.200 € möglich</span></div>
+        <p>{{model_vollzeit_desc}}</p>
+        <a href="{{application_url}}" class="btn btn-ghost btn-block">Auf Vollzeit bewerben →</a>
+      </div>
+    </div>
+    <p class="tasks-note">Alle Spannen entsprechen tatsächlichen Auszahlungen unserer aktuellen Bewerber. Das individuelle Einkommen hängt von deinem gewählten Modell und (in Vollzeit) der Bereitschaft für Zusatzaufträge ab.</p>
+  </div>
+</section>
+
+<!-- ===== BIG STATS (dark) ===== -->
+<section class="bigstats">
+  <div class="container">
+    <div class="section-head section-head--light">
+      <span class="chip chip--gold">✦ Vertrauen in Zahlen</span>
+      <h2>{{bigstats_title}}</h2>
+      <p>{{bigstats_subtitle}}</p>
+    </div>
+    <div class="bigstats-grid">
+      <div class="bigstat"><div class="bigstat-v">8.420+</div><div class="bigstat-t">Erfolgreich vermittelt</div><div class="bigstat-d">Bewerber seit 2023</div></div>
+      <div class="bigstat"><div class="bigstat-v">180+</div><div class="bigstat-t">Verifizierte Partner</div><div class="bigstat-d">Geprüfte Unternehmen</div></div>
+      <div class="bigstat"><div class="bigstat-v">4,8/5</div><div class="bigstat-t">Durchschnittsbewertung</div><div class="bigstat-d">Aus 1.247 Bewertungen</div></div>
+      <div class="bigstat"><div class="bigstat-v">96 %</div><div class="bigstat-t">Empfehlungsrate</div><div class="bigstat-d">Würden uns weiterempfehlen</div></div>
     </div>
   </div>
 </section>
 
 <!-- ===== TESTIMONIALS ===== -->
-<section id="referenzen" class="testimonials">
+<section class="section">
   <div class="container">
-    <div class="section-head" data-animate>
-      <div class="section-label">Referenzen</div>
-      <h2>{{testimonials_title}}</h2>
+    <div class="section-head">
+      <div class="rating-row">★★★★★ <strong>4,8 von 5</strong> <span class="muted">· 1.247 Bewertungen</span></div>
+      <h2>{{testi_title}}</h2>
+      <p>{{testi_subtitle}}</p>
     </div>
-    <div class="testimonials-grid">
-      <div class="testi-card" data-animate>
-        <div class="testi-stars">★★★★★</div>
-        <blockquote>{{testi_1_quote}}</blockquote>
-        <div class="testi-author">
-          <div class="testi-avatar">{{testi_1_name_initial}}</div>
+    <div class="testi-grid">
+      <figure class="testi-card">
+        <div class="stars">★★★★★</div>
+        <blockquote>“{{testi_1_quote}}”</blockquote>
+        <figcaption>
+          <img src="{{testi_1_img}}" alt="{{testi_1_name}}" loading="lazy" />
           <div>
-            <strong>{{testi_1_name}}</strong>
-            <span>{{testi_1_role}}</span>
+            <div class="testi-name">{{testi_1_name}}</div>
+            <div class="testi-role">{{testi_1_role}}</div>
+            <div class="testi-since">{{testi_1_since}}</div>
           </div>
-        </div>
-      </div>
-      <div class="testi-card testi-card--accent" data-animate>
-        <div class="testi-stars">★★★★★</div>
-        <blockquote>{{testi_2_quote}}</blockquote>
-        <div class="testi-author">
-          <div class="testi-avatar">{{testi_2_name_initial}}</div>
+        </figcaption>
+      </figure>
+      <figure class="testi-card">
+        <div class="stars">★★★★★</div>
+        <blockquote>“{{testi_2_quote}}”</blockquote>
+        <figcaption>
+          <img src="{{testi_2_img}}" alt="{{testi_2_name}}" loading="lazy" />
           <div>
-            <strong>{{testi_2_name}}</strong>
-            <span>{{testi_2_role}}</span>
+            <div class="testi-name">{{testi_2_name}}</div>
+            <div class="testi-role">{{testi_2_role}}</div>
+            <div class="testi-since">{{testi_2_since}}</div>
           </div>
-        </div>
-      </div>
-      <div class="testi-card" data-animate>
-        <div class="testi-stars">★★★★★</div>
-        <blockquote>{{testi_3_quote}}</blockquote>
-        <div class="testi-author">
-          <div class="testi-avatar">{{testi_3_name_initial}}</div>
+        </figcaption>
+      </figure>
+      <figure class="testi-card">
+        <div class="stars">★★★★★</div>
+        <blockquote>“{{testi_3_quote}}”</blockquote>
+        <figcaption>
+          <img src="{{testi_3_img}}" alt="{{testi_3_name}}" loading="lazy" />
           <div>
-            <strong>{{testi_3_name}}</strong>
-            <span>{{testi_3_role}}</span>
+            <div class="testi-name">{{testi_3_name}}</div>
+            <div class="testi-role">{{testi_3_role}}</div>
+            <div class="testi-since">{{testi_3_since}}</div>
           </div>
-        </div>
+        </figcaption>
+      </figure>
+    </div>
+    <p class="tasks-note">✓ Alle Bewertungen sind verifiziert — wir prüfen jede Bewertung manuell auf Echtheit.</p>
+  </div>
+</section>
+
+<!-- ===== COMPARISON TABLE ===== -->
+<section class="section section-surface">
+  <div class="container container-narrow">
+    <div class="section-head">
+      <span class="chip">Der Unterschied</span>
+      <h2>{{compare_title}}</h2>
+      <p>Viele Plattformen versprechen viel. Wir liefern Transparenz, geprüfte Partner und ehrliche Zahlen — ohne Vorkosten.</p>
+    </div>
+    <div class="compare-table">
+      <div class="compare-row compare-row--head">
+        <div>Kriterium</div><div class="accent">{{compare_us_label}}</div><div class="muted">Marktstandard</div>
       </div>
-      <div class="testi-card" data-animate>
-        <div class="testi-stars">★★★★★</div>
-        <blockquote>{{testi_4_quote}}</blockquote>
-        <div class="testi-author">
-          <div class="testi-avatar">{{testi_4_name_initial}}</div>
-          <div>
-            <strong>{{testi_4_name}}</strong>
-            <span>{{testi_4_role}}</span>
-          </div>
-        </div>
-      </div>
+      <div class="compare-row"><div>Vorkosten / Bewerbungsgebühren</div><div><span class="ok">✓</span> Komplett kostenlos</div><div class="muted"><span class="x">✗</span> Oft 19–99 € Gebühr</div></div>
+      <div class="compare-row alt"><div>Realistische Einkommensangaben</div><div><span class="ok">✓</span> Geprüfte Spannen</div><div class="muted"><span class="x">✗</span> Übertriebene Versprechen</div></div>
+      <div class="compare-row"><div>DSGVO-konforme Datenverarbeitung</div><div><span class="ok">✓</span> Voll DSGVO-konform</div><div class="muted"><span class="x">✗</span> Datenschutz unklar</div></div>
+      <div class="compare-row alt"><div>Persönlicher Ansprechpartner</div><div><span class="ok">✓</span> Feste E-Mail-Ansprechperson</div><div class="muted"><span class="x">✗</span> Nur Bot-Antworten</div></div>
+      <div class="compare-row"><div>Verifizierte Partner-Unternehmen</div><div><span class="ok">✓</span> Manuell geprüft</div><div class="muted"><span class="x">✗</span> Ungeprüfte Anzeigen</div></div>
+      <div class="compare-row alt"><div>Vollständiges Impressum</div><div><span class="ok">✓</span> Transparente Firmendaten</div><div class="muted"><span class="x">✗</span> Häufig versteckt</div></div>
+      <div class="compare-row"><div>Jederzeit löschbar</div><div><span class="ok">✓</span> Mit einem Klick</div><div class="muted"><span class="x">✗</span> Versteckte Bedingungen</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TRUST REASONS ===== -->
+<section id="vertrauen" class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="chip">Vertrauen verdient</span>
+      <h2>{{trust_title}}</h2>
+      <p>{{trust_subtitle}}</p>
+    </div>
+    <div class="trust-grid">
+      <div class="trust-card"><div class="trust-icon">✓</div><h3>100 % kostenlos</h3><p>Keine versteckten Gebühren oder Vorkosten. Die Bewerbung ist und bleibt frei — für immer.</p></div>
+      <div class="trust-card"><div class="trust-icon">🔒</div><h3>DSGVO-konform</h3><p>Deine Daten werden ausschließlich nach DSGVO verarbeitet und nicht an Dritte weitergegeben.</p></div>
+      <div class="trust-card"><div class="trust-icon">🛡</div><h3>Transparent</h3><p>Realistische Einkommensangaben, klare Prozesse und vollständiges Impressum — keine Versteckspiele.</p></div>
+      <div class="trust-card"><div class="trust-icon">★</div><h3>Verifizierte Partner</h3><p>Wir arbeiten ausschließlich mit manuell geprüften Unternehmen, die seriöse Angebote machen.</p></div>
+      <div class="trust-card"><div class="trust-icon">💬</div><h3>Persönlicher Kontakt</h3><p>Du erreichst uns jederzeit per E-Mail. Antwort werktags innerhalb von 24 Stunden.</p></div>
+      <div class="trust-card"><div class="trust-icon">🗑</div><h3>Jederzeit löschbar</h3><p>Mit einem Klick kannst du dein Profil und alle Daten unwiderruflich entfernen lassen.</p></div>
     </div>
   </div>
 </section>
 
 <!-- ===== FAQ ===== -->
-<section id="faq" class="faq">
-  <div class="container">
-    <div class="section-head" data-animate>
-      <div class="section-label">FAQ</div>
+<section id="faq" class="section section-surface">
+  <div class="container container-narrow">
+    <div class="section-head">
+      <span class="chip">Häufige Fragen</span>
       <h2>{{faq_title}}</h2>
+      <p>Die wichtigsten Punkte auf einen Blick. Du findest deine Frage hier nicht? Schreib uns einfach.</p>
+      <div class="hero-ctas center">
+        <a href="mailto:{{kontakt_email}}" class="btn btn-ghost">Direkt kontaktieren</a>
+      </div>
     </div>
-    <div class="faq-list" data-animate>
-      <details class="faq-item">
-        <summary>{{faq_1_question}}</summary>
-        <div class="faq-answer">{{faq_1_answer}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_2_question}}</summary>
-        <div class="faq-answer">{{faq_2_answer}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_3_question}}</summary>
-        <div class="faq-answer">{{faq_3_answer}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_4_question}}</summary>
-        <div class="faq-answer">{{faq_4_answer}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_5_question}}</summary>
-        <div class="faq-answer">{{faq_5_answer}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_6_question}}</summary>
-        <div class="faq-answer">{{faq_6_answer}}</div>
-      </details>
+    <div class="faq-list">
+      <details class="faq-item" open><summary>{{faq_1_q}}<span class="chev">▾</span></summary><div class="faq-a">{{faq_1_a}}</div></details>
+      <details class="faq-item"><summary>{{faq_2_q}}<span class="chev">▾</span></summary><div class="faq-a">{{faq_2_a}}</div></details>
+      <details class="faq-item"><summary>{{faq_3_q}}<span class="chev">▾</span></summary><div class="faq-a">{{faq_3_a}}</div></details>
+      <details class="faq-item"><summary>{{faq_4_q}}<span class="chev">▾</span></summary><div class="faq-a">{{faq_4_a}}</div></details>
+      <details class="faq-item"><summary>{{faq_5_q}}<span class="chev">▾</span></summary><div class="faq-a">{{faq_5_a}}</div></details>
     </div>
   </div>
 </section>
 
-<!-- ===== KONTAKT ===== -->
-<section id="kontakt" class="contact">
+<!-- ===== FINAL CTA ===== -->
+<section class="section">
   <div class="container">
-    <div class="contact-inner">
-      <div class="contact-info" data-animate>
-        <div class="section-label section-label--light">Kontakt</div>
-        <h2>{{cta_title}}</h2>
-        <p>{{cta_body}}</p>
-        <div class="contact-details">
-          <div class="contact-detail-item">
-            <span class="cd-icon">📞</span>
-            <span>{{kontakt_telefon}}</span>
+    <div class="final-cta">
+      <div class="final-cta-bg" aria-hidden="true"></div>
+      <div class="final-cta-grid">
+        <div>
+          <span class="chip chip--gold">✦ Letzter Schritt</span>
+          <h2>{{final_cta_title}}</h2>
+          <p>{{final_cta_body}}</p>
+          <ul class="check-list check-list--light">
+            <li><span class="ok-gold">✓</span>Bewerbung in 2 Minuten</li>
+            <li><span class="ok-gold">✓</span>DSGVO-konform</li>
+            <li><span class="ok-gold">✓</span>Komplett kostenlos</li>
+          </ul>
+          <div class="hero-ctas">
+            <a href="{{application_url}}" class="btn btn-gold btn-lg">{{final_cta_button}} →</a>
+            <a href="mailto:{{kontakt_email}}" class="btn btn-outline-white btn-lg">✉ E-Mail schreiben</a>
           </div>
-          <div class="contact-detail-item">
-            <span class="cd-icon">✉️</span>
-            <span>{{kontakt_email}}</span>
-          </div>
-          <div class="contact-detail-item">
-            <span class="cd-icon">📍</span>
-            <span>{{adresse}}</span>
-          </div>
+          <p class="final-cta-note">Keine versteckten Kosten · Jederzeit kündbar · Nur diese eine Bewerbung</p>
         </div>
-        <a href="{{portal_url}}" class="btn btn-white" target="_blank" rel="noopener">Zum Kunden-Portal →</a>
-      </div>
-      <div class="contact-form-wrap" data-animate>
-        <form id="application-form" class="lead-form">
-          <h3>Kostenlose Beratung anfragen</h3>
-          <div class="form-row">
-            <label>Vorname<input name="first_name" required placeholder="Max" /></label>
-            <label>Nachname<input name="last_name" required placeholder="Mustermann" /></label>
-          </div>
-          <label>E-Mail<input type="email" name="email" required placeholder="max@beispiel.de" /></label>
-          <label>Telefon<input name="phone" placeholder="+49 123 456789" /></label>
-          <label>Ihre Website (falls vorhanden)<input name="street" placeholder="www.beispiel.de" /></label>
-          <label>Wie können wir helfen?
-            <textarea name="message" rows="3" placeholder="Kurze Beschreibung Ihres Projekts…"></textarea>
-          </label>
-          <button type="submit" class="btn btn-primary btn-lg btn-block">Anfrage senden →</button>
-          <p id="form-status" class="status"></p>
-        </form>
+        <div class="final-cta-image">
+          <img src="{{hero_image_url}}" alt="" loading="lazy" />
+        </div>
       </div>
     </div>
   </div>
@@ -326,44 +438,20 @@
 
 <!-- ===== FOOTER ===== -->
 <footer class="site-footer">
-  <div class="container footer-grid">
+  <div class="container footer-row">
     <div class="footer-brand">
-      <div class="footer-logo">
-        <div class="logo-icon logo-icon--sm">✦</div>
-        <span>{{firmenname}}</span>
-      </div>
-      <p>{{footer_tagline}}</p>
-      <p class="footer-contact">📞 {{kontakt_telefon}}<br/>✉ {{kontakt_email}}</p>
+      <span class="logo-icon">⌂</span>
+      <strong>{{firmenname}}</strong>
+      <span class="muted">· © <span id="year">2026</span></span>
     </div>
-    <div>
-      <h5>Navigation</h5>
-      <a href="#ueber-uns">Über uns</a>
-      <a href="#leistungen">Leistungen</a>
-      <a href="#referenzen">Referenzen</a>
-      <a href="#faq">FAQ</a>
-      <a href="#kontakt">Kontakt</a>
-    </div>
-    <div>
-      <h5>Portal</h5>
-      <a href="{{portal_url}}" target="_blank" rel="noopener">Login zum Kundenportal</a>
-      <a href="#kontakt">Beratung anfragen</a>
-    </div>
-    <div>
-      <h5>Rechtliches</h5>
+    <div class="footer-links">
       <a href="{{impressum_url}}">Impressum</a>
       <a href="{{datenschutz_url}}">Datenschutz</a>
-      <p class="footer-addr">{{adresse}}</p>
+      <a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a>
     </div>
-  </div>
-  <div class="container footer-bottom">
-    <p>© <span id="year"></span> {{firmenname}} · Alle Rechte vorbehalten ·
-      <a href="{{impressum_url}}">Impressum</a> ·
-      <a href="{{datenschutz_url}}">Datenschutz</a>
-    </p>
   </div>
 </footer>
 
-<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 <script src="script.js"></script>
 </body>
 </html>
