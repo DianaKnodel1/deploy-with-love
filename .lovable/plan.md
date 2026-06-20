@@ -1,105 +1,64 @@
-# Offene Punkte – haarscharf durchgegangen
+# Plan: Echte 1:1-Themes (HomeOfficeCareer, Eilers, Effica)
 
-Stand des Codes: Broker-Grundgerüst steht (Migration-Datei, Partner-CRUD, `/bewerbung/verbinden`, Webhook-Empfang, Landing-Generator-Picker). **Das eigentliche „Drum-herum" ist noch lückenhaft.** Hier alles, was offen ist – sortiert nach Wichtigkeit.
+Ziel: Drei Themes so weit bringen, dass sie visuell, inhaltlich und interaktiv mit den Lovable-Originalen übereinstimmen.
 
-## A. Broker-Flow: harte Lücken (Code existiert, aber unvollständig)
+## Phase 1 — Assets aus den Quellprojekten ziehen
 
-1. **Migrationen noch nicht ausgeführt** (manuell)
-   - `20260618100000_calendly_integration.sql`
-   - `20260619000000_broker_flow.sql`
-   - Ohne diese laufen Webhook, Partner-CRUD und `booking_status` ins Leere.
+Pro Theme ein `assets/`-Unterordner mit allen referenzierten Bildern, hochgeladen als Lovable-CDN-Assets.
 
-2. **Calendly-Webhook → keine Bestätigungsmail**
-   `calendly-webhook.ts` setzt nur `booking_status='scheduled'`. Es wird **keine** Mail an den Bewerber ausgelöst (Plan-Punkt 7 + E). Fehlt:
-   - Trigger „broker_invitation"-Template bei `invitee.created`
-   - Reschedule-Mail bei `invitee.canceled`
+**HomeOfficeCareer** (`b7900815…`):
+- `hero-workspace.jpg`, `workspace-flatlay.jpg`
+- `testimonial-sarah.jpg`, `testimonial-thomas.jpg`, `testimonial-lisa.jpg`
+- evtl. Logo/Favicon
 
-3. **E-Mail-Template `broker_invitation` existiert nicht**
-   - Kein Seed, kein Eintrag in `email_templates`, kein Edge-Function-Aufruf.
-   - Variablen wie `{{partner_firma}}`, `{{calendly_link}}`, `{{portal_url}}` müssen verdrahtet werden.
+**Eilers** (`343eb395…`):
+- Hero-/Office-Bilder aus `src/assets/`
+- Logo, Favicon
 
-4. **Bewerber-Liste & -Detail zeigen `booking_status` nicht**
-   - Keine Badge-Spalte in `admin.applications.index.tsx`
-   - Kein Filter „Nur gebuchte / no_show / cancelled"
-   - Detail-View zeigt keinen Calendly-Event-Link, kein Termin-Datum, keine Reschedule/Cancel-URL
+**Effica** (`b45d44b8…`):
+- `hero.webp`
+- 8–11 Partner-Logos (`AOK-2021.svg`, `Commerzbank.svg`, etc.) — aktuell Hotlinks auf `effica.cc`
 
-5. **Landing-Tabelle zeigt Vermittlung nicht**
-   `admin.landing-generator.tsx` Zeile 624 kennt nur `fast` und `classic` Badges. „🤝 Vermittlung" fehlt.
+→ je `cross_project--read_project_asset` → in `/tmp` zwischenspeichern → `lovable-assets create` → `.asset.json` neben dem Theme ablegen → Slot-Defaults in `meta.json` auf die CDN-URLs umstellen.
 
-6. **FunnelPanel: Broker-Stufen fehlen komplett**
-   `landing-funnel.functions.ts` hat keine Broker-Logik. Stufen „Zwischenseite gesehen → Calendly geöffnet → gebucht" sind nicht messbar.
+## Phase 2 — Layout & Interaktionen pro Theme nachschärfen
 
-7. **Sidebar-Eintrag „Partner-Firmen"** prüfen
-   `admin.vermittlung.tsx` und `admin.partner-companies.tsx` existieren — aber im `AdminLayout` ist nur ein Eintrag verlinkt. Doppelte/fehlende Navigation klären.
+### HomeOfficeCareer
+- Hero-Bild im Theme einsetzen (statt Slot-Platzhalter)
+- Testimonials mit echten Personenbildern + Sternen
+- FAQ-Accordion verifizieren (Click-Toggle, aria-expanded)
+- Mobile-Hamburger testen
 
-8. **Tracking „Zwischenseite gesehen / Calendly geöffnet"**
-   Aktuell kein Event-Log auf `/bewerbung/verbinden`. Ohne das ist Funnel-Panel sinnlos.
+### Eilers
+- Phasen-Timeline mit Verbinder-Linien (war im Original ein vertikaler Stroke)
+- Eyebrow-Typografie + Letter-Spacing prüfen
+- Service-Tabs (Strategy/Wachstum/…) als Akkordeon
 
-## B. Setup-/Doku-Lücken (du musst es einmal tun)
+### Effica
+- **Pricing-Toggle** (Monatlich/Jährlich, -20%) als JS-Toggle hinzufügen — beide Preise als Data-Attribut
+- **Testimonial-Carousel** mit 3-Spalten-View, Prev/Next-Buttons, Dot-Pagination
+- Float-Badges (Top-Right „100 % Zufriedenheit", Bottom-Left „150+ Projekte") im Hero
+- Hover-Effekte auf Service-Cards (lift + Border-Color)
 
-9. Calendly-Account anlegen → Signing Key in `/admin/calendly` eintragen
-10. Webhook-URL in Calendly registrieren (`/api/public/calendly-webhook`)
-11. Mindestens eine Partner-Firma in `/admin/partner-firmen` anlegen
-12. End-to-End-Test: Bewerbung → Zwischenseite → Calendly → `scheduled` im Admin
+## Phase 3 — Visuelle Verifikation
 
-## C. KI-Interview „drum-herum" (alles außer der Sprach-Engine)
+1. Jedes Theme über den lokalen `scripts/serve.mjs` Preview-Renderer aufrufen
+2. Screenshot bei 1440px + 390px (Desktop & Mobile)
+3. Live-Site mit `browser--navigate_to_url` aufrufen (homeoffice-career.de, eilers-gmbh.com, effica.cc) → Screenshot
+4. Seite-an-Seite-Vergleich, Differenzen dokumentieren, nachbessern
 
-Wenn ElevenAgents später eingestöpselt wird, muss das Drum-herum bereits stehen:
+## Aufwand & Reihenfolge
 
-13. **DB-Schema `interview_sessions`**
-    - `id, application_id, partner_company_id, status (pending/in_progress/completed/failed), started_at, ended_at, duration_sec, transcript jsonb, audio_url, ai_score int, ai_summary text, ai_flags jsonb`
-    - GRANTs + RLS (admin lesen, anon nur eigenes via Token)
+Reihenfolge: **Effica → HomeOfficeCareer → Eilers** (Effica hat die meisten externen Hotlinks und das komplexeste Interaktive — schnellster sichtbarer Win).
 
-14. **Storage-Bucket `interview-audio`** (privat, signed URLs)
+Geschätzte Tool-Calls: ~80–120 (asset uploads, file writes, screenshots). In etwa 4–6 zusammenhängende Antworten.
 
-15. **Bewerber-Einstiegspunkt definieren**
-    - Variante A: Direkt nach Bewerbung absenden, vor Calendly (Vorqualifizierung)
-    - Variante B: Statt Calendly (KI = der Termin)
-    - Variante C: Nach Calendly-Termin, asynchrone Hausaufgabe
-    → **Frage an dich: Welche Variante?**
+## Was *nicht* gemacht wird
 
-16. **Bewerber-Route `/interview/[token]`**
-    - Token-basierter Zugang (keine Login-Pflicht)
-    - Mic-Permission, Vorab-Briefing-Bildschirm, Start-Button, Live-Status, Beenden-Button
-    - Platzhalter-Box wo später der `useConversation`-Hook reinkommt
+- Keine pixelperfekte CSS-Übersetzung jeder Tailwind-Klasse (~95% reicht; Restdifferenzen werden im Screenshot-Vergleich gefixt)
+- Keine Lottie-/Video-Animationen falls die Originale welche haben (Themes sind statisches HTML)
+- Keine Backend-Funktionalität (Formular-POST geht weiterhin nur an die Lovable-API der echten Originale, nicht ans Theme)
 
-17. **Admin-Konfiguration Interview-Persona**
-    - Pro Partner-Firma oder pro Landing: `interview_prompt` (Systemprompt), `interview_questions` (Leitfragen), `interview_voice_id`, `interview_duration_max_min`
-    - UI in `/admin/partner-firmen` als zusätzliche Tabs
+## Bestätigung
 
-18. **Admin-Auswertung im Bewerber-Detail**
-    - Tab „Interview" mit: Audio-Player, Transcript-Reader (Bewerber/KI farblich), KI-Zusammenfassung, Score, Red-Flags, Empfehlung „Einstellen / Ablehnen / Weiter"
-
-19. **E-Mail-Template `interview_invitation`**
-    - Mit eindeutigem Token-Link
-
-20. **Edge-Function `interview-evaluate`**
-    - Wird vom KI-Interview-Ende getriggert → schickt Transcript an LLM → speichert `ai_summary, ai_score, ai_flags`
-
-21. **Secrets-Slots vorbereiten** (noch keine Werte)
-    - `ELEVENLABS_API_KEY` als geplanter Secret-Name dokumentieren
-
-22. **Funnel-Stufe ergänzen**: „Interview gestartet → abgeschlossen → bewertet"
-
-## D. Optionales Feintuning
-
-23. Whitelabel: Zwischenseite `/bewerbung/verbinden` aktuell auf Tenant-Portal-Domain — soll sie auf Landing-Domain laufen?
-24. DSGVO-Hinweis auf Zwischenseite + Interview-Start („Gespräch wird aufgezeichnet")
-25. Limit Interview pro Bewerber (genau 1 Versuch?)
-
----
-
-## Vorschlag Reihenfolge
-
-**Block 1 – Broker fertig machen** (Punkte 1–8): erst hier sauber zu Ende.
-**Block 2 – Setup** (9–12): du machst es manuell, ich liefere Klick-Anleitung.
-**Block 3 – Interview-Schale** (13–22): komplettes Drumherum mit Platzhalter für die Voice-Engine.
-**Block 4 – ElevenAgents einstecken** (zum Schluss, separat).
-
----
-
-**Bitte beantworte vor Implementierung:**
-
-- (a) Soll ich **Block 1 komplett** in einem Rutsch fertigbauen oder die Punkte einzeln?
-- (b) Welche **Interview-Variante (A/B/C in Punkt 15)** willst du?
-- (c) Punkt 23: Zwischenseite auf Landing-Domain oder Portal-Domain belassen?
+OK so? Falls ja, fange ich mit **Effica** an: Hero-Bild + 8 Partner-Logos hochladen, Pricing-Toggle + Carousel JS, dann Screenshot-Vergleich gegen `effica.cc`.
