@@ -3,6 +3,7 @@ import { z } from "zod";
 import JSZip from "jszip";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getTheme } from "./landing-themes";
+import { THEME_ASSETS } from "./theme-assets.generated";
 
 const HexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Ungültige Hex-Farbe");
 
@@ -168,6 +169,17 @@ export const generateLandingZip = createServerFn({ method: "POST" })
         `3. SSL-Zertifikat (Let's Encrypt) für die Domain einrichten\n\n` +
         `Bewerbungen werden an: ${data.branding.api_endpoint} gesendet.\n`,
     );
+
+    // Theme-eigene statische Assets (Hero-Bilder, Testimonials, Partner-Logos)
+    // aus src/landing-themes/<id>/assets/ in die ZIP packen.
+    const themeAssets = THEME_ASSETS[data.themeId] ?? {};
+    for (const [name, b64] of Object.entries(themeAssets)) {
+      // Base64 → Uint8Array (Worker-kompatibel)
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      zip.folder("assets")!.file(name, bytes);
+    }
 
     if (data.logoDataUrl) {
       const parsed = parseDataUrl(data.logoDataUrl);

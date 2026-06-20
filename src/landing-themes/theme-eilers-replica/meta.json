@@ -3,98 +3,515 @@
   "name": "Eilers GmbH — Unternehmensberatung Kiel",
   "description": "1:1-Replik der Eilers-Beratungs-Landing: Playfair Display (Serif) + Inter, warmes Beige, Navy-Primary, Terracotta-Akzent. Editorial-Layout mit 7 Sektionen — Hero mit kursivem Highlight, Überblick-Band (dunkel), Haltung + 3 Prinzipien, 4 Beratungsphasen (dunkel), 5 Leistungen mit Detail, 10 Branchen, vertrauliches Erstgespräch-CTA.",
   "slots": [
-    { "key": "hero_eyebrow", "label": "Hero Eyebrow", "type": "text", "default": "Unternehmensberatung — Kiel, seit 2023" },
-    { "key": "hero_title_l1", "label": "Hero-Titel Zeile 1", "type": "text", "default": "Entscheidungen," },
-    { "key": "hero_title_italic", "label": "Hero-Titel kursiver Teil", "type": "text", "default": "die Bestand haben." },
-    { "key": "hero_body", "label": "Hero-Body", "type": "longtext", "default": "Die Eilers GmbH begleitet Unternehmen bei betriebswirtschaftlichen und strategischen Weichenstellungen — von der Strategie über Organisation und Prozesse bis zur Umsetzung im Alltag. Eigentümergeführt aus Kiel." },
-    { "key": "hero_cta_primary", "label": "Hero CTA primär", "type": "text", "default": "Erstgespräch vereinbaren" },
-    { "key": "hero_cta_secondary", "label": "Hero CTA sekundär", "type": "text", "default": "Zum Blog" },
-    { "key": "hero_image_url", "label": "Hero-Bild URL", "type": "text", "default": "https://images.unsplash.com/photo-1554469384-e58fac16e23a?w=1600&q=80" },
-    { "key": "hero_card_eyebrow", "label": "Hero-Karte Eyebrow", "type": "text", "default": "Schwerpunkt" },
-    { "key": "hero_card_text", "label": "Hero-Karte Text", "type": "text", "default": "Strategie, Organisation und Umsetzung — aus einer Hand" },
-    { "key": "hero_card_left", "label": "Hero-Karte Footer links", "type": "text", "default": "Eigentümergeführt" },
-    { "key": "hero_card_right", "label": "Hero-Karte Footer rechts", "type": "text", "default": "Kiel" },
-    { "key": "hero_pill", "label": "Hero Pill (unten links)", "type": "text", "default": "SITZ KIEL" },
-
-    { "key": "overview_eyebrow", "label": "Überblick Eyebrow", "type": "text", "default": "Eilers GmbH · im Überblick" },
-    { "key": "overview_1_v", "label": "Überblick 1 Wert", "type": "text", "default": "2023" },
-    { "key": "overview_1_l", "label": "Überblick 1 Label", "type": "text", "default": "Gegründet" },
-    { "key": "overview_2_v", "label": "Überblick 2 Wert", "type": "text", "default": "Kiel" },
-    { "key": "overview_2_l", "label": "Überblick 2 Label", "type": "text", "default": "Sitz der Gesellschaft" },
-    { "key": "overview_3_v", "label": "Überblick 3 Wert", "type": "text", "default": "100.000 €" },
-    { "key": "overview_3_l", "label": "Überblick 3 Label", "type": "text", "default": "Stammkapital" },
-    { "key": "overview_4_v", "label": "Überblick 4 Wert", "type": "text", "default": "HRB 25516 KI" },
-    { "key": "overview_4_l", "label": "Überblick 4 Label", "type": "text", "default": "Amtsgericht Kiel" },
-
-    { "key": "haltung_eyebrow", "label": "Haltung Eyebrow", "type": "text", "default": "Unsere Haltung" },
-    { "key": "haltung_title_pre", "label": "Haltung Titel (vor kursiv)", "type": "text", "default": "Beratung ist" },
-    { "key": "haltung_title_italic", "label": "Haltung Titel (kursiv)", "type": "text", "default": "kein Produkt." },
-    { "key": "haltung_p1", "label": "Haltung Absatz 1", "type": "longtext", "default": "Wir glauben nicht an Standard-Frameworks oder austauschbare PowerPoint-Decks. Jedes Mandat beginnt mit einer ergebnisoffenen Diagnose — und endet erst, wenn die Entscheidung umgesetzt ist." },
-    { "key": "haltung_p2", "label": "Haltung Absatz 2", "type": "longtext", "default": "Als eigentümergeführte Beratung tragen wir persönliche Verantwortung für jedes Projekt — von der ersten Hypothese bis zur Operationalisierung beim Mandanten. Kurze Wege, klare Ansprache, keine anonymen Großstrukturen." },
-
-    { "key": "principle_1_title", "label": "Prinzip 1 Titel", "type": "text", "default": "Zuhören vor Empfehlen" },
-    { "key": "principle_1_body", "label": "Prinzip 1 Body", "type": "text", "default": "Wir beginnen mit Fragen, nicht mit Antworten." },
-    { "key": "principle_2_title", "label": "Prinzip 2 Titel", "type": "text", "default": "Unternehmerisch denken" },
-    { "key": "principle_2_body", "label": "Prinzip 2 Body", "type": "text", "default": "Wir handeln, als wäre es unser eigenes Unternehmen." },
-    { "key": "principle_3_title", "label": "Prinzip 3 Titel", "type": "text", "default": "Umsetzung als Maßstab" },
-    { "key": "principle_3_body", "label": "Prinzip 3 Body", "type": "text", "default": "Erfolg messen wir an dem, was im Alltag ankommt." },
-
-    { "key": "phasen_eyebrow", "label": "Phasen Eyebrow", "type": "text", "default": "Wie wir arbeiten" },
-    { "key": "phasen_title_pre", "label": "Phasen Titel Zeile 1", "type": "text", "default": "Vier Phasen," },
-    { "key": "phasen_title_italic", "label": "Phasen Titel kursiv", "type": "text", "default": "eine Linie." },
-    { "key": "phasen_intro", "label": "Phasen Intro-Text", "type": "longtext", "default": "Kein Standardablauf, aber ein klarer Rahmen. So sehen unsere Mandate fast immer aus — mit Anpassungen, die zur Situation passen." },
-    { "key": "phase_1_dauer", "label": "Phase 1 Dauer", "type": "text", "default": "2–4 Wochen" },
-    { "key": "phase_1_title", "label": "Phase 1 Titel", "type": "text", "default": "Ergebnisoffen verstehen" },
-    { "key": "phase_1_body", "label": "Phase 1 Body", "type": "longtext", "default": "Zwei bis vier Wochen strukturierte Bestandsaufnahme. Wir hören zu, prüfen Hypothesen, sprechen mit Schlüsselpersonen — bevor wir empfehlen." },
-    { "key": "phase_2_dauer", "label": "Phase 2 Dauer", "type": "text", "default": "4–8 Wochen" },
-    { "key": "phase_2_title", "label": "Phase 2 Titel", "type": "text", "default": "Optionen schärfen" },
-    { "key": "phase_2_body", "label": "Phase 2 Body", "type": "longtext", "default": "Entscheidungsoptionen mit klarer Faktenbasis. Belastbare Antworten auf die wenigen wirklich wichtigen Fragen — keine 90-Seiten-Decks." },
-    { "key": "phase_3_dauer", "label": "Phase 3 Dauer", "type": "text", "default": "3–9 Monate" },
-    { "key": "phase_3_title", "label": "Phase 3 Titel", "type": "text", "default": "Im Alltag verankern" },
-    { "key": "phase_3_body", "label": "Phase 3 Body", "type": "longtext", "default": "Wir bleiben dran, bis die Entscheidung im operativen Geschäft angekommen ist. Mit klaren Arbeitspaketen, festen Meilensteinen und Sparring auf Geschäftsleitungsebene." },
-    { "key": "phase_4_dauer", "label": "Phase 4 Dauer", "type": "text", "default": "6–12 Monate" },
-    { "key": "phase_4_title", "label": "Phase 4 Titel", "type": "text", "default": "Nachgefragt, nicht nachgereicht" },
-    { "key": "phase_4_body", "label": "Phase 4 Body", "type": "longtext", "default": "Sechs und zwölf Monate nach Mandatsabschluss melden wir uns. Was hat sich gehalten? Was nicht? Diese Reviews fließen in jedes Folgemandat ein." },
-
-    { "key": "leistungen_eyebrow", "label": "Leistungen Eyebrow", "type": "text", "default": "Leistungen" },
-    { "key": "leistungen_title_pre", "label": "Leistungen Titel Zeile 1", "type": "text", "default": "Fünf Disziplinen." },
-    { "key": "leistungen_title_italic", "label": "Leistungen Titel kursiv", "type": "text", "default": "Ein integriertes Beratungsverständnis." },
-    { "key": "service_1_name", "label": "Service 1 Name", "type": "text", "default": "Strategieentwicklung" },
-    { "key": "service_2_name", "label": "Service 2 Name", "type": "text", "default": "Wachstum & Partnerschaften" },
-    { "key": "service_3_name", "label": "Service 3 Name", "type": "text", "default": "Digitale Transformation" },
-    { "key": "service_4_name", "label": "Service 4 Name", "type": "text", "default": "Operative Exzellenz" },
-    { "key": "service_5_name", "label": "Service 5 Name", "type": "text", "default": "Veränderungsbegleitung" },
-    { "key": "service_detail_tag", "label": "Service Detail Tag", "type": "text", "default": "Strategy" },
-    { "key": "service_detail_title", "label": "Service Detail Titel", "type": "text", "default": "Strategieentwicklung" },
-    { "key": "service_detail_body", "label": "Service Detail Body", "type": "longtext", "default": "Von der Vision zur belastbaren Roadmap. Wir entwickeln Wachstums-, Portfolio- und Wettbewerbsstrategien für Familienunternehmen und mittelständische Konzerne." },
-    { "key": "service_detail_p1", "label": "Service Detail Punkt 1", "type": "text", "default": "Wettbewerbs- und Marktanalysen" },
-    { "key": "service_detail_p2", "label": "Service Detail Punkt 2", "type": "text", "default": "Portfolio-Strategie & Geschäftsmodell-Innovation" },
-    { "key": "service_detail_p3", "label": "Service Detail Punkt 3", "type": "text", "default": "Internationalisierung" },
-    { "key": "service_detail_p4", "label": "Service Detail Punkt 4", "type": "text", "default": "Strategie-Operationalisierung" },
-    { "key": "service_detail_image", "label": "Service Detail Bild URL", "type": "text", "default": "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=1200&q=80" },
-
-    { "key": "branchen_eyebrow", "label": "Branchen Eyebrow", "type": "text", "default": "Branchen" },
-    { "key": "branchen_title_pre", "label": "Branchen Titel (vor kursiv)", "type": "text", "default": "Tiefe Branchen­expertise" },
-    { "key": "branchen_title_italic", "label": "Branchen Titel kursiv", "type": "text", "default": "als Standard." },
-    { "key": "branchen_intro", "label": "Branchen Intro", "type": "longtext", "default": "Wir arbeiten branchenübergreifend und bringen betriebswirtschaftliche Methodik dorthin, wo Entscheidungen anstehen — unabhängig von der Größe des Hauses." },
-    { "key": "branche_1", "label": "Branche 1", "type": "text", "default": "Maschinen- und Anlagenbau" },
-    { "key": "branche_2", "label": "Branche 2", "type": "text", "default": "Automotive & Mobility" },
-    { "key": "branche_3", "label": "Branche 3", "type": "text", "default": "Energie & Versorgung" },
-    { "key": "branche_4", "label": "Branche 4", "type": "text", "default": "Chemie & Werkstoffe" },
-    { "key": "branche_5", "label": "Branche 5", "type": "text", "default": "Konsumgüter & Handel" },
-    { "key": "branche_6", "label": "Branche 6", "type": "text", "default": "Finanzdienstleistungen" },
-    { "key": "branche_7", "label": "Branche 7", "type": "text", "default": "Healthcare & Life Sciences" },
-    { "key": "branche_8", "label": "Branche 8", "type": "text", "default": "Bau & Immobilien" },
-    { "key": "branche_9", "label": "Branche 9", "type": "text", "default": "Logistik & Transport" },
-    { "key": "branche_10", "label": "Branche 10", "type": "text", "default": "Technologie & Software" },
-
-    { "key": "cta_eyebrow", "label": "CTA Eyebrow", "type": "text", "default": "Erstgespräch" },
-    { "key": "cta_title_pre", "label": "CTA Titel Zeile 1", "type": "text", "default": "Ein vertrauliches Gespräch" },
-    { "key": "cta_title_italic", "label": "CTA Titel kursiv", "type": "text", "default": "ist der Anfang." },
-    { "key": "cta_body", "label": "CTA Body", "type": "longtext", "default": "45 Minuten, persönlich, unverbindlich. Sie erhalten eine erste fundierte Einschätzung — wir entscheiden gemeinsam, ob eine Zusammenarbeit Sinn ergibt." },
-    { "key": "cta_button", "label": "CTA Button", "type": "text", "default": "Erstgespräch vereinbaren" },
-
-    { "key": "impressum_url", "label": "Impressum URL", "type": "text", "default": "/impressum" },
-    { "key": "datenschutz_url", "label": "Datenschutz URL", "type": "text", "default": "/datenschutz" }
+    {
+      "key": "hero_eyebrow",
+      "label": "Hero Eyebrow",
+      "type": "text",
+      "default": "Unternehmensberatung — Kiel, seit 2023"
+    },
+    {
+      "key": "hero_title_l1",
+      "label": "Hero-Titel Zeile 1",
+      "type": "text",
+      "default": "Entscheidungen,"
+    },
+    {
+      "key": "hero_title_italic",
+      "label": "Hero-Titel kursiver Teil",
+      "type": "text",
+      "default": "die Bestand haben."
+    },
+    {
+      "key": "hero_body",
+      "label": "Hero-Body",
+      "type": "longtext",
+      "default": "Die Eilers GmbH begleitet Unternehmen bei betriebswirtschaftlichen und strategischen Weichenstellungen — von der Strategie über Organisation und Prozesse bis zur Umsetzung im Alltag. Eigentümergeführt aus Kiel."
+    },
+    {
+      "key": "hero_cta_primary",
+      "label": "Hero CTA primär",
+      "type": "text",
+      "default": "Erstgespräch vereinbaren"
+    },
+    {
+      "key": "hero_cta_secondary",
+      "label": "Hero CTA sekundär",
+      "type": "text",
+      "default": "Zum Blog"
+    },
+    {
+      "key": "hero_image_url",
+      "label": "Hero-Bild URL",
+      "type": "text",
+      "default": "assets/hero-office.jpg"
+    },
+    {
+      "key": "hero_card_eyebrow",
+      "label": "Hero-Karte Eyebrow",
+      "type": "text",
+      "default": "Schwerpunkt"
+    },
+    {
+      "key": "hero_card_text",
+      "label": "Hero-Karte Text",
+      "type": "text",
+      "default": "Strategie, Organisation und Umsetzung — aus einer Hand"
+    },
+    {
+      "key": "hero_card_left",
+      "label": "Hero-Karte Footer links",
+      "type": "text",
+      "default": "Eigentümergeführt"
+    },
+    {
+      "key": "hero_card_right",
+      "label": "Hero-Karte Footer rechts",
+      "type": "text",
+      "default": "Kiel"
+    },
+    {
+      "key": "hero_pill",
+      "label": "Hero Pill (unten links)",
+      "type": "text",
+      "default": "SITZ KIEL"
+    },
+    {
+      "key": "overview_eyebrow",
+      "label": "Überblick Eyebrow",
+      "type": "text",
+      "default": "Eilers GmbH · im Überblick"
+    },
+    {
+      "key": "overview_1_v",
+      "label": "Überblick 1 Wert",
+      "type": "text",
+      "default": "2023"
+    },
+    {
+      "key": "overview_1_l",
+      "label": "Überblick 1 Label",
+      "type": "text",
+      "default": "Gegründet"
+    },
+    {
+      "key": "overview_2_v",
+      "label": "Überblick 2 Wert",
+      "type": "text",
+      "default": "Kiel"
+    },
+    {
+      "key": "overview_2_l",
+      "label": "Überblick 2 Label",
+      "type": "text",
+      "default": "Sitz der Gesellschaft"
+    },
+    {
+      "key": "overview_3_v",
+      "label": "Überblick 3 Wert",
+      "type": "text",
+      "default": "100.000 €"
+    },
+    {
+      "key": "overview_3_l",
+      "label": "Überblick 3 Label",
+      "type": "text",
+      "default": "Stammkapital"
+    },
+    {
+      "key": "overview_4_v",
+      "label": "Überblick 4 Wert",
+      "type": "text",
+      "default": "HRB 25516 KI"
+    },
+    {
+      "key": "overview_4_l",
+      "label": "Überblick 4 Label",
+      "type": "text",
+      "default": "Amtsgericht Kiel"
+    },
+    {
+      "key": "haltung_eyebrow",
+      "label": "Haltung Eyebrow",
+      "type": "text",
+      "default": "Unsere Haltung"
+    },
+    {
+      "key": "haltung_title_pre",
+      "label": "Haltung Titel (vor kursiv)",
+      "type": "text",
+      "default": "Beratung ist"
+    },
+    {
+      "key": "haltung_title_italic",
+      "label": "Haltung Titel (kursiv)",
+      "type": "text",
+      "default": "kein Produkt."
+    },
+    {
+      "key": "haltung_p1",
+      "label": "Haltung Absatz 1",
+      "type": "longtext",
+      "default": "Wir glauben nicht an Standard-Frameworks oder austauschbare PowerPoint-Decks. Jedes Mandat beginnt mit einer ergebnisoffenen Diagnose — und endet erst, wenn die Entscheidung umgesetzt ist."
+    },
+    {
+      "key": "haltung_p2",
+      "label": "Haltung Absatz 2",
+      "type": "longtext",
+      "default": "Als eigentümergeführte Beratung tragen wir persönliche Verantwortung für jedes Projekt — von der ersten Hypothese bis zur Operationalisierung beim Mandanten. Kurze Wege, klare Ansprache, keine anonymen Großstrukturen."
+    },
+    {
+      "key": "principle_1_title",
+      "label": "Prinzip 1 Titel",
+      "type": "text",
+      "default": "Zuhören vor Empfehlen"
+    },
+    {
+      "key": "principle_1_body",
+      "label": "Prinzip 1 Body",
+      "type": "text",
+      "default": "Wir beginnen mit Fragen, nicht mit Antworten."
+    },
+    {
+      "key": "principle_2_title",
+      "label": "Prinzip 2 Titel",
+      "type": "text",
+      "default": "Unternehmerisch denken"
+    },
+    {
+      "key": "principle_2_body",
+      "label": "Prinzip 2 Body",
+      "type": "text",
+      "default": "Wir handeln, als wäre es unser eigenes Unternehmen."
+    },
+    {
+      "key": "principle_3_title",
+      "label": "Prinzip 3 Titel",
+      "type": "text",
+      "default": "Umsetzung als Maßstab"
+    },
+    {
+      "key": "principle_3_body",
+      "label": "Prinzip 3 Body",
+      "type": "text",
+      "default": "Erfolg messen wir an dem, was im Alltag ankommt."
+    },
+    {
+      "key": "phasen_eyebrow",
+      "label": "Phasen Eyebrow",
+      "type": "text",
+      "default": "Wie wir arbeiten"
+    },
+    {
+      "key": "phasen_title_pre",
+      "label": "Phasen Titel Zeile 1",
+      "type": "text",
+      "default": "Vier Phasen,"
+    },
+    {
+      "key": "phasen_title_italic",
+      "label": "Phasen Titel kursiv",
+      "type": "text",
+      "default": "eine Linie."
+    },
+    {
+      "key": "phasen_intro",
+      "label": "Phasen Intro-Text",
+      "type": "longtext",
+      "default": "Kein Standardablauf, aber ein klarer Rahmen. So sehen unsere Mandate fast immer aus — mit Anpassungen, die zur Situation passen."
+    },
+    {
+      "key": "phase_1_dauer",
+      "label": "Phase 1 Dauer",
+      "type": "text",
+      "default": "2–4 Wochen"
+    },
+    {
+      "key": "phase_1_title",
+      "label": "Phase 1 Titel",
+      "type": "text",
+      "default": "Ergebnisoffen verstehen"
+    },
+    {
+      "key": "phase_1_body",
+      "label": "Phase 1 Body",
+      "type": "longtext",
+      "default": "Zwei bis vier Wochen strukturierte Bestandsaufnahme. Wir hören zu, prüfen Hypothesen, sprechen mit Schlüsselpersonen — bevor wir empfehlen."
+    },
+    {
+      "key": "phase_2_dauer",
+      "label": "Phase 2 Dauer",
+      "type": "text",
+      "default": "4–8 Wochen"
+    },
+    {
+      "key": "phase_2_title",
+      "label": "Phase 2 Titel",
+      "type": "text",
+      "default": "Optionen schärfen"
+    },
+    {
+      "key": "phase_2_body",
+      "label": "Phase 2 Body",
+      "type": "longtext",
+      "default": "Entscheidungsoptionen mit klarer Faktenbasis. Belastbare Antworten auf die wenigen wirklich wichtigen Fragen — keine 90-Seiten-Decks."
+    },
+    {
+      "key": "phase_3_dauer",
+      "label": "Phase 3 Dauer",
+      "type": "text",
+      "default": "3–9 Monate"
+    },
+    {
+      "key": "phase_3_title",
+      "label": "Phase 3 Titel",
+      "type": "text",
+      "default": "Im Alltag verankern"
+    },
+    {
+      "key": "phase_3_body",
+      "label": "Phase 3 Body",
+      "type": "longtext",
+      "default": "Wir bleiben dran, bis die Entscheidung im operativen Geschäft angekommen ist. Mit klaren Arbeitspaketen, festen Meilensteinen und Sparring auf Geschäftsleitungsebene."
+    },
+    {
+      "key": "phase_4_dauer",
+      "label": "Phase 4 Dauer",
+      "type": "text",
+      "default": "6–12 Monate"
+    },
+    {
+      "key": "phase_4_title",
+      "label": "Phase 4 Titel",
+      "type": "text",
+      "default": "Nachgefragt, nicht nachgereicht"
+    },
+    {
+      "key": "phase_4_body",
+      "label": "Phase 4 Body",
+      "type": "longtext",
+      "default": "Sechs und zwölf Monate nach Mandatsabschluss melden wir uns. Was hat sich gehalten? Was nicht? Diese Reviews fließen in jedes Folgemandat ein."
+    },
+    {
+      "key": "leistungen_eyebrow",
+      "label": "Leistungen Eyebrow",
+      "type": "text",
+      "default": "Leistungen"
+    },
+    {
+      "key": "leistungen_title_pre",
+      "label": "Leistungen Titel Zeile 1",
+      "type": "text",
+      "default": "Fünf Disziplinen."
+    },
+    {
+      "key": "leistungen_title_italic",
+      "label": "Leistungen Titel kursiv",
+      "type": "text",
+      "default": "Ein integriertes Beratungsverständnis."
+    },
+    {
+      "key": "service_1_name",
+      "label": "Service 1 Name",
+      "type": "text",
+      "default": "Strategieentwicklung"
+    },
+    {
+      "key": "service_2_name",
+      "label": "Service 2 Name",
+      "type": "text",
+      "default": "Wachstum & Partnerschaften"
+    },
+    {
+      "key": "service_3_name",
+      "label": "Service 3 Name",
+      "type": "text",
+      "default": "Digitale Transformation"
+    },
+    {
+      "key": "service_4_name",
+      "label": "Service 4 Name",
+      "type": "text",
+      "default": "Operative Exzellenz"
+    },
+    {
+      "key": "service_5_name",
+      "label": "Service 5 Name",
+      "type": "text",
+      "default": "Veränderungsbegleitung"
+    },
+    {
+      "key": "service_detail_tag",
+      "label": "Service Detail Tag",
+      "type": "text",
+      "default": "Strategy"
+    },
+    {
+      "key": "service_detail_title",
+      "label": "Service Detail Titel",
+      "type": "text",
+      "default": "Strategieentwicklung"
+    },
+    {
+      "key": "service_detail_body",
+      "label": "Service Detail Body",
+      "type": "longtext",
+      "default": "Von der Vision zur belastbaren Roadmap. Wir entwickeln Wachstums-, Portfolio- und Wettbewerbsstrategien für Familienunternehmen und mittelständische Konzerne."
+    },
+    {
+      "key": "service_detail_p1",
+      "label": "Service Detail Punkt 1",
+      "type": "text",
+      "default": "Wettbewerbs- und Marktanalysen"
+    },
+    {
+      "key": "service_detail_p2",
+      "label": "Service Detail Punkt 2",
+      "type": "text",
+      "default": "Portfolio-Strategie & Geschäftsmodell-Innovation"
+    },
+    {
+      "key": "service_detail_p3",
+      "label": "Service Detail Punkt 3",
+      "type": "text",
+      "default": "Internationalisierung"
+    },
+    {
+      "key": "service_detail_p4",
+      "label": "Service Detail Punkt 4",
+      "type": "text",
+      "default": "Strategie-Operationalisierung"
+    },
+    {
+      "key": "service_detail_image",
+      "label": "Service Detail Bild URL",
+      "type": "text",
+      "default": "assets/strategy-meeting.jpg"
+    },
+    {
+      "key": "branchen_eyebrow",
+      "label": "Branchen Eyebrow",
+      "type": "text",
+      "default": "Branchen"
+    },
+    {
+      "key": "branchen_title_pre",
+      "label": "Branchen Titel (vor kursiv)",
+      "type": "text",
+      "default": "Tiefe Branchen­expertise"
+    },
+    {
+      "key": "branchen_title_italic",
+      "label": "Branchen Titel kursiv",
+      "type": "text",
+      "default": "als Standard."
+    },
+    {
+      "key": "branchen_intro",
+      "label": "Branchen Intro",
+      "type": "longtext",
+      "default": "Wir arbeiten branchenübergreifend und bringen betriebswirtschaftliche Methodik dorthin, wo Entscheidungen anstehen — unabhängig von der Größe des Hauses."
+    },
+    {
+      "key": "branche_1",
+      "label": "Branche 1",
+      "type": "text",
+      "default": "Maschinen- und Anlagenbau"
+    },
+    {
+      "key": "branche_2",
+      "label": "Branche 2",
+      "type": "text",
+      "default": "Automotive & Mobility"
+    },
+    {
+      "key": "branche_3",
+      "label": "Branche 3",
+      "type": "text",
+      "default": "Energie & Versorgung"
+    },
+    {
+      "key": "branche_4",
+      "label": "Branche 4",
+      "type": "text",
+      "default": "Chemie & Werkstoffe"
+    },
+    {
+      "key": "branche_5",
+      "label": "Branche 5",
+      "type": "text",
+      "default": "Konsumgüter & Handel"
+    },
+    {
+      "key": "branche_6",
+      "label": "Branche 6",
+      "type": "text",
+      "default": "Finanzdienstleistungen"
+    },
+    {
+      "key": "branche_7",
+      "label": "Branche 7",
+      "type": "text",
+      "default": "Healthcare & Life Sciences"
+    },
+    {
+      "key": "branche_8",
+      "label": "Branche 8",
+      "type": "text",
+      "default": "Bau & Immobilien"
+    },
+    {
+      "key": "branche_9",
+      "label": "Branche 9",
+      "type": "text",
+      "default": "Logistik & Transport"
+    },
+    {
+      "key": "branche_10",
+      "label": "Branche 10",
+      "type": "text",
+      "default": "Technologie & Software"
+    },
+    {
+      "key": "cta_eyebrow",
+      "label": "CTA Eyebrow",
+      "type": "text",
+      "default": "Erstgespräch"
+    },
+    {
+      "key": "cta_title_pre",
+      "label": "CTA Titel Zeile 1",
+      "type": "text",
+      "default": "Ein vertrauliches Gespräch"
+    },
+    {
+      "key": "cta_title_italic",
+      "label": "CTA Titel kursiv",
+      "type": "text",
+      "default": "ist der Anfang."
+    },
+    {
+      "key": "cta_body",
+      "label": "CTA Body",
+      "type": "longtext",
+      "default": "45 Minuten, persönlich, unverbindlich. Sie erhalten eine erste fundierte Einschätzung — wir entscheiden gemeinsam, ob eine Zusammenarbeit Sinn ergibt."
+    },
+    {
+      "key": "cta_button",
+      "label": "CTA Button",
+      "type": "text",
+      "default": "Erstgespräch vereinbaren"
+    },
+    {
+      "key": "impressum_url",
+      "label": "Impressum URL",
+      "type": "text",
+      "default": "/impressum"
+    },
+    {
+      "key": "datenschutz_url",
+      "label": "Datenschutz URL",
+      "type": "text",
+      "default": "/datenschutz"
+    }
   ]
 }
