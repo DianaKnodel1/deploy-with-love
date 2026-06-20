@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{seo_title}}</title>
+<meta name="description" content="{{seo_description}}" />
+<meta property="og:title" content="{{seo_title}}" />
+<meta property="og:description" content="{{seo_description}}" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://{{landing_domain}}/" />
+<meta property="og:image" content="{{seo_image}}" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="canonical" href="https://{{landing_domain}}/" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="start">
+  <div class="container header-row">
+    <a href="#start" class="logo">
+      <div class="logo-icon">✦</div>
+      <span class="logo-text">{{firmenname}}</span>
+    </a>
+    <button id="burger" class="burger" aria-label="Menü öffnen">☰</button>
+    <nav id="nav-links" class="nav-links">
+      <a href="#ueber-uns">Über uns</a>
+      <a href="#leistungen">Leistungen</a>
+      <a href="#referenzen">Referenzen</a>
+      <a href="#faq">FAQ</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+    <div class="nav-cta-group">
+      <a href="#kontakt" class="btn btn-primary nav-cta">Jetzt starten →</a>
+      <a href="{{portal_url}}" class="btn btn-ghost nav-cta" target="_blank" rel="noopener">Login</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="hero-bg-shapes" aria-hidden="true">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+  <div class="container hero-inner" data-animate>
+    <span class="badge">{{hero_badge}}</span>
+    <h1>{{hero_title}}</h1>
+    <p class="hero-sub">{{hero_subtitle}}</p>
+    <div class="hero-ctas">
+      <a href="#kontakt" class="btn btn-primary btn-lg">{{hero_cta_primary}}</a>
+      <a href="#leistungen" class="btn btn-outline btn-lg">{{hero_cta_secondary}}</a>
+    </div>
+    <div class="hero-preview">
+      <div class="browser-mock">
+        <div class="browser-bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <div class="browser-url">{{landing_domain}}</div>
+        </div>
+        <div class="browser-body">
+          <img src="{{hero_image_url}}" alt="Website Vorschau" class="preview-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+          <div class="preview-placeholder" style="display:none">
+            <div class="placeholder-content">
+              <div class="ph-bar ph-bar--wide"></div>
+              <div class="ph-bar ph-bar--medium"></div>
+              <div class="ph-bar ph-bar--short"></div>
+              <div class="ph-grid">
+                <div class="ph-card"></div>
+                <div class="ph-card"></div>
+                <div class="ph-card"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ÜBER UNS ===== -->
+<section id="ueber-uns" class="about">
+  <div class="container about-grid" data-animate>
+    <div class="about-visual">
+      <div class="about-card">
+        <div class="about-icon">🚀</div>
+        <div class="about-stat-grid">
+          <div class="about-stat"><strong>{{stat_1_num}}</strong><span>{{stat_1_lbl}}</span></div>
+          <div class="about-stat"><strong>{{stat_2_num}}</strong><span>{{stat_2_lbl}}</span></div>
+          <div class="about-stat"><strong>{{stat_3_num}}</strong><span>{{stat_3_lbl}}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="about-content">
+      <div class="section-label">Über uns</div>
+      <h2>{{about_title}}</h2>
+      <p>{{about_body}}</p>
+      <a href="#kontakt" class="btn btn-primary">Gespräch vereinbaren →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LEISTUNGEN ===== -->
+<section id="leistungen" class="services">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <div class="section-label">Leistungen</div>
+      <h2>{{services_title}}</h2>
+      <p>{{services_subtitle}}</p>
+    </div>
+    <div class="services-grid">
+      <div class="service-card" data-animate>
+        <div class="service-icon">{{service_1_icon}}</div>
+        <h3>{{service_1_title}}</h3>
+        <p>{{service_1_body}}</p>
+      </div>
+      <div class="service-card" data-animate>
+        <div class="service-icon">{{service_2_icon}}</div>
+        <h3>{{service_2_title}}</h3>
+        <p>{{service_2_body}}</p>
+      </div>
+      <div class="service-card service-card--featured" data-animate>
+        <div class="service-icon">{{service_3_icon}}</div>
+        <h3>{{service_3_title}}</h3>
+        <p>{{service_3_body}}</p>
+      </div>
+      <div class="service-card" data-animate>
+        <div class="service-icon">{{service_4_icon}}</div>
+        <h3>{{service_4_title}}</h3>
+        <p>{{service_4_body}}</p>
+      </div>
+      <div class="service-card" data-animate>
+        <div class="service-icon">{{service_5_icon}}</div>
+        <h3>{{service_5_title}}</h3>
+        <p>{{service_5_body}}</p>
+      </div>
+      <div class="service-card" data-animate>
+        <div class="service-icon">{{service_6_icon}}</div>
+        <h3>{{service_6_title}}</h3>
+        <p>{{service_6_body}}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROZESS ===== -->
+<section class="process">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <div class="section-label">Ablauf</div>
+      <h2>{{process_title}}</h2>
+    </div>
+    <div class="process-steps">
+      <div class="process-step" data-animate>
+        <div class="process-num">01</div>
+        <div class="process-content">
+          <h4>{{step_1_title}}</h4>
+          <p>{{step_1_body}}</p>
+        </div>
+      </div>
+      <div class="process-step" data-animate>
+        <div class="process-num">02</div>
+        <div class="process-content">
+          <h4>{{step_2_title}}</h4>
+          <p>{{step_2_body}}</p>
+        </div>
+      </div>
+      <div class="process-step" data-animate>
+        <div class="process-num">03</div>
+        <div class="process-content">
+          <h4>{{step_3_title}}</h4>
+          <p>{{step_3_body}}</p>
+        </div>
+      </div>
+      <div class="process-step" data-animate>
+        <div class="process-num">04</div>
+        <div class="process-content">
+          <h4>{{step_4_title}}</h4>
+          <p>{{step_4_body}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section id="referenzen" class="testimonials">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <div class="section-label">Referenzen</div>
+      <h2>{{testimonials_title}}</h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>{{testi_1_quote}}</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar">{{testi_1_name_initial}}</div>
+          <div>
+            <strong>{{testi_1_name}}</strong>
+            <span>{{testi_1_role}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card testi-card--accent" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>{{testi_2_quote}}</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar">{{testi_2_name_initial}}</div>
+          <div>
+            <strong>{{testi_2_name}}</strong>
+            <span>{{testi_2_role}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>{{testi_3_quote}}</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar">{{testi_3_name_initial}}</div>
+          <div>
+            <strong>{{testi_3_name}}</strong>
+            <span>{{testi_3_role}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>{{testi_4_quote}}</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar">{{testi_4_name_initial}}</div>
+          <div>
+            <strong>{{testi_4_name}}</strong>
+            <span>{{testi_4_role}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section id="faq" class="faq">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <div class="section-label">FAQ</div>
+      <h2>{{faq_title}}</h2>
+    </div>
+    <div class="faq-list" data-animate>
+      <details class="faq-item">
+        <summary>{{faq_1_question}}</summary>
+        <div class="faq-answer">{{faq_1_answer}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_2_question}}</summary>
+        <div class="faq-answer">{{faq_2_answer}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_3_question}}</summary>
+        <div class="faq-answer">{{faq_3_answer}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_4_question}}</summary>
+        <div class="faq-answer">{{faq_4_answer}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_5_question}}</summary>
+        <div class="faq-answer">{{faq_5_answer}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_6_question}}</summary>
+        <div class="faq-answer">{{faq_6_answer}}</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== KONTAKT ===== -->
+<section id="kontakt" class="contact">
+  <div class="container">
+    <div class="contact-inner">
+      <div class="contact-info" data-animate>
+        <div class="section-label section-label--light">Kontakt</div>
+        <h2>{{cta_title}}</h2>
+        <p>{{cta_body}}</p>
+        <div class="contact-details">
+          <div class="contact-detail-item">
+            <span class="cd-icon">📞</span>
+            <span>{{kontakt_telefon}}</span>
+          </div>
+          <div class="contact-detail-item">
+            <span class="cd-icon">✉️</span>
+            <span>{{kontakt_email}}</span>
+          </div>
+          <div class="contact-detail-item">
+            <span class="cd-icon">📍</span>
+            <span>{{adresse}}</span>
+          </div>
+        </div>
+        <a href="{{portal_url}}" class="btn btn-white" target="_blank" rel="noopener">Zum Kunden-Portal →</a>
+      </div>
+      <div class="contact-form-wrap" data-animate>
+        <form id="application-form" class="lead-form">
+          <h3>Kostenlose Beratung anfragen</h3>
+          <div class="form-row">
+            <label>Vorname<input name="first_name" required placeholder="Max" /></label>
+            <label>Nachname<input name="last_name" required placeholder="Mustermann" /></label>
+          </div>
+          <label>E-Mail<input type="email" name="email" required placeholder="max@beispiel.de" /></label>
+          <label>Telefon<input name="phone" placeholder="+49 123 456789" /></label>
+          <label>Ihre Website (falls vorhanden)<input name="street" placeholder="www.beispiel.de" /></label>
+          <label>Wie können wir helfen?
+            <textarea name="message" rows="3" placeholder="Kurze Beschreibung Ihres Projekts…"></textarea>
+          </label>
+          <button type="submit" class="btn btn-primary btn-lg btn-block">Anfrage senden →</button>
+          <p id="form-status" class="status"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <div class="logo-icon logo-icon--sm">✦</div>
+        <span>{{firmenname}}</span>
+      </div>
+      <p>{{footer_tagline}}</p>
+      <p class="footer-contact">📞 {{kontakt_telefon}}<br/>✉ {{kontakt_email}}</p>
+    </div>
+    <div>
+      <h5>Navigation</h5>
+      <a href="#ueber-uns">Über uns</a>
+      <a href="#leistungen">Leistungen</a>
+      <a href="#referenzen">Referenzen</a>
+      <a href="#faq">FAQ</a>
+      <a href="#kontakt">Kontakt</a>
+    </div>
+    <div>
+      <h5>Portal</h5>
+      <a href="{{portal_url}}" target="_blank" rel="noopener">Login zum Kundenportal</a>
+      <a href="#kontakt">Beratung anfragen</a>
+    </div>
+    <div>
+      <h5>Rechtliches</h5>
+      <a href="{{impressum_url}}">Impressum</a>
+      <a href="{{datenschutz_url}}">Datenschutz</a>
+      <p class="footer-addr">{{adresse}}</p>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <p>© <span id="year"></span> {{firmenname}} · Alle Rechte vorbehalten ·
+      <a href="{{impressum_url}}">Impressum</a> ·
+      <a href="{{datenschutz_url}}">Datenschutz</a>
+    </p>
+  </div>
+</footer>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="script.js"></script>
+</body>
+</html>

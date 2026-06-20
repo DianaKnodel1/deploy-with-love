@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{seo_title}}</title>
+<meta name="description" content="{{seo_description}}" />
+<meta property="og:title" content="{{seo_title}}" />
+<meta property="og:description" content="{{seo_description}}" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://{{landing_domain}}/" />
+<meta property="og:image" content="{{seo_image}}" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="canonical" href="https://{{landing_domain}}/" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Lora:ital,wght@0,600;1,500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header" id="top">
+  <div class="container header-row">
+    <a href="#top" class="logo">
+      <span class="logo-mark">E</span>
+      <span class="logo-text">{{firmenname}}</span>
+    </a>
+    <button id="burger" class="burger" aria-label="Menü öffnen" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <nav id="nav-links" class="nav-links" role="navigation">
+      <a href="#about">Über uns</a>
+      <a href="#leistungen">Leistungen</a>
+      <a href="#referenzen">Referenzen</a>
+      <a href="#faq">FAQ</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="{{portal_url}}" class="btn btn-ghost nav-cta" target="_blank" rel="noopener">Portal</a>
+      <a href="#kontakt" class="btn btn-primary nav-cta">Gespräch buchen →</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+  <div class="container hero-layout">
+    <div class="hero-content" data-animate>
+      <span class="hero-badge">{{hero_badge}}</span>
+      <h1 class="hero-title">{{hero_title}}</h1>
+      <p class="hero-subtitle">{{hero_subtitle}}</p>
+      <div class="hero-ctas">
+        <a href="#kontakt" class="btn btn-primary btn-lg">{{hero_cta_primary}}</a>
+        <a href="#leistungen" class="btn btn-outline btn-lg">{{hero_cta_secondary}}</a>
+      </div>
+    </div>
+    <div class="hero-visual" data-animate data-delay="200">
+      <div class="hero-img-wrap">
+        <img src="{{hero_image_url}}" alt="{{firmenname}} — Professionelle Beratung" class="hero-img" loading="eager" />
+        <div class="hero-img-badge">
+          <span class="hib-icon">✦</span>
+          <span>Vertrauenspartner seit über 15 Jahren</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="hero-stats" data-animate>
+      <div class="hstat"><strong>{{hero_stat_1_num}}</strong><span>{{hero_stat_1_lbl}}</span></div>
+      <div class="hstat-divider"></div>
+      <div class="hstat"><strong>{{hero_stat_2_num}}</strong><span>{{hero_stat_2_lbl}}</span></div>
+      <div class="hstat-divider"></div>
+      <div class="hstat"><strong>{{hero_stat_3_num}}</strong><span>{{hero_stat_3_lbl}}</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ABOUT ===== -->
+<section class="about section" id="about">
+  <div class="container about-layout">
+    <div class="about-img-wrap" data-animate>
+      <img src="{{about_image_url}}" alt="Über {{firmenname}}" class="about-img" loading="lazy" />
+      <div class="about-accent-card">
+        <span class="aac-num">320+</span>
+        <span class="aac-lbl">erfolgreiche Projekte</span>
+      </div>
+    </div>
+    <div class="about-text" data-animate>
+      <span class="section-eyebrow">{{about_title}}</span>
+      <h2 class="section-title">Ihr Erfolg ist unsere Leidenschaft.</h2>
+      <div class="about-body" id="about-body-text"></div>
+      <a href="#kontakt" class="btn btn-primary">Lernen Sie uns kennen →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SERVICES ===== -->
+<section class="services section section-dark" id="leistungen">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <span class="section-eyebrow light">Leistungen</span>
+      <h2 class="section-title light">{{services_title}}</h2>
+      <p class="section-sub light">{{services_subtitle}}</p>
+    </div>
+    <div class="services-grid">
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{service_1_icon}}</div>
+        <h3>{{service_1_title}}</h3>
+        <p>{{service_1_body}}</p>
+        <a href="#kontakt" class="svc-link">Mehr erfahren →</a>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{service_2_icon}}</div>
+        <h3>{{service_2_title}}</h3>
+        <p>{{service_2_body}}</p>
+        <a href="#kontakt" class="svc-link">Mehr erfahren →</a>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{service_3_icon}}</div>
+        <h3>{{service_3_title}}</h3>
+        <p>{{service_3_body}}</p>
+        <a href="#kontakt" class="svc-link">Mehr erfahren →</a>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{service_4_icon}}</div>
+        <h3>{{service_4_title}}</h3>
+        <p>{{service_4_body}}</p>
+        <a href="#kontakt" class="svc-link">Mehr erfahren →</a>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{service_5_icon}}</div>
+        <h3>{{service_5_title}}</h3>
+        <p>{{service_5_body}}</p>
+        <a href="#kontakt" class="svc-link">Mehr erfahren →</a>
+      </div>
+      <div class="svc-card" data-animate>
+        <div class="svc-icon">{{service_6_icon}}</div>
+        <h3>{{service_6_title}}</h3>
+        <p>{{service_6_body}}</p>
+        <a href="#kontakt" class="svc-link">Mehr erfahren →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="testimonials section" id="referenzen">
+  <div class="container">
+    <div class="section-head" data-animate>
+      <span class="section-eyebrow">Referenzen</span>
+      <h2 class="section-title">{{testimonials_title}}</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>{{testimonial_1_quote}}</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" aria-hidden="true">{{testimonial_1_name}}</div>
+          <div>
+            <strong>{{testimonial_1_name}}</strong>
+            <span>{{testimonial_1_role}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card testi-featured" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>{{testimonial_2_quote}}</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" aria-hidden="true">{{testimonial_2_name}}</div>
+          <div>
+            <strong>{{testimonial_2_name}}</strong>
+            <span>{{testimonial_2_role}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>{{testimonial_3_quote}}</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" aria-hidden="true">{{testimonial_3_name}}</div>
+          <div>
+            <strong>{{testimonial_3_name}}</strong>
+            <span>{{testimonial_3_role}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card" data-animate>
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>{{testimonial_4_quote}}</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar" aria-hidden="true">{{testimonial_4_name}}</div>
+          <div>
+            <strong>{{testimonial_4_name}}</strong>
+            <span>{{testimonial_4_role}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="faq section section-soft" id="faq">
+  <div class="container faq-layout">
+    <div class="faq-intro" data-animate>
+      <span class="section-eyebrow">FAQ</span>
+      <h2 class="section-title">{{faq_title}}</h2>
+      <p class="section-sub">Haben Sie weitere Fragen? Schreiben Sie uns einfach.</p>
+      <a href="#kontakt" class="btn btn-primary" style="margin-top:24px">Frage stellen →</a>
+    </div>
+    <div class="faq-list" data-animate>
+      <details class="faq-item">
+        <summary>{{faq_1_q}}<span class="faq-arrow"></span></summary>
+        <div class="faq-body">{{faq_1_a}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_2_q}}<span class="faq-arrow"></span></summary>
+        <div class="faq-body">{{faq_2_a}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_3_q}}<span class="faq-arrow"></span></summary>
+        <div class="faq-body">{{faq_3_a}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_4_q}}<span class="faq-arrow"></span></summary>
+        <div class="faq-body">{{faq_4_a}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_5_q}}<span class="faq-arrow"></span></summary>
+        <div class="faq-body">{{faq_5_a}}</div>
+      </details>
+      <details class="faq-item">
+        <summary>{{faq_6_q}}<span class="faq-arrow"></span></summary>
+        <div class="faq-body">{{faq_6_a}}</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section class="contact section" id="kontakt">
+  <div class="container contact-layout">
+    <div class="contact-info" data-animate>
+      <span class="section-eyebrow light">Kontakt</span>
+      <h2 class="section-title light">Starten wir gemeinsam.</h2>
+      <p class="section-sub light">Erstes Gespräch kostenlos und unverbindlich. Wir melden uns innerhalb von 24 Stunden.</p>
+      <div class="contact-details">
+        <div class="cd-item"><span class="cd-icon">📞</span><a href="tel:{{kontakt_telefon}}">{{kontakt_telefon}}</a></div>
+        <div class="cd-item"><span class="cd-icon">✉️</span><a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a></div>
+        <div class="cd-item"><span class="cd-icon">📍</span><span>{{adresse}}</span></div>
+      </div>
+      <div class="trust-row">
+        <span class="trust-chip">✓ Kostenfreies Erstgespräch</span>
+        <span class="trust-chip">✓ Angebot in 48h</span>
+        <span class="trust-chip">✓ Keine versteckten Kosten</span>
+      </div>
+    </div>
+    <div class="contact-form-wrap" data-animate>
+      <form id="application-form" class="contact-form">
+        <h3>Jetzt Termin anfragen</h3>
+        <div class="form-row">
+          <label>Vorname<input name="first_name" placeholder="Max" required /></label>
+          <label>Nachname<input name="last_name" placeholder="Mustermann" required /></label>
+        </div>
+        <label>Unternehmen (optional)<input name="company" placeholder="Musterfirma GmbH" /></label>
+        <label>Telefon<input name="phone" placeholder="+49 221 …" required /></label>
+        <label>E-Mail<input type="email" name="email" placeholder="max@musterfirma.de" required /></label>
+        <label>Ihre Nachricht<textarea name="message" rows="4" placeholder="Worum geht es? Wie können wir helfen?"></textarea></label>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Anfrage absenden →</button>
+        <p id="form-status" class="status"></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <span class="logo-mark sm">E</span>
+        <span>{{firmenname}}</span>
+      </div>
+      <p class="footer-tagline">Ihr Partner für nachhaltigen Unternehmenserfolg.</p>
+      <p class="footer-address">{{adresse}}</p>
+    </div>
+    <div class="footer-col">
+      <h5>Leistungen</h5>
+      <a href="#leistungen">Strategieberatung</a>
+      <a href="#leistungen">Prozessoptimierung</a>
+      <a href="#leistungen">Digitale Transformation</a>
+      <a href="#leistungen">Change Management</a>
+    </div>
+    <div class="footer-col">
+      <h5>Unternehmen</h5>
+      <a href="#about">Über uns</a>
+      <a href="#referenzen">Referenzen</a>
+      <a href="#faq">FAQ</a>
+      <a href="#kontakt">Kontakt</a>
+      <a href="{{portal_url}}" target="_blank" rel="noopener">Portal Login</a>
+    </div>
+    <div class="footer-col">
+      <h5>Kontakt</h5>
+      <a href="tel:{{kontakt_telefon}}">{{kontakt_telefon}}</a>
+      <a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <p>© <span id="year"></span> {{firmenname}} · Alle Rechte vorbehalten</p>
+    <div class="footer-legal-links">
+      <a href="{{impressum_url}}">Impressum</a>
+      <a href="{{datenschutz_url}}">Datenschutz</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== LEGAL ANCHORS ===== -->
+<section id="impressum" class="legal">
+  <div class="container">
+    <a href="#top" class="legal-close">← Zurück</a>
+    <h2>Impressum</h2>
+    <h3>Angaben gemäß § 5 TMG</h3>
+    <p>{{firmenname}}<br/>{{adresse}}</p>
+    <h3>Kontakt</h3>
+    <p>Telefon: {{kontakt_telefon}}<br/>E-Mail: {{kontakt_email}}</p>
+    <h3>Verantwortlich für den Inhalt (§ 55 Abs. 2 RStV)</h3>
+    <p>{{firmenname}}</p>
+  </div>
+</section>
+
+<section id="datenschutz" class="legal">
+  <div class="container">
+    <a href="#top" class="legal-close">← Zurück</a>
+    <h2>Datenschutzerklärung</h2>
+    <h3>1. Verantwortliche Stelle</h3>
+    <p>{{firmenname}}, {{adresse}}, {{kontakt_email}}</p>
+    <h3>2. Erhobene Daten</h3>
+    <p>Beim Besuch dieser Website werden technisch notwendige Daten (Server-Logfiles) sowie bei Nutzung des Kontaktformulars die von Ihnen eingegebenen Daten verarbeitet.</p>
+    <h3>3. Zweck der Verarbeitung</h3>
+    <p>Ihre Daten werden ausschließlich zur Bearbeitung Ihrer Kontaktanfrage verwendet und nicht an Dritte weitergegeben.</p>
+    <h3>4. Ihre Rechte</h3>
+    <ul>
+      <li>Auskunft über gespeicherte Daten</li>
+      <li>Berichtigung unrichtiger Daten</li>
+      <li>Löschung Ihrer Daten</li>
+      <li>Einschränkung der Verarbeitung</li>
+      <li>Widerspruch gegen die Verarbeitung</li>
+      <li>Datenübertragbarkeit</li>
+    </ul>
+    <p>Wenden Sie sich dazu an: {{kontakt_email}}</p>
+  </div>
+</section>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="script.js"></script>
+</body>
+</html>
