@@ -6,15 +6,15 @@ import { createClient } from '@supabase/supabase-js';
 type Database = any;
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = process.env.SELFHOSTED_SUPABASE_URL || process.env.SUPABASE_URL;
+  const SUPABASE_SERVICE_ROLE_KEY = process.env.SELFHOSTED_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
+      ...(!SUPABASE_URL ? ['SELFHOSTED_SUPABASE_URL'] : []),
+      ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SELFHOSTED_SUPABASE_SERVICE_ROLE_KEY'] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. For self-hosted Supabase, add them to the server .env / systemd EnvironmentFile and restart the service.`;
+    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Add them in Lovable Cloud → Secrets.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
