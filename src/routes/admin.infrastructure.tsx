@@ -288,9 +288,17 @@ function BootstrapDialog({ server, onClose }: { server: { id: string; name: stri
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>Server „{server.name}" einrichten</DialogTitle></DialogHeader>
         <div className="space-y-3 text-sm">
-          <p>Logge dich per SSH auf den Server ein (Ubuntu/Debian, root oder mit sudo) und führe diesen Befehl aus:</p>
+          <div className="rounded-md border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 p-3 text-xs space-y-1">
+            <div className="font-semibold text-emerald-800 dark:text-emerald-300">Empfohlener Ablauf (1 Server kann mehrere Landing-Pages hosten)</div>
+            <ol className="list-decimal ml-4 space-y-0.5 text-emerald-900/80 dark:text-emerald-200/80">
+              <li>Beim Hoster einen <b>frischen Ubuntu/Debian-VPS</b> neu aufsetzen lassen (Reset / Reinstall).</li>
+              <li>Per SSH als <code className="font-mono">root</code> (oder mit <code className="font-mono">sudo</code>) einloggen.</li>
+              <li>Befehl unten kopieren &amp; ausführen — Script installiert Bun + Caddy, Renderer, systemd-Services.</li>
+              <li>Nach ~1 Min erscheint der Server hier als „Online" (Heartbeat alle 60s).</li>
+            </ol>
+          </div>
 
-          <label className="flex items-start gap-2 rounded-md border p-3 bg-muted/40 cursor-pointer">
+          <label className="flex items-start gap-2 rounded-md border border-amber-300 dark:border-amber-800 p-3 bg-amber-50 dark:bg-amber-950/30 cursor-pointer">
             <input
               type="checkbox"
               className="mt-0.5"
@@ -298,25 +306,33 @@ function BootstrapDialog({ server, onClose }: { server: { id: string; name: stri
               onChange={(e) => setClean(e.target.checked)}
             />
             <div>
-              <div className="font-medium">Clean Install — vorhandene Installation vorher entfernen</div>
-              <div className="text-xs text-muted-foreground">
-                Stoppt &amp; entfernt vorhandene Webserver (nginx, apache, alte Caddy-Configs, alte landing-server-Services),
-                räumt die Ports 80/443/3001 frei und löscht <code className="font-mono">/opt/landing-server</code>.
-                Nutze das nur, wenn auf dem Server nichts mehr Wichtiges läuft.
+              <div className="font-medium text-amber-900 dark:text-amber-200">
+                Clean Install <span className="font-normal">(<code className="font-mono">clean=1</code>)</span> — nur bei bestehender Installation aktivieren
+              </div>
+              <div className="text-xs text-amber-800/80 dark:text-amber-200/70 mt-1 space-y-1">
+                <p>
+                  <b>Frisch aufgesetzter VPS / nach Reset:</b> <span className="text-emerald-700 dark:text-emerald-400">NICHT nötig</span> — Kästchen aus lassen.
+                </p>
+                <p>
+                  <b>VPS lief schon mit nginx/apache/altem Caddy oder altem landing-server:</b> aktivieren. Stoppt &amp; entfernt
+                  Webserver, räumt Ports 80/443/3001 frei und löscht <code className="font-mono">/opt/landing-server</code>.
+                </p>
+                <p className="text-red-700 dark:text-red-400">
+                  ⚠️ Nur auf Servern aktivieren, auf denen sonst nichts Wichtiges mehr läuft.
+                </p>
               </div>
             </div>
           </label>
 
           <div className="relative">
             <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre-wrap break-all">{cmd}</pre>
-            <Button size="sm" variant="ghost" className="absolute top-1 right-1" onClick={() => navigator.clipboard.writeText(cmd)}>
+            <Button size="sm" variant="ghost" className="absolute top-1 right-1" onClick={() => navigator.clipboard.writeText(cmd)} title="Befehl kopieren">
               <Copy className="w-3 h-3" />
             </Button>
           </div>
           <div className="text-muted-foreground text-xs space-y-1">
-            <p>Das Script installiert Bun + Caddy, lädt den Renderer herunter, schreibt systemd-Services und startet sofort.</p>
-            <p>Nach ~1 Minute erscheint der Server hier als „Online" (Heartbeat alle 60s).</p>
-            <p className="text-amber-600 dark:text-amber-400">⚠️ Token = Zugang. Nicht öffentlich teilen.</p>
+            <p>Das Script ist idempotent — du kannst es bei Bedarf erneut ausführen (z.B. um den Renderer zu aktualisieren).</p>
+            <p className="text-amber-600 dark:text-amber-400">⚠️ Token = Zugang zum Server-Account. Nicht öffentlich teilen.</p>
           </div>
         </div>
         <DialogFooter><Button onClick={onClose}>Schließen</Button></DialogFooter>
