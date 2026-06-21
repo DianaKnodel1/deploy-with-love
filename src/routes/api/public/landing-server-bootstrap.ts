@@ -219,9 +219,9 @@ cat > /etc/caddy/Caddyfile <<EOF
   }
 }
 
-http:// { redir https://{host}{uri} 308 }
+:80 { redir https://{host}{uri} 308 }
 
-https:// {
+:443 {
   tls { on_demand }
   encode zstd gzip
   reverse_proxy 127.0.0.1:3001 {
@@ -267,8 +267,11 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now landing-server.service
-systemctl enable --now landing-heartbeat.service
-systemctl reload caddy || systemctl restart caddy
+systemctl start landing-heartbeat.service
+caddy validate --config /etc/caddy/Caddyfile || { journalctl -u caddy -n 80 --no-pager || true; exit 1; }
+if ! systemctl reload caddy; then
+  systemctl restart caddy || { systemctl status caddy --no-pager || true; journalctl -u caddy -n 80 --no-pager || true; exit 1; }
+fi
 
 echo "[bootstrap] 7/7 Initialer Heartbeat …"
 sleep 2
