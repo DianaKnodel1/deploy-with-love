@@ -168,6 +168,15 @@ if ! command -v caddy >/dev/null 2>&1; then
   apt-get update -qq
   apt-get install -y -qq caddy >/dev/null
 fi
+systemctl stop nginx apache2 httpd 2>/dev/null || true
+systemctl disable nginx apache2 httpd 2>/dev/null || true
+for P in 80 443; do
+  PIDS=$(ss -lptnH "sport = :$P" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u || true)
+  for PID in $PIDS; do
+    COMM=$(ps -p "$PID" -o comm= 2>/dev/null || true)
+    if [ "$COMM" != "caddy" ]; then kill -9 "$PID" 2>/dev/null || true; fi
+  done
+done
 
 echo "[bootstrap] 3/7 Bun installieren …"
 if ! command -v /usr/local/bin/bun >/dev/null 2>&1; then
