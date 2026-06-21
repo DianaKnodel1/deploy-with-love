@@ -5,8 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>{seo_title}</title>
 <meta name="description" content="{seo_description}" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://{landing_domain}/" />
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://{landing_domain}/" />
 <meta property="og:title" content="{seo_title}" />
 <meta property="og:description" content="{seo_description}" />
+<meta property="og:image" content="https://{landing_domain}/assets/hero-workspace.jpg" />
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{seo_title}" />
+<meta name="twitter:description" content="{seo_description}" />
+<meta name="twitter:image" content="https://{landing_domain}/assets/hero-workspace.jpg" />
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
@@ -14,7 +26,7 @@
 </head>
 <body>
 
-<!-- ANNOUNCEMENT -->
+<!-- ANNOUNCEMENT BAR -->
 <div class="announce">
   <div class="container announce-inner">
     <span class="announce-text"><span class="spark">✨</span><strong>Aktuelle Stelle:</strong> Dateneingabe &amp; Prozessprüfung — Minijob, Teilzeit oder Vollzeit. Bewerbung in 2 Minuten.</span>
@@ -22,8 +34,8 @@
   </div>
 </div>
 
-<!-- NAV -->
-<header class="navbar">
+<!-- NAVBAR -->
+<header class="navbar" id="top">
   <div class="container nav-inner">
     <a href="#top" class="brand">
       <span class="brand-icon">
@@ -45,13 +57,29 @@
           <div class="contact-email">{contact_email}</div>
         </div>
       </div>
+      <a href="{portal_url}" class="nav-login" target="_blank" rel="noopener">Login</a>
       <a href="{cta_url}" class="btn-primary btn-sm">Jetzt bewerben →</a>
+      <!-- HAMBURGER -->
+      <button class="hamburger" id="hamburger" aria-label="Menü öffnen" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
+  </div>
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <nav class="mobile-nav">
+      <a href="#stelle" class="mobile-nav-link">Die Stelle</a>
+      <a href="#prozess" class="mobile-nav-link">Wie es funktioniert</a>
+      <a href="#vertrauen" class="mobile-nav-link">Über uns</a>
+      <a href="#faq" class="mobile-nav-link">FAQ</a>
+      <a href="{portal_url}" class="mobile-nav-link" target="_blank" rel="noopener">Login</a>
+      <a href="{cta_url}" class="btn-primary mobile-cta">Jetzt bewerben →</a>
+    </nav>
   </div>
 </header>
 
 <!-- HERO -->
-<section class="hero" id="top">
+<section class="hero" id="hero">
   <div class="dotted-bg hero-bg"></div>
   <div class="container hero-grid">
     <div>
@@ -146,8 +174,8 @@
         <li><span class="ck">✓</span>Einarbeitung komplett online — ohne Vorkenntnisse</li>
       </ul>
       <div class="facts-grid">
-        <div class="fact"><div class="fact-l">Arbeitszeit</div><div class="fact-v">8–40 Std./Woche</div></div>
-        <div class="fact"><div class="fact-l">Verdienst</div><div class="fact-v">603 € – 4.200 €/Monat</div></div>
+        <div class="fact"><div class="fact-l">Arbeitszeit</div><div class="fact-v">{stunden_woche} Std./Woche</div></div>
+        <div class="fact"><div class="fact-l">Verdienst</div><div class="fact-v">{gehalt}/Monat</div></div>
         <div class="fact"><div class="fact-l">Arbeitsort</div><div class="fact-v">100 % Home-Office</div></div>
         <div class="fact"><div class="fact-l">Voraussetzungen</div><div class="fact-v">Ohne Vorkenntnisse</div></div>
       </div>
@@ -255,7 +283,7 @@
   <p class="tasks-note">Alle Spannen entsprechen tatsächlichen Auszahlungen unserer aktuellen Bewerber. Das individuelle Einkommen hängt von deinem gewählten Modell und (in Vollzeit) der Bereitschaft für Zusatzaufträge ab.</p>
 </section>
 
-<!-- STATS DARK -->
+<!-- DARK STATS -->
 <section class="stats-dark">
   <div class="container">
     <div class="section-head center">
@@ -282,24 +310,24 @@
   <div class="testimonials-grid">
     <figure class="card-surface t-card">
       <div class="t-stars">★★★★★</div>
-      <blockquote>„Rund 10 Stunden pro Woche von zu Hause, dafür die vollen 603 € Minijob — steuerfrei. Perfekt für die Zeit mit den Kindern, endlich keine Stresswege mehr morgens."</blockquote>
-      <figcaption><img src="assets/testimonial-sarah.jpg" alt="Sarah M." /><div><div class="t-name">Sarah M.</div><div class="t-role">Minijob · Dateneingabe · München</div><div class="t-since">Seit 8 Monaten dabei</div></div></figcaption>
+      <blockquote>„{testimonial_1_quote}"</blockquote>
+      <figcaption><img src="assets/testimonial-sarah.jpg" alt="{testimonial_1_name}" /><div><div class="t-name">{testimonial_1_name}</div><div class="t-role">{testimonial_1_role}</div><div class="t-since">{testimonial_1_since}</div></div></figcaption>
     </figure>
     <figure class="card-surface t-card">
       <div class="t-stars">★★★★★</div>
-      <blockquote>„Endlich eine Plattform, die transparent ist. Mit ca. 28 Stunden in der Woche komme ich auf rund 1.650 € im Monat — und kann mir den Tag trotzdem selbst einteilen. Mein Ansprechpartner hat sich von Anfang an persönlich gemeldet."</blockquote>
-      <figcaption><img src="assets/testimonial-thomas.jpg" alt="Thomas K." /><div><div class="t-name">Thomas K.</div><div class="t-role">Teilzeit · Prozessprüfung · Berlin</div><div class="t-since">Seit 5 Monaten dabei</div></div></figcaption>
+      <blockquote>„{testimonial_2_quote}"</blockquote>
+      <figcaption><img src="assets/testimonial-thomas.jpg" alt="{testimonial_2_name}" /><div><div class="t-name">{testimonial_2_name}</div><div class="t-role">{testimonial_2_role}</div><div class="t-since">{testimonial_2_since}</div></div></figcaption>
     </figure>
     <figure class="card-surface t-card">
       <div class="t-stars">★★★★★</div>
-      <blockquote>„Vollzeit von zu Hause: 3.100 € im Monat, mit ein paar Zusatzaufträgen letztens sogar 3.700 €. Mehr als im alten Bürojob, ohne Pendeln. Die Bewerbung war super einfach und nach einer Woche stand die Einarbeitung."</blockquote>
-      <figcaption><img src="assets/testimonial-lisa.jpg" alt="Lisa W." /><div><div class="t-name">Lisa W.</div><div class="t-role">Vollzeit · Datenpflege · Hamburg</div><div class="t-since">Seit 1 Jahr dabei</div></div></figcaption>
+      <blockquote>„{testimonial_3_quote}"</blockquote>
+      <figcaption><img src="assets/testimonial-lisa.jpg" alt="{testimonial_3_name}" /><div><div class="t-name">{testimonial_3_name}</div><div class="t-role">{testimonial_3_role}</div><div class="t-since">{testimonial_3_since}</div></div></figcaption>
     </figure>
   </div>
   <p class="verify-line">🛡 Alle Bewertungen sind verifiziert — wir prüfen jede Bewertung manuell auf Echtheit.</p>
 </section>
 
-<!-- COMPARISON -->
+<!-- COMPARISON TABLE -->
 <section class="section section-surface">
   <div class="container container-narrow">
     <div class="section-head center">
@@ -308,14 +336,46 @@
       <p class="section-lede">Viele Plattformen versprechen viel. Wir liefern Transparenz, geprüfte Partner und ehrliche Zahlen — ohne Vorkosten.</p>
     </div>
     <div class="card-surface compare-table">
-      <div class="compare-head"><div>Kriterium</div><div class="us">{brand_short}</div><div class="them">Marktstandard</div></div>
-      <div class="compare-row"><div class="cell-k">Vorkosten / Bewerbungsgebühren</div><div class="cell-u">✓ Komplett kostenlos</div><div class="cell-t">✕ Oft 19–99 € Gebühr</div></div>
-      <div class="compare-row alt"><div class="cell-k">Realistische Einkommensangaben</div><div class="cell-u">✓ Geprüfte Spannen</div><div class="cell-t">✕ Übertriebene Versprechen</div></div>
-      <div class="compare-row"><div class="cell-k">DSGVO-konforme Datenverarbeitung</div><div class="cell-u">✓ Voll DSGVO-konform</div><div class="cell-t">✕ Datenschutz unklar</div></div>
-      <div class="compare-row alt"><div class="cell-k">Persönlicher Ansprechpartner</div><div class="cell-u">✓ Feste E-Mail-Ansprechperson</div><div class="cell-t">✕ Nur Bot-Antworten</div></div>
-      <div class="compare-row"><div class="cell-k">Verifizierte Partner-Unternehmen</div><div class="cell-u">✓ Manuell geprüft</div><div class="cell-t">✕ Ungeprüfte Anzeigen</div></div>
-      <div class="compare-row alt"><div class="cell-k">Vollständiges Impressum</div><div class="cell-u">✓ Transparente Firmendaten</div><div class="cell-t">✕ Häufig versteckt</div></div>
-      <div class="compare-row"><div class="cell-k">Jederzeit löschbar</div><div class="cell-u">✓ Mit einem Klick</div><div class="cell-t">✕ Versteckte Bedingungen</div></div>
+      <div class="compare-head">
+        <div>Kriterium</div>
+        <div class="us">{brand_short}</div>
+        <div class="them">Marktstandard</div>
+      </div>
+      <div class="compare-row">
+        <div class="cell-k">Vorkosten / Bewerbungsgebühren</div>
+        <div class="cell-u" data-label="{brand_short}">✓ Komplett kostenlos</div>
+        <div class="cell-t" data-label="Marktstandard">✕ Oft 19–99 € Gebühr</div>
+      </div>
+      <div class="compare-row alt">
+        <div class="cell-k">Realistische Einkommensangaben</div>
+        <div class="cell-u" data-label="{brand_short}">✓ Geprüfte Spannen</div>
+        <div class="cell-t" data-label="Marktstandard">✕ Übertriebene Versprechen</div>
+      </div>
+      <div class="compare-row">
+        <div class="cell-k">DSGVO-konforme Datenverarbeitung</div>
+        <div class="cell-u" data-label="{brand_short}">✓ Voll DSGVO-konform</div>
+        <div class="cell-t" data-label="Marktstandard">✕ Datenschutz unklar</div>
+      </div>
+      <div class="compare-row alt">
+        <div class="cell-k">Persönlicher Ansprechpartner</div>
+        <div class="cell-u" data-label="{brand_short}">✓ Feste E-Mail-Ansprechperson</div>
+        <div class="cell-t" data-label="Marktstandard">✕ Nur Bot-Antworten</div>
+      </div>
+      <div class="compare-row">
+        <div class="cell-k">Verifizierte Partner-Unternehmen</div>
+        <div class="cell-u" data-label="{brand_short}">✓ Manuell geprüft</div>
+        <div class="cell-t" data-label="Marktstandard">✕ Ungeprüfte Anzeigen</div>
+      </div>
+      <div class="compare-row alt">
+        <div class="cell-k">Vollständiges Impressum</div>
+        <div class="cell-u" data-label="{brand_short}">✓ Transparente Firmendaten</div>
+        <div class="cell-t" data-label="Marktstandard">✕ Häufig versteckt</div>
+      </div>
+      <div class="compare-row">
+        <div class="cell-k">Jederzeit löschbar</div>
+        <div class="cell-u" data-label="{brand_short}">✓ Mit einem Klick</div>
+        <div class="cell-t" data-label="Marktstandard">✕ Versteckte Bedingungen</div>
+      </div>
     </div>
   </div>
 </section>
@@ -345,30 +405,30 @@
       <h2 class="section-title">Du hast Fragen? Wir haben Antworten.</h2>
       <p class="section-lede">Die wichtigsten Punkte auf einen Blick. Du findest deine Frage hier nicht? Schreib uns einfach.</p>
       <div class="hero-cta center-flex">
-        <a href="#faq" class="btn-primary">Alle FAQs ansehen →</a>
+        <button class="btn-primary" id="faq-expand-all" type="button">Alle ansehen ▾</button>
         <a href="mailto:{contact_email}" class="btn-ghost">Direkt kontaktieren</a>
       </div>
     </div>
     <div class="faq-list">
       <details class="card-surface faq-item" open>
-        <summary><span>Ist die Bewerbung wirklich kostenlos?</span><span class="chev">▼</span></summary>
-        <div class="faq-body">Ja. Die Bewerbung und der gesamte Prozess sind und bleiben für dich 100 % kostenlos. Es gibt keine Vorkosten, keine Gebühren und keine versteckten Abos.</div>
+        <summary><span>{faq_1_q}</span><span class="chev">▼</span></summary>
+        <div class="faq-body">{faq_1_a}</div>
       </details>
       <details class="card-surface faq-item">
-        <summary><span>Brauche ich Vorkenntnisse?</span><span class="chev">▼</span></summary>
-        <div class="faq-body">Nein. Die Tätigkeit ist so aufgebaut, dass du ohne Vorkenntnisse starten kannst. Die Einarbeitung erfolgt komplett online und in deinem eigenen Tempo.</div>
+        <summary><span>{faq_2_q}</span><span class="chev">▼</span></summary>
+        <div class="faq-body">{faq_2_a}</div>
       </details>
       <details class="card-surface faq-item">
-        <summary><span>Wie schnell kann ich anfangen?</span><span class="chev">▼</span></summary>
-        <div class="faq-body">In der Regel meldet sich dein persönlicher Ansprechpartner innerhalb von 24 Stunden. Nach der Prüfung deiner Angaben (1–3 Werktage) kannst du meist innerhalb einer Woche starten.</div>
+        <summary><span>{faq_3_q}</span><span class="chev">▼</span></summary>
+        <div class="faq-body">{faq_3_a}</div>
       </details>
       <details class="card-surface faq-item">
-        <summary><span>Welche Ausstattung brauche ich?</span><span class="chev">▼</span></summary>
-        <div class="faq-body">Ein Laptop oder PC mit stabiler Internetverbindung reicht aus. Spezielle Hardware oder Software musst du nicht anschaffen.</div>
+        <summary><span>{faq_4_q}</span><span class="chev">▼</span></summary>
+        <div class="faq-body">{faq_4_a}</div>
       </details>
       <details class="card-surface faq-item">
-        <summary><span>Kann ich die Arbeitszeit selbst bestimmen?</span><span class="chev">▼</span></summary>
-        <div class="faq-body">Im Minijob und in der Teilzeit teilst du dir deine Zeit weitgehend selbst ein. In der Vollzeit gibt es einen festen Stundenrahmen, aber keine starren Bürozeiten.</div>
+        <summary><span>{faq_5_q}</span><span class="chev">▼</span></summary>
+        <div class="faq-body">{faq_5_a}</div>
       </details>
     </div>
   </div>
@@ -381,7 +441,7 @@
     <div class="final-grid">
       <div>
         <span class="upper-yellow">✨ Letzter Schritt</span>
-        <h2 class="final-title">Sichere dir die Dateneingabe &amp; Prozessprüfung-Stelle.</h2>
+        <h2 class="final-title">Sichere dir die {job_title}-Stelle.</h2>
         <p class="final-lede">Über 8.000 Menschen haben bereits ihren Schritt ins Home-Office gemacht. Du brauchst nur 2 Minuten — und keine Angst vor Bürokratie.</p>
         <ul class="final-checks">
           <li>✓ Bewerbung in 2 Minuten</li>
@@ -389,7 +449,7 @@
           <li>✓ Komplett kostenlos</li>
         </ul>
         <div class="hero-cta">
-          <a href="{cta_url}" class="btn-yellow">Jetzt kostenlos bewerben →</a>
+          <a href="{cta_url}" class="btn-yellow">{cta_label}</a>
           <a href="mailto:{contact_email}" class="btn-outline-white">✉ E-Mail schreiben</a>
         </div>
         <p class="final-note">Keine versteckten Kosten · Jederzeit kündbar · Nur diese eine Bewerbung</p>
@@ -407,11 +467,11 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
       </span>
       <span>{brand_short}</span>
-      <span>· © <span id="year"></span></span>
+      <span>· © <span id="year"></span> {firmenname}</span>
     </div>
     <div class="footer-links">
-      <a href="#impressum">Impressum</a>
-      <a href="#datenschutz">Datenschutz</a>
+      <a href="{impressum_url}">Impressum</a>
+      <a href="{datenschutz_url}">Datenschutz</a>
       <a href="mailto:{contact_email}">{contact_email}</a>
     </div>
   </div>

@@ -1,392 +1,660 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>{seo_title}</title>
-<meta name="description" content="{seo_description}" />
-<meta property="og:title" content="{seo_title}" />
-<meta property="og:description" content="{seo_description}" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{firmenname} | Digitale Lösungen</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="min-h-screen flex-col">
 
-<!-- HEADER -->
-<header class="site-header">
-  <div class="container header-inner">
-    <a href="#top" class="brand">
-      <span class="brand-mark">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 8l7-4 7 4-7 4-7-4zm0 8l7 4 7-4M5 12l7 4 7-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-      </span>
-      <span>{logo_text}</span>
-    </a>
-    <nav class="primary-nav">
-      <a href="#top" class="nav-link active">Startseite</a>
-      <a href="#ueber-uns" class="nav-link">Über uns</a>
-      <a href="#leistungen" class="nav-link">Leistungen</a>
-      <a href="#preise" class="nav-link">Preise</a>
-      <a href="#karriere" class="nav-link">Karriere</a>
-      <a href="{cta_url}" class="nav-link">Kontakt</a>
-    </nav>
-    <a href="{cta_url}" class="btn-primary btn-sm desktop-only">Beratung buchen</a>
-    <button class="mobile-toggle" id="mobileToggle" aria-label="Menü">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-    </button>
-  </div>
-  <div class="mobile-nav" id="mobileNav">
-    <a href="#top">Startseite</a>
-    <a href="#ueber-uns">Über uns</a>
-    <a href="#leistungen">Leistungen</a>
-    <a href="#preise">Preise</a>
-    <a href="#karriere">Karriere</a>
-    <a href="{cta_url}">Kontakt</a>
-    <a href="{cta_url}" class="btn-primary btn-sm">Beratung buchen</a>
-  </div>
-</header>
-
-<!-- HERO -->
-<section class="hero hero-gradient" id="top">
-  <div class="container hero-grid">
-    <div>
-      <span class="chip chip-dot">Jetzt skalieren</span>
-      <h1 class="hero-title">Digitale <span class="text-gradient">Lösungen</span> für moderne Unternehmen.</h1>
-      <p class="hero-lede">{hero_subtitle}</p>
-      <div class="hero-cta">
-        <a href="{cta_url}" class="btn-primary">Beratung buchen →</a>
-        <a href="#leistungen" class="btn-outline">Leistungen ansehen</a>
-      </div>
-    </div>
-    <div class="hero-visual">
-      <div class="float-badge float-badge-tr">
-        <span class="float-check">✓</span>
-        <span>100% Zufriedenheit</span>
-      </div>
-      <div class="hero-image-wrap">
-        <img src="assets/hero.webp" alt="Dashboard Preview" />
-      </div>
-      <div class="float-badge float-badge-bl">
-        <span class="float-icon">📈</span>
-        <div>
-          <div class="float-num">150+</div>
-          <div class="float-sub">Projekte</div>
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="mobile-menu hidden">
+    <div class="container">
+      <div class="mobile-menu-links">
+        <a href="#" class="mobile-nav-link">Startseite</a>
+        <a href="#" class="mobile-nav-link">Über uns</a>
+        <a href="#leistungen" class="mobile-nav-link">Leistungen</a>
+        <a href="#preise" class="mobile-nav-link">Preise</a>
+        <a href="#" class="mobile-nav-link">Karriere</a>
+        <a href="#kontakt" class="mobile-nav-link">Kontakt</a>
+        <div class="mobile-menu-cta">
+          <a href="{cta_url}" class="btn-primary w-full text-center">{cta_label}</a>
         </div>
       </div>
     </div>
   </div>
-</section>
 
-<!-- PARTNERS -->
-<section class="partners">
-  <div class="container">
-    <p class="partners-label">Vertrauen von führenden Unternehmen</p>
-    <div class="partners-grid">
-      <img src="assets/AOK-2021.svg" alt="AOK" />
-      <img src="assets/BBVA_2019.svg" alt="BBVA" />
-      <img src="assets/Commerzbank.svg" alt="Commerzbank" />
-      <img src="assets/Debeka.svg" alt="Debeka" />
-      <img src="assets/Deutsche_Post.svg" alt="Deutsche Post" />
-      <img src="assets/SAP_2011_logo.svg" alt="SAP" />
-      <img src="assets/allianz-logo.svg" alt="Allianz" />
-      <img src="assets/deutschebank.svg" alt="Deutsche Bank" />
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container">
+      <nav class="nav">
+        <a href="#" class="logo">
+          <img src="assets/favicon.svg" alt="Logo" class="logo-icon" />
+          <span class="logo-text">{logo_text}</span>
+        </a>
+        <div class="nav-links">
+          <a href="#" class="nav-link">Startseite</a>
+          <a href="#" class="nav-link">Über uns</a>
+          <a href="#leistungen" class="nav-link">Leistungen</a>
+          <a href="#preise" class="nav-link">Preise</a>
+          <a href="#" class="nav-link">Karriere</a>
+          <a href="#kontakt" class="nav-link">Kontakt</a>
+        </div>
+        <div class="nav-actions">
+          <a href="{cta_url}" class="btn-primary">{cta_label}</a>
+        </div>
+        <button id="mobile-menu-button" class="hamburger-btn" aria-label="Menü öffnen">
+          <svg id="menu-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+          <svg id="menu-icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </nav>
     </div>
-  </div>
-</section>
+  </header>
+  <div class="header-spacer"></div>
 
-<!-- SERVICES -->
-<section class="section" id="leistungen">
-  <div class="container">
-    <div class="section-head center">
-      <span class="chip chip-dot">Unsere Expertise</span>
-      <h2 class="section-title">Unsere Leistungen</h2>
-      <p class="section-lede">Von der Idee bis zur Umsetzung — wir begleiten Sie auf dem Weg zur digitalen Exzellenz.</p>
-    </div>
-    <div class="services-grid">
-      <div class="card-soft service-card">
-        <div class="service-icon">💻</div>
-        <h3>Software-Entwicklung</h3>
-        <p>Maßgeschneiderte Softwarelösungen, die exakt auf Ihre Geschäftsprozesse zugeschnitten sind. Wir entwickeln robuste, wartbare und skalierbare Anwendungen — von modernen Web-Apps über native Mobile-Lösungen bis hin zu komplexen Enterprise-Systemen mit Microservice-Architektur.</p>
-        <ul class="check-list">
-          <li><span class="check">✓</span>Web-Anwendungen mit React, Vue oder Angular</li>
-          <li><span class="check">✓</span>Native &amp; Cross-Platform Mobile Apps</li>
-          <li><span class="check">✓</span>RESTful &amp; GraphQL API-Entwicklung</li>
-          <li><span class="check">✓</span>Legacy-System Modernisierung</li>
-          <li><span class="check">✓</span>Enterprise Resource Planning (ERP)</li>
-          <li><span class="check">✓</span>Systemintegration &amp; Middleware</li>
-        </ul>
-        <a href="#preise" class="service-more">Mehr erfahren →</a>
-      </div>
-      <div class="card-soft service-card">
-        <div class="service-icon">⚙️</div>
-        <h3>Prozessautomatisierung</h3>
-        <p>Steigern Sie die Effizienz Ihres Unternehmens durch intelligente Automatisierung. Wir identifizieren repetitive Aufgaben und transformieren sie in vollautomatische Workflows — von der Dokumentenverarbeitung bis zur kompletten End-to-End-Prozessautomatisierung.</p>
-        <ul class="check-list">
-          <li><span class="check">✓</span>Workflow-Automation mit n8n &amp; Zapier</li>
-          <li><span class="check">✓</span>Robotic Process Automation (RPA)</li>
-          <li><span class="check">✓</span>Intelligente Dokumentenverarbeitung</li>
-          <li><span class="check">✓</span>E-Mail &amp; Kommunikationsautomatisierung</li>
-          <li><span class="check">✓</span>Datenextraktion &amp; -transformation</li>
-          <li><span class="check">✓</span>Automatische Berichterstellung</li>
-        </ul>
-        <a href="#preise" class="service-more">Mehr erfahren →</a>
-      </div>
-      <div class="card-soft service-card">
-        <div class="service-icon">☁️</div>
-        <h3>Cloud-Infrastruktur</h3>
-        <p>Moderne Cloud-Architekturen für maximale Verfügbarkeit, Skalierbarkeit und Kosteneffizienz. Wir begleiten Sie von der Strategie über die Migration bis zum laufenden Betrieb — auf AWS, Azure, Google Cloud oder in Ihrer Private Cloud.</p>
-        <ul class="check-list">
-          <li><span class="check">✓</span>Cloud-Migration &amp; Lift-and-Shift</li>
-          <li><span class="check">✓</span>Infrastructure as Code (Terraform, Pulumi)</li>
-          <li><span class="check">✓</span>Container-Orchestrierung mit Kubernetes</li>
-          <li><span class="check">✓</span>CI/CD Pipelines &amp; DevOps-Kultur</li>
-          <li><span class="check">✓</span>24/7 Monitoring &amp; Alerting</li>
-          <li><span class="check">✓</span>Disaster Recovery &amp; Backup-Strategien</li>
-        </ul>
-        <a href="#preise" class="service-more">Mehr erfahren →</a>
-      </div>
-      <div class="card-soft service-card">
-        <div class="service-icon">🧠</div>
-        <h3>KI &amp; Machine Learning</h3>
-        <p>Erschließen Sie das volle Potenzial Ihrer Daten mit maßgeschneiderten KI-Lösungen. Von der Integration großer Sprachmodelle bis hin zu individuellen Machine-Learning-Pipelines — wir machen künstliche Intelligenz für Ihr Business nutzbar.</p>
-        <ul class="check-list">
-          <li><span class="check">✓</span>LLM-Integration (GPT, Claude, Gemini)</li>
-          <li><span class="check">✓</span>Custom AI Agents &amp; Chatbots</li>
-          <li><span class="check">✓</span>Predictive Analytics &amp; Forecasting</li>
-          <li><span class="check">✓</span>Computer Vision &amp; Bildanalyse</li>
-          <li><span class="check">✓</span>Natural Language Processing (NLP)</li>
-          <li><span class="check">✓</span>ML-Modell-Training &amp; Deployment</li>
-        </ul>
-        <a href="#preise" class="service-more">Mehr erfahren →</a>
-      </div>
-      <div class="card-soft service-card">
-        <div class="service-icon">🛡️</div>
-        <h3>Qualitätssicherung &amp; Cybersecurity</h3>
-        <p>Schützen Sie Ihre digitalen Assets und garantieren Sie höchste Softwarequalität. Unsere Experten prüfen Ihre Systeme auf Sicherheitslücken, implementieren Best Practices und etablieren nachhaltige QA-Prozesse für fehlerfreie Releases.</p>
-        <ul class="check-list">
-          <li><span class="check">✓</span>Penetrationstests &amp; Vulnerability Scans</li>
-          <li><span class="check">✓</span>Security Audits nach OWASP-Standards</li>
-          <li><span class="check">✓</span>Automatisierte Test-Suites (Unit, E2E, Integration)</li>
-          <li><span class="check">✓</span>Code Reviews &amp; statische Codeanalyse</li>
-          <li><span class="check">✓</span>DSGVO-Compliance &amp; Datenschutz-Audits</li>
-          <li><span class="check">✓</span>Incident Response &amp; Security Monitoring</li>
-        </ul>
-        <a href="#preise" class="service-more">Mehr erfahren →</a>
-      </div>
-      <div class="card-soft service-card">
-        <div class="service-icon">🎯</div>
-        <h3>IT-Beratung &amp; Strategie</h3>
-        <p>Navigieren Sie sicher durch die digitale Transformation mit unserer strategischen IT-Beratung. Wir analysieren Ihre aktuelle Systemlandschaft, identifizieren Optimierungspotenziale und entwickeln eine Roadmap für Ihre digitale Zukunft.</p>
-        <ul class="check-list">
-          <li><span class="check">✓</span>Digitalisierungsstrategie &amp; Roadmap</li>
-          <li><span class="check">✓</span>IT-Architektur &amp; System-Design</li>
-          <li><span class="check">✓</span>Technologie-Audits &amp; Assessments</li>
-          <li><span class="check">✓</span>Vendor-Selection &amp; Tool-Evaluierung</li>
-          <li><span class="check">✓</span>Team-Schulungen &amp; Workshops</li>
-          <li><span class="check">✓</span>Agile Transformation &amp; Coaching</li>
-        </ul>
-        <a href="#preise" class="service-more">Mehr erfahren →</a>
-      </div>
-    </div>
-    <div class="center mt-10">
-      <a href="#preise" class="btn-outline">Alle Leistungen ansehen</a>
-    </div>
-  </div>
-</section>
+  <main>
 
-<!-- STATS -->
-<section class="stats-band">
-  <div class="container stats-grid">
-    <div class="stat"><div class="stat-v text-gradient">150+</div><div class="stat-l">Projekte abgeschlossen</div></div>
-    <div class="stat"><div class="stat-v text-gradient">100%</div><div class="stat-l">Kundenzufriedenheit</div></div>
-    <div class="stat"><div class="stat-v text-gradient">25+</div><div class="stat-l">Experten im Team</div></div>
-    <div class="stat"><div class="stat-v text-gradient">12</div><div class="stat-l">Jahre Erfahrung</div></div>
-  </div>
-</section>
+    <!-- HERO -->
+    <section class="hero-section">
+      <div class="hero-bg">
+        <div class="hero-bg-radial-tr"></div>
+        <div class="hero-bg-radial-bl"></div>
+      </div>
+      <div class="hero-blobs">
+        <div class="blob blob-tl"></div>
+        <div class="blob blob-br"></div>
+        <div class="dot dot-1"></div>
+        <div class="dot dot-2"></div>
+        <div class="dot dot-3"></div>
+      </div>
+      <div class="hero-inner container">
+        <div class="hero-grid">
+          <!-- Left -->
+          <div class="hero-content">
+            <div class="hero-badge">
+              <span class="badge-dot">
+                <span class="badge-ping"></span>
+                <span class="badge-core"></span>
+              </span>
+              Jetzt skalieren
+            </div>
+            <h1 class="hero-title">
+              Digitale <span class="gradient-text">{hero_highlight}</span> für moderne Unternehmen.
+            </h1>
+            <p class="hero-sub">{hero_sub}</p>
+            <div class="hero-btns">
+              <a href="{cta_url}" class="btn-primary btn-lg">
+                {cta_label}
+                <svg class="btn-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              </a>
+              <a href="#leistungen" class="btn-outline btn-lg">Leistungen ansehen</a>
+            </div>
+          </div>
+          <!-- Right image -->
+          <div class="hero-img-wrap">
+            <div class="hero-img-frame">
+              <img src="assets/hero.webp" alt="Dashboard Preview" class="hero-img" loading="eager" />
+              <div class="hero-img-overlay"></div>
+              <!-- badge bottom left -->
+              <div class="hero-badge-projects">
+                <div class="hero-badge-icon gradient-primary">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </div>
+                <div>
+                  <div class="badge-number">150+</div>
+                  <div class="badge-label">Projekte</div>
+                </div>
+              </div>
+              <!-- badge top right -->
+              <div class="hero-badge-satisfaction">
+                <div class="sat-icon">
+                  <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <span class="sat-text">100% Zufriedenheit</span>
+              </div>
+            </div>
+            <div class="hero-deco-tr"></div>
+            <div class="hero-deco-bl"></div>
+          </div>
+        </div>
+      </div>
 
-<!-- WHY -->
-<section class="section" id="ueber-uns">
-  <div class="container">
-    <div class="section-head center">
-      <h2 class="section-title">Warum wir?</h2>
-      <p class="section-lede">Wir kombinieren technische Expertise mit unternehmerischem Denken — für Lösungen, die wirklich funktionieren.</p>
-    </div>
-    <div class="why-grid">
-      <div class="card-soft why-card"><h3>Deutsche Qualität</h3><p>Entwicklung nach höchsten deutschen Standards mit Fokus auf Datenschutz und Sicherheit.</p></div>
-      <div class="card-soft why-card"><h3>Schnelle Umsetzung</h3><p>Agile Methoden ermöglichen kurze Entwicklungszyklen und schnelle Time-to-Market.</p></div>
-      <div class="card-soft why-card"><h3>Persönlicher Support</h3><p>Feste Ansprechpartner und direkte Kommunikation — keine Ticket-Warteschlangen.</p></div>
-      <div class="card-soft why-card"><h3>Skalierbare Lösungen</h3><p>Unsere Architekturen wachsen mit Ihrem Unternehmen mit.</p></div>
-    </div>
-  </div>
-</section>
+      <!-- Partners slider (inside hero section per original) -->
+      <section class="partners-section">
+        <div class="container">
+          <p class="partners-heading">Vertrauen von führenden Unternehmen</p>
+          <div class="partners-slider-wrap">
+            <button class="slider-btn slider-prev" id="partners-prev" aria-label="Zurück">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="partners-track-outer">
+              <div class="partners-track" id="partners-track">
+                <div class="partner-logo"><img src="assets/partners/AOK-2021.svg" alt="AOK" /></div>
+                <div class="partner-logo"><img src="assets/partners/BBVA_2019.svg" alt="BBVA" /></div>
+                <div class="partner-logo"><img src="assets/partners/Commerzbank.svg" alt="Commerzbank" /></div>
+                <div class="partner-logo"><img src="assets/partners/Debeka.svg" alt="Debeka" /></div>
+                <div class="partner-logo"><img src="assets/partners/Deutsche_Kreditbank_AG_Logo.svg" alt="Deutsche Kreditbank" /></div>
+                <div class="partner-logo"><img src="assets/partners/Deutsche_Post.svg" alt="Deutsche Post" /></div>
+                <div class="partner-logo"><img src="assets/partners/HypoVereinsbank_Logo_2008.svg" alt="HypoVereinsbank" /></div>
+                <div class="partner-logo"><img src="assets/partners/SAP_2011_logo.svg" alt="SAP" /></div>
+                <div class="partner-logo"><img src="assets/partners/WebID_Solutions_GmbH.svg" alt="WebID" /></div>
+                <div class="partner-logo"><img src="assets/partners/allianz-logo.svg" alt="Allianz" /></div>
+                <div class="partner-logo"><img src="assets/partners/deutschebank.svg" alt="Deutsche Bank" /></div>
+              </div>
+            </div>
+            <button class="slider-btn slider-next" id="partners-next" aria-label="Weiter">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+    </section>
 
-<!-- PROCESS -->
-<section class="section section-soft">
-  <div class="container">
-    <div class="section-head center">
-      <span class="chip chip-dot">Unser Prozess</span>
-      <h2 class="section-title">Wie wir arbeiten</h2>
-      <p class="section-lede">Ein strukturierter Ansatz für Projekte, die nachhaltig erfolgreich sind.</p>
-    </div>
-    <div class="process-grid">
-      <div class="card-soft process-card"><div class="process-n text-gradient">01</div><h3>Analyse</h3><p>In intensiven Workshops erfassen wir Ihre Anforderungen und identifizieren Optimierungspotenziale.</p></div>
-      <div class="card-soft process-card"><div class="process-n text-gradient">02</div><h3>Strategie</h3><p>Gemeinsam entwickeln wir eine Roadmap mit Meilensteinen, Zeitplänen und Erfolgsmetriken.</p></div>
-      <div class="card-soft process-card"><div class="process-n text-gradient">03</div><h3>Entwicklung</h3><p>In agilen Sprints — mit Demo-Sessions, transparenter Kommunikation und Feedback-Schleifen.</p></div>
-      <div class="card-soft process-card"><div class="process-n text-gradient">04</div><h3>Optimierung</h3><p>Nach dem Launch: proaktiver Support, Monitoring und kontinuierliche Verbesserung.</p></div>
-    </div>
-  </div>
-</section>
+    <!-- SERVICES -->
+    <section id="leistungen" class="section services-section">
+      <div class="container">
+        <div class="section-label">Unsere Expertise</div>
+        <h2 class="section-title">Unsere Leistungen</h2>
+        <p class="section-sub">Von der Idee bis zur Umsetzung - wir begleiten Sie auf dem Weg zur digitalen Exzellenz.</p>
+        <div class="services-grid">
 
-<!-- TESTIMONIALS -->
-<section class="section">
-  <div class="container">
-    <div class="section-head center">
-      <span class="chip chip-dot">Kundenstimmen</span>
-      <h2 class="section-title">Was unsere Kunden sagen</h2>
-      <p class="section-lede">Erfolgsgeschichten aus verschiedenen Branchen — echte Projekte, echte Ergebnisse.</p>
-    </div>
-    <div class="carousel-wrap">
-      <div class="carousel-track" data-carousel-track>
-        <div class="carousel-slide"><div class="card-soft testimonial"><div class="t-quote">"</div><p>Die Zusammenarbeit war hervorragend. Das Team hat unsere Vision perfekt umgesetzt und dabei stets proaktiv mitgedacht.</p><div class="t-author"><div class="t-avatar">AM</div><div><div class="t-name">Dr. Anna Müller</div><div class="t-role">CTO, TechVision GmbH</div></div></div></div></div>
-        <div class="carousel-slide"><div class="card-soft testimonial"><div class="t-quote">"</div><p>Dank der Automatisierungslösungen konnten wir unsere Prozesskosten um 45% senken. Eine Investition, die sich sofort ausgezahlt hat.</p><div class="t-author"><div class="t-avatar">MS</div><div><div class="t-name">Michael Schmidt</div><div class="t-role">Geschäftsführer, Logistik Plus AG</div></div></div></div></div>
-        <div class="carousel-slide"><div class="card-soft testimonial"><div class="t-quote">"</div><p>Endlich ein IT-Partner, der versteht, was wir brauchen. Klare Kommunikation, zuverlässige Lieferung, faire Preise.</p><div class="t-author"><div class="t-avatar">SW</div><div><div class="t-name">Sarah Weber</div><div class="t-role">Head of Digital, Finanz Direkt</div></div></div></div></div>
-        <div class="carousel-slide"><div class="card-soft testimonial"><div class="t-quote">"</div><p>Die neue Cloud-Infrastruktur läuft seit 18 Monaten ohne einen einzigen Ausfall. Das spricht für sich.</p><div class="t-author"><div class="t-avatar">TB</div><div><div class="t-name">Thomas Bergmann</div><div class="t-role">IT-Leiter, MedTech Solutions</div></div></div></div></div>
-        <div class="carousel-slide"><div class="card-soft testimonial"><div class="t-quote">"</div><p>Vom ersten Gespräch bis zum Go-Live haben wir uns bestens aufgehoben gefühlt. Professionell und menschlich zugleich.</p><div class="t-author"><div class="t-avatar">JH</div><div><div class="t-name">Julia Hoffmann</div><div class="t-role">Projektleiterin, Retail Connect</div></div></div></div></div>
-        <div class="carousel-slide"><div class="card-soft testimonial"><div class="t-quote">"</div><p>Unsere App wurde in Rekordzeit entwickelt und übertrifft alle Erwartungen. Die Nutzer lieben sie.</p><div class="t-author"><div class="t-avatar">MK</div><div><div class="t-name">Markus Klein</div><div class="t-role">Gründer, FoodDelivery24</div></div></div></div></div>
-      </div>
-    </div>
-    <div class="carousel-controls">
-      <button class="carousel-btn" data-carousel-prev aria-label="Vorherige">←</button>
-      <div class="carousel-dots" data-carousel-dots></div>
-      <button class="carousel-btn" data-carousel-next aria-label="Nächste">→</button>
-    </div>
-  </div>
-</section>
+          <div class="service-card">
+            <div class="service-icon gradient-primary">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            </div>
+            <h3 class="service-title">{service_1_title}</h3>
+            <p class="service-desc">{service_1_desc}</p>
+            <ul class="service-list">
+              <li>Web-Anwendungen mit React, Vue oder Angular</li>
+              <li>Native &amp; Cross-Platform Mobile Apps</li>
+              <li>RESTful &amp; GraphQL API-Entwicklung</li>
+              <li>Legacy-System Modernisierung</li>
+              <li>Enterprise Resource Planning (ERP)</li>
+              <li>Systemintegration &amp; Middleware</li>
+            </ul>
+            <a href="#" class="service-link">Mehr erfahren <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></a>
+          </div>
 
-<!-- PRICING -->
-<section class="section section-soft" id="preise">
-  <div class="container">
-    <div class="section-head center">
-      <span class="chip chip-dot">Preise</span>
-      <h2 class="section-title">Transparente Preise für Ihr Wachstum</h2>
-      <p class="section-lede">Wählen Sie das Paket, das zu Ihren Anforderungen passt. Keine versteckten Kosten.</p>
-    </div>
-    <div class="billing-toggle">
-      <div class="toggle-pill">
-        <button class="toggle-btn active" data-billing="monthly">Monatlich</button>
-        <button class="toggle-btn" data-billing="yearly">Jährlich <span class="toggle-discount">-20%</span></button>
-      </div>
-    </div>
-    <div class="pricing-grid">
-      <div class="card-soft pricing-card">
-        <h3>Starter</h3>
-        <p class="pricing-desc">Ideal für kleine Projekte und Startups</p>
-        <div class="price-block"><span class="price-num" data-monthly="999" data-yearly="799">999</span><span class="price-currency">€</span><div class="price-sub">pro Monat</div></div>
-        <ul class="check-list">
-          <li><span class="check">✓</span>Bis zu 3 aktive Projekte</li>
-          <li><span class="check">✓</span>Basis-Support per E-Mail</li>
-          <li><span class="check">✓</span>Monatliche Status-Meetings</li>
-          <li><span class="check">✓</span>Dokumentation inklusive</li>
-        </ul>
-        <a href="{cta_url}" class="btn-outline btn-block">Jetzt starten</a>
-      </div>
-      <div class="card-soft pricing-card pricing-highlight">
-        <span class="pricing-badge">Empfohlen</span>
-        <h3>Professional</h3>
-        <p class="pricing-desc">Für wachsende Unternehmen mit komplexen Anforderungen</p>
-        <div class="price-block"><span class="price-num" data-monthly="2499" data-yearly="1999">2.499</span><span class="price-currency">€</span><div class="price-sub">pro Monat</div></div>
-        <ul class="check-list">
-          <li><span class="check">✓</span>Unbegrenzte Projekte</li>
-          <li><span class="check">✓</span>Priority-Support</li>
-          <li><span class="check">✓</span>Wöchentliche Meetings</li>
-          <li><span class="check">✓</span>Dedizierter Projektmanager</li>
-          <li><span class="check">✓</span>SLA-Garantie 99,5%</li>
-          <li><span class="check">✓</span>Individuelle Integrationen</li>
-        </ul>
-        <a href="{cta_url}" class="btn-primary btn-block">Upgrade wählen</a>
-      </div>
-      <div class="card-soft pricing-card">
-        <h3>Enterprise</h3>
-        <p class="pricing-desc">Maßgeschneiderte Lösungen für Großunternehmen</p>
-        <div class="price-block"><span class="price-num-text">Auf Anfrage</span><div class="price-sub">Individuelles Angebot</div></div>
-        <ul class="check-list">
-          <li><span class="check">✓</span>Alle Professional-Features</li>
-          <li><span class="check">✓</span>24/7 Support-Hotline</li>
-          <li><span class="check">✓</span>On-Premise Option</li>
-          <li><span class="check">✓</span>Dedicated Account Manager</li>
-          <li><span class="check">✓</span>Individuelle SLA</li>
-          <li><span class="check">✓</span>White-Label-Lösungen</li>
-        </ul>
-        <a href="{cta_url}" class="btn-outline btn-block">Kontakt aufnehmen</a>
-      </div>
-    </div>
-  </div>
-</section>
+          <div class="service-card">
+            <div class="service-icon gradient-primary">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </div>
+            <h3 class="service-title">{service_2_title}</h3>
+            <p class="service-desc">{service_2_desc}</p>
+            <ul class="service-list">
+              <li>Workflow-Automation mit n8n &amp; Zapier</li>
+              <li>Robotic Process Automation (RPA)</li>
+              <li>Intelligente Dokumentenverarbeitung</li>
+              <li>E-Mail &amp; Kommunikationsautomatisierung</li>
+              <li>Datenextraktion &amp; -transformation</li>
+              <li>Automatische Berichterstellung</li>
+            </ul>
+            <a href="#" class="service-link">Mehr erfahren <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></a>
+          </div>
 
-<!-- FINAL CTA -->
-<section class="section" id="karriere">
-  <div class="container container-narrow">
-    <div class="final-cta">
-      <h2>Bereit, Ihr Projekt zu starten?</h2>
-      <p>Vereinbaren Sie noch heute ein kostenloses Erstgespräch und entdecken Sie die Möglichkeiten.</p>
-      <div class="final-cta-actions">
-        <a href="{cta_url}" class="cta-btn-light">Beratung buchen</a>
-        <a href="{cta_url}" class="cta-btn-outline">Vertrieb kontaktieren</a>
-      </div>
-    </div>
-  </div>
-</section>
+          <div class="service-card">
+            <div class="service-icon gradient-primary">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+            </div>
+            <h3 class="service-title">{service_3_title}</h3>
+            <p class="service-desc">{service_3_desc}</p>
+            <ul class="service-list">
+              <li>Cloud-Migration &amp; Lift-and-Shift</li>
+              <li>Infrastructure as Code (Terraform, Pulumi)</li>
+              <li>Container-Orchestrierung mit Kubernetes</li>
+              <li>CI/CD Pipelines &amp; DevOps-Kultur</li>
+              <li>24/7 Monitoring &amp; Alerting</li>
+              <li>Disaster Recovery &amp; Backup-Strategien</li>
+            </ul>
+            <a href="#" class="service-link">Mehr erfahren <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></a>
+          </div>
 
-<!-- FOOTER -->
-<footer class="site-footer">
-  <div class="container footer-grid">
-    <div>
-      <div class="brand brand-footer">
-        <span class="brand-mark">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 8l7-4 7 4-7 4-7-4zm0 8l7 4 7-4M5 12l7 4 7-4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-        </span>
-        <span>{firmenname}</span>
-      </div>
-      <p class="footer-desc">Ihr Partner für maßgeschneiderte Software, Automatisierung und digitale Transformation.</p>
-    </div>
-    <div>
-      <h4>Unternehmen</h4>
-      <ul>
-        <li><a href="#ueber-uns">Über uns</a></li>
-        <li><a href="#karriere">Karriere</a></li>
-        <li><a href="{cta_url}">Kontakt</a></li>
-      </ul>
-    </div>
-    <div>
-      <h4>Leistungen</h4>
-      <ul>
-        <li><a href="#leistungen">Software-Entwicklung</a></li>
-        <li><a href="#leistungen">Automatisierung</a></li>
-        <li><a href="#leistungen">Cloud &amp; DevOps</a></li>
-        <li><a href="#preise">Preise</a></li>
-      </ul>
-    </div>
-    <div>
-      <h4>Rechtliches</h4>
-      <ul>
-        <li><a href="#impressum">Impressum</a></li>
-        <li><a href="#datenschutz">Datenschutz</a></li>
-      </ul>
-      <div class="footer-contact">
-        <p>{contact_email}</p>
-        <p>{contact_phone}</p>
-      </div>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <div class="container footer-bottom-inner">
-      <p>© <span id="year"></span> {firmenname}. Alle Rechte vorbehalten.</p>
-      <p>Made in Germany 🇩🇪</p>
-    </div>
-  </div>
-</footer>
+          <div class="service-card">
+            <div class="service-icon gradient-primary">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            </div>
+            <h3 class="service-title">{service_4_title}</h3>
+            <p class="service-desc">{service_4_desc}</p>
+            <ul class="service-list">
+              <li>LLM-Integration (GPT, Claude, Gemini)</li>
+              <li>Custom AI Agents &amp; Chatbots</li>
+              <li>Predictive Analytics &amp; Forecasting</li>
+              <li>Computer Vision &amp; Bildanalyse</li>
+              <li>Natural Language Processing (NLP)</li>
+              <li>ML-Modell-Training &amp; Deployment</li>
+            </ul>
+            <a href="#" class="service-link">Mehr erfahren <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></a>
+          </div>
 
-<script src="script.js"></script>
+          <div class="service-card">
+            <div class="service-icon gradient-primary">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h3 class="service-title">{service_5_title}</h3>
+            <p class="service-desc">{service_5_desc}</p>
+            <ul class="service-list">
+              <li>Penetrationstests &amp; Vulnerability Scans</li>
+              <li>Security Audits nach OWASP-Standards</li>
+              <li>Automatisierte Test-Suites (Unit, E2E, Integration)</li>
+              <li>Code Reviews &amp; statische Codeanalyse</li>
+              <li>DSGVO-Compliance &amp; Datenschutz-Audits</li>
+              <li>Incident Response &amp; Forensik</li>
+            </ul>
+            <a href="#" class="service-link">Mehr erfahren <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></a>
+          </div>
+
+          <div class="service-card">
+            <div class="service-icon gradient-primary">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <h3 class="service-title">{service_6_title}</h3>
+            <p class="service-desc">{service_6_desc}</p>
+            <ul class="service-list">
+              <li>IT-Strategie &amp; Digitalisierungsberatung</li>
+              <li>Technologie-Auswahl &amp; Architektur-Review</li>
+              <li>Agile Transformation &amp; Scrum-Coaching</li>
+              <li>Vendor Management &amp; Outsourcing</li>
+              <li>IT-Due-Diligence für M&amp;A</li>
+              <li>CTO-as-a-Service</li>
+            </ul>
+            <a href="#" class="service-link">Mehr erfahren <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg></a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS + WHY -->
+    <section class="section stats-why-section">
+      <div class="container">
+        <!-- Stats row -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-number">150+</div>
+            <div class="stat-label">Projekte abgeschlossen</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Kundenzufriedenheit</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">25+</div>
+            <div class="stat-label">Experten im Team</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">12</div>
+            <div class="stat-label">Jahre Erfahrung</div>
+          </div>
+        </div>
+        <!-- Why us -->
+        <div class="why-grid">
+          <div class="why-left">
+            <div class="section-label">Warum wir?</div>
+            <h2 class="section-title">Wir kombinieren technische Expertise mit unternehmerischem Denken</h2>
+            <p class="section-sub">für Lösungen, die wirklich funktionieren.</p>
+            <a href="#" class="btn-outline mt-8 inline-block">Mehr über uns erfahren</a>
+          </div>
+          <div class="why-features">
+            <div class="why-feature">
+              <div class="why-feature-icon gradient-primary">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+              </div>
+              <div>
+                <h4 class="why-feature-title">Deutsche Qualität</h4>
+                <p class="why-feature-desc">Entwicklung nach höchsten deutschen Standards mit Fokus auf Datenschutz und Sicherheit.</p>
+              </div>
+            </div>
+            <div class="why-feature">
+              <div class="why-feature-icon gradient-primary">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <div>
+                <h4 class="why-feature-title">Schnelle Umsetzung</h4>
+                <p class="why-feature-desc">Agile Methoden ermöglichen kurze Entwicklungszyklen und schnelle Time-to-Market.</p>
+              </div>
+            </div>
+            <div class="why-feature">
+              <div class="why-feature-icon gradient-primary">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>
+              </div>
+              <div>
+                <h4 class="why-feature-title">Persönlicher Support</h4>
+                <p class="why-feature-desc">Feste Ansprechpartner und direkte Kommunikation - keine Ticket-Warteschlangen.</p>
+              </div>
+            </div>
+            <div class="why-feature">
+              <div class="why-feature-icon gradient-primary">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+              </div>
+              <div>
+                <h4 class="why-feature-title">Skalierbare Lösungen</h4>
+                <p class="why-feature-desc">Unsere Architekturen wachsen mit Ihrem Unternehmen mit.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROCESS -->
+    <section class="section process-section">
+      <div class="container">
+        <div class="section-label">Unser Prozess</div>
+        <h2 class="section-title">Wie wir arbeiten</h2>
+        <p class="section-sub">Ein strukturierter Ansatz für Projekte, die nachhaltig erfolgreich sind. Transparenz und Zusammenarbeit stehen bei uns an erster Stelle.</p>
+        <div class="process-grid">
+          <div class="process-step">
+            <div class="process-step-num">
+              <span class="step-label">Schritt 1</span>
+              <div class="step-circle gradient-primary">1</div>
+            </div>
+            <h3 class="process-step-title">{process_1_title}</h3>
+            <p class="process-step-desc">{process_1_desc}</p>
+          </div>
+          <div class="process-step">
+            <div class="process-step-num">
+              <span class="step-label">Schritt 2</span>
+              <div class="step-circle gradient-primary">2</div>
+            </div>
+            <h3 class="process-step-title">{process_2_title}</h3>
+            <p class="process-step-desc">{process_2_desc}</p>
+          </div>
+          <div class="process-step">
+            <div class="process-step-num">
+              <span class="step-label">Schritt 3</span>
+              <div class="step-circle gradient-primary">3</div>
+            </div>
+            <h3 class="process-step-title">{process_3_title}</h3>
+            <p class="process-step-desc">{process_3_desc}</p>
+          </div>
+          <div class="process-step">
+            <div class="process-step-num">
+              <span class="step-label">Schritt 4</span>
+              <div class="step-circle gradient-primary">4</div>
+            </div>
+            <h3 class="process-step-title">{process_4_title}</h3>
+            <p class="process-step-desc">{process_4_desc}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="section testimonials-section">
+      <div class="container">
+        <div class="section-label">Kundenstimmen</div>
+        <h2 class="section-title">Was unsere Kunden sagen</h2>
+        <p class="section-sub">Erfolgsgeschichten aus verschiedenen Branchen - echte Projekte, echte Ergebnisse.</p>
+        <div class="testimonials-slider">
+          <div class="testimonials-track" id="testimonials-track">
+            <div class="testimonial-card">
+              <p class="testimonial-quote">„{testimonial_1_quote}"</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">{testimonial_1_initials}</div>
+                <div>
+                  <div class="testimonial-name">{testimonial_1_name}</div>
+                  <div class="testimonial-role">{testimonial_1_role}</div>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <p class="testimonial-quote">„{testimonial_2_quote}"</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">{testimonial_2_initials}</div>
+                <div>
+                  <div class="testimonial-name">{testimonial_2_name}</div>
+                  <div class="testimonial-role">{testimonial_2_role}</div>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <p class="testimonial-quote">„{testimonial_3_quote}"</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">{testimonial_3_initials}</div>
+                <div>
+                  <div class="testimonial-name">{testimonial_3_name}</div>
+                  <div class="testimonial-role">{testimonial_3_role}</div>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <p class="testimonial-quote">„{testimonial_4_quote}"</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">{testimonial_4_initials}</div>
+                <div>
+                  <div class="testimonial-name">{testimonial_4_name}</div>
+                  <div class="testimonial-role">{testimonial_4_role}</div>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <p class="testimonial-quote">„{testimonial_5_quote}"</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">{testimonial_5_initials}</div>
+                <div>
+                  <div class="testimonial-name">{testimonial_5_name}</div>
+                  <div class="testimonial-role">{testimonial_5_role}</div>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <p class="testimonial-quote">„{testimonial_6_quote}"</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">{testimonial_6_initials}</div>
+                <div>
+                  <div class="testimonial-name">{testimonial_6_name}</div>
+                  <div class="testimonial-role">{testimonial_6_role}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonials-controls">
+            <button class="slider-btn" id="testimonials-prev" aria-label="Zurück">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button class="slider-btn" id="testimonials-next" aria-label="Weiter">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section id="preise" class="section pricing-section">
+      <div class="container">
+        <div class="section-label">Preise</div>
+        <h2 class="section-title">Transparente Preise für Ihr Wachstum</h2>
+        <p class="section-sub">Wählen Sie das Paket, das zu Ihren Anforderungen passt. Keine versteckten Kosten.</p>
+        <!-- Toggle -->
+        <div class="pricing-toggle">
+          <span class="toggle-label" id="toggle-monthly-label">Monatlich</span>
+          <button class="toggle-switch" id="pricing-toggle" role="switch" aria-checked="false">
+            <span class="toggle-thumb"></span>
+          </button>
+          <span class="toggle-label" id="toggle-yearly-label">Jährlich <span class="toggle-badge">-20%</span></span>
+        </div>
+
+        <div class="pricing-grid">
+          <!-- Starter -->
+          <div class="pricing-card">
+            <div class="pricing-card-header">
+              <h3 class="plan-name">{plan_1_name}</h3>
+              <p class="plan-tagline">{plan_1_tagline}</p>
+              <div class="plan-price">
+                <span class="price-amount" data-monthly="{plan_1_price_monthly}" data-yearly="{plan_1_price_yearly}">{plan_1_price_monthly}</span>
+                <span class="price-unit">€<br/><span class="price-per">pro Monat</span></span>
+              </div>
+            </div>
+            <ul class="plan-features">
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_1_feature_1}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_1_feature_2}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_1_feature_3}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_1_feature_4}</li>
+            </ul>
+            <a href="{cta_url}" class="btn-outline w-full text-center">Jetzt starten</a>
+          </div>
+
+          <!-- Professional (recommended) -->
+          <div class="pricing-card pricing-card-featured">
+            <div class="pricing-featured-badge">Empfohlen</div>
+            <div class="pricing-card-header">
+              <h3 class="plan-name">{plan_2_name}</h3>
+              <p class="plan-tagline">{plan_2_tagline}</p>
+              <div class="plan-price">
+                <span class="price-amount" data-monthly="{plan_2_price_monthly}" data-yearly="{plan_2_price_yearly}">{plan_2_price_monthly}</span>
+                <span class="price-unit">€<br/><span class="price-per">pro Monat</span></span>
+              </div>
+            </div>
+            <ul class="plan-features">
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_2_feature_1}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_2_feature_2}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_2_feature_3}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_2_feature_4}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_2_feature_5}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_2_feature_6}</li>
+            </ul>
+            <a href="{cta_url}" class="btn-primary w-full text-center">Upgrade wählen</a>
+          </div>
+
+          <!-- Enterprise -->
+          <div class="pricing-card">
+            <div class="pricing-card-header">
+              <h3 class="plan-name">{plan_3_name}</h3>
+              <p class="plan-tagline">{plan_3_tagline}</p>
+              <div class="plan-price plan-price-custom">
+                <span class="price-custom">Auf Anfrage</span>
+                <span class="price-unit-custom">Individuelles Angebot</span>
+              </div>
+            </div>
+            <ul class="plan-features">
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_3_feature_1}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_3_feature_2}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_3_feature_3}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_3_feature_4}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_3_feature_5}</li>
+              <li><svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{plan_3_feature_6}</li>
+            </ul>
+            <a href="#kontakt" class="btn-outline w-full text-center">Kontakt aufnehmen</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section id="kontakt" class="section cta-section">
+      <div class="container">
+        <div class="cta-box">
+          <div class="cta-bg-deco"></div>
+          <h2 class="cta-title">Bereit, Ihr Projekt zu starten?</h2>
+          <p class="cta-sub">Vereinbaren Sie noch heute ein kostenloses Erstgespräch und entdecken Sie die Möglichkeiten.</p>
+          <div class="cta-btns">
+            <a href="{cta_url}" class="btn-primary btn-lg">{cta_label}</a>
+            <a href="mailto:{contact_email}" class="btn-outline btn-lg btn-light">Vertrieb kontaktieren</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+
+    <!-- Zertifiziert & Sicher bar -->
+    <div class="cert-bar">
+      <div class="container">
+        <p class="cert-heading">Zertifiziert &amp; Sicher</p>
+        <div class="cert-logos">
+          <div class="cert-logo"><img src="assets/certificates/ISO_27001.png" alt="ISO 27001" /></div>
+          <div class="cert-logo"><img src="assets/certificates/dsgvo.webp" alt="DSGVO" /></div>
+          <div class="cert-logo"><img src="assets/certificates/iso9001.JPG" alt="ISO 9001" /></div>
+          <div class="cert-logo"><img src="assets/certificates/mig.webp" alt="Made in Germany" /></div>
+          <div class="cert-logo"><img src="assets/certificates/server_in_germany.png" alt="Server in Germany" /></div>
+          <div class="cert-logo"><img src="assets/certificates/ssl.png" alt="SSL" /></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-main">
+      <div class="container">
+        <div class="footer-grid">
+
+          <!-- Brand -->
+          <div class="footer-brand">
+            <a href="#" class="logo">
+              <img src="assets/favicon.svg" alt="Logo" class="logo-icon" />
+              <span class="logo-text">{logo_text}</span>
+            </a>
+            <p class="footer-brand-desc">{kurzbeschreibung}</p>
+            <div class="footer-social">
+              <a href="{social_linkedin}" class="social-link" aria-label="LinkedIn">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              </a>
+              <a href="{social_xing}" class="social-link" aria-label="Xing">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.188 0c-.517 0-.741.325-.927.66 0 0-7.455 13.224-7.702 13.657.015.024 4.919 9.023 4.919 9.023.17.308.436.66.967.66h3.454c.211 0 .375-.078.463-.22.089-.151.089-.346-.009-.536l-4.879-8.916c-.004-.006-.004-.016 0-.022L22.139.756c.095-.191.097-.387.006-.535C22.056.078 21.894 0 21.686 0h-3.498zM3.648 4.74c-.211 0-.385.074-.473.216-.09.149-.078.339.02.531l2.34 4.05c.004.01.004.016 0 .021L1.86 16.051c-.099.188-.093.381 0 .529.085.142.239.234.45.234h3.461c.518 0 .766-.348.945-.667l3.734-6.609-2.378-4.155c-.172-.315-.434-.643-.962-.643H3.648z"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Lösungen -->
+          <div class="footer-col">
+            <h4 class="footer-col-title">Lösungen</h4>
+            <ul class="footer-links">
+              <li><a href="#leistungen">Software-Entwicklung</a></li>
+              <li><a href="#leistungen">Automatisierung</a></li>
+              <li><a href="#leistungen">Cloud-Infrastruktur</a></li>
+              <li><a href="#leistungen">KI &amp; Machine Learning</a></li>
+              <li><a href="#leistungen">Qualitätssicherung</a></li>
+              <li><a href="#leistungen">IT-Beratung</a></li>
+            </ul>
+          </div>
+
+          <!-- Unternehmen -->
+          <div class="footer-col">
+            <h4 class="footer-col-title">Unternehmen</h4>
+            <ul class="footer-links">
+              <li><a href="#">Über uns</a></li>
+              <li><a href="#">Karriere</a></li>
+              <li><a href="#kontakt">Kontakt</a></li>
+              <li><a href="#">Blog</a></li>
+            </ul>
+          </div>
+
+          <!-- Newsletter -->
+          <div class="footer-col footer-newsletter">
+            <h4 class="footer-col-title">{newsletter_heading}</h4>
+            <p class="footer-newsletter-sub">Bleiben Sie auf dem Laufenden mit den neuesten Tech-Insights.</p>
+            <form class="newsletter-form" onsubmit="return false;">
+              <input type="email" placeholder="{newsletter_placeholder}" class="newsletter-input" />
+              <button type="submit" class="btn-primary newsletter-btn">{newsletter_button}</button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- Footer bottom -->
+        <div class="footer-bottom">
+          <p class="footer-copy">&copy; <span id="footer-year"></span> {firmenname}. Alle Rechte vorbehalten.</p>
+          <div class="footer-legal">
+            <a href="{datenschutz_url}">Datenschutz</a>
+            <a href="{impressum_url}">Impressum</a>
+            <a href="{agb_url}">AGB</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
