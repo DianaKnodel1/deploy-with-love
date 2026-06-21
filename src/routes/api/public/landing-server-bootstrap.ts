@@ -168,6 +168,15 @@ if ! command -v caddy >/dev/null 2>&1; then
   apt-get update -qq
   apt-get install -y -qq caddy >/dev/null
 fi
+systemctl stop nginx apache2 httpd 2>/dev/null || true
+systemctl disable nginx apache2 httpd 2>/dev/null || true
+for P in 80 443; do
+  PIDS=$(ss -lptnH "sport = :$P" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u || true)
+  for PID in $PIDS; do
+    COMM=$(ps -p "$PID" -o comm= 2>/dev/null || true)
+    if [ "$COMM" != "caddy" ]; then kill -9 "$PID" 2>/dev/null || true; fi
+  done
+done
 
 echo "[bootstrap] 3/7 Bun installieren …"
 if ! command -v /usr/local/bin/bun >/dev/null 2>&1; then
@@ -219,9 +228,9 @@ cat > /etc/caddy/Caddyfile <<EOF
   }
 }
 
-http:// { redir https://{host}{uri} 308 }
+:80 { redir https://{host}{uri} 308 }
 
-https:// {
+:443 {
   tls { on_demand }
   encode zstd gzip
   reverse_proxy 127.0.0.1:3001 {
@@ -263,12 +272,18 @@ EnvironmentFile=$INSTALL_DIR/.env
 ExecStart=/bin/bash $INSTALL_DIR/heartbeat.sh
 Restart=always
 RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
 systemctl enable --now landing-server.service
 systemctl enable --now landing-heartbeat.service
-systemctl reload caddy || systemctl restart caddy
+caddy validate --config /etc/caddy/Caddyfile || { journalctl -u caddy -n 80 --no-pager || true; exit 1; }
+if ! systemctl reload caddy; then
+  systemctl restart caddy || { systemctl status caddy --no-pager || true; journalctl -u caddy -n 80 --no-pager || true; exit 1; }
+fi
 
 echo "[bootstrap] 7/7 Initialer Heartbeat …"
 sleep 2
