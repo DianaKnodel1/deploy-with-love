@@ -212,6 +212,7 @@ PORT=3001
 SERVER_ID=${p.serverId}
 BOOTSTRAP_TOKEN=$BOOTSTRAP_TOKEN
 HEARTBEAT_URL=$HEARTBEAT_URL
+PORTAL_API_ENDPOINT=${shellEscape(`${p.portalOrigin}/api/public/applications`)}
 ACME_EMAIL=$ACME_EMAIL
 EOF
 chmod 600 "$INSTALL_DIR/.env"
