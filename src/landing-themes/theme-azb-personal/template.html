@@ -2,410 +2,239 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>{{seo_title}}</title>
-<meta name="description" content="{{seo_description}}" />
-<meta property="og:title" content="{{seo_title}}" />
-<meta property="og:description" content="{{seo_description}}" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://{{landing_domain}}/" />
-<meta property="og:image" content="{{seo_image}}" />
-<meta name="twitter:card" content="summary_large_image" />
-<link rel="canonical" href="https://{{landing_domain}}/" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{seo_title}</title>
+<meta name="description" content="{seo_description}" />
+<meta property="og:title" content="{seo_title}" />
+<meta property="og:description" content="{seo_description}" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800;900&display=swap" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- HEADER -->
-<header class="site-header" id="start">
-  <div class="container header-row">
-    <a href="#start" class="logo">
-      <div class="logo-mark">P</div>
-      <span class="logo-text">{{firmenname}}</span>
-    </a>
-    <button id="burger" class="burger" aria-label="Menü öffnen" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
-    <nav id="nav-links" class="nav-links" aria-label="Hauptnavigation">
-      <a href="#leistungen">Leistungen</a>
-      <a href="#ueber-uns">Über uns</a>
-      <a href="#stimmen">Stimmen</a>
-      <a href="#faq">FAQ</a>
-      <a href="#kontakt">Kontakt</a>
-    </nav>
-    <div class="nav-actions">
-      <a href="#kontakt" class="btn btn-accent nav-cta">Jetzt bewerben</a>
-      <a href="{{portal_url}}" class="btn btn-ghost nav-cta" target="_blank" rel="noopener">Login</a>
-    </div>
-  </div>
-</header>
+<main class="page">
+  <!-- Background blobs -->
+  <div class="blob blob-teal"></div>
+  <div class="blob blob-peach"></div>
+  <div class="blob blob-sky"></div>
 
-<!-- HERO -->
-<section class="hero" aria-label="Einstieg">
-  <div class="container hero-inner">
-    <div class="hero-content" data-animate>
-      <span class="badge">{{hero_badge}}</span>
-      <h1>{{hero_title}}</h1>
-      <p class="lead">{{hero_subtitle}}</p>
-      <div class="hero-ctas">
-        <a href="#kontakt" class="btn btn-accent btn-lg">{{hero_cta_primary}} →</a>
-        <a href="#leistungen" class="btn btn-outline btn-lg">{{hero_cta_secondary}}</a>
-      </div>
-      <div class="stats-strip">
-        <div class="stat">
-          <strong>{{stat_1_num}}</strong>
-          <span>{{stat_1_lbl}}</span>
-        </div>
-        <div class="stat-sep"></div>
-        <div class="stat">
-          <strong>{{stat_2_num}}</strong>
-          <span>{{stat_2_lbl}}</span>
-        </div>
-        <div class="stat-sep"></div>
-        <div class="stat">
-          <strong>{{stat_3_num}}</strong>
-          <span>{{stat_3_lbl}}</span>
-        </div>
-      </div>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#top" class="logo">
+        <span class="logo-mark"><span class="logo-grad"></span><span class="logo-bar"></span></span>
+        <span class="logo-text">{firmenname}</span>
+      </a>
+      <nav class="primary-nav">
+        <a href="#jobs">Stellenangebote</a>
+        <a href="#about">Über uns</a>
+        <a href="#leistungen">Leistungen</a>
+      </nav>
+      <a href="{cta_url}" class="btn-pill btn-primary">Jetzt registrieren! ↗</a>
     </div>
-    <div class="hero-image-wrap" data-animate data-delay="200">
-      <img src="{{hero_image}}" alt="Team bei der Arbeit" class="hero-img" loading="eager" />
-      <div class="hero-badge-float">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        <span>Kostenlos für Bewerber</span>
-      </div>
-    </div>
-  </div>
-</section>
+  </header>
 
-<!-- ABOUT -->
-<section id="ueber-uns" class="about">
-  <div class="container about-grid">
-    <div class="about-image-wrap" data-animate>
-      <img src="{{about_image}}" alt="Unser Team" class="about-img" loading="lazy" />
-      <div class="about-card-float">
-        <div class="about-card-icon">🤝</div>
-        <div>
-          <strong>Persönliche Betreuung</strong>
-          <span>Ihr fester Ansprechpartner</span>
-        </div>
+  <!-- Hero -->
+  <section class="hero" id="top">
+    <div class="container">
+      <h1 class="hero-title">Ihr Traumjob wartet <span class="text-teal">bereits auf Sie</span></h1>
+      <p class="hero-lede">{hero_subtitle}</p>
+      <div class="hero-cta">
+        <a href="#jobs" class="btn-pill btn-primary">Jobs entdecken ↗</a>
+        <a href="#about" class="btn-pill btn-ghost">Mehr erfahren ↵</a>
+      </div>
+      <div class="hero-image-wrap">
+        <img src="assets/hero-illustration.jpg" alt="Mitarbeiter im Home-Office am Laptop" />
       </div>
     </div>
-    <div class="about-content" data-animate>
-      <span class="section-label">Über uns</span>
-      <h2>{{about_title}}</h2>
-      <p>{{about_body}}</p>
-      <ul class="checkmarks">
-        <li>Zertifizierter Personaldienstleister (iGZ-Mitglied)</li>
-        <li>Regionale Marktkenntnis &amp; schnelle Reaktionszeiten</li>
-        <li>Faire Bezahlung nach Tarifvertrag</li>
-        <li>Persönliche Begleitung von der Bewerbung bis zur Einstellung</li>
-      </ul>
-      <a href="#kontakt" class="btn btn-accent">Kontakt aufnehmen →</a>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- SERVICES -->
-<section id="leistungen" class="services">
-  <div class="container">
-    <div class="section-head" data-animate>
-      <span class="section-label">Leistungen</span>
-      <h2>{{services_title}}</h2>
-      <p>{{services_subtitle}}</p>
-    </div>
-    <div class="services-grid">
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_1_icon}}</div>
-        <h3>{{service_1_title}}</h3>
-        <p>{{service_1_body}}</p>
-      </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_2_icon}}</div>
-        <h3>{{service_2_title}}</h3>
-        <p>{{service_2_body}}</p>
-      </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_3_icon}}</div>
-        <h3>{{service_3_title}}</h3>
-        <p>{{service_3_body}}</p>
-      </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_4_icon}}</div>
-        <h3>{{service_4_title}}</h3>
-        <p>{{service_4_body}}</p>
-      </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_5_icon}}</div>
-        <h3>{{service_5_title}}</h3>
-        <p>{{service_5_body}}</p>
-      </div>
-      <div class="service-card" data-animate>
-        <div class="service-icon">{{service_6_icon}}</div>
-        <h3>{{service_6_title}}</h3>
-        <p>{{service_6_body}}</p>
+  <!-- Jobs -->
+  <section class="section" id="jobs">
+    <div class="container">
+      <h2 class="section-title center text-teal">Chancen entdecken</h2>
+      <p class="section-lede center">Wir bauen kontinuierlich unser Netzwerk aus qualifizierten Kandidaten auf. Registrieren Sie sich jetzt kostenlos und erhalten Sie bevorzugten Zugang zu neuen Stellenangeboten.</p>
+      <div class="jobs-grid">
+        <article class="soft-card bg-mint p-7">
+          <div class="job-head"><span class="job-badge">Digitale Jobs</span><span class="status status-teal">Verfügbar</span></div>
+          <h3>App- &amp; Qualitätsprüfung</h3>
+          <p>Flexible Jobs im Bereich Software-Checks und digitale Qualitätsprüfung. Perfekt für Einsteiger – keine Vorerfahrung nötig.</p>
+          <a href="{cta_url}" class="link-arrow">Jetzt bewerben ↵</a>
+        </article>
+        <article class="soft-card bg-peach p-7">
+          <div class="job-head"><span class="job-badge">Kundenservice</span><span class="status status-sky">Bald verfügbar</span></div>
+          <h3>Home-Office Support</h3>
+          <p>Telefonischer und Chat-Support von zu Hause aus. Flexible Arbeitszeiten und umfassende Einarbeitung.</p>
+          <a href="{cta_url}" class="link-arrow">Interesse anmelden ↵</a>
+        </article>
+        <article class="soft-card bg-sky p-7">
+          <div class="job-head"><span class="job-badge">Administration</span><span class="status status-lavender">In Planung</span></div>
+          <h3>Datenerfassung &amp; Verwaltung</h3>
+          <p>Administrative Tätigkeiten im Home-Office. Datenerfassung, Dokumentenverwaltung und Büroorganisation.</p>
+          <a href="{cta_url}" class="link-arrow">Vorregistrierung ↵</a>
+        </article>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- PROCESS STRIP -->
-<section class="process-strip">
-  <div class="container">
-    <div class="process-grid">
-      <div class="process-step" data-animate>
-        <div class="process-num">01</div>
-        <div>
-          <h4>Formular ausfüllen</h4>
-          <p>Kurze Angaben zu Ihrem Profil und Wunschstelle.</p>
+  <!-- Partner -->
+  <section class="section" id="about">
+    <div class="container">
+      <h2 class="section-title center">Ihr Karriere-Partner <br><span class="text-teal">für flexible Jobs</span></h2>
+      <p class="big-lede">Wir sind eine spezialisierte Personalvermittlung, die sich auf Home-Office und flexible Arbeitsplätze fokussiert. Registrieren Sie sich in unserem Kandidaten-Pool und erhalten Sie bevorzugten Zugang zu neuen Stellenangeboten!</p>
+      <div class="partner-grid">
+        <div class="partner-feat">
+          <div class="partner-circle">🤝</div>
+          <h3>Persönliche Betreuung</h3>
+          <p>Wir lernen Sie persönlich kennen und finden die Position, die wirklich zu Ihnen passt.</p>
         </div>
-      </div>
-      <div class="process-arrow">→</div>
-      <div class="process-step" data-animate>
-        <div class="process-num">02</div>
-        <div>
-          <h4>Persönliches Gespräch</h4>
-          <p>Wir lernen uns kennen und besprechen Ihre Ziele.</p>
+        <div class="partner-feat">
+          <div class="partner-circle">👥</div>
+          <h3>Exklusive Chancen</h3>
+          <p>Als Teil unseres Kandidaten-Pools erhalten Sie bevorzugten Zugang zu neuen Stellenangeboten.</p>
         </div>
-      </div>
-      <div class="process-arrow">→</div>
-      <div class="process-step" data-animate>
-        <div class="process-num">03</div>
-        <div>
-          <h4>Passgenaue Stellen</h4>
-          <p>Wir schlagen Ihnen geeignete Unternehmen vor.</p>
-        </div>
-      </div>
-      <div class="process-arrow">→</div>
-      <div class="process-step" data-animate>
-        <div class="process-num">04</div>
-        <div>
-          <h4>Einstellung &amp; Start</h4>
-          <p>Sie starten — wir begleiten Sie auch danach.</p>
+        <div class="partner-feat">
+          <div class="partner-circle">✓</div>
+          <h3>Geprüfte Arbeitgeber</h3>
+          <p>Wir arbeiten nur mit seriösen Unternehmen zusammen, die faire Arbeitsbedingungen bieten.</p>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- TESTIMONIALS -->
-<section id="stimmen" class="testimonials">
-  <div class="container">
-    <div class="section-head" data-animate>
-      <span class="section-label">Stimmen</span>
-      <h2>Was unsere Kunden sagen</h2>
-    </div>
-    <div class="testi-grid">
-      <div class="testi-card" data-animate>
-        <div class="testi-stars">★★★★★</div>
-        <blockquote>„{{testi_1_quote}}"</blockquote>
-        <div class="testi-author">
-          <div class="testi-avatar">{{testi_1_name}}</div>
-          <div>
-            <strong>{{testi_1_name}}</strong>
-            <span>{{testi_1_role}}</span>
+  <!-- Stats -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title center">Dein <br><span class="text-teal">Ansprechpartner</span></h2>
+      <div class="soft-card stats-card">
+        <p class="stats-sub">… in Zahlen</p>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-icon">🌐</div>
+            <div class="stat-val"><span class="stat-dot dot-violet"></span>6592</div>
+            <p>Vermittelte Jobs</p>
           </div>
-        </div>
-      </div>
-      <div class="testi-card testi-featured" data-animate>
-        <div class="testi-stars">★★★★★</div>
-        <blockquote>„{{testi_2_quote}}"</blockquote>
-        <div class="testi-author">
-          <div class="testi-avatar">{{testi_2_name}}</div>
-          <div>
-            <strong>{{testi_2_name}}</strong>
-            <span>{{testi_2_role}}</span>
+          <div class="stat-item">
+            <div class="stat-icon">🏢</div>
+            <div class="stat-val"><span class="stat-dot dot-orange"></span>2334</div>
+            <p>Zufriedene Firmen</p>
           </div>
-        </div>
-      </div>
-      <div class="testi-card" data-animate>
-        <div class="testi-stars">★★★★★</div>
-        <blockquote>„{{testi_3_quote}}"</blockquote>
-        <div class="testi-author">
-          <div class="testi-avatar">{{testi_3_name}}</div>
-          <div>
-            <strong>{{testi_3_name}}</strong>
-            <span>{{testi_3_role}}</span>
+          <div class="stat-item">
+            <div class="stat-icon">📊</div>
+            <div class="stat-val"><span class="stat-dot dot-red"></span>9+</div>
+            <p>Jahre Erfahrung</p>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- FAQ -->
-<section id="faq" class="faq">
-  <div class="container faq-inner">
-    <div class="section-head" data-animate>
-      <span class="section-label">FAQ</span>
-      <h2>{{faq_title}}</h2>
+  <!-- About detail -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title center text-teal">Ihre Karriere-Partner</h2>
+      <p class="big-lede">Wir sind eine spezialisierte Personalvermittlung mit Fokus auf flexible Arbeitsplätze und Home-Office-Positionen. Unser Ziel ist es, qualifizierte Kandidaten mit den passenden Arbeitgebern zu verbinden.</p>
+      <div class="about-grid">
+        <div>
+          <h3 class="about-h">Unser Ansatz</h3>
+          <p>Wir bauen kontinuierlich einen Pool aus qualifizierten Kandidaten auf, die sich für flexible Arbeitsmodelle interessieren. Durch unsere persönliche Betreuung und unser Netzwerk aus vertrauenswürdigen Partnern können wir gezielt passende Positionen vermitteln.</p>
+          <p>Mit über 8 Jahren Erfahrung in der Personalvermittlung haben wir bereits über 3.500 Menschen erfolgreich in neue Positionen vermittelt. Registrieren Sie sich jetzt in unserem Kandidaten-Pool und erhalten Sie bevorzugten Zugang zu neuen Stellenangeboten.</p>
+          <ul class="bullet-list">
+            <li><span class="bullet-chip">›</span>Persönliche Beratung und Karriereplanung</li>
+            <li><span class="bullet-chip">›</span>Seriöse und geprüfte Arbeitgeber</li>
+            <li><span class="bullet-chip">›</span>Flexible Arbeitsmodelle (Home-Office)</li>
+            <li><span class="bullet-chip">›</span>Langfristige Karrierebegleitung</li>
+          </ul>
+        </div>
+        <div><img src="assets/team-illustration.jpg" alt="Team von AZB Personal" class="rounded-img" /></div>
+      </div>
     </div>
-    <div class="faq-list" data-animate>
-      <details class="faq-item">
-        <summary>{{faq_1_q}}</summary>
-        <div class="faq-body">{{faq_1_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_2_q}}</summary>
-        <div class="faq-body">{{faq_2_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_3_q}}</summary>
-        <div class="faq-body">{{faq_3_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_4_q}}</summary>
-        <div class="faq-body">{{faq_4_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_5_q}}</summary>
-        <div class="faq-body">{{faq_5_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_6_q}}</summary>
-        <div class="faq-body">{{faq_6_a}}</div>
-      </details>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- CTA / CONTACT -->
-<section id="kontakt" class="contact-section">
-  <div class="container contact-grid">
-    <div class="contact-info" data-animate>
-      <span class="section-label light">Kontakt</span>
-      <h2>{{cta_title}}</h2>
-      <p>{{cta_body}}</p>
-      <div class="contact-details">
-        <div class="contact-item">
-          <span class="contact-icon">📞</span>
-          <a href="tel:{{kontakt_telefon}}">{{kontakt_telefon}}</a>
-        </div>
-        <div class="contact-item">
-          <span class="contact-icon">✉️</span>
-          <a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a>
-        </div>
-        <div class="contact-item">
-          <span class="contact-icon">📍</span>
-          <span>{{adresse}}</span>
+  <!-- CTA Banner -->
+  <section class="section" id="register">
+    <div class="container">
+      <div class="soft-card cta-banner bg-peach">
+        <h2>Bereit für Ihre Karriere? Registrieren Sie sich jetzt in unserem Kandidaten-Pool!</h2>
+        <p>Werden Sie Teil unseres exklusiven Netzwerks und erhalten Sie bevorzugten Zugang zu neuen Stellenangeboten. Wir kontaktieren Sie persönlich, sobald eine passende Position verfügbar ist.</p>
+        <div class="cta-actions">
+          <a href="{cta_url}" class="btn-pill btn-primary">Jetzt registrieren ↗</a>
+          <a href="#about" class="btn-pill btn-ghost">Mehr erfahren ↵</a>
         </div>
       </div>
-      <a href="{{portal_url}}" class="btn btn-ghost-light" target="_blank" rel="noopener">Zum Mitarbeiter-Portal →</a>
     </div>
-    <div class="contact-form-wrap" data-animate>
-      <form id="application-form" class="lead-form">
-        <h3>Jetzt bewerben</h3>
-        <div class="form-row">
-          <label>Vorname<input name="first_name" required placeholder="Max" /></label>
-          <label>Nachname<input name="last_name" required placeholder="Mustermann" /></label>
-        </div>
-        <label>Straße &amp; Hausnummer<input name="street" placeholder="Musterstraße 1" /></label>
-        <div class="form-row">
-          <label>PLZ<input name="postal_code" placeholder="12345" /></label>
-          <label>Stadt<input name="city" placeholder="Musterstadt" /></label>
-        </div>
-        <label>Telefon<input name="phone" type="tel" required placeholder="+49 170 …" /></label>
-        <label>E-Mail<input name="email" type="email" required placeholder="max@beispiel.de" /></label>
-        <label>Gewünschte Stelle / Branche
-          <input name="message" placeholder="z. B. Lagerhelfer, Mechatroniker, Bürokaufmann …" />
-        </label>
-        <button type="submit" class="btn btn-accent btn-lg btn-block">Bewerbung absenden →</button>
-        <p id="form-status" class="status"></p>
-        <p class="form-hint">Kostenlos &amp; unverbindlich · Wir melden uns innerhalb von 24 h</p>
-      </form>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- FOOTER -->
-<footer class="site-footer">
-  <div class="container footer-grid">
-    <div class="footer-brand">
-      <div class="footer-logo-row">
-        <div class="logo-mark small">P</div>
-        <span>{{firmenname}}</span>
+  <!-- Benefits -->
+  <section class="section" id="leistungen">
+    <div class="container">
+      <h2 class="section-title center">Unsere <span class="text-teal">Vorteile</span></h2>
+      <p class="big-lede">Wir unterstützen Sie dabei, schnell und unkompliziert einen digitalen Minijob zu finden, der zu Ihnen passt.</p>
+      <div class="benefits-grid">
+        <article class="soft-card bg-lavender p-8 bcard"><div class="bcard-icon">💼</div><h3>Jobvermittlung</h3><p>Wir verbinden Sie mit passenden Auftraggebern, die einfache und flexible Jobs anbieten.</p><a href="{cta_url}" class="link-arrow">Mehr erfahren ↵</a></article>
+        <article class="soft-card bg-lime p-8 bcard"><div class="bcard-icon">🎧</div><h3>Persönliche Beratung</h3><p>Wir stehen Ihnen bei Fragen und dem Einstieg in die digitale Arbeitswelt zur Seite.</p><a href="{cta_url}" class="link-arrow">Mehr erfahren ↵</a></article>
+        <article class="soft-card bg-peach p-8 bcard"><div class="bcard-icon">⏰</div><h3>Flexibles Arbeiten</h3><p>Arbeiten Sie wann und wo Sie möchten – alle Jobs sind perfekt an Ihren Alltag anpassbar.</p><a href="{cta_url}" class="link-arrow">Mehr erfahren ↵</a></article>
+        <article class="soft-card bg-mint p-8 bcard"><div class="bcard-icon">🛡</div><h3>Geprüfte Auftraggeber</h3><p>Wir arbeiten nur mit vertrauenswürdigen Unternehmen zusammen, damit Sie sicher arbeiten können.</p><a href="{cta_url}" class="link-arrow">Mehr erfahren ↵</a></article>
+        <article class="soft-card bg-sky p-8 bcard"><div class="bcard-icon">📱</div><h3>Einfache Jobs</h3><p>Die Aufgaben lassen sich bequem und ohne Vorkenntnisse mit Ihrem Smartphone erledigen.</p><a href="{cta_url}" class="link-arrow">Mehr erfahren ↵</a></article>
+        <article class="soft-card bg-rose p-8 bcard"><div class="bcard-icon">💕</div><h3>Zufriedene Nutzer</h3><p>Tausende zufriedene Bewerber haben bereits über uns ihren Job gefunden.</p><a href="{cta_url}" class="link-arrow">Mehr erfahren ↵</a></article>
       </div>
-      <p>{{adresse}}</p>
-      <p><a href="tel:{{kontakt_telefon}}">{{kontakt_telefon}}</a></p>
-      <p><a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a></p>
     </div>
-    <div class="footer-col">
-      <h5>Navigation</h5>
-      <a href="#ueber-uns">Über uns</a>
-      <a href="#leistungen">Leistungen</a>
-      <a href="#stimmen">Kundenstimmen</a>
-      <a href="#faq">FAQ</a>
-      <a href="#kontakt">Kontakt</a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer-wrap">
+    <div class="soft-card footer-card">
+      <div class="footer-grid">
+        <div>
+          <h4>Nützliche Links</h4>
+          <ul class="footer-links">
+            <li><a href="#top">Home</a></li>
+            <li><a href="#leistungen">Leistungen</a></li>
+            <li><a href="#about">Über uns</a></li>
+            <li><a href="{cta_url}">Bewerben</a></li>
+            <li><a href="#impressum">Impressum</a></li>
+            <li><a href="#datenschutz">Datenschutz</a></li>
+            <li><a href="#agb">AGB</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Über uns</h4>
+          <p>Wir vermitteln einfache, flexible Jobs, die Sie von zu Hause aus erledigen können. Keine Vorerfahrung nötig – jeder hat bei uns die Chance auf einen Job.</p>
+        </div>
+        <div>
+          <h4>Kontakt</h4>
+          <ul class="contact-list">
+            <li><span class="ctc-icon">📍</span><span>{firmen_adresse}<br>{firmen_plz_ort}</span></li>
+            <li><span class="ctc-icon">✉</span><span>{contact_email}</span></li>
+            <li><span class="ctc-icon">📞</span><span>{contact_phone}</span></li>
+          </ul>
+          <h5 class="sprechzeiten-h">Sprechzeiten</h5>
+          <dl class="sprechzeiten">
+            <dt>Montag – Freitag</dt><dd>09:00 – 17:00</dd>
+            <dt>Samstag</dt><dd>09:00 – 12:00</dd>
+            <dt>Sonntag</dt><dd>geschlossen</dd>
+          </dl>
+        </div>
+        <div>
+          <h4>Newsletter</h4>
+          <form class="newsletter" onsubmit="return false">
+            <input type="email" placeholder="E-Mail" />
+            <button aria-label="Anmelden">→</button>
+          </form>
+          <div class="footer-logo">
+            <span class="logo-mark"><span class="logo-grad"></span><span class="logo-bar"></span></span>
+            <span class="logo-text">{firmenname}</span>
+          </div>
+          <div class="social"><a href="#" aria-label="Facebook">f</a><a href="#" aria-label="Instagram">◯</a><a href="#" aria-label="LinkedIn">in</a></div>
+          <p class="copy">© Copyright <span id="year"></span> | Alle Rechte vorbehalten</p>
+        </div>
+      </div>
     </div>
-    <div class="footer-col">
-      <h5>Portal</h5>
-      <a href="{{portal_url}}" target="_blank" rel="noopener">Mitarbeiter-Login</a>
-      <a href="#kontakt">Jetzt bewerben</a>
-    </div>
-    <div class="footer-col">
-      <h5>Rechtliches</h5>
-      <a href="{{footer_impressum_url}}">Impressum</a>
-      <a href="{{footer_datenschutz_url}}">Datenschutz</a>
-      <a href="#agb">AGB</a>
-    </div>
-  </div>
-  <div class="container footer-bottom">
-    <p>© <span id="year"></span> {{firmenname}} · Alle Rechte vorbehalten</p>
-  </div>
-</footer>
+  </footer>
+</main>
 
-<!-- LEGAL SECTIONS -->
-<section id="impressum" class="legal">
-  <div class="container">
-    <a href="#start" class="legal-close">← Zurück</a>
-    <h2>Impressum</h2>
-    <h3>Angaben gemäß § 5 TMG</h3>
-    <p>{{firmenname}}<br />{{adresse}}</p>
-    <h3>Kontakt</h3>
-    <p>Telefon: {{kontakt_telefon}}<br />E-Mail: {{kontakt_email}}</p>
-    <h3>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h3>
-    <p>{{firmenname}}</p>
-  </div>
-</section>
-
-<section id="datenschutz" class="legal">
-  <div class="container">
-    <a href="#start" class="legal-close">← Zurück</a>
-    <h2>Datenschutzerklärung</h2>
-    <h3>1. Verantwortliche Stelle</h3>
-    <p>{{firmenname}}, {{adresse}}, {{kontakt_email}}</p>
-    <h3>2. Erhobene Daten</h3>
-    <p>Beim Ausfüllen des Bewerbungsformulars werden Name, Adresse, Telefonnummer und E-Mail-Adresse erfasst und ausschließlich zur Bearbeitung Ihrer Bewerbung verwendet.</p>
-    <h3>3. Server-Logfiles</h3>
-    <p>Technisch notwendige Logfiles werden beim Seitenaufruf erfasst und nach kurzer Zeit automatisch gelöscht.</p>
-    <h3>4. Ihre Rechte</h3>
-    <ul><li>Auskunft (Art. 15 DSGVO)</li><li>Berichtigung (Art. 16 DSGVO)</li><li>Löschung (Art. 17 DSGVO)</li><li>Einschränkung (Art. 18 DSGVO)</li><li>Datenübertragbarkeit (Art. 20 DSGVO)</li><li>Widerspruch (Art. 21 DSGVO)</li></ul>
-    <h3>5. Kontakt Datenschutz</h3>
-    <p>Bei Fragen wenden Sie sich bitte an: {{kontakt_email}}</p>
-  </div>
-</section>
-
-<section id="agb" class="legal">
-  <div class="container">
-    <a href="#start" class="legal-close">← Zurück</a>
-    <h2>Allgemeine Geschäftsbedingungen</h2>
-    <h3>§ 1 Geltungsbereich</h3>
-    <p>Diese AGB gelten für alle Vermittlungs- und Zeitarbeitsverträge zwischen {{firmenname}} und Auftraggebern.</p>
-    <h3>§ 2 Leistungen</h3>
-    <p>Gegenstand sind Personal- und Zeitarbeitsvermittlungsleistungen entsprechend dem individuellen Auftrag.</p>
-    <h3>§ 3 Vergütung</h3>
-    <p>Die Vergütung wird projektspezifisch oder nach Tarifvertrag vereinbart und ist innerhalb von 14 Tagen fällig.</p>
-    <h3>§ 4 Datenschutz</h3>
-    <p>Alle im Rahmen der Zusammenarbeit übermittelten Bewerberdaten werden vertraulich behandelt und ausschließlich zum Vermittlungszweck verwendet.</p>
-    <h3>§ 5 Schlussbestimmungen</h3>
-    <p>Es gilt das Recht der Bundesrepublik Deutschland. Gerichtsstand ist der Sitz von {{firmenname}}.</p>
-  </div>
-</section>
-
-<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 <script src="script.js"></script>
 </body>
 </html>
