@@ -142,8 +142,22 @@ ${cleanBlock}
 
 echo "[bootstrap] 1/7 Pakete aktualisieren …"
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-apt-get install -y -qq curl ca-certificates debian-keyring debian-archive-keyring apt-transport-https unzip jq >/dev/null
+# Debian 11/12: falls security-Repo des Anbieters falsch gesetzt ist, sources.list reparieren
+if grep -q "bullseye" /etc/os-release 2>/dev/null; then
+  cat > /etc/apt/sources.list <<'SRC'
+deb http://deb.debian.org/debian bullseye main contrib non-free
+deb http://security.debian.org/debian-security bullseye-security main contrib non-free
+deb http://deb.debian.org/debian bullseye-updates main contrib non-free
+SRC
+elif grep -q "bookworm" /etc/os-release 2>/dev/null; then
+  cat > /etc/apt/sources.list <<'SRC'
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+SRC
+fi
+apt-get update -o Acquire::AllowReleaseInfoChange=true -qq || apt-get update -qq || true
+apt-get install -y -qq curl ca-certificates debian-keyring debian-archive-keyring apt-transport-https unzip jq gnupg >/dev/null
 
 echo "[bootstrap] 2/7 Caddy installieren …"
 if ! command -v caddy >/dev/null 2>&1; then
