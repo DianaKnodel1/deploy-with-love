@@ -1,29 +1,13 @@
-// HomeOfficeCareer Theme — Minimal Interactivity
+(function () {
+  'use strict';
+  var y = document.getElementById('year');
+  if (y) y.textContent = new Date().getFullYear();
 
-// Mobile Nav Toggle
-document.addEventListener("DOMContentLoaded", () => {
-  const burger = document.getElementById("burger");
-  const navLinks = document.getElementById("nav-links");
-  if (burger && navLinks) {
-    burger.addEventListener("click", () => navLinks.classList.toggle("is-open"));
-    navLinks.querySelectorAll("a").forEach((a) =>
-      a.addEventListener("click", () => navLinks.classList.remove("is-open")),
-    );
-  }
-
-  // Footer year
-  const yearEl = document.getElementById("year");
-  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
-
-  // FAQ accordion: nur eins offen
-  const faqs = document.querySelectorAll(".faq-item");
-  faqs.forEach((item) => {
-    item.addEventListener("toggle", () => {
-      if (item.open) {
-        faqs.forEach((other) => {
-          if (other !== item) other.removeAttribute("open");
-        });
-      }
+  // FAQ: nur ein <details> offen
+  var items = document.querySelectorAll('.faq-item');
+  items.forEach(function (el) {
+    el.addEventListener('toggle', function () {
+      if (el.open) items.forEach(function (o) { if (o !== el) o.open = false; });
     });
   });
-});
+})();

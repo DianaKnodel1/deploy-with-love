@@ -1,89 +1,67 @@
-// Mobile nav toggle
-document.getElementById('burger')?.addEventListener('click', () => {
-  document.getElementById('nav-links')?.classList.toggle('open');
-});
-document.querySelectorAll('#nav-links a').forEach(a => {
-  a.addEventListener('click', () => document.getElementById('nav-links')?.classList.remove('open'));
-});
+(function () {
+  'use strict';
 
-// Smooth scroll
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', (e) => {
-    const id = a.getAttribute('href');
-    if (id && id.length > 1) {
-      const el = document.querySelector(id);
-      if (el) { e.preventDefault(); el.scrollIntoView({ behavior:'smooth', block:'start' }); }
-    }
-  });
-});
+  // ===== Year =====
+  var y = document.getElementById('year');
+  if (y) y.textContent = new Date().getFullYear();
 
-// Pricing toggle (Monthly / Yearly -20%)
-(function initPricingToggle(){
-  const toggle = document.querySelector('[data-pricing-toggle]');
-  if (!toggle) return;
-  const buttons = toggle.querySelectorAll('.pt-btn');
-  const amounts = document.querySelectorAll('.pamount[data-price]');
-  const pers = document.querySelectorAll('.pper[data-per]');
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const yearly = btn.dataset.period === 'yearly';
-      amounts.forEach(el => {
-        const base = parseFloat(el.dataset.price);
-        if (!isNaN(base)) {
-          const val = yearly ? Math.round(base * 0.8) : base;
-          el.textContent = val + '€';
-        }
+  // ===== Mobile Nav =====
+  var toggle = document.getElementById('mobileToggle');
+  var nav = document.getElementById('mobileNav');
+  if (toggle && nav) {
+    toggle.addEventListener('click', function () { nav.classList.toggle('open'); });
+    nav.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () { nav.classList.remove('open'); });
+    });
+  }
+
+  // ===== Pricing Toggle =====
+  var billingBtns = document.querySelectorAll('[data-billing]');
+  var priceNums = document.querySelectorAll('.price-num[data-monthly]');
+  function fmt(n) { return n.toLocaleString('de-DE'); }
+  billingBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var mode = btn.getAttribute('data-billing');
+      billingBtns.forEach(function (b) { b.classList.toggle('active', b === btn); });
+      priceNums.forEach(function (el) {
+        var v = mode === 'yearly' ? el.getAttribute('data-yearly') : el.getAttribute('data-monthly');
+        if (v) el.textContent = fmt(parseInt(v, 10));
       });
-      pers.forEach(el => { el.textContent = yearly ? 'pro Monat (jährl.)' : 'pro Monat'; });
+      document.querySelectorAll('.price-sub').forEach(function (s) {
+        if (s.parentElement.querySelector('.price-num-text')) return;
+        s.textContent = mode === 'yearly' ? 'pro Monat (jährlich)' : 'pro Monat';
+      });
     });
   });
-})();
 
-// Testimonial carousel
-(function initCarousel(){
-  const root = document.querySelector('[data-carousel]');
-  if (!root) return;
-  const track = root.querySelector('[data-carousel-track]');
-  const slides = Array.from(track.children);
-  const prev = root.querySelector('[data-carousel-prev]');
-  const next = root.querySelector('[data-carousel-next]');
-  const dotsWrap = root.querySelector('[data-carousel-dots]');
-  let index = 0;
-  let perView = 3;
-  const computePerView = () => {
-    const w = window.innerWidth;
-    perView = w < 720 ? 1 : w < 1024 ? 2 : 3;
-  };
-  const maxIndex = () => Math.max(0, slides.length - perView);
-  const update = () => {
-    const slideW = track.parentElement.clientWidth / perView;
-    slides.forEach(s => { s.style.flex = `0 0 ${slideW}px`; });
-    track.style.transform = `translateX(${-index * slideW}px)`;
-    dotsWrap.querySelectorAll('button').forEach((d,i) => d.classList.toggle('active', i === index));
-  };
-  const buildDots = () => {
-    dotsWrap.innerHTML = '';
-    for (let i = 0; i <= maxIndex(); i++) {
-      const b = document.createElement('button');
-      b.addEventListener('click', () => { index = i; update(); });
-      dotsWrap.appendChild(b);
+  // ===== Testimonial Carousel =====
+  var track = document.querySelector('[data-carousel-track]');
+  var prevBtn = document.querySelector('[data-carousel-prev]');
+  var nextBtn = document.querySelector('[data-carousel-next]');
+  var dotsWrap = document.querySelector('[data-carousel-dots]');
+  if (track && prevBtn && nextBtn && dotsWrap) {
+    var slides = track.querySelectorAll('.carousel-slide');
+    var total = slides.length;
+    var idx = 0;
+    // Build dots
+    for (var i = 0; i < total; i++) {
+      (function (n) {
+        var d = document.createElement('button');
+        d.className = 'carousel-dot';
+        d.setAttribute('aria-label', 'Slide ' + (n + 1));
+        d.addEventListener('click', function () { idx = n; render(); });
+        dotsWrap.appendChild(d);
+      })(i);
     }
-  };
-  const rebuild = () => {
-    computePerView();
-    index = Math.min(index, maxIndex());
-    buildDots();
-    update();
-  };
-  prev?.addEventListener('click', () => { index = Math.max(0, index - 1); update(); });
-  next?.addEventListener('click', () => { index = Math.min(maxIndex(), index + 1); update(); });
-  window.addEventListener('resize', rebuild);
-  rebuild();
-  // Auto-advance every 6s
-  setInterval(() => {
-    index = index >= maxIndex() ? 0 : index + 1;
-    update();
-  }, 6000);
+    var dots = dotsWrap.querySelectorAll('.carousel-dot');
+    function render() {
+      track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+      dots.forEach(function (d, i) { d.classList.toggle('active', i === idx); });
+    }
+    prevBtn.addEventListener('click', function () { idx = Math.max(0, idx - 1); render(); });
+    nextBtn.addEventListener('click', function () { idx = Math.min(total - 1, idx + 1); render(); });
+    // Auto-advance
+    setInterval(function () { idx = (idx + 1) % total; render(); }, 6000);
+    render();
+  }
 })();

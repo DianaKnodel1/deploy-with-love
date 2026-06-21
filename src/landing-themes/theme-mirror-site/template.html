@@ -2,322 +2,211 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>{{seo_title}}</title>
-<meta name="description" content="{{seo_description}}" />
-<meta property="og:title" content="{{seo_title}}" />
-<meta property="og:description" content="{{seo_description}}" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://{{landing_domain}}/" />
-<meta property="og:image" content="{{seo_image}}" />
-<meta name="twitter:card" content="summary_large_image" />
-<link rel="canonical" href="https://{{landing_domain}}/" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{seo_title}</title>
+<meta name="description" content="{seo_description}" />
+<meta property="og:title" content="{seo_title}" />
+<meta property="og:description" content="{seo_description}" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+<div class="bpo">
 
-<!-- ========== HEADER ========== -->
-<header class="site-header" id="top">
-  <div class="container header-row">
-    <a href="#top" class="logo-link">
-      <span class="logo-icon">🪞</span>
-      <span class="logo-text">{{firmenname}}</span>
-    </a>
-    <button id="burger" class="burger" aria-label="Menü öffnen">
-      <span></span><span></span><span></span>
-    </button>
-    <nav id="main-nav" class="main-nav">
-      <a href="#ueber-uns">Über uns</a>
-      <a href="#leistungen">Leistungen</a>
-      <a href="#stimmen">Referenzen</a>
-      <a href="#faq">FAQ</a>
-      <a href="#kontakt">Kontakt</a>
-    </nav>
-    <div class="header-actions">
-      <a href="{{portal_url}}" class="btn btn-ghost" target="_blank" rel="noopener">Login</a>
-      <a href="#kontakt" class="btn btn-primary">Jetzt starten</a>
-    </div>
-  </div>
-</header>
-
-<!-- ========== HERO ========== -->
-<section id="hero" class="hero-section">
-  <div class="hero-bg-glow"></div>
-  <div class="container hero-inner">
-    <div class="hero-text" data-animate="fade-up">
-      <span class="hero-badge">{{hero_badge}}</span>
-      <h1 class="hero-title">{{hero_title}}</h1>
-      <p class="hero-subtitle">{{hero_subtitle}}</p>
-      <div class="hero-ctas">
-        <a href="#kontakt" class="btn btn-primary btn-lg">{{hero_cta_primary}}</a>
-        <a href="{{portal_url}}" class="btn btn-outline btn-lg" target="_blank" rel="noopener">{{hero_cta_secondary}}</a>
+  <!-- Header -->
+  <header class="bpo-header">
+    <div class="bpo-container">
+      <div class="bpo-header-inner">
+        <a href="#top" class="bpo-logo">
+          <img src="assets/logo.svg" alt="{firmenname} Logo" />
+          <span>{logo_text}</span>
+        </a>
+        <nav class="bpo-nav">
+          <a href="#top">Stellenangebote</a>
+          <a href="#ueber-uns">Über uns</a>
+          <a href="#leistungen">Leistungen</a>
+          <a href="#blog">Blog</a>
+        </nav>
+        <a href="{cta_url}" class="bpo-btn">Jetzt bewerben</a>
+        <button class="bpo-menu-toggle" id="menuToggle" aria-label="Menü">☰</button>
       </div>
-      <div class="hero-stats">
-        <div class="hstat"><strong>24h</strong><span>Lieferzeit</span></div>
-        <div class="hstat"><strong>99.9%</strong><span>Uptime SLA</span></div>
-        <div class="hstat"><strong>500+</strong><span>Mirror Sites</span></div>
+      <div class="bpo-mobile-nav" id="mobileNav" hidden>
+        <a href="#top">Stellenangebote</a>
+        <a href="#ueber-uns">Über uns</a>
+        <a href="#leistungen">Leistungen</a>
+        <a href="#blog">Blog</a>
+        <a href="{cta_url}" class="bpo-btn">Jetzt bewerben</a>
       </div>
     </div>
-    <div class="hero-visual" data-animate="fade-left">
-      <div class="hero-img-wrap">
-        <img src="{{hero_image_url}}" alt="Mirror Site Visualisierung" class="hero-img" loading="eager" />
-        <div class="hero-img-badge">
-          <span class="pulse-dot"></span>
-          Live-Sync aktiv
+  </header>
+
+  <!-- Hero -->
+  <section class="bpo-hero" id="top" style="background-image:url('assets/slider6.png');">
+    <div class="bpo-container">
+      <div class="text">
+        <h1>Arbeiten von zu Hause als <span>{job_title}</span></h1>
+        <p>{hero_subtitle}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Schedule card -->
+  <section class="bpo-schedule">
+    <div class="bpo-container">
+      <div class="bpo-schedule-card">
+        <svg class="bg-icon" width="120" height="120" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-10-2h4v2h-4V4z"/></svg>
+        <span>{job_type}</span>
+        <h4>{job_title}</h4>
+        <p>
+          <span class="price">{job_pay}</span>
+          {job_description}
+        </p>
+        <a href="{cta_url}">MEHR ERFAHREN →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="bpo-section">
+    <div class="bpo-container">
+      <div class="bpo-section-title">
+        <h2>Ihr neuer Home-Office-Job</h2>
+        <img src="assets/section-img.svg" alt="" />
+        <p>Wir vermitteln einfache und flexible Jobs, die Sie von zu Hause aus erledigen können. Keine Vorerfahrung nötig – jeder hat eine Chance!</p>
+      </div>
+      <div class="bpo-grid bpo-grid-3">
+        <div class="bpo-feature">
+          <div class="icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17a4 4 0 0 1-8 0V7a4 4 0 0 1 8 0v10z"/><path d="M21 17a4 4 0 0 1-8 0V7a4 4 0 0 1 8 0v10z"/></svg></div>
+          <h3>Schnelle Vermittlung</h3>
+          <p>Starten Sie sofort in Ihren neuen Job – wir nehmen wirklich jeden auf!</p>
+        </div>
+        <div class="bpo-feature">
+          <div class="icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
+          <h3>Für jeden geeignet</h3>
+          <p>Unsere Home-Office-Jobs sind für alle geeignet – Quereinsteiger willkommen.</p>
+        </div>
+        <div class="bpo-feature">
+          <div class="icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg></div>
+          <h3>Arbeiten von zu Hause</h3>
+          <p>Alle Aufgaben lassen sich bequem und sicher mit Ihrem Smartphone erledigen.</p>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ========== ABOUT ========== -->
-<section id="ueber-uns" class="about-section">
-  <div class="container about-inner">
-    <div class="about-img-wrap" data-animate="fade-right">
-      <img src="{{about_image_url}}" alt="Über {{firmenname}}" class="about-img" loading="lazy" />
-      <div class="about-card-float">
-        <span class="about-card-icon">🪞</span>
+  <!-- Why choose -->
+  <section class="bpo-section bpo-why" id="ueber-uns" style="padding-top:0;">
+    <div class="bpo-container">
+      <div class="bpo-section-title">
+        <h2>Warum uns wählen?</h2>
+        <img src="assets/section-img.svg" alt="" />
+        <p>Wir helfen Ihnen dabei, flexible und einfache Jobs im digitalen Bereich zu finden – passend zu Ihren Bedürfnissen und ohne Vorkenntnisse.</p>
+      </div>
+      <div class="bpo-grid bpo-grid-2">
         <div>
-          <strong>Identische Kopie</strong>
-          <span>Pixel-perfekt gespiegelt</span>
+          <h3>Wer wir sind</h3>
+          <p>Wir sind eine Vermittlungsagentur, die sich darauf spezialisiert hat, Ihnen den Einstieg in die digitale Arbeitswelt zu erleichtern. Egal ob Quereinsteiger oder Neuanfang – bei uns finden Sie Ihren Job.</p>
+          <p>Unser Ziel ist es, Ihnen die besten Möglichkeiten zu bieten, flexibel und sicher von zu Hause zu arbeiten.</p>
+          <ul class="bpo-list">
+            <li>›&nbsp;Einfacher Einstieg ohne Vorkenntnisse</li>
+            <li>›&nbsp;Seriöse und geprüfte Auftraggeber</li>
+            <li>›&nbsp;Flexible Arbeitszeiten</li>
+            <li>›&nbsp;Direkter Einstieg in Ihren neuen Job</li>
+          </ul>
         </div>
+        <div class="bpo-why-image"><img src="assets/why-choose.jpg" alt="Arbeiten von zu Hause" /></div>
       </div>
     </div>
-    <div class="about-text" data-animate="fade-left">
-      <span class="section-label">Über uns</span>
-      <h2>{{about_title}}</h2>
-      <p>{{about_body}}</p>
-      <a href="#kontakt" class="btn btn-primary">Kostenlos beraten lassen</a>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- ========== SERVICES ========== -->
-<section id="leistungen" class="services-section">
-  <div class="container">
-    <div class="section-head" data-animate="fade-up">
-      <span class="section-label">Leistungen</span>
-      <h2>{{services_title}}</h2>
-      <p class="section-sub">{{services_subtitle}}</p>
-    </div>
-    <div class="services-grid">
-      <div class="svc-card" data-animate="fade-up">
-        <div class="svc-icon">{{svc_1_icon}}</div>
-        <h3>{{svc_1_title}}</h3>
-        <p>{{svc_1_body}}</p>
+  <!-- Services -->
+  <section class="bpo-section" id="leistungen" style="background:oklch(0.98 0.005 256);">
+    <div class="bpo-container">
+      <div class="bpo-section-title">
+        <h2>Unsere Leistungen für Sie</h2>
+        <img src="assets/section-img.svg" alt="" />
+        <p>Wir unterstützen Sie dabei, schnell und unkompliziert einen digitalen Minijob zu finden, der zu Ihnen passt.</p>
       </div>
-      <div class="svc-card" data-animate="fade-up" style="--delay:.08s">
-        <div class="svc-icon">{{svc_2_icon}}</div>
-        <h3>{{svc_2_title}}</h3>
-        <p>{{svc_2_body}}</p>
-      </div>
-      <div class="svc-card svc-featured" data-animate="fade-up" style="--delay:.16s">
-        <div class="svc-icon">{{svc_3_icon}}</div>
-        <h3>{{svc_3_title}}</h3>
-        <p>{{svc_3_body}}</p>
-        <span class="svc-tag">Beliebt</span>
-      </div>
-      <div class="svc-card" data-animate="fade-up" style="--delay:.24s">
-        <div class="svc-icon">{{svc_4_icon}}</div>
-        <h3>{{svc_4_title}}</h3>
-        <p>{{svc_4_body}}</p>
-      </div>
-      <div class="svc-card" data-animate="fade-up" style="--delay:.32s">
-        <div class="svc-icon">{{svc_5_icon}}</div>
-        <h3>{{svc_5_title}}</h3>
-        <p>{{svc_5_body}}</p>
-      </div>
-      <div class="svc-card" data-animate="fade-up" style="--delay:.4s">
-        <div class="svc-icon">{{svc_6_icon}}</div>
-        <h3>{{svc_6_title}}</h3>
-        <p>{{svc_6_body}}</p>
+      <div class="bpo-grid bpo-grid-3">
+        <div class="bpo-service"><div class="svc-icon">🤝</div><h4><a href="{cta_url}">Jobvermittlung</a></h4><p>Wir verbinden Sie mit passenden Auftraggebern, die einfache und flexible Jobs anbieten.</p></div>
+        <div class="bpo-service"><div class="svc-icon">👤</div><h4><a href="{cta_url}">Persönliche Beratung</a></h4><p>Wir stehen Ihnen bei Fragen und dem Einstieg in die digitale Arbeitswelt zur Seite.</p></div>
+        <div class="bpo-service"><div class="svc-icon">📅</div><h4><a href="{cta_url}">Flexibles Arbeiten</a></h4><p>Arbeiten Sie wann und wo Sie möchten – alle Jobs sind perfekt an Ihren Alltag anpassbar.</p></div>
+        <div class="bpo-service"><div class="svc-icon">🛡</div><h4><a href="{cta_url}">Geprüfte Auftraggeber</a></h4><p>Wir arbeiten nur mit vertrauenswürdigen Unternehmen zusammen, damit Sie sicher arbeiten können.</p></div>
+        <div class="bpo-service"><div class="svc-icon">📱</div><h4><a href="{cta_url}">Einfache Jobs</a></h4><p>Die Aufgaben lassen sich bequem und ohne Vorkenntnisse mit Ihrem Smartphone erledigen.</p></div>
+        <div class="bpo-service"><div class="svc-icon">😊</div><h4><a href="{cta_url}">Zufriedene Nutzer</a></h4><p>Tausende zufriedene Bewerber haben bereits über uns ihren Job gefunden.</p></div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ========== HOW IT WORKS ========== -->
-<section class="how-section">
-  <div class="container">
-    <div class="section-head" data-animate="fade-up">
-      <span class="section-label">Prozess</span>
-      <h2>In 3 Schritten zur Mirror-Site</h2>
-    </div>
-    <div class="how-grid">
-      <div class="how-step" data-animate="fade-up">
-        <div class="how-num">01</div>
-        <h4>Briefing</h4>
-        <p>Sie teilen uns Ihre Quell-URL und Wünsche mit. Wir analysieren Ihre Website kostenlos und erstellen ein Angebot.</p>
+  <!-- Blog -->
+  <section class="bpo-section" id="blog">
+    <div class="bpo-container">
+      <div class="bpo-section-title">
+        <h2>Neuigkeiten aus der digitalen Arbeitswelt</h2>
+        <img src="assets/section-img.svg" alt="" />
+        <p>Erhalten Sie Tipps, Einblicke und aktuelle Informationen zu digitalen Minijobs und flexiblen Arbeitsmöglichkeiten.</p>
       </div>
-      <div class="how-connector" aria-hidden="true">→</div>
-      <div class="how-step" data-animate="fade-up" style="--delay:.1s">
-        <div class="how-num">02</div>
-        <h4>Klonen & Konfigurieren</h4>
-        <p>Unser System klont Ihre Website vollständig und konfiguriert Domain, SSL und Auto-Sync auf Wunsch.</p>
-      </div>
-      <div class="how-connector" aria-hidden="true">→</div>
-      <div class="how-step" data-animate="fade-up" style="--delay:.2s">
-        <div class="how-num">03</div>
-        <h4>Go Live!</h4>
-        <p>Nach Ihrer Freigabe geht die Mirror-Site online. Ab diesem Moment überwachen wir sie 24/7 für Sie.</p>
+      <div class="bpo-grid bpo-grid-3">
+        <div class="bpo-news"><div class="bpo-news-head"><img src="assets/blog5.jpg" alt="So starten Sie als Anwendungsprüfer" /></div><div class="bpo-news-body"><div class="date">22.05.2026</div><h2><a href="{cta_url}">So starten Sie als Anwendungsprüfer</a></h2><p>Entdecken Sie, wie einfach der Einstieg in digitale Minijobs ist und worauf Sie achten sollten.</p></div></div>
+        <div class="bpo-news"><div class="bpo-news-head"><img src="assets/blog4.jpg" alt="Tipps für flexibles Arbeiten" /></div><div class="bpo-news-body"><div class="date">27.04.2026</div><h2><a href="{cta_url}">5 Tipps für flexibles Arbeiten von zu Hause</a></h2><p>Lernen Sie, wie Sie Ihren Arbeitsplatz effizient organisieren und produktiv bleiben.</p></div></div>
+        <div class="bpo-news"><div class="bpo-news-head"><img src="assets/blog6.jpg" alt="Warum digitale Jobs die Zukunft sind" /></div><div class="bpo-news-body"><div class="date">02.04.2026</div><h2><a href="{cta_url}">Warum digitale Jobs die Zukunft sind</a></h2><p>Erfahren Sie, warum immer mehr Menschen auf digitale Arbeitsmodelle setzen und welche Vorteile sie bieten.</p></div></div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ========== TESTIMONIALS ========== -->
-<section id="stimmen" class="testimonials-section">
-  <div class="container">
-    <div class="section-head" data-animate="fade-up">
-      <span class="section-label">Referenzen</span>
-      <h2>{{testimonials_title}}</h2>
-    </div>
-    <div class="testi-grid">
-      <div class="testi-card" data-animate="fade-up">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-quote">"{{t1_quote}}"</p>
-        <div class="testi-author">
-          <div class="testi-avatar">{{t1_name}}</div>
-          <div>
-            <strong>{{t1_name}}</strong>
-            <span>{{t1_role}}</span>
+  <!-- Footer -->
+  <footer class="bpo-footer">
+    <div class="bpo-container">
+      <div class="bpo-footer-grid">
+        <div>
+          <h2>Über uns</h2>
+          <p>Wir vermitteln einfache, flexible Jobs, die Sie von zu Hause aus erledigen können. Keine Vorerfahrung nötig – jeder hat bei uns die Chance auf einen Job.</p>
+        </div>
+        <div>
+          <h2>Nützliche Links</h2>
+          <div class="f-links">
+            <ul>
+              <li><a href="#ueber-uns">›&nbsp;Über uns</a></li>
+              <li><a href="#leistungen">›&nbsp;Leistungen</a></li>
+              <li><a href="#blog">›&nbsp;Blog</a></li>
+              <li><a href="{cta_url}">›&nbsp;Bewerben</a></li>
+            </ul>
+            <ul>
+              <li><a href="#newsletter">›&nbsp;Newsletter</a></li>
+              <li><a href="#datenschutz">›&nbsp;Datenschutz</a></li>
+              <li><a href="#impressum">›&nbsp;Impressum</a></li>
+              <li><a href="#agb">›&nbsp;AGB</a></li>
+            </ul>
           </div>
         </div>
-      </div>
-      <div class="testi-card testi-featured" data-animate="fade-up" style="--delay:.1s">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-quote">"{{t2_quote}}"</p>
-        <div class="testi-author">
-          <div class="testi-avatar">{{t2_name}}</div>
-          <div>
-            <strong>{{t2_name}}</strong>
-            <span>{{t2_role}}</span>
-          </div>
+        <div>
+          <h2>Öffnungszeiten</h2>
+          <p>Unser Büro ist zu folgenden Zeiten für Sie geöffnet:</p>
+          <ul class="bpo-time">
+            <li>Montag – Freitag<span>9:00 – 17:00 Uhr</span></li>
+            <li>Samstag<span>9:00 – 12:00 Uhr</span></li>
+            <li>Sonntag<span>geschlossen</span></li>
+          </ul>
         </div>
-      </div>
-      <div class="testi-card" data-animate="fade-up" style="--delay:.2s">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-quote">"{{t3_quote}}"</p>
-        <div class="testi-author">
-          <div class="testi-avatar">{{t3_name}}</div>
-          <div>
-            <strong>{{t3_name}}</strong>
-            <span>{{t3_role}}</span>
-          </div>
+        <div id="newsletter">
+          <h2>Newsletter</h2>
+          <p>Bleiben Sie informiert über aktuelle Jobs und Angebote.</p>
+          <form class="bpo-newsletter" onsubmit="event.preventDefault(); window.location.href='{cta_url}';">
+            <input placeholder="E-Mail Adresse" />
+            <button aria-label="Anmelden">➤</button>
+          </form>
         </div>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- ========== FAQ ========== -->
-<section id="faq" class="faq-section">
-  <div class="container faq-inner">
-    <div class="section-head" data-animate="fade-up">
-      <span class="section-label">FAQ</span>
-      <h2>{{faq_title}}</h2>
-    </div>
-    <div class="faq-list" data-animate="fade-up">
-      <details class="faq-item">
-        <summary>{{faq_1_q}}</summary>
-        <div class="faq-answer">{{faq_1_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_2_q}}</summary>
-        <div class="faq-answer">{{faq_2_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_3_q}}</summary>
-        <div class="faq-answer">{{faq_3_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_4_q}}</summary>
-        <div class="faq-answer">{{faq_4_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_5_q}}</summary>
-        <div class="faq-answer">{{faq_5_a}}</div>
-      </details>
-      <details class="faq-item">
-        <summary>{{faq_6_q}}</summary>
-        <div class="faq-answer">{{faq_6_a}}</div>
-      </details>
-    </div>
-  </div>
-</section>
-
-<!-- ========== KONTAKT ========== -->
-<section id="kontakt" class="contact-section">
-  <div class="container contact-inner">
-    <div class="contact-info" data-animate="fade-right">
-      <span class="section-label">Kontakt</span>
-      <h2>{{kontakt_title}}</h2>
-      <p>{{kontakt_body}}</p>
-      <ul class="contact-details">
-        <li>📧 <a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a></li>
-        <li>📞 <a href="tel:{{kontakt_telefon}}">{{kontakt_telefon}}</a></li>
-        <li>📍 {{adresse}}</li>
-      </ul>
-      <a href="{{portal_url}}" class="btn btn-outline" target="_blank" rel="noopener">Zum Kundenportal →</a>
-    </div>
-    <form id="contact-form" class="contact-form" data-animate="fade-left">
-      <h3>Kostenlose Anfrage stellen</h3>
-      <div class="form-row">
-        <label>Vorname<input type="text" name="first_name" placeholder="Max" required /></label>
-        <label>Nachname<input type="text" name="last_name" placeholder="Mustermann" required /></label>
+    <div class="bpo-copyright">
+      <div class="bpo-container">
+        <p>© Copyright <span id="year"></span> | {firmenname} | Alle Rechte vorbehalten</p>
       </div>
-      <label>E-Mail<input type="email" name="email" placeholder="max@beispiel.de" required /></label>
-      <label>Telefon<input type="tel" name="phone" placeholder="+49 30 …" /></label>
-      <label>Quell-URL Ihrer Website<input type="url" name="source_url" placeholder="https://ihrewebsite.de" /></label>
-      <label>Ihre Nachricht
-        <textarea name="message" rows="4" placeholder="Kurze Beschreibung Ihres Projekts…"></textarea>
-      </label>
-      <button type="submit" class="btn btn-primary btn-lg btn-block">Anfrage absenden →</button>
-      <p id="form-status" class="form-status" aria-live="polite"></p>
-    </form>
-  </div>
-</section>
-
-<!-- ========== FOOTER ========== -->
-<footer class="site-footer">
-  <div class="container footer-grid">
-    <div class="footer-brand">
-      <span class="logo-icon">🪞</span>
-      <span class="logo-text">{{firmenname}}</span>
-      <p>Ihr Spezialist für professionelle Mirror-Sites und Web-Replikation.</p>
-      <p class="footer-address">{{adresse}}</p>
     </div>
-    <div class="footer-col">
-      <h5>Navigation</h5>
-      <a href="#ueber-uns">Über uns</a>
-      <a href="#leistungen">Leistungen</a>
-      <a href="#stimmen">Referenzen</a>
-      <a href="#faq">FAQ</a>
-      <a href="#kontakt">Kontakt</a>
-    </div>
-    <div class="footer-col">
-      <h5>Portal</h5>
-      <a href="{{portal_url}}" target="_blank" rel="noopener">Login</a>
-      <a href="{{portal_url}}" target="_blank" rel="noopener">Kunden-Dashboard</a>
-      <a href="#kontakt">Neue Anfrage</a>
-    </div>
-    <div class="footer-col">
-      <h5>Kontakt</h5>
-      <a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a>
-      <a href="tel:{{kontakt_telefon}}">{{kontakt_telefon}}</a>
-    </div>
-  </div>
-  <div class="footer-bottom container">
-    <p>© <span id="footer-year"></span> {{firmenname}}. Alle Rechte vorbehalten.</p>
-    <div class="footer-legal">
-      <a href="{{impressum_url}}">Impressum</a>
-      <a href="{{datenschutz_url}}">Datenschutz</a>
-    </div>
-  </div>
-</footer>
+  </footer>
+</div>
 
 <script src="script.js"></script>
 </body>
