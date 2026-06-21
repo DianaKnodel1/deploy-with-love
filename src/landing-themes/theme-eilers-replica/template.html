@@ -2,245 +2,246 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>{{seo_title}}</title>
-<meta name="description" content="{{seo_description}}" />
-<meta property="og:title" content="{{seo_title}}" />
-<meta property="og:description" content="{{seo_description}}" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://{{landing_domain}}/" />
-<meta property="og:image" content="{{seo_image}}" />
-<meta name="twitter:card" content="summary_large_image" />
-<link rel="canonical" href="https://{{landing_domain}}/" />
-<link rel="icon" href="assets/favicon.png" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{seo_title}</title>
+<meta name="description" content="{seo_description}" />
+<meta property="og:title" content="{seo_title}" />
+<meta property="og:description" content="{seo_description}" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- ===== HEADER ===== -->
-<header class="site-header" id="start">
-  <div class="container header-row">
-    <a href="#start" class="logo">
-      <span class="logo-mark">E</span>
-      <span class="logo-text">{{firmenname}}</span>
+<!-- HEADER -->
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="#top" class="brand">
+      <svg class="brand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      <span class="brand-text">{logo_text}</span>
     </a>
-    <button id="burger" class="burger" aria-label="Menü öffnen">☰</button>
-    <nav id="nav-links" class="nav-links">
-      <a href="#haltung">Haltung</a>
-      <a href="#leistungen">Leistungen</a>
-      <a href="#branchen">Branchen</a>
-      <a href="#kontakt">Kontakt</a>
+    <nav class="primary-nav">
+      <a href="#top" class="nav-link active">Home</a>
+      <a href="#blog" class="nav-link">Blog</a>
+      <a href="{cta_url}" class="nav-link">Kontakt</a>
     </nav>
-    <a href="#kontakt" class="btn btn-primary nav-cta">{{hero_cta_primary}} →</a>
+    <div class="header-actions">
+      <a href="{cta_url}" class="btn-ghost desktop-only">Offene Positionen</a>
+      <a href="{cta_url}" class="btn-solid">Gespräch →</a>
+    </div>
   </div>
 </header>
 
-<!-- ===== HERO ===== -->
-<section class="hero">
+<!-- HERO -->
+<section class="hero" id="top">
   <div class="container hero-grid">
-    <div class="hero-text">
-      <p class="eyebrow">{{hero_eyebrow}}</p>
+    <div>
+      <p class="eyebrow">Unternehmensberatung — {firmen_sitz}, seit {firmen_seit}</p>
       <h1 class="hero-title">
-        {{hero_title_l1}}<br />
-        <em>{{hero_title_italic}}</em>
+        Entscheidungen,<br>
+        <em>die Bestand</em><br>
+        <em>haben.</em>
       </h1>
-      <p class="hero-body">{{hero_body}}</p>
-      <div class="hero-ctas">
-        <a href="#kontakt" class="btn btn-primary">{{hero_cta_primary}} →</a>
-        <a href="#leistungen" class="btn btn-ghost">{{hero_cta_secondary}}</a>
+      <p class="hero-lede">{hero_subtitle}</p>
+      <div class="hero-cta">
+        <a href="{cta_url}" class="btn-solid">Erstgespräch vereinbaren →</a>
+        <a href="#blog" class="btn-outline">Zum Blog</a>
       </div>
       <div class="hero-stats">
-        <div><div class="hero-stat-v">2023</div><div class="hero-stat-l">Gegründet</div></div>
-        <div><div class="hero-stat-v">Kiel</div><div class="hero-stat-l">Sitz</div></div>
+        <div><div class="hero-stat-v">{firmen_seit}</div><div class="hero-stat-l">Gegründet</div></div>
+        <div><div class="hero-stat-v">{firmen_sitz}</div><div class="hero-stat-l">Sitz</div></div>
         <div><div class="hero-stat-v">100%</div><div class="hero-stat-l">Eigentümergeführt</div></div>
       </div>
     </div>
     <div class="hero-visual">
-      <img src="{{hero_image_url}}" alt="Modernes Bürogebäude mit Glasfassade" loading="eager" />
+      <img src="assets/hero-office.jpg" alt="Modernes Bürogebäude" />
       <div class="hero-card">
-        <p class="eyebrow">{{hero_card_eyebrow}}</p>
-        <p class="hero-card-text">{{hero_card_text}}</p>
-        <div class="hero-card-foot">
-          <span>{{hero_card_left}}</span>
-          <span>{{hero_card_right}}</span>
+        <p class="eyebrow">Schwerpunkt</p>
+        <p class="hero-card-text">Strategie, Organisation und Umsetzung — aus einer Hand</p>
+        <div class="hero-card-meta">
+          <span>Eigentümergeführt</span>
+          <span>{firmen_sitz}</span>
         </div>
       </div>
       <div class="hero-pill">
-        <span class="pill-dot"></span> ◉ {{hero_pill}}
+        <span class="dot"></span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        SITZ {firmen_sitz_upper}
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===== ÜBERBLICK BAND ===== -->
+<!-- ÜBERBLICK -->
 <section class="overview-band">
-  <div class="container overview-row">
-    <p class="eyebrow eyebrow--light">{{overview_eyebrow}}</p>
-    <div class="overview-items">
-      <div class="ov-item"><span class="ov-v">{{overview_1_v}}</span><span class="ov-l">{{overview_1_l}}</span></div>
-      <div class="ov-item"><span class="ov-v">{{overview_2_v}}</span><span class="ov-l">{{overview_2_l}}</span></div>
-      <div class="ov-item"><span class="ov-v">{{overview_3_v}}</span><span class="ov-l">{{overview_3_l}}</span></div>
-      <div class="ov-item"><span class="ov-v">{{overview_4_v}}</span><span class="ov-l">{{overview_4_l}}</span></div>
-    </div>
+  <div class="container overview-inner">
+    <p class="eyebrow eyebrow-light">{firmenname} · im Überblick</p>
+    <div class="overview-item"><span class="overview-v">{firmen_seit}</span><span class="overview-l">Gegründet</span></div>
+    <div class="overview-item"><span class="overview-v">{firmen_sitz}</span><span class="overview-l">Sitz der Gesellschaft</span></div>
+    <div class="overview-item"><span class="overview-v">100.000 €</span><span class="overview-l">Stammkapital</span></div>
+    <div class="overview-item"><span class="overview-v">{firmen_hrb}</span><span class="overview-l">Amtsgericht {firmen_sitz}</span></div>
   </div>
 </section>
 
-<!-- ===== HALTUNG ===== -->
-<section id="haltung" class="section">
+<!-- HALTUNG -->
+<section class="section">
   <div class="container">
-    <div class="twocol">
-      <div class="twocol-left">
-        <p class="eyebrow">{{haltung_eyebrow}}</p>
-        <h2>{{haltung_title_pre}} <em>{{haltung_title_italic}}</em></h2>
+    <div class="haltung-head">
+      <div>
+        <p class="eyebrow">Unsere Haltung</p>
+        <h2 class="section-title">Beratung ist <em>kein Produkt.</em></h2>
       </div>
-      <div class="twocol-right prose">
-        <p>{{haltung_p1}}</p>
-        <p>{{haltung_p2}}</p>
+      <div class="haltung-text">
+        <p>Wir glauben nicht an Standard-Frameworks oder austauschbare PowerPoint-Decks. Jedes Mandat beginnt mit einer ergebnisoffenen Diagnose — und endet erst, wenn die Entscheidung umgesetzt ist.</p>
+        <p>Als eigentümergeführte Beratung tragen wir persönliche Verantwortung für jedes Projekt — von der ersten Hypothese bis zur Operationalisierung beim Mandanten. Kurze Wege, klare Ansprache, keine anonymen Großstrukturen.</p>
       </div>
     </div>
     <div class="principles">
-      <div class="principle">
-        <div class="principle-num">01</div>
-        <h3>{{principle_1_title}}</h3>
-        <p>{{principle_1_body}}</p>
-      </div>
-      <div class="principle">
-        <div class="principle-num">02</div>
-        <h3>{{principle_2_title}}</h3>
-        <p>{{principle_2_body}}</p>
-      </div>
-      <div class="principle">
-        <div class="principle-num">03</div>
-        <h3>{{principle_3_title}}</h3>
-        <p>{{principle_3_body}}</p>
-      </div>
+      <div class="principle"><div class="principle-n">01</div><h3>Zuhören vor Empfehlen</h3><p>Wir beginnen mit Fragen, nicht mit Antworten.</p></div>
+      <div class="principle"><div class="principle-n">02</div><h3>Unternehmerisch denken</h3><p>Wir handeln, als wäre es unser eigenes Unternehmen.</p></div>
+      <div class="principle"><div class="principle-n">03</div><h3>Umsetzung als Maßstab</h3><p>Erfolg messen wir an dem, was im Alltag ankommt.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ===== PHASEN (dunkel) ===== -->
-<section class="phasen">
+<!-- PHASEN -->
+<section class="phases-band">
   <div class="container">
-    <div class="twocol">
-      <div class="twocol-left">
-        <p class="eyebrow eyebrow--light">{{phasen_eyebrow}}</p>
-        <h2>{{phasen_title_pre}}<br /><em>{{phasen_title_italic}}</em></h2>
+    <div class="phases-head">
+      <div>
+        <p class="eyebrow eyebrow-light">Wie wir arbeiten</p>
+        <h2 class="section-title section-title-light">Vier Phasen,<br><em>eine Linie.</em></h2>
       </div>
-      <p class="twocol-right phasen-intro">{{phasen_intro}}</p>
+      <p class="phases-lede">Kein Standardablauf, aber ein klarer Rahmen. So sehen unsere Mandate fast immer aus — mit Anpassungen, die zur Situation passen.</p>
     </div>
-    <div class="phase-grid">
-      <div class="phase">
-        <div class="phase-head"><span class="phase-tag">01 · DIAGNOSE</span><span class="phase-dauer">{{phase_1_dauer}}</span></div>
-        <h3>{{phase_1_title}}</h3>
-        <p>{{phase_1_body}}</p>
-      </div>
-      <div class="phase">
-        <div class="phase-head"><span class="phase-tag">02 · KONZEPTION</span><span class="phase-dauer">{{phase_2_dauer}}</span></div>
-        <h3>{{phase_2_title}}</h3>
-        <p>{{phase_2_body}}</p>
-      </div>
-      <div class="phase">
-        <div class="phase-head"><span class="phase-tag">03 · UMSETZUNG</span><span class="phase-dauer">{{phase_3_dauer}}</span></div>
-        <h3>{{phase_3_title}}</h3>
-        <p>{{phase_3_body}}</p>
-      </div>
-      <div class="phase">
-        <div class="phase-head"><span class="phase-tag">04 · WIRKUNG</span><span class="phase-dauer">{{phase_4_dauer}}</span></div>
-        <h3>{{phase_4_title}}</h3>
-        <p>{{phase_4_body}}</p>
-      </div>
+    <div class="phases-grid">
+      <div class="phase"><div class="phase-meta"><span class="phase-n">01 · DIAGNOSE</span><span class="phase-dur">2–4 Wochen</span></div><h3>Ergebnisoffen verstehen</h3><p>Zwei bis vier Wochen strukturierte Bestandsaufnahme. Wir hören zu, prüfen Hypothesen, sprechen mit Schlüsselpersonen — bevor wir empfehlen.</p></div>
+      <div class="phase"><div class="phase-meta"><span class="phase-n">02 · KONZEPTION</span><span class="phase-dur">4–8 Wochen</span></div><h3>Optionen schärfen</h3><p>Entscheidungsoptionen mit klarer Faktenbasis. Belastbare Antworten auf die wenigen wirklich wichtigen Fragen — keine 90-Seiten-Decks.</p></div>
+      <div class="phase"><div class="phase-meta"><span class="phase-n">03 · UMSETZUNG</span><span class="phase-dur">3–9 Monate</span></div><h3>Im Alltag verankern</h3><p>Wir bleiben dran, bis die Entscheidung im operativen Geschäft angekommen ist. Mit klaren Arbeitspaketen, festen Meilensteinen und Sparring auf Geschäftsleitungsebene.</p></div>
+      <div class="phase"><div class="phase-meta"><span class="phase-n">04 · WIRKUNG</span><span class="phase-dur">6–12 Monate</span></div><h3>Nachgefragt, nicht nachgereicht</h3><p>Sechs und zwölf Monate nach Mandatsabschluss melden wir uns. Was hat sich gehalten? Was nicht? Diese Reviews fließen in jedes Folgemandat ein.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ===== LEISTUNGEN ===== -->
-<section id="leistungen" class="section">
+<!-- LEISTUNGEN -->
+<section class="section" id="leistungen">
   <div class="container">
-    <div class="twocol">
-      <div class="twocol-left">
-        <p class="eyebrow">{{leistungen_eyebrow}}</p>
-        <h2>{{leistungen_title_pre}}<br /><em>{{leistungen_title_italic}}</em></h2>
-      </div>
+    <div class="leistungen-head">
+      <p class="eyebrow">Leistungen</p>
+      <h2 class="section-title">Fünf Disziplinen.<br><em>Ein integriertes Beratungsverständnis.</em></h2>
     </div>
-    <div class="services-grid">
+    <div class="leistungen-grid">
       <div class="services-list">
-        <div class="service-row active"><span class="srv-num">01</span><span class="srv-name">{{service_1_name}}</span></div>
-        <div class="service-row"><span class="srv-num">02</span><span class="srv-name">{{service_2_name}}</span></div>
-        <div class="service-row"><span class="srv-num">03</span><span class="srv-name">{{service_3_name}}</span></div>
-        <div class="service-row"><span class="srv-num">04</span><span class="srv-name">{{service_4_name}}</span></div>
-        <div class="service-row"><span class="srv-num">05</span><span class="srv-name">{{service_5_name}}</span></div>
+        <div class="service-item active"><span class="service-n">01</span><span class="service-name">Strategieentwicklung</span></div>
+        <div class="service-item"><span class="service-n">02</span><span class="service-name">Wachstum &amp; Partnerschaften</span></div>
+        <div class="service-item"><span class="service-n">03</span><span class="service-name">Digitale Transformation</span></div>
+        <div class="service-item"><span class="service-n">04</span><span class="service-name">Operative Exzellenz</span></div>
+        <div class="service-item"><span class="service-n">05</span><span class="service-name">Veränderungsbegleitung</span></div>
       </div>
       <div class="service-detail">
         <div>
-          <p class="eyebrow">{{service_detail_tag}}</p>
-          <h3>{{service_detail_title}}</h3>
-          <p class="srv-body">{{service_detail_body}}</p>
-          <ul class="srv-points">
-            <li><span class="dash">—</span>{{service_detail_p1}}</li>
-            <li><span class="dash">—</span>{{service_detail_p2}}</li>
-            <li><span class="dash">—</span>{{service_detail_p3}}</li>
-            <li><span class="dash">—</span>{{service_detail_p4}}</li>
+          <p class="eyebrow">Strategy</p>
+          <h3 class="service-detail-title">Strategieentwicklung</h3>
+          <p class="service-detail-text">Von der Vision zur belastbaren Roadmap. Wir entwickeln Wachstums-, Portfolio- und Wettbewerbsstrategien für Familienunternehmen und mittelständische Konzerne.</p>
+          <ul class="dash-list">
+            <li><span>—</span>Wettbewerbs- und Marktanalysen</li>
+            <li><span>—</span>Portfolio-Strategie &amp; Geschäftsmodell-Innovation</li>
+            <li><span>—</span>Internationalisierung</li>
+            <li><span>—</span>Strategie-Operationalisierung</li>
           </ul>
         </div>
-        <img src="{{service_detail_image}}" alt="Strategieentwicklung — Beratungsgespräch" loading="lazy" />
+        <img src="assets/strategy-meeting.jpg" alt="Strategieentwicklung — Beratungsgespräch" class="service-detail-img" />
       </div>
     </div>
   </div>
 </section>
 
-<!-- ===== BRANCHEN ===== -->
-<section id="branchen" class="section section-surface">
+<!-- BRANCHEN -->
+<section class="section section-surface">
   <div class="container">
-    <div class="twocol">
-      <div class="twocol-left">
-        <p class="eyebrow">{{branchen_eyebrow}}</p>
-        <h2>{{branchen_title_pre}} <em>{{branchen_title_italic}}</em></h2>
+    <div class="branchen-head">
+      <div>
+        <p class="eyebrow">Branchen</p>
+        <h2 class="section-title">Tiefe Branchenexpertise <em>als Standard.</em></h2>
       </div>
-      <p class="twocol-right">{{branchen_intro}}</p>
+      <p class="branchen-lede">Wir arbeiten branchenübergreifend und bringen betriebswirtschaftliche Methodik dorthin, wo Entscheidungen anstehen — unabhängig von der Größe des Hauses.</p>
     </div>
     <div class="branchen-grid">
-      <div class="branche"><span class="b-num">01.</span><span>{{branche_1}}</span></div>
-      <div class="branche"><span class="b-num">02.</span><span>{{branche_2}}</span></div>
-      <div class="branche"><span class="b-num">03.</span><span>{{branche_3}}</span></div>
-      <div class="branche"><span class="b-num">04.</span><span>{{branche_4}}</span></div>
-      <div class="branche"><span class="b-num">05.</span><span>{{branche_5}}</span></div>
-      <div class="branche"><span class="b-num">06.</span><span>{{branche_6}}</span></div>
-      <div class="branche"><span class="b-num">07.</span><span>{{branche_7}}</span></div>
-      <div class="branche"><span class="b-num">08.</span><span>{{branche_8}}</span></div>
-      <div class="branche"><span class="b-num">09.</span><span>{{branche_9}}</span></div>
-      <div class="branche"><span class="b-num">10.</span><span>{{branche_10}}</span></div>
+      <div class="branche"><span class="branche-n">01.</span><span>Maschinen- und Anlagenbau</span></div>
+      <div class="branche"><span class="branche-n">02.</span><span>Automotive &amp; Mobility</span></div>
+      <div class="branche"><span class="branche-n">03.</span><span>Energie &amp; Versorgung</span></div>
+      <div class="branche"><span class="branche-n">04.</span><span>Chemie &amp; Werkstoffe</span></div>
+      <div class="branche"><span class="branche-n">05.</span><span>Konsumgüter &amp; Handel</span></div>
+      <div class="branche"><span class="branche-n">06.</span><span>Finanzdienstleistungen</span></div>
+      <div class="branche"><span class="branche-n">07.</span><span>Healthcare &amp; Life Sciences</span></div>
+      <div class="branche"><span class="branche-n">08.</span><span>Bau &amp; Immobilien</span></div>
+      <div class="branche"><span class="branche-n">09.</span><span>Logistik &amp; Transport</span></div>
+      <div class="branche"><span class="branche-n">10.</span><span>Technologie &amp; Software</span></div>
     </div>
   </div>
 </section>
 
-<!-- ===== CTA ===== -->
-<section id="kontakt" class="cta-section">
+<!-- CTA -->
+<section class="cta-section" id="blog">
   <div class="container container-narrow center">
-    <p class="eyebrow eyebrow--center">{{cta_eyebrow}}</p>
-    <h2 class="cta-title">{{cta_title_pre}}<br /><em>{{cta_title_italic}}</em></h2>
-    <p class="cta-body">{{cta_body}}</p>
-    <div class="cta-actions">
-      <a href="{{application_url}}" class="btn btn-primary btn-lg">{{cta_button}} →</a>
-      <a href="mailto:{{kontakt_email}}" class="btn btn-ghost btn-lg">✉ {{kontakt_email}}</a>
-    </div>
+    <p class="eyebrow eyebrow-center">Erstgespräch</p>
+    <h2 class="cta-title">Ein vertrauliches Gespräch<br><em>ist der Anfang.</em></h2>
+    <p class="cta-lede">45 Minuten, persönlich, unverbindlich. Sie erhalten eine erste fundierte Einschätzung — wir entscheiden gemeinsam, ob eine Zusammenarbeit Sinn ergibt.</p>
+    <a href="{cta_url}" class="btn-solid btn-lg">Erstgespräch vereinbaren →</a>
   </div>
 </section>
 
-<!-- ===== FOOTER ===== -->
+<!-- FOOTER -->
 <footer class="site-footer">
-  <div class="container footer-row">
-    <div class="footer-brand">
-      <span class="logo-mark">E</span>
-      <strong>{{firmenname}}</strong>
-      <span class="muted">· © <span id="year">2026</span></span>
+  <div class="container footer-grid">
+    <div>
+      <div class="brand brand-footer">
+        <svg class="brand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        <span class="brand-text">{logo_text}</span>
+      </div>
+      <p class="footer-desc">{firmenname} — betriebswirtschaftliche und strategische Unternehmensberatung mit Sitz in {firmen_sitz}. Eigentümergeführt, persönlich, ergebnisorientiert.</p>
+      <div class="footer-pills">
+        <span class="footer-pill"><span class="dot"></span> Gegründet {firmen_seit}</span>
+        <span class="footer-pill"><span class="dot"></span> Sitz {firmen_sitz}</span>
+      </div>
     </div>
-    <div class="footer-links">
-      <a href="{{impressum_url}}">Impressum</a>
-      <a href="{{datenschutz_url}}">Datenschutz</a>
-      <a href="mailto:{{kontakt_email}}">{{kontakt_email}}</a>
+    <div>
+      <p class="eyebrow eyebrow-light">Leistungen</p>
+      <ul class="footer-list">
+        <li>Strategieentwicklung</li>
+        <li>Wachstum &amp; Partnerschaften</li>
+        <li>Digitalisierung</li>
+        <li>Operative Exzellenz</li>
+        <li>Veränderungsbegleitung</li>
+      </ul>
+    </div>
+    <div>
+      <p class="eyebrow eyebrow-light">Unternehmen</p>
+      <ul class="footer-list">
+        <li><a href="#top">Über uns</a></li>
+        <li><a href="#blog">Blog</a></li>
+        <li>Karriere</li>
+        <li><a href="{cta_url}">Kontakt</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="eyebrow eyebrow-light">Kontakt</p>
+      <ul class="footer-list">
+        <li>{firmen_strasse}</li>
+        <li>{firmen_plz} {firmen_sitz}</li>
+        <li>{contact_email}</li>
+        <li class="muted">{firmen_hrb} · AG {firmen_sitz}</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container footer-bottom-inner">
+      <span>© <span id="year"></span> {firmenname}</span>
+      <div class="footer-legal">
+        <span>Impressum</span>
+        <span>Datenschutz</span>
+      </div>
     </div>
   </div>
 </footer>
