@@ -272,11 +272,14 @@ EnvironmentFile=$INSTALL_DIR/.env
 ExecStart=/bin/bash $INSTALL_DIR/heartbeat.sh
 Restart=always
 RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
 systemctl daemon-reload
 systemctl enable --now landing-server.service
-systemctl start landing-heartbeat.service
+systemctl enable --now landing-heartbeat.service
 caddy validate --config /etc/caddy/Caddyfile || { journalctl -u caddy -n 80 --no-pager || true; exit 1; }
 if ! systemctl reload caddy; then
   systemctl restart caddy || { systemctl status caddy --no-pager || true; journalctl -u caddy -n 80 --no-pager || true; exit 1; }
