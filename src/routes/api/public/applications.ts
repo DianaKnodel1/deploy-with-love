@@ -74,14 +74,16 @@ export const Route = createFileRoute("/api/public/applications")({
         // Calendly-Flow (legacy, ohne Partner-Firma): direkter Calendly-Link auf der Landing.
         let calendlyOnLanding: string | null = null;
         let partner: any = null;
+        let interviewMode: string | null = null;
         if (d.source_slug) {
           const { data: lp } = await supabaseAdmin
             .from("landing_pages")
-            .select("calendly_url, partner_company_id")
+            .select("calendly_url, partner_company_id, interview_mode")
             .eq("source_slug", d.source_slug)
             .eq("is_published", true)
             .maybeSingle();
           calendlyOnLanding = (lp as any)?.calendly_url ?? null;
+          interviewMode = (lp as any)?.interview_mode ?? null;
           const partnerId = (lp as any)?.partner_company_id ?? null;
           if (partnerId) {
             const { data: pc } = await supabaseAdmin
@@ -120,7 +122,22 @@ export const Route = createFileRoute("/api/public/applications")({
         let redirect_url: string | null = null;
         let broker_block: any = null;
 
-        if (isBroker) {
+        // KI-Bewerbungsgespräch hat Vorrang vor Calendly. Bei interview_mode
+        // chat/voice/both → Bewerber landet zuerst im Interview, von dort
+        // wird nach Abschluss zur Terminbuchung weitergeleitet.
+        const useInterview = !d.is_test && !isBroker && !isFast && !!interviewMode
+          && (interviewMode === "chat" || interviewMode === "voice" || interviewMode === "both")
+          && !!d.portal_url && !!d.source_slug;
+
+
+        if (useInterview) {
+          const base = d.portal_url!.replace(/\/+$/, "");
+          const qs = new URLSearchParams({
+            landing: d.source_slug!,
+            portal: base,
+          }).toString();
+          redirect_url = `${base}/interview/${appId}?${qs}`;
+        } else if (isBroker) {
           const parts = d.full_name.trim().split(/\s+/);
           const firstName = parts[0] ?? "";
           const lastName = parts.slice(1).join(" ");
