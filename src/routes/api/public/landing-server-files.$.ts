@@ -10,7 +10,7 @@ const PACKAGE_JSON = `{
   "name": "landing-server",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "start": "bun --smol server.js" },
+  "scripts": { "start": "node --max-old-space-size=128 server.js" },
   "dependencies": {}
 }
 `;
