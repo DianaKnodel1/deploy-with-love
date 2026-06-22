@@ -224,8 +224,6 @@ cat > /etc/caddy/Caddyfile <<EOF
   email $ACME_EMAIL
   on_demand_tls {
     ask http://127.0.0.1:3001/_internal/ask
-    interval 2m
-    burst 5
   }
 }
 
