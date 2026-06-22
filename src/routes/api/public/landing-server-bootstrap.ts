@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/landing-server-bootstrap")({
 
         const supabaseUrl = process.env.SUPABASE_URL ?? "";
         const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
-        const portalOrigin = url.origin;
+        const portalOrigin = normalizePortalOrigin(url.origin);
         const acmeEmail = process.env.ACME_EMAIL ?? "admin@example.com";
 
         const script = renderScript({
@@ -64,6 +64,11 @@ export const Route = createFileRoute("/api/public/landing-server-bootstrap")({
 
 function shellEscape(s: string): string {
   return `'${String(s).replace(/'/g, "'\\''")}'`;
+}
+
+function normalizePortalOrigin(origin: string): string {
+  if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) return origin;
+  return origin.replace(/^http:\/\//, "https://");
 }
 
 function renderScript(p: {
