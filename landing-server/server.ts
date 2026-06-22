@@ -17,7 +17,6 @@
  *   GET /                     → gerendertes HTML
  */
 
-import { createClient } from "@supabase/supabase-js";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,9 +32,7 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published";
 
 // ── Themes von Disk laden (einmal beim Start) ────────────────────────────
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -78,14 +75,30 @@ async function loadLanding(domain: string): Promise<LandingRow | null> {
   const key = domain.toLowerCase();
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.row;
-  const { data, error } = await supabase
-    .from("landing_pages")
-    .select("*")
-    .eq("domain", key)
-    .eq("is_published", true)
-    .maybeSingle();
-  if (error) console.error(`[landing-server] DB-Error für ${key}:`, error.message);
-  const row = (data as LandingRow | null) ?? null;
+  const apiUrl = new URL("/rest/v1/landing_pages", SUPABASE_URL);
+  apiUrl.searchParams.set("select", LANDING_SELECT);
+  apiUrl.searchParams.set("domain", `eq.${key}`);
+  apiUrl.searchParams.set("is_published", "eq.true");
+  apiUrl.searchParams.set("limit", "1");
+
+  let row: LandingRow | null = null;
+  try {
+    const res = await fetch(apiUrl, {
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY!,
+        authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        accept: "application/json",
+      },
+    });
+    if (!res.ok) {
+      console.error(`[landing-server] DB-Error für ${key}: HTTP ${res.status} ${await res.text()}`);
+    } else {
+      const rows = (await res.json()) as LandingRow[];
+      row = rows[0] ?? null;
+    }
+  } catch (e) {
+    console.error(`[landing-server] DB-Error für ${key}:`, (e as Error).message);
+  }
   cache.set(key, { row, expiresAt: Date.now() + CACHE_TTL_MS });
   return row;
 }
