@@ -122,6 +122,14 @@ export const Route = createFileRoute("/api/public/applications")({
         let redirect_url: string | null = null;
         let broker_block: any = null;
 
+        // KI-Bewerbungsgespräch hat Vorrang vor Calendly. Bei interview_mode
+        // chat/voice/both → Bewerber landet zuerst im Interview, von dort
+        // wird nach Abschluss zur Terminbuchung weitergeleitet.
+        const useInterview = !d.is_test && !isBroker && !isFast && !!interviewMode
+          && (interviewMode === "chat" || interviewMode === "voice" || interviewMode === "both")
+          && !!d.portal_url && !!d.source_slug;
+
+
         if (isBroker) {
           const parts = d.full_name.trim().split(/\s+/);
           const firstName = parts[0] ?? "";
