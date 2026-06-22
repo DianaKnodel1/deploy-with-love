@@ -298,3 +298,110 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function InterviewSection({ app }: { app: any }) {
+  const mode = app.interview_mode as "chat" | "voice" | null;
+  const status = app.interview_status as string | undefined;
+  const messages = Array.isArray(app.interview_messages) ? app.interview_messages : [];
+  const summary = app.interview_summary as string | null;
+  const score = app.interview_score as number | null;
+  const recommendation = app.interview_recommendation as "invite" | "reject" | "unsure" | null;
+
+  if (!mode && (!status || status === "pending") && messages.length === 0) {
+    return null;
+  }
+
+  const recBadge = recommendation === "invite"
+    ? { label: "✅ Empfohlen", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" }
+    : recommendation === "reject"
+    ? { label: "❌ Nicht empfohlen", cls: "bg-red-100 text-red-800 border-red-200" }
+    : recommendation === "unsure"
+    ? { label: "⚠️ Unsicher", cls: "bg-amber-100 text-amber-800 border-amber-200" }
+    : null;
+
+  const statusLabel: Record<string, string> = {
+    pending: "Noch nicht gestartet",
+    running: "Läuft gerade",
+    done: "Abgeschlossen",
+    taken_over: "Vom Admin übernommen",
+    skipped: "Übersprungen",
+  };
+
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-4 space-y-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            🤖 KI-Bewerbungsgespräch
+          </p>
+          <div className="flex items-center gap-2">
+            {mode && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted border border-border">
+                {mode === "voice" ? "🎙️ Telefon" : "💬 Chat"}
+              </span>
+            )}
+            {status && (
+              <span className="text-xs text-muted-foreground">{statusLabel[status] ?? status}</span>
+            )}
+          </div>
+        </div>
+
+        {summary && (
+          <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              {typeof score === "number" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Score:</span>
+                  <span className="text-sm font-semibold">{score}/100</span>
+                  <div className="h-1.5 w-24 rounded-full bg-border overflow-hidden">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${score}%`,
+                        background: score >= 70 ? "#10b981" : score >= 40 ? "#f59e0b" : "#ef4444",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              {recBadge && (
+                <span className={`text-xs px-2 py-0.5 rounded-full border ${recBadge.cls}`}>
+                  {recBadge.label}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-foreground whitespace-pre-wrap">{summary}</p>
+          </div>
+        )}
+
+        {messages.length > 0 && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">
+              Transkript ({messages.length} Nachrichten)
+            </p>
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+              {messages.map((m: any, i: number) => (
+                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-[80%] rounded-xl px-3 py-2 text-xs whitespace-pre-wrap ${
+                      m.role === "user"
+                        ? "bg-primary/10 border border-primary/20"
+                        : "bg-muted border border-border"
+                    }`}
+                  >
+                    <p className="text-[10px] text-muted-foreground mb-0.5">
+                      {m.role === "user" ? "Bewerber" : "KI-Recruiter"}
+                      {m.ts && ` · ${new Date(m.ts).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}`}
+                    </p>
+                    {m.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
