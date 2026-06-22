@@ -154,6 +154,9 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       intermediate_logo_url: data.intermediate_logo_url || null,
       redirect_delay_ms: data.redirect_delay_ms ?? 2500,
       partner_company_id: data.partner_company_id ?? null,
+      interview_mode: data.interview_mode ?? "chat",
+      interview_voice_id: data.interview_voice_id ?? null,
+      interview_system_prompt: data.interview_system_prompt ?? null,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
