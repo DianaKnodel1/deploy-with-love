@@ -384,8 +384,12 @@ document.addEventListener('submit', function(e){
   });
 
   const handleGenerate = async () => {
-    if (!branding.firmenname || !branding.email || !branding.api_endpoint) {
-      toast({ title: "Fehlende Felder", description: "Firmenname, E-Mail und API-Endpoint sind Pflicht.", variant: "destructive" });
+    if (!branding.firmenname || !branding.email) {
+      toast({ title: "Fehlende Felder", description: "Firmenname und E-Mail sind Pflicht.", variant: "destructive" });
+      return;
+    }
+    if (branding.flow_type !== "broker" && !branding.api_endpoint) {
+      toast({ title: "API-Endpoint fehlt", description: "Klassisch/Fast-Track brauchen den Portal-API-Endpoint.", variant: "destructive" });
       return;
     }
     if (!branding.landing_domain.trim()) {
@@ -400,6 +404,7 @@ document.addEventListener('submit', function(e){
       toast({ title: "Tenant-ID fehlt", description: "Ohne Tenant-ID landet die Bewerbung beim falschen Mandanten. Hol sie aus Admin → Tenants.", variant: "destructive" });
       return;
     }
+
     setLoading(true);
     try {
       const res = await generate({ data: { themeId, branding: withSeoDefaults(branding), logoDataUrl, faviconDataUrl, slots: slotValues } });
@@ -434,13 +439,15 @@ document.addEventListener('submit', function(e){
   };
 
   const validateRequired = (): string | null => {
-    if (!branding.firmenname || !branding.email || !branding.api_endpoint) return "Firmenname, E-Mail und API-Endpoint sind Pflicht.";
+    if (!branding.firmenname || !branding.email) return "Firmenname und E-Mail sind Pflicht.";
+    if (branding.flow_type !== "broker" && !branding.api_endpoint) return "API-Endpoint ist für Klassisch/Fast-Track Pflicht.";
     if (!branding.landing_domain.trim()) return "Landing-Domain fehlt.";
     if (branding.flow_type === "fast" && !branding.portal_url.trim()) return "Fast-Track braucht Portal-URL.";
     if (branding.flow_type === "broker" && !branding.calendly_url.trim()) return "Vermittlung braucht entweder eine Partner-Firma oder einen Calendly-Link.";
     if (!branding.tenant_id.trim()) return "Tenant-ID fehlt.";
     return null;
   };
+
 
   const handleSaveLive = async () => {
     const err = validateRequired();
