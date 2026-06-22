@@ -74,14 +74,16 @@ export const Route = createFileRoute("/api/public/applications")({
         // Calendly-Flow (legacy, ohne Partner-Firma): direkter Calendly-Link auf der Landing.
         let calendlyOnLanding: string | null = null;
         let partner: any = null;
+        let interviewMode: string | null = null;
         if (d.source_slug) {
           const { data: lp } = await supabaseAdmin
             .from("landing_pages")
-            .select("calendly_url, partner_company_id")
+            .select("calendly_url, partner_company_id, interview_mode")
             .eq("source_slug", d.source_slug)
             .eq("is_published", true)
             .maybeSingle();
           calendlyOnLanding = (lp as any)?.calendly_url ?? null;
+          interviewMode = (lp as any)?.interview_mode ?? null;
           const partnerId = (lp as any)?.partner_company_id ?? null;
           if (partnerId) {
             const { data: pc } = await supabaseAdmin
