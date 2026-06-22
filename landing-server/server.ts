@@ -17,7 +17,7 @@
  *   GET /                     → gerendertes HTML
  */
 
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -39,7 +39,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 type Theme = { id: string; html: string; css: string; js: string };
 const THEMES: Record<string, Theme> = {};
 const themesDir = join(__dirname, "themes");
-for (const id of readdirSync(themesDir)) {
+for (const id of existsSync(themesDir) ? readdirSync(themesDir) : []) {
   const dir = join(themesDir, id);
   try {
     THEMES[id] = {
