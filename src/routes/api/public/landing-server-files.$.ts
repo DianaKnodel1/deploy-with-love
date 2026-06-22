@@ -4,7 +4,16 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { THEMES } from "@/lib/landing-themes";
-import landingServerSource from "../../../../landing-server/server.ts?raw";
+import landingServerSource from "../../../../landing-server/server.js?raw";
+
+const PACKAGE_JSON = `{
+  "name": "landing-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "start": "bun --smol server.js" },
+  "dependencies": {}
+}
+`;
 
 const HEARTBEAT_SH = `#!/usr/bin/env bash
 # Liest .env (HEARTBEAT_URL, BOOTSTRAP_TOKEN), schickt alle 60s einen Heartbeat.
@@ -28,9 +37,14 @@ export const Route = createFileRoute("/api/public/landing-server-files/$")({
       GET: async ({ params }) => {
         const path = String((params as any)._splat ?? "").replace(/\.\./g, "");
 
-        if (path === "server.ts") {
+        if (path === "server.js" || path === "server.ts") {
           return new Response(landingServerSource, {
             headers: { "content-type": "text/plain; charset=utf-8" },
+          });
+        }
+        if (path === "package.json") {
+          return new Response(PACKAGE_JSON, {
+            headers: { "content-type": "application/json; charset=utf-8" },
           });
         }
         if (path === "heartbeat.sh") {
