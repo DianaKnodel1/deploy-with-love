@@ -2,7 +2,7 @@
 // Aufruf: curl -sSL https://mb-portal.com/api/public/landing-server-bootstrap?token=XYZ | bash
 //
 // Validiert Token gegen landing_servers.bootstrap_token, gibt dann ein
-// idempotentes Setup-Script aus (Bun, Caddy, server.ts, systemd) — alle
+// idempotentes Setup-Script aus (Node, Caddy, server.js, systemd) — alle
 // benötigten Env-Vars (Supabase-URL/Key, Portal-URL, Server-ID, Token) sind
 // direkt eingebettet.
 
@@ -183,11 +183,8 @@ for P in 80 443; do
   done
 done
 
-echo "[bootstrap] 3/7 Bun installieren …"
-if ! command -v /usr/local/bin/bun >/dev/null 2>&1; then
-  curl -fsSL https://bun.sh/install | bash >/dev/null
-  install -m 0755 /root/.bun/bin/bun /usr/local/bin/bun
-fi
+echo "[bootstrap] 3/7 Node prüfen …"
+command -v /usr/bin/node >/dev/null 2>&1 || { echo "Node.js fehlt: bitte nodejs installieren"; exit 1; }
 
 echo "[bootstrap] 4/7 User + Verzeichnisse …"
 id -u "$SERVICE_USER" >/dev/null 2>&1 || useradd --system --home "$INSTALL_DIR" --shell /usr/sbin/nologin "$SERVICE_USER"
@@ -254,7 +251,7 @@ EOF
 echo "[bootstrap] 6/7 systemd-Services …"
 cat > /etc/systemd/system/landing-server.service <<EOF
 [Unit]
-Description=Landing Renderer (Bun)
+Description=Landing Renderer (Node)
 After=network.target
 
 [Service]
@@ -262,7 +259,7 @@ Type=simple
 User=$SERVICE_USER
 WorkingDirectory=$INSTALL_DIR
 EnvironmentFile=$INSTALL_DIR/.env
-ExecStart=/usr/local/bin/bun --smol server.js
+ExecStart=/usr/bin/node --max-old-space-size=128 server.js
 Restart=always
 RestartSec=3
 
