@@ -95,7 +95,10 @@ export const Route = createFileRoute("/api/public/applications")({
         const isBroker = d.flow_type === "broker" && !!partner && !d.is_test;
         const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test;
 
-        const { data: inserted, error } = await supabaseAdmin.from("applications").insert({
+        const appId = crypto.randomUUID();
+
+        const { error } = await supabaseAdmin.from("applications").insert({
+          id: appId,
           full_name: displayName,
           email: d.email,
           phone: d.phone ?? null,
@@ -108,12 +111,11 @@ export const Route = createFileRoute("/api/public/applications")({
           source_slug: d.source_slug ?? null,
           is_test: !!d.is_test,
           booking_status: (isBroker || useCalendly) ? "pending" : "none",
-        } as any).select("id").single();
+        } as any);
         if (error) {
           console.error("[applications] insert error:", error);
           return json({ error: "Could not save application" }, 500);
         }
-        const appId = (inserted as any)?.id ?? "";
 
         let redirect_url: string | null = null;
         let broker_block: any = null;
