@@ -195,7 +195,8 @@ mkdir -p "$INSTALL_DIR/themes"
 chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 
 echo "[bootstrap] 5/7 Renderer + Themes laden …"
-curl -fsSL "$SERVER_FILES_BASE/server.ts"  -o "$INSTALL_DIR/server.ts"
+curl -fsSL "$SERVER_FILES_BASE/server.js"  -o "$INSTALL_DIR/server.js"
+curl -fsSL "$SERVER_FILES_BASE/package.json"  -o "$INSTALL_DIR/package.json"
 curl -fsSL "$SERVER_FILES_BASE/heartbeat.sh" -o "$INSTALL_DIR/heartbeat.sh"
 chmod +x "$INSTALL_DIR/heartbeat.sh"
 
@@ -261,7 +262,7 @@ Type=simple
 User=$SERVICE_USER
 WorkingDirectory=$INSTALL_DIR
 EnvironmentFile=$INSTALL_DIR/.env
-ExecStart=/usr/local/bin/bun run server.ts
+ExecStart=/usr/local/bin/bun --smol server.js
 Restart=always
 RestartSec=3
 
