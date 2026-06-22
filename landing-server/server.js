@@ -86,17 +86,15 @@ async function loadLanding(domain) {
 
   let row = null;
   try {
-    const res = await fetch(apiUrl, {
-      headers: {
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-        accept: "application/json",
-      },
+    const res = await requestJson(apiUrl, {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+      accept: "application/json",
     });
     if (!res.ok) {
-      console.error(`[landing-server] DB-Error für ${key}: HTTP ${res.status} ${await res.text()}`);
+      console.error(`[landing-server] DB-Error für ${key}: HTTP ${res.status} ${res.text}`);
     } else {
-      const rows = await res.json();
+      const rows = res.json();
       row = rows[0] || null;
     }
   } catch (e) {
