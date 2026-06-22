@@ -188,6 +188,9 @@ function AdminApplicationDetailPage() {
         </CardContent>
       </Card>
 
+      <InterviewSection app={app as any} />
+
+
       {(app as any).booking_status && (app as any).booking_status !== "none" && (
         <Card>
           <CardContent className="pt-4 pb-4 space-y-3">
