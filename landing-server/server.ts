@@ -113,7 +113,8 @@ function applyPlaceholders(src: string, branding: Record<string, any>, slots: Re
 
 function injectLandingConfig(html: string, row: LandingRow): string {
   const esc = (s: string) => String(s ?? "").replace(/[<>"']/g, (c) => ({ "<": "\\u003c", ">": "\\u003e", '"': '\\"', "'": "\\'" }[c]!));
-  const apiEndpoint = row.branding?.api_endpoint || PORTAL_API_ENDPOINT;
+  const rawApi = row.branding?.api_endpoint || PORTAL_API_ENDPOINT;
+  const apiEndpoint = String(rawApi ?? "").trim().replace(/[.,;\s]+$/g, "");
   const portalUrl = row.branding?.portal_url || "";
   const wa = row.branding?.whatsapp_enabled ? String(row.branding?.whatsapp_number ?? "").replace(/[^0-9]/g, "") : "";
   const cleanHtml = html.replace(/<script>\s*window\.PORTAL_API\s*=\s*[\s\S]*?<\/script>\s*/gi, "");
