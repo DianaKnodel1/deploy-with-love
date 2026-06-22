@@ -3,8 +3,8 @@
  * Läuft ohne TypeScript-Transpiling und ohne npm-Abhängigkeiten.
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -13,40 +13,39 @@ const PORTAL_API_ENDPOINT = process.env.PORTAL_API_ENDPOINT || "";
 const PORT = Number(process.env.PORT || 3001);
 const CACHE_TTL_MS = 60_000;
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error("[landing-server] SUPABASE_URL und SUPABASE_PUBLISHABLE_KEY müssen gesetzt sein.");
-  process.exit(1);
-}
-
 const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const themesDir = join(__dirname, "themes");
-const themeIds = existsSync(themesDir) ? readdirSync(themesDir) : [];
 const cache = new Map();
 const themeCache = new Map();
 
-console.log(`[landing-server] ${themeIds.length} Themes gefunden: ${themeIds.join(", ")}`);
-
 function loadTheme(id) {
-  if (themeCache.has(id)) return themeCache.get(id);
-  if (!themeIds.includes(id)) return null;
-  const dir = join(themesDir, id);
+  const safeId = basename(String(id || "")).replace(/[^a-z0-9_-]/gi, "");
+  if (!safeId) return null;
+  if (themeCache.has(safeId)) return themeCache.get(safeId);
+  const dir = join(themesDir, safeId);
+  if (!existsSync(dir)) return null;
   try {
     const theme = {
-      id,
+      id: safeId,
       html: readFileSync(join(dir, "template.html"), "utf8"),
       css: readFileSync(join(dir, "style.css"), "utf8"),
       js: readFileSync(join(dir, "script.js"), "utf8"),
     };
-    themeCache.set(id, theme);
+    themeCache.set(safeId, theme);
     return theme;
   } catch (e) {
-    console.warn(`[themes] Skip ${id}: ${e?.message || e}`);
+    console.warn(`[themes] Skip ${safeId}: ${e?.message || e}`);
     return null;
   }
 }
 
 async function loadLanding(domain) {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    console.error("[landing-server] SUPABASE_URL und SUPABASE_PUBLISHABLE_KEY müssen gesetzt sein.");
+    return null;
+  }
+
   const key = domain.toLowerCase();
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.row;
