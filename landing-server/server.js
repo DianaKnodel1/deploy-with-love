@@ -184,23 +184,28 @@ const server = createServer(async (req, res) => {
     if (!row) return send(res, 404, `Keine Landing für ${host} konfiguriert.`);
 
     if (path === "/style.css") {
-      return new Response(renderCss(row), { headers: { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" } });
+      return send(res, 200, renderCss(row), { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path === "/script.js") {
-      return new Response(renderJs(row), { headers: { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" } });
+      return send(res, 200, renderJs(row), { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path.startsWith("/assets/logo")) {
-      return row.logo_url ? Response.redirect(row.logo_url, 302) : new Response("no logo", { status: 404 });
+      return row.logo_url ? send(res, 302, "", { location: row.logo_url }) : send(res, 404, "no logo");
     }
     if (path.startsWith("/assets/favicon")) {
-      return row.favicon_url ? Response.redirect(row.favicon_url, 302) : new Response("no favicon", { status: 404 });
+      return row.favicon_url ? send(res, 302, "", { location: row.favicon_url }) : send(res, 404, "no favicon");
     }
     if (path === "/" || path === "/index.html") {
       const { body, status } = renderHtml(row, host);
-      return new Response(body, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+      return send(res, status, body, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
     }
-    return new Response("not found", { status: 404 });
-  },
+    return send(res, 404, "not found");
+  } catch (e) {
+    console.error("[landing-server] request error:", e?.message || e);
+    return send(res, 500, "internal error");
+  }
 });
 
-console.log(`[landing-server] listening on http://127.0.0.1:${server.port}`);
+server.listen(PORT, "127.0.0.1", () => {
+  console.log(`[landing-server] listening on http://127.0.0.1:${PORT}`);
+});
