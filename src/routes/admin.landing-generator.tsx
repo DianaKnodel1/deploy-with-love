@@ -491,6 +491,9 @@ document.addEventListener('submit', function(e){
         intermediate_logo_url: "",
         redirect_delay_ms: Number(branding.redirect_delay_ms ?? 2500),
         partner_company_id: branding.partner_company_id || null,
+        interview_mode: branding.interview_mode || "chat",
+        interview_voice_id: branding.interview_voice_id || null,
+        interview_system_prompt: branding.interview_system_prompt || null,
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
       } as any });
