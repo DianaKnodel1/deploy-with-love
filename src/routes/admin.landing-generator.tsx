@@ -531,6 +531,9 @@ document.addEventListener('submit', function(e){
         intermediate_company_name: row.intermediate_company_name ?? "",
         redirect_delay_ms: row.redirect_delay_ms ?? 2500,
         partner_company_id: row.partner_company_id ?? "",
+        interview_mode: row.interview_mode ?? "chat",
+        interview_voice_id: row.interview_voice_id ?? "XrExE9yKIg1WjnnlVkGX",
+        interview_system_prompt: row.interview_system_prompt ?? "",
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
