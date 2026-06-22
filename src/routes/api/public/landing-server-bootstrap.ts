@@ -229,10 +229,14 @@ cat > /etc/caddy/Caddyfile <<EOF
   }
 }
 
-:80 { redir https://{host}{uri} 308 }
+:80 {
+  redir https://{host}{uri} 308
+}
 
 :443 {
-  tls { on_demand }
+  tls {
+    on_demand
+  }
   encode zstd gzip
   reverse_proxy 127.0.0.1:3001 {
     header_up Host {host}
