@@ -1,64 +1,78 @@
-# Plan: Echte 1:1-Themes (HomeOfficeCareer, Eilers, Effica)
 
-Ziel: Drei Themes so weit bringen, dass sie visuell, inhaltlich und interaktiv mit den Lovable-Originalen übereinstimmen.
+# Admin wählt pro Landing Page: KI-Chat **oder** KI-Telefon
 
-## Phase 1 — Assets aus den Quellprojekten ziehen
+Verstanden — **du** (Admin) entscheidest pro Landing Page, wie das Bewerbungsgespräch läuft. Der Bewerber sieht keine Auswahl, sondern direkt die Methode, die du für diese Page festgelegt hast.
 
-Pro Theme ein `assets/`-Unterordner mit allen referenzierten Bildern, hochgeladen als Lovable-CDN-Assets.
+---
 
-**HomeOfficeCareer** (`b7900815…`):
-- `hero-workspace.jpg`, `workspace-flatlay.jpg`
-- `testimonial-sarah.jpg`, `testimonial-thomas.jpg`, `testimonial-lisa.jpg`
-- evtl. Logo/Favicon
+## 1. Wo du das einstellst
 
-**Eilers** (`343eb395…`):
-- Hero-/Office-Bilder aus `src/assets/`
-- Logo, Favicon
+Im **Landing-Page-Generator / Bearbeiten** (`/admin/landing-generator` bzw. Edit-Form) kommt ein neues Feld:
 
-**Effica** (`b45d44b8…`):
-- `hero.webp`
-- 8–11 Partner-Logos (`AOK-2021.svg`, `Commerzbank.svg`, etc.) — aktuell Hotlinks auf `effica.cc`
+```text
+┌─────────────────────────────────────────┐
+│  Bewerbungsgespräch                     │
+│                                         │
+│  ( ) 💬 KI-Chat (schriftlich)           │
+│  (•) 🎙️ KI-Telefon (Sprache)            │
+│  ( ) Beides — Bewerber wählt selbst     │
+│                                         │
+│  [bei Voice/Beides:]                    │
+│  Stimme:  [Matilda (w) ▼]               │
+└─────────────────────────────────────────┘
+```
 
-→ je `cross_project--read_project_asset` → in `/tmp` zwischenspeichern → `lovable-assets create` → `.asset.json` neben dem Theme ablegen → Slot-Defaults in `meta.json` auf die CDN-URLs umstellen.
+So kannst du z. B. Landing A auf Chat, Landing B auf Voice setzen und **A/B-testen welche besser konvertiert**.
 
-## Phase 2 — Layout & Interaktionen pro Theme nachschärfen
+---
 
-### HomeOfficeCareer
-- Hero-Bild im Theme einsetzen (statt Slot-Platzhalter)
-- Testimonials mit echten Personenbildern + Sternen
-- FAQ-Accordion verifizieren (Click-Toggle, aria-expanded)
-- Mobile-Hamburger testen
+## 2. Was wir bauen
 
-### Eilers
-- Phasen-Timeline mit Verbinder-Linien (war im Original ein vertikaler Stroke)
-- Eyebrow-Typografie + Letter-Spacing prüfen
-- Service-Tabs (Strategy/Wachstum/…) als Akkordeon
+### A) Datenbank (1 Migration)
+- `landing_pages.interview_mode` text — `chat` | `voice` | `both` (default `chat`)
+- `landing_pages.interview_voice_id` text nullable (ElevenLabs Voice-ID)
+- `landing_pages.interview_system_prompt` text nullable (Override pro Page, sonst Tenant-Default)
+- `applications.interview_mode` text — was der Bewerber tatsächlich genutzt hat
+- `applications.interview_messages` jsonb (Chat-Verlauf **oder** Voice-Transcript, gleiches Schema)
+- `applications.interview_summary` text + `interview_score` int + `interview_recommendation` text
 
-### Effica
-- **Pricing-Toggle** (Monatlich/Jährlich, -20%) als JS-Toggle hinzufügen — beide Preise als Data-Attribut
-- **Testimonial-Carousel** mit 3-Spalten-View, Prev/Next-Buttons, Dot-Pagination
-- Float-Badges (Top-Right „100 % Zufriedenheit", Bottom-Left „150+ Projekte") im Hero
-- Hover-Effekte auf Service-Cards (lift + Border-Color)
+### B) Admin-UI
+- `src/routes/admin.landing-generator.tsx` (bzw. Edit-Page): neue Sektion „Bewerbungsgespräch" mit Radio + Voice-Dropdown
+- `src/routes/admin.applications.$appId.tsx`: neuer Tab **„Interview"** zeigt Mode-Badge (💬/🎙️), Transcript, KI-Summary, Score, Empfehlung
 
-## Phase 3 — Visuelle Verifikation
+### C) Bewerber-Flow (auf der gerenderten Landing Page)
+- Nach „Bewerben" → Name/E-Mail → Routing abhängig von `landing_pages.interview_mode`:
+  - `chat` → direkt Chat-UI
+  - `voice` → direkt Voice-UI (Mikro-Permission)
+  - `both` → kurzer Auswahl-Screen
+- Mode wird in `applications.interview_mode` gespeichert
 
-1. Jedes Theme über den lokalen `scripts/serve.mjs` Preview-Renderer aufrufen
-2. Screenshot bei 1440px + 390px (Desktop & Mobile)
-3. Live-Site mit `browser--navigate_to_url` aufrufen (homeoffice-career.de, eilers-gmbh.com, effica.cc) → Screenshot
-4. Seite-an-Seite-Vergleich, Differenzen dokumentieren, nachbessern
+### D) Server-Endpoints (TanStack server routes, public)
+- `src/routes/api/public/interview-chat.ts` — AI-SDK Stream, Claude Sonnet 4.5 via Lovable AI Gateway, schreibt in DB
+- `src/routes/api/public/elevenlabs-token.ts` — mintet WebRTC-Token mit der `interview_voice_id` der Landing Page
+- `src/routes/api/public/elevenlabs-webhook.ts` — empfängt Transcript nach Anrufende, schreibt Messages + triggert Summary (Claude)
 
-## Aufwand & Reihenfolge
+### E) ElevenLabs-Setup (einmalig)
+1. Standard-Connector `elevenlabs` verbinden → `ELEVENLABS_API_KEY` wird automatisch gesynct
+2. Einen Conversational Agent in ElevenLabs anlegen (System-Prompt + Webhook auf unsere Route)
+3. Agent-ID als Secret `ELEVENLABS_INTERVIEW_AGENT_ID`
+4. Voice-ID kommt pro Landing Page aus der DB → Agent bekommt sie via Override
 
-Reihenfolge: **Effica → HomeOfficeCareer → Eilers** (Effica hat die meisten externen Hotlinks und das komplexeste Interaktive — schnellster sichtbarer Win).
+### F) Statistik
+- `/admin/statistiken` bekommt Vergleich: pro Mode (Chat vs Voice) → Conversion, Abschlussquote, Ø-Score, Kosten
 
-Geschätzte Tool-Calls: ~80–120 (asset uploads, file writes, screenshots). In etwa 4–6 zusammenhängende Antworten.
+---
 
-## Was *nicht* gemacht wird
+## 3. Reihenfolge
 
-- Keine pixelperfekte CSS-Übersetzung jeder Tailwind-Klasse (~95% reicht; Restdifferenzen werden im Screenshot-Vergleich gefixt)
-- Keine Lottie-/Video-Animationen falls die Originale welche haben (Themes sind statisches HTML)
-- Keine Backend-Funktionalität (Formular-POST geht weiterhin nur an die Lovable-API der echten Originale, nicht ans Theme)
+1. Migration + Admin-Feld im Landing-Generator + Chat-Variante komplett
+2. Admin-Tab „Interview" mit Transcript + KI-Summary
+3. ElevenLabs-Connector + Voice-Variante
+4. „Beides"-Option + Statistik-Vergleich
 
-## Bestätigung
+---
 
-OK so? Falls ja, fange ich mit **Effica** an: Hero-Bild + 8 Partner-Logos hochladen, Pricing-Toggle + Carousel JS, dann Screenshot-Vergleich gegen `effica.cc`.
+## 4. Bevor ich baue — 2 Fragen
+
+1. **Default-Stimme** für neue Landing Pages: **männlich (Charlie)** oder **weiblich (Matilda)**?
+2. **System-Prompt:** Soll ich einen Standard-Interview-Prompt für **Versicherungs-/Finanzvermittlung** schreiben, oder hast du einen Fragenkatalog, den ich übernehmen soll?
