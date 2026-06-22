@@ -68,7 +68,15 @@ function shellEscape(s: string): string {
 
 function normalizePortalOrigin(origin: string): string {
   if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) return origin;
-  return origin.replace(/^http:\/\//, "https://");
+  const httpsOrigin = origin.replace(/^http:\/\//, "https://");
+  try {
+    const parsed = new URL(httpsOrigin);
+    const previewMatch = /^id-preview--([a-f0-9-]+)\.lovable\.app$/i.exec(parsed.hostname);
+    if (previewMatch) return `https://project--${previewMatch[1]}-dev.lovable.app`;
+  } catch {
+    // Fallback below keeps the previous behavior for unusual origins.
+  }
+  return httpsOrigin;
 }
 
 function renderScript(p: {
@@ -196,6 +204,19 @@ echo "[bootstrap] 5/7 Renderer + Themes laden …"
 curl -fsSL "$SERVER_FILES_BASE/server.js"  -o "$INSTALL_DIR/server.js"
 curl -fsSL "$SERVER_FILES_BASE/package.json"  -o "$INSTALL_DIR/package.json"
 curl -fsSL "$SERVER_FILES_BASE/heartbeat.sh" -o "$INSTALL_DIR/heartbeat.sh"
+if head -c 32 "$INSTALL_DIR/server.js" | grep -qi '<!DOCTYPE html\|<html'; then
+  echo "[bootstrap] ❌ server.js Download enthält HTML statt JavaScript." >&2
+  echo "[bootstrap]    Prüfe URL: $SERVER_FILES_BASE/server.js" >&2
+  exit 1
+fi
+if grep -q 'Bun\.serve' "$INSTALL_DIR/server.js"; then
+  echo "[bootstrap] ❌ server.js ist noch die alte Bun-Version." >&2
+  exit 1
+fi
+if ! grep -q 'node:http\|createServer' "$INSTALL_DIR/server.js"; then
+  echo "[bootstrap] ❌ server.js sieht nicht wie der Node-Renderer aus." >&2
+  exit 1
+fi
 chmod +x "$INSTALL_DIR/heartbeat.sh"
 
 # Themes-Liste & Dateien holen
