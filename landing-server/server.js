@@ -4,6 +4,9 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
+import { createServer } from "node:http";
+import { request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,6 +21,31 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const themesDir = join(__dirname, "themes");
 const cache = new Map();
 const themeCache = new Map();
+
+function requestJson(url, headers) {
+  return new Promise((resolve, reject) => {
+    const request = url.protocol === "http:" ? httpRequest : httpsRequest;
+    const req = request(url, { method: "GET", headers }, (res) => {
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => {
+        body += chunk;
+        if (body.length > 2_000_000) req.destroy(new Error("response too large"));
+      });
+      res.on("end", () => {
+        resolve({
+          ok: (res.statusCode || 0) >= 200 && (res.statusCode || 0) < 300,
+          status: res.statusCode || 0,
+          text: body,
+          json: () => JSON.parse(body),
+        });
+      });
+    });
+    req.setTimeout(10_000, () => req.destroy(new Error("request timeout")));
+    req.on("error", reject);
+    req.end();
+  });
+}
 
 function loadTheme(id) {
   const safeId = basename(String(id || "")).replace(/[^a-z0-9_-]/gi, "");
