@@ -6,8 +6,5 @@
   "scripts": {
     "start": "bun run server.ts",
     "dev": "bun --watch run server.ts"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.45.0"
   }
 }
