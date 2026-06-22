@@ -159,26 +159,29 @@ function renderJs(row) {
   return theme ? applyPlaceholders(theme.js, row.branding, row.slots) : "// theme missing";
 }
 
-const server = Bun.serve({
-  port: PORT,
-  hostname: "127.0.0.1",
-  async fetch(req) {
-    const url = new URL(req.url);
+function send(res, status, body, headers = {}) {
+  res.writeHead(status, headers);
+  res.end(body);
+}
+
+const server = createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
     const path = url.pathname;
 
-    if (path === "/_health") return new Response("ok");
+    if (path === "/_health") return send(res, 200, "ok");
 
     if (path === "/_internal/ask") {
       const domain = (url.searchParams.get("domain") || "").toLowerCase();
-      if (!domain) return new Response("missing domain", { status: 400 });
+      if (!domain) return send(res, 400, "missing domain");
       const row = await loadLanding(domain);
-      return row ? new Response("ok") : new Response("not found", { status: 404 });
+      return row ? send(res, 200, "ok") : send(res, 404, "not found");
     }
 
-    const host = (req.headers.get("host") || "").toLowerCase().split(":")[0];
-    if (!host) return new Response("no host", { status: 400 });
+    const host = String(req.headers.host || "").toLowerCase().split(":")[0];
+    if (!host) return send(res, 400, "no host");
     const row = await loadLanding(host);
-    if (!row) return new Response(`Keine Landing für ${host} konfiguriert.`, { status: 404 });
+    if (!row) return send(res, 404, `Keine Landing für ${host} konfiguriert.`);
 
     if (path === "/style.css") {
       return new Response(renderCss(row), { headers: { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" } });
