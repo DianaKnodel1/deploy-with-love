@@ -101,6 +101,7 @@ systemctl disable httpd 2>/dev/null || true
 rm -f /etc/systemd/system/landing-server.service
 rm -f /etc/systemd/system/landing-heartbeat.service
 rm -f /etc/systemd/system/landing.service
+rm -rf /etc/systemd/system/landing-server.service.d
 rm -rf /etc/systemd/system/caddy.service.d
 systemctl daemon-reload
 # Verzeichnisse / alte Renderer plattmachen
@@ -249,6 +250,7 @@ cat > /etc/caddy/Caddyfile <<EOF
 EOF
 
 echo "[bootstrap] 6/7 systemd-Services …"
+rm -rf /etc/systemd/system/landing-server.service.d
 cat > /etc/systemd/system/landing-server.service <<EOF
 [Unit]
 Description=Landing Renderer (Node)
