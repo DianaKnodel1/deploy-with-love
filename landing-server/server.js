@@ -4,6 +4,9 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
+import { createServer } from "node:http";
+import { request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
 import { basename, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,6 +21,31 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const themesDir = join(__dirname, "themes");
 const cache = new Map();
 const themeCache = new Map();
+
+function requestJson(url, headers) {
+  return new Promise((resolve, reject) => {
+    const request = url.protocol === "http:" ? httpRequest : httpsRequest;
+    const req = request(url, { method: "GET", headers }, (res) => {
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => {
+        body += chunk;
+        if (body.length > 2_000_000) req.destroy(new Error("response too large"));
+      });
+      res.on("end", () => {
+        resolve({
+          ok: (res.statusCode || 0) >= 200 && (res.statusCode || 0) < 300,
+          status: res.statusCode || 0,
+          text: body,
+          json: () => JSON.parse(body),
+        });
+      });
+    });
+    req.setTimeout(10_000, () => req.destroy(new Error("request timeout")));
+    req.on("error", reject);
+    req.end();
+  });
+}
 
 function loadTheme(id) {
   const safeId = basename(String(id || "")).replace(/[^a-z0-9_-]/gi, "");
@@ -58,17 +86,15 @@ async function loadLanding(domain) {
 
   let row = null;
   try {
-    const res = await fetch(apiUrl, {
-      headers: {
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-        accept: "application/json",
-      },
+    const res = await requestJson(apiUrl, {
+      apikey: SUPABASE_PUBLISHABLE_KEY,
+      authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+      accept: "application/json",
     });
     if (!res.ok) {
-      console.error(`[landing-server] DB-Error für ${key}: HTTP ${res.status} ${await res.text()}`);
+      console.error(`[landing-server] DB-Error für ${key}: HTTP ${res.status} ${res.text}`);
     } else {
-      const rows = await res.json();
+      const rows = res.json();
       row = rows[0] || null;
     }
   } catch (e) {
@@ -133,45 +159,53 @@ function renderJs(row) {
   return theme ? applyPlaceholders(theme.js, row.branding, row.slots) : "// theme missing";
 }
 
-const server = Bun.serve({
-  port: PORT,
-  hostname: "127.0.0.1",
-  async fetch(req) {
-    const url = new URL(req.url);
+function send(res, status, body, headers = {}) {
+  res.writeHead(status, headers);
+  res.end(body);
+}
+
+const server = createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
     const path = url.pathname;
 
-    if (path === "/_health") return new Response("ok");
+    if (path === "/_health") return send(res, 200, "ok");
 
     if (path === "/_internal/ask") {
       const domain = (url.searchParams.get("domain") || "").toLowerCase();
-      if (!domain) return new Response("missing domain", { status: 400 });
+      if (!domain) return send(res, 400, "missing domain");
       const row = await loadLanding(domain);
-      return row ? new Response("ok") : new Response("not found", { status: 404 });
+      return row ? send(res, 200, "ok") : send(res, 404, "not found");
     }
 
-    const host = (req.headers.get("host") || "").toLowerCase().split(":")[0];
-    if (!host) return new Response("no host", { status: 400 });
+    const host = String(req.headers.host || "").toLowerCase().split(":")[0];
+    if (!host) return send(res, 400, "no host");
     const row = await loadLanding(host);
-    if (!row) return new Response(`Keine Landing für ${host} konfiguriert.`, { status: 404 });
+    if (!row) return send(res, 404, `Keine Landing für ${host} konfiguriert.`);
 
     if (path === "/style.css") {
-      return new Response(renderCss(row), { headers: { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" } });
+      return send(res, 200, renderCss(row), { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path === "/script.js") {
-      return new Response(renderJs(row), { headers: { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" } });
+      return send(res, 200, renderJs(row), { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path.startsWith("/assets/logo")) {
-      return row.logo_url ? Response.redirect(row.logo_url, 302) : new Response("no logo", { status: 404 });
+      return row.logo_url ? send(res, 302, "", { location: row.logo_url }) : send(res, 404, "no logo");
     }
     if (path.startsWith("/assets/favicon")) {
-      return row.favicon_url ? Response.redirect(row.favicon_url, 302) : new Response("no favicon", { status: 404 });
+      return row.favicon_url ? send(res, 302, "", { location: row.favicon_url }) : send(res, 404, "no favicon");
     }
     if (path === "/" || path === "/index.html") {
       const { body, status } = renderHtml(row, host);
-      return new Response(body, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+      return send(res, status, body, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
     }
-    return new Response("not found", { status: 404 });
-  },
+    return send(res, 404, "not found");
+  } catch (e) {
+    console.error("[landing-server] request error:", e?.message || e);
+    return send(res, 500, "internal error");
+  }
 });
 
-console.log(`[landing-server] listening on http://127.0.0.1:${server.port}`);
+server.listen(PORT, "127.0.0.1", () => {
+  console.log(`[landing-server] listening on http://127.0.0.1:${PORT}`);
+});

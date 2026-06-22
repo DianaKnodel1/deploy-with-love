@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "bun --smol server.js",
-    "dev": "bun --watch server.js"
+    "start": "node --max-old-space-size=128 server.js",
+    "dev": "node --watch server.js"
   }
 }
