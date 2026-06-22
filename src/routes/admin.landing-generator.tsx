@@ -96,6 +96,9 @@ const EMPTY: Branding = {
   seo_title: "",
   seo_description: "",
   seo_image: "",
+  interview_mode: "chat",
+  interview_voice_id: "XrExE9yKIg1WjnnlVkGX",
+  interview_system_prompt: "",
 };
 
 function LandingGeneratorPage() {
