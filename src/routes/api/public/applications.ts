@@ -130,7 +130,14 @@ export const Route = createFileRoute("/api/public/applications")({
           && !!d.portal_url && !!d.source_slug;
 
 
-        if (isBroker) {
+        if (useInterview) {
+          const base = d.portal_url!.replace(/\/+$/, "");
+          const qs = new URLSearchParams({
+            landing: d.source_slug!,
+            portal: base,
+          }).toString();
+          redirect_url = `${base}/interview/${appId}?${qs}`;
+        } else if (isBroker) {
           const parts = d.full_name.trim().split(/\s+/);
           const firstName = parts[0] ?? "";
           const lastName = parts.slice(1).join(" ");
