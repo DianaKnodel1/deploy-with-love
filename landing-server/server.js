@@ -91,6 +91,7 @@ function injectLandingConfig(html, row) {
   const apiEndpoint = row.branding?.api_endpoint || PORTAL_API_ENDPOINT;
   const portalUrl = row.branding?.portal_url || "";
   const wa = row.branding?.whatsapp_enabled ? String(row.branding?.whatsapp_number || "").replace(/[^0-9]/g, "") : "";
+  const cleanHtml = html.replace(/<script>\s*window\.PORTAL_API\s*=\s*[\s\S]*?<\/script>\s*/gi, "");
   const block = `<script>
 window.PORTAL_API = "${esc(apiEndpoint)}";
 window.PORTAL_URL = "${esc(portalUrl)}";
@@ -99,7 +100,7 @@ window.FLOW_TYPE = "${esc(row.flow_type)}";
 window.SOURCE_SLUG = "${esc(row.source_slug || row.slug)}";
 window.WHATSAPP_NUMBER = "${esc(wa)}";
 </script>`;
-  return /<\/head>/i.test(html) ? html.replace(/<\/head>/i, block + "</head>") : block + html;
+  return /<\/head>/i.test(cleanHtml) ? cleanHtml.replace(/<\/head>/i, block + "</head>") : block + cleanHtml;
 }
 
 function cleanEmptyMeta(html, branding, domain) {
