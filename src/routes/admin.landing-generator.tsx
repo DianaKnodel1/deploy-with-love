@@ -58,6 +58,9 @@ type Branding = {
   seo_title: string;
   seo_description: string;
   seo_image: string;
+  interview_mode: "chat" | "voice" | "both";
+  interview_voice_id: string;
+  interview_system_prompt: string;
 };
 
 const EMPTY: Branding = {
