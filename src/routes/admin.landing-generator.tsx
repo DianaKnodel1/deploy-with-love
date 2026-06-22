@@ -384,8 +384,12 @@ document.addEventListener('submit', function(e){
   });
 
   const handleGenerate = async () => {
-    if (!branding.firmenname || !branding.email || !branding.api_endpoint) {
-      toast({ title: "Fehlende Felder", description: "Firmenname, E-Mail und API-Endpoint sind Pflicht.", variant: "destructive" });
+    if (!branding.firmenname || !branding.email) {
+      toast({ title: "Fehlende Felder", description: "Firmenname und E-Mail sind Pflicht.", variant: "destructive" });
+      return;
+    }
+    if (branding.flow_type !== "broker" && !branding.api_endpoint) {
+      toast({ title: "API-Endpoint fehlt", description: "Klassisch/Fast-Track brauchen den Portal-API-Endpoint.", variant: "destructive" });
       return;
     }
     if (!branding.landing_domain.trim()) {
@@ -400,6 +404,7 @@ document.addEventListener('submit', function(e){
       toast({ title: "Tenant-ID fehlt", description: "Ohne Tenant-ID landet die Bewerbung beim falschen Mandanten. Hol sie aus Admin → Tenants.", variant: "destructive" });
       return;
     }
+
     setLoading(true);
     try {
       const res = await generate({ data: { themeId, branding: withSeoDefaults(branding), logoDataUrl, faviconDataUrl, slots: slotValues } });
