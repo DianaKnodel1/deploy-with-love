@@ -55,6 +55,10 @@ const SaveInput = z.object({
   // Optional: Data-URLs für Logo/Favicon — werden in Storage gelegt
   logo_data_url: z.string().max(15_000_000).nullable().optional(),
   favicon_data_url: z.string().max(1_000_000).nullable().optional(),
+  // KI-Bewerbungsgespräch
+  interview_mode: z.enum(["chat", "voice", "both"]).default("chat"),
+  interview_voice_id: z.string().max(80).nullable().optional(),
+  interview_system_prompt: z.string().max(8000).nullable().optional(),
 });
 
 async function requireAdmin(ctx: { supabase: any; userId: string }) {
@@ -150,6 +154,9 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       intermediate_logo_url: data.intermediate_logo_url || null,
       redirect_delay_ms: data.redirect_delay_ms ?? 2500,
       partner_company_id: data.partner_company_id ?? null,
+      interview_mode: data.interview_mode ?? "chat",
+      interview_voice_id: data.interview_voice_id ?? null,
+      interview_system_prompt: data.interview_system_prompt ?? null,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
