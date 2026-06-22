@@ -889,6 +889,65 @@ document.addEventListener('submit', function(e){
                 </div>
               </div>
 
+              {/* KI-Bewerbungsgespräch */}
+              <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                <div>
+                  <Label className="text-xs font-semibold">🤖 KI-Bewerbungsgespräch</Label>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Nach dem Absenden der Bewerbung führt die KI das Erstgespräch. Du wählst pro Landing, ob schriftlich oder per Sprache. Verlauf, KI-Zusammenfassung und Empfehlung erscheinen im Admin unter der Bewerbung.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-3 gap-2">
+                  {([
+                    { id: "chat", title: "💬 KI-Chat", desc: "Schriftlich. Niedrige Hürde, hohe Abschlussrate, günstig (~0,05 € / Gespräch)." },
+                    { id: "voice", title: "🎙️ KI-Telefon", desc: "Wie ein echtes Telefonat (ElevenLabs). Wow-Effekt, qualifiziert besser, braucht Mikro & ruhige Umgebung." },
+                    { id: "both", title: "🔀 Beides", desc: "Bewerber wählt selbst. Gut zum A/B-Testen." },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setBranding((b) => ({ ...b, interview_mode: opt.id }))}
+                      className={cn(
+                        "text-left rounded-md border-2 p-3 transition-all text-xs",
+                        branding.interview_mode === opt.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/40",
+                      )}
+                    >
+                      <div className="font-semibold mb-1">{opt.title}</div>
+                      <p className="text-muted-foreground text-[11px]">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+
+                {(branding.interview_mode === "voice" || branding.interview_mode === "both") && (
+                  <Field label="Stimme (ElevenLabs)">
+                    <select
+                      className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                      value={branding.interview_voice_id}
+                      onChange={(e) => setBranding((b) => ({ ...b, interview_voice_id: e.target.value }))}
+                    >
+                      <option value="XrExE9yKIg1WjnnlVkGX">Matilda — weiblich, warm (deutsch)</option>
+                      <option value="IKne3meq5aSn9XLyUdCD">Charlie — männlich, freundlich</option>
+                      <option value="JBFqnCBsd6RMkjVDRZzb">George — männlich, seriös</option>
+                      <option value="FGY2WhTYpPnrIDTdsKH5">Laura — weiblich, professionell</option>
+                      <option value="EXAVITQu4vr4xnSDxMaL">Sarah — weiblich, ruhig</option>
+                    </select>
+                  </Field>
+                )}
+
+                <Field label="Eigener System-Prompt (optional)">
+                  <Textarea
+                    rows={4}
+                    placeholder="Leer = Standard-Interview-Prompt für Versicherungs-/Finanzvermittlung. Hier kannst du den Fragenkatalog & Ton überschreiben."
+                    value={branding.interview_system_prompt}
+                    onChange={set("interview_system_prompt")}
+                  />
+                </Field>
+              </div>
+
+
+
               {/* Vermittlung: Partner-Firma wählen */}
               {branding.flow_type === "broker" && (
                 <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-3">
