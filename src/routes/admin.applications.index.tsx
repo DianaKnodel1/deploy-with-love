@@ -673,7 +673,12 @@ function AdminApplicationsPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex flex-col gap-1 items-start">
-                        <Badge variant="secondary" className={`text-[10px] ${statusColor(app.status)}`}>{statusLabel(app.status)}</Badge>
+                        <ApplicationStatusBadge
+                          status={normalizeAppStatus({
+                            status: app.status,
+                            registered_at: (app as any).registered_at ?? null,
+                          })}
+                        />
                         {bookingBadge((app as any).booking_status, (app as any).scheduled_at)}
                       </div>
                     </td>
