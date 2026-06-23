@@ -1,76 +1,90 @@
-## Antworten zuerst
+# Plan: Bewerber-Tabs + Statistik (Stufe 1, ohne Keys)
 
-### Was ist „Schritt 4 (Landing-Renderer)"?
-Deine veröffentlichten Landing Pages (z. B. `uwk-consulting.com`) werden **nicht** vom Lovable-App-Server ausgeliefert, sondern von einem separaten Node-Prozess (`landing-server/server.ts`) auf deinem eigenen Server (Server 1 mit Caddy davor). Der liest die Landing aus der DB und rendert das Theme-HTML.
+Was jetzt gebaut wird — alles ohne Gemini/ElevenLabs-Keys nutzbar.
 
-Das heißt: wenn das Bewerbungs-Flow im gerenderten HTML (z. B. Button „Bewerben" → Chat/Voice UI) erweitert wird, **muss `landing-server/server.ts` neu deployt werden** (auf deinem Server `git pull` + Restart). Sonst sehen Bewerber die alte Version, obwohl in Lovable alles steht.
+## 1. DB-Migration: Schema vorbereiten
 
-Aktuell: Der „Bewerben"-Flow auf der Landing schickt Bewerber bereits an `/bewerbung/...` auf der Haupt-App. Die KI-Interview-Routen (`/interview/:id` und `/interview/:id/voice`) liegen ebenfalls in der Haupt-App. **Solange wir nur in der Haupt-App neue Routen anlegen und am Landing-HTML nichts ändern, ist KEIN Re-Deploy des Landing-Servers nötig.** Ich plane das so.
+Neue Spalten für spätere KI-Integration anlegen, damit später nur noch Werte gefüllt werden müssen:
 
-### Landing `uwk-consulting.com` offline nehmen / löschen
-Im Admin gibt es bereits den Landing-Generator. Sauberster Weg:
-1. **Admin → Landing-Generator → uwk-consulting.com öffnen → „Unpublish"** (setzt `is_published=false`, nach max. 60 s Cache ist die Seite tot).
-2. Anschließend im selben Dialog **„Löschen"** → Eintrag aus `landing_pages` raus.
-3. DNS bei deinem Registrar (A-Record auf Landing-Server-IP) kann bleiben oder weg — für ein neues Hochladen einfach im Generator neu anlegen.
+**`landing_pages`**
+- `system_prompt TEXT` — pro Landing individueller KI-Prompt (Override)
+- `decision_prompt TEXT` — Prompt für KI-Zusage/Absage-Entscheidung
+- `voice_id TEXT` — ElevenLabs Voice-ID (Override)
 
-Falls die UI keinen „Unpublish/Löschen"-Button hat, ergänze ich den als Mini-Schritt 0 (1 Button im Landing-Generator + `deleteLandingPage`-ServerFn). **Frage unten dazu.**
+**`applications`**
+- `transcript JSONB` — Gesprächsverlauf Chat/Voice
+- `ai_score INT` — 0–100
+- `ai_decision TEXT` — `zusage` | `absage` | `pending`
+- `ai_reason TEXT` — Begründung der KI
+- `interview_started_at`, `interview_completed_at TIMESTAMPTZ`
+- `registered_at TIMESTAMPTZ` — wann Bewerber sich im Portal registriert hat
 
----
+**Globale Settings** (Tabelle `ai_settings`, single-row):
+- `gemini_api_key`, `gemini_model`, `elevenlabs_api_key`, `default_voice_id`
+- `default_system_prompt`, `default_decision_prompt`
 
-## Plan: Schritte 1–3
+Alle inkl. GRANTs + RLS (nur Admin).
 
-### Schritt 1 — Chat-Endpoint + Bewerber-Routing (Schrift-Interview)
-**Neu:** `src/routes/api/public/interview-chat.ts` (TSS-Route, `/api/public/...`, kein Auth)
-- POST `{ applicationId, messages }` → Streaming-Antwort
-- Lädt `applications` + `landing_pages.interview_system_prompt` (oder Default-Prompt für Versicherungs-/Finanz-Bewerbung)
-- Ruft Lovable AI Gateway, Modell `google/gemini-2.5-flash` (schneller + günstiger als Claude für Chat-Turns, frei während Promo)
-- Speichert nach jedem Turn `interview_messages` (jsonb append) via `supabaseAdmin`
-- Erkennt „Gespräch beendet" → triggert Summary-Call (zweiter AI-Call mit `interview_summary_prompt`), schreibt `interview_summary`, `interview_score`, `interview_recommendation`, setzt `interview_status='completed'`
+## 2. `/admin/applications` — Tabs umbauen
 
-**Neu:** `src/routes/interview.$appId.tsx` (öffentlich, kein Auth-Gate)
-- Lädt Application + Landing-Settings (über public ServerFn mit narrowem SELECT)
-- Wenn `interview_mode === 'voice'` → Redirect auf `/interview/$appId/voice`
-- Sonst: Chat-UI (eigenes `useChat` mit fetch-Streaming auf den Endpoint, scroll-to-bottom, „Senden"-Button, „Gespräch beenden"-Button)
-- Bei `interview_status='completed'` → Danke-Screen
+Bestehende Liste in 3 Tabs gliedern, gefiltert nach `flow_type`:
 
-**Bewerber-Übergabe:** In `bewerbung.verbinden.tsx` (oder dem Schritt nach Name/E-Mail-Erfassung) nach `INSERT` in `applications`:
-- `interview_mode` aus `landing_pages` lesen
-- Redirect auf `/interview/{id}` (Routing zu Voice macht die Route selbst)
+```text
+[ Klassisch (143) ] [ Fast-Track (89) ] [ Vermittlung/Chat (47) ]
+```
 
-### Schritt 2 — Voice-Endpoint + Voice-UI (ElevenLabs)
-**Connector:** ElevenLabs als Standard-Connector verbinden → `ELEVENLABS_API_KEY` in Server-Env.
+Spalten pro Tab:
+- **Klassisch**: Name · Landing · Eingegangen · Status · [Zusage senden] [Absage]
+- **Fast-Track**: Name · Landing · Eingegangen · Registriert? · Portal-Link
+- **Vermittlung**: Name · Landing · Termin · KI-Score · KI-Empfehlung · Partnerfirma · [Details]
 
-**Neu:** `src/routes/api/public/elevenlabs-token.ts`
-- POST `{ applicationId }` → lädt Application + Landing
-- Holt Conversation-Token via `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=...` mit `xi-api-key`
-- Agent-ID: einen fixen ElevenLabs Conversational Agent (du erstellst ihn 1× in der ElevenLabs-UI mit DE-Stimme Matilda/Charlie + Webhook-URL)
-- Überschreibt per `overrides` den `prompt.prompt` mit `landing_pages.interview_system_prompt` und ggf. `tts.voiceId` aus `landing_pages.interview_voice_id`
-- Returnt `{ token, agentId, overrides }`
+Gemeinsame Filter oben (Landing, Datum, Suche).
 
-**Neu:** `src/routes/interview.$appId.voice.tsx`
-- `@elevenlabs/react` `useConversation` + WebRTC
-- Mic-Permission-Flow, Visualizer (Input/Output Volume), „Gespräch starten/beenden"-Button
-- `onMessage` → speichert User-/Agent-Transkripte direkt in `applications.interview_messages` via ServerFn (Public, applicationId-scoped)
+## 3. `/admin/statistiken` — Funnel pro Tab
 
-**Neu:** `src/routes/api/public/elevenlabs-webhook.ts`
-- ElevenLabs Post-Call-Webhook (HMAC-Signatur prüfen mit `ELEVENLABS_WEBHOOK_SECRET`)
-- Mappt `conversation_id` → `application_id` (gespeichert beim Start als Metadata)
-- Schreibt vollständiges Transkript + ruft Summary-AI-Call (gleich wie Chat) → `interview_summary/score/recommendation`, `interview_status='completed'`
+Drei Funnel-Visualisierungen (je nach Tab unterschiedliche Stufen):
 
-### Schritt 3 — Admin-Tab „Interview" in `admin.applications.$appId.tsx`
-- Neuer Tab neben den bestehenden
-- Anzeige: Mode-Badge (💬 Chat / 🎙️ Voice), `interview_status`, Dauer (started_at → completed_at)
-- **Transkript-Viewer:** Chat-Bubble-Style aus `interview_messages` (für Voice mit Timestamps)
-- **KI-Summary-Card:** `interview_summary` (Markdown), `interview_score` (0–100 mit Farb-Balken), `interview_recommendation` (Badge: ✅ Empfohlen / ⚠️ Mit Vorbehalt / ❌ Nicht empfohlen)
-- Button „Bewerbung annehmen/ablehnen" (nur Status-Update, nutzt bestehende Flow-Logik)
+**Klassisch**: Bewerbung → Zusage → Registriert → Aktiv
+**Fast-Track**: Bewerbung → Weitergeleitet → Registriert → Aktiv
+**Vermittlung**: Bewerbung → Termin gebucht → Erschienen → KI-Interview → Zusage → Registriert
 
-### Datenbank
-Migration aus letzter Runde ist schon angelegt (`20260622100000_landing_interview.sql`) und muss laufen. Kein weiteres Schema nötig außer evtl. einem Index auf `applications.interview_status`.
+Pro Landing filterbar, Zeitraum (7T / 30T / Custom).
+Vermittlungs-Landing zeigt zusätzlich Cross-Tenant-Flow (uwk-consulting → digital-dgigmbh).
 
----
+## 4. `/admin/ai-settings` — Settings-Seite (leer-fähig)
 
-## Offene Fragen vor Build
+- Gemini API Key (Input, später ausfüllen)
+- Gemini Modell (Dropdown: 2.5-flash / 3-flash-preview)
+- ElevenLabs API Key + Default Voice-ID
+- Default System Prompt (Textarea, vordefiniert mit HR-Standardprompt auf Deutsch)
+- Default Decision Prompt (Textarea, vordefiniert mit JSON-Schema-Antwort)
 
-1. **Landing `uwk-consulting.com` löschen:** Hat der Landing-Generator bereits einen „Löschen"-Button, oder soll ich den als allerersten Mini-Schritt mit einbauen?
-2. **Voice (Schritt 2) jetzt oder später?** Schritt 1 (Chat) ist in ~1 Iteration durchgebaut und testbar, Schritt 2 braucht den ElevenLabs-Connector + Agent-Setup in der ElevenLabs-UI durch dich. Soll ich **Schritt 1+3 zuerst** bauen und Schritt 2 in einer separaten Runde wenn ElevenLabs verbunden ist? (Empfehlung: ja)
-3. **System-Prompt-Default:** Soll ich einen Standard-Prompt für Versicherungs-/Finanzvermittler-Bewerbung schreiben (Bereitschaft Außendienst, Vertriebsaffinität, IHK §34d/f, Selbstständigkeit, Motivation) oder lieferst du den Text?
+Seite funktioniert ohne Keys — speichert nur Werte.
+
+## 5. Landing-Edit: KI-Override-Felder
+
+In bestehender Landing-Edit-Seite drei neue optionale Felder unten in einem Accordion "KI-Konfiguration":
+- System Prompt (überschreibt Default)
+- Decision Prompt (überschreibt Default)
+- Voice-ID (überschreibt Default)
+
+Wenn leer → Default aus `ai_settings` wird verwendet.
+
+## Was NICHT in dieser Stufe enthalten ist (braucht Keys)
+
+- `/interview/$appId` Chat-UI mit Gemini
+- ElevenLabs Voice-Agent
+- Auto-Scoring nach Interview
+- Auto-Email Zusage/Absage-Versand
+
+→ Sobald du die Keys hast, baue ich Stufe 2 dazu — die DB ist dann schon bereit.
+
+## Reihenfolge der Implementierung
+
+1. SQL-Migration (Schema)
+2. `/admin/ai-settings` Seite
+3. Landing-Edit Override-Felder
+4. `/admin/applications` Tabs-Umbau
+5. `/admin/statistiken` Funnel pro Tab
+
+Soll ich loslegen?
