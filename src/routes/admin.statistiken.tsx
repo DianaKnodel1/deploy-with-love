@@ -28,19 +28,29 @@ const PRESETS = [
 function StatistikenPage() {
   const fn = useServerFn(getCohortStats);
   const [days, setDays] = useState(7);
+  const [tenantId, setTenantId] = useState<string>(""); // "" = alle
+  const [tenants, setTenants] = useState<Array<{ id: string; name: string }>>([]);
   const [rows, setRows] = useState<CohortRow[]>([]);
   const [totals, setTotals] = useState<CohortTotals | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    supabase.from("tenants").select("id, name").order("name").then(({ data }) => {
+      setTenants((data ?? []) as Array<{ id: string; name: string }>);
+    });
+  }, []);
+
   const reload = () => {
     setLoading(true); setErr(null);
-    fn({ data: { days } as any })
+    const payload: any = { days };
+    if (tenantId) payload.tenant_id = tenantId;
+    fn({ data: payload })
       .then((r: any) => { setRows(r.rows ?? []); setTotals(r.totals ?? null); if (r.error) setErr(r.error); })
       .catch((e: any) => setErr(e?.message ?? "Fehler"))
       .finally(() => setLoading(false));
   };
-  useEffect(reload, [days]);
+  useEffect(reload, [days, tenantId]);
 
   const fmtDate = (k: string) => {
     const [y, m, d] = k.split("-");
