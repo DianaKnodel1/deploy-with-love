@@ -142,6 +142,28 @@ function AdminAiSettingsPage() {
     }
   };
 
+  const saveInterviewSettings = async () => {
+    setSavingInterview(true);
+    const patch: Record<string, any> = {
+      gemini_model: geminiModel,
+      default_voice_id: defaultVoiceId.trim() || null,
+      default_system_prompt: defaultSystemPrompt.trim() || null,
+      default_decision_prompt: defaultDecisionPrompt.trim() || null,
+    };
+    if (geminiKey.trim()) patch.gemini_api_key = geminiKey.trim();
+    if (elevenKey.trim()) patch.elevenlabs_api_key = elevenKey.trim();
+    const { error } = await supabase.from("system_settings").update(patch).eq("id", 1);
+    setSavingInterview(false);
+    if (error) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Interview-Einstellungen gespeichert" });
+      setGeminiKey(""); setElevenKey("");
+      loadSystemKey();
+    }
+  };
+
+
   const loadTenants = async () => {
     const { data } = await supabase.from("tenants").select("id, name, ai_enabled, ai_system_prompt, ai_escalation_keywords, ai_model, ai_language_style, ai_fallback_text, whatsapp_number, ai_faq_entries") as any;
     const list = (data ?? []) as TenantAiSettings[];
