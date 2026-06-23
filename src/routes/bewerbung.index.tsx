@@ -3,7 +3,7 @@
 // /bewerbung/verbinden) weitergeleitet. Andernfalls erhält er eine
 // passende Statusmeldung.
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Mail, CalendarCheck2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,25 @@ type LookupResult =
   | { found: true; booked: true; message: string }
   | { found: true; booked: false; redirect_url?: string; message?: string };
 
+const REDIRECT_SECONDS = 15;
+
 function BewerbungLookupPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<LookupResult | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      if (redirectUrl) window.location.href = redirectUrl;
+      return;
+    }
+    const t = setTimeout(() => setCountdown((c) => (c === null ? null : c - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, redirectUrl]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
