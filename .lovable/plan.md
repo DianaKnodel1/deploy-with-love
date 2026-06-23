@@ -1,90 +1,70 @@
-# Plan: Bewerber-Tabs + Statistik (Stufe 1, ohne Keys)
+# Umsetzungsplan — Stage 2 (ohne API-Keys)
 
-Was jetzt gebaut wird — alles ohne Gemini/ElevenLabs-Keys nutzbar.
+## Klärungen vorab
 
-## 1. DB-Migration: Schema vorbereiten
+**B) Mitarbeiter-Freischaltung — ja, gilt für beide Wege**
+Sowohl Klassisch als auch Fast-Track enden gleich: Bewerber registriert sich im Mitarbeiter-Portal → Status `pending_activation` → Admin klickt "Freischalten" → Status `active`. Der Unterschied liegt nur **davor** (Zusage-Mail bei Klassisch vs. Auto-Akzeptanz bei Fast-Track). Der Freischalt-Button (Punkt B aus Stage 1) wird also für **alle** angezeigt, die `pending_activation` sind — egal welcher Flow.
 
-Neue Spalten für spätere KI-Integration anlegen, damit später nur noch Werte gefüllt werden müssen:
+**D) "Zusage senden"-Button — bestätigt**
+Genau so wie du es beschreibst: Bewerbung kommt rein → Admin klickt "Annehmen / Zusage senden" → Modal mit Vorschau der Willkommens-Mail (Name, Firma, Registrierungs-Link) → "Senden" → Mail geht raus, `accepted_at` gesetzt, Status "Akzeptiert". Bewerber bekommt Mail mit Link → registriert sich → wird Mitarbeiter (siehe B).
 
-**`landing_pages`**
-- `system_prompt TEXT` — pro Landing individueller KI-Prompt (Override)
-- `decision_prompt TEXT` — Prompt für KI-Zusage/Absage-Entscheidung
-- `voice_id TEXT` — ElevenLabs Voice-ID (Override)
+---
 
-**`applications`**
-- `transcript JSONB` — Gesprächsverlauf Chat/Voice
-- `ai_score INT` — 0–100
-- `ai_decision TEXT` — `zusage` | `absage` | `pending`
-- `ai_reason TEXT` — Begründung der KI
-- `interview_started_at`, `interview_completed_at TIMESTAMPTZ`
-- `registered_at TIMESTAMPTZ` — wann Bewerber sich im Portal registriert hat
+## Was ich jetzt umsetze
 
-**Globale Settings** (Tabelle `ai_settings`, single-row):
-- `gemini_api_key`, `gemini_model`, `elevenlabs_api_key`, `default_voice_id`
-- `default_system_prompt`, `default_decision_prompt`
+### A) Tenant-spezifische Kohorten
+- `getCohortStats` in `src/lib/landing-cohorts.functions.ts` bekommt optionalen `tenantId`-Filter
+- `requireSupabaseAuth` + `has_role(admin)`-Check ergänzen
+- `/admin/statistiken`: Pro Vermittlungs-Landing eigene Funnel-Card statt eine gemischte Übersicht
 
-Alle inkl. GRANTs + RLS (nur Admin).
+### C) Drei E-Mail-Templates
+Neu in `/admin/email-templates`:
+- `klassisch_zusage` — "Herzlich willkommen, bitte registrieren" (mit Link)
+- `klassisch_absage` — höfliche Absage
+- `fast_track_welcome` — "Schön dass du dabei bist, gleich geht's los"
 
-## 2. `/admin/applications` — Tabs umbauen
+Variablen: `{{first_name}}`, `{{last_name}}`, `{{company_name}}`, `{{registration_url}}`
 
-Bestehende Liste in 3 Tabs gliedern, gefiltert nach `flow_type`:
+### D) "Zusage senden"-Modal (Klassisch-Tab)
+In `src/routes/admin.applications.index.tsx`:
+- Button "Zusage senden" pro Klassisch-Bewerber
+- Modal: gerendertes Template-Preview + Empfänger
+- "Senden"-Klick → enqueue in `transactional_emails`, setzt `applications.accepted_at = now()`, `status = 'accepted'`
+- Toast + Liste aktualisiert sich
 
-```text
-[ Klassisch (143) ] [ Fast-Track (89) ] [ Vermittlung/Chat (47) ]
-```
+Außerdem: "Absage senden"-Button mit gleichem Flow + `klassisch_absage`-Template.
 
-Spalten pro Tab:
-- **Klassisch**: Name · Landing · Eingegangen · Status · [Zusage senden] [Absage]
-- **Fast-Track**: Name · Landing · Eingegangen · Registriert? · Portal-Link
-- **Vermittlung**: Name · Landing · Termin · KI-Score · KI-Empfehlung · Partnerfirma · [Details]
+### E) 15-Sekunden-Countdown auf Fast-Track Pop-up
+In `src/routes/bewerbung.index.tsx` (bzw. wo der Erfolgs-State liegt):
+- Countdown von 3s auf 15s
+- Text: "Sie werden gleich ins Mitarbeiter-Portal geleitet zur Registrierung!"
+- Sekunden-Anzeige sichtbar
+- "Jetzt weiter"-Button zum Überspringen
 
-Gemeinsame Filter oben (Landing, Datum, Suche).
+### F) Einheitliche Status-Badges
+Neue Komponente `src/components/ApplicationStatusBadge.tsx`:
+| Status | Farbe | Label |
+|---|---|---|
+| `new` | grau | Neu |
+| `accepted` | blau | Akzeptiert |
+| `registered` | violett | Registriert |
+| `active` | grün | Freigeschaltet |
+| `rejected` | rot | Abgelehnt |
 
-## 3. `/admin/statistiken` — Funnel pro Tab
+Verwendet in: `admin.applications.index.tsx`, `admin.applications.$appId.tsx`, `admin.employees.index.tsx`.
 
-Drei Funnel-Visualisierungen (je nach Tab unterschiedliche Stufen):
+---
 
-**Klassisch**: Bewerbung → Zusage → Registriert → Aktiv
-**Fast-Track**: Bewerbung → Weitergeleitet → Registriert → Aktiv
-**Vermittlung**: Bewerbung → Termin gebucht → Erschienen → KI-Interview → Zusage → Registriert
+## Reihenfolge der Implementation
+1. F (Badge-Komponente) — Basis für alle Listen
+2. C (Templates) — werden in D verwendet
+3. D (Zusage-Modal + Klassisch-Akzeptieren-Flow)
+4. A (Tenant-Kohorten)
+5. E (15s-Countdown)
 
-Pro Landing filterbar, Zeitraum (7T / 30T / Custom).
-Vermittlungs-Landing zeigt zusätzlich Cross-Tenant-Flow (uwk-consulting → digital-dgigmbh).
-
-## 4. `/admin/ai-settings` — Settings-Seite (leer-fähig)
-
-- Gemini API Key (Input, später ausfüllen)
-- Gemini Modell (Dropdown: 2.5-flash / 3-flash-preview)
-- ElevenLabs API Key + Default Voice-ID
-- Default System Prompt (Textarea, vordefiniert mit HR-Standardprompt auf Deutsch)
-- Default Decision Prompt (Textarea, vordefiniert mit JSON-Schema-Antwort)
-
-Seite funktioniert ohne Keys — speichert nur Werte.
-
-## 5. Landing-Edit: KI-Override-Felder
-
-In bestehender Landing-Edit-Seite drei neue optionale Felder unten in einem Accordion "KI-Konfiguration":
-- System Prompt (überschreibt Default)
-- Decision Prompt (überschreibt Default)
-- Voice-ID (überschreibt Default)
-
-Wenn leer → Default aus `ai_settings` wird verwendet.
-
-## Was NICHT in dieser Stufe enthalten ist (braucht Keys)
-
-- `/interview/$appId` Chat-UI mit Gemini
-- ElevenLabs Voice-Agent
-- Auto-Scoring nach Interview
-- Auto-Email Zusage/Absage-Versand
-
-→ Sobald du die Keys hast, baue ich Stufe 2 dazu — die DB ist dann schon bereit.
-
-## Reihenfolge der Implementierung
-
-1. SQL-Migration (Schema)
-2. `/admin/ai-settings` Seite
-3. Landing-Edit Override-Felder
-4. `/admin/applications` Tabs-Umbau
-5. `/admin/statistiken` Funnel pro Tab
+## Was danach noch offen bleibt (braucht Keys)
+- KI-Interview-Chat (`/interview/$appId`) → braucht Gemini-Key
+- Voice-Interview → braucht ElevenLabs-Key
+- KI-Scoring → braucht Gemini-Key
 
 Soll ich loslegen?
