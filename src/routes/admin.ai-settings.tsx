@@ -45,6 +45,37 @@ const STYLES = [
   { value: "motivierend", label: "Motivierend" },
 ];
 
+const DEFAULT_SYSTEM_PROMPT = `Du bist ein professioneller HR-Interviewer und führst ein erstes Bewerbungsgespräch im Bereich Vertrieb / Versicherungen.
+
+Regeln:
+- Sprich den Bewerber durchgehend mit "Sie" an.
+- Sei höflich, wertschätzend und sachlich.
+- Stelle 6–10 strukturierte Fragen: Motivation, Vertriebserfahrung, Selbstständigkeit/Disziplin, Umgang mit Ablehnung, zeitliche Verfügbarkeit, Erreichbarkeit.
+- Eine Frage pro Nachricht. Warte auf die Antwort, bevor du nachhakst.
+- Stelle KEINE rechtswidrigen Fragen (Alter, Familie, Religion, Gesundheit, Schwangerschaft).
+- Mache KEINE Zusagen oder Absagen — Entscheidung trifft das HR-Team.
+- Bei Off-Topic oder Beleidigungen: höflich zur Bewerbungssituation zurückführen.
+- Wenn alle Themen abgefragt sind, bedanke dich und beende das Gespräch mit dem Satz: "Vielen Dank für das Gespräch, wir melden uns innerhalb von 48 Stunden."`;
+
+const DEFAULT_DECISION_PROMPT = `Du bist HR-Entscheider. Bewerte das folgende Bewerbungsgespräch.
+
+Antworte AUSSCHLIESSLICH als gültiges JSON in genau diesem Schema (keine Markdown-Code-Blöcke, kein Erklärtext):
+{
+  "score": <integer 0-100>,
+  "decision": "zusage" | "absage",
+  "reason": "<2–4 Sätze Begründung auf Deutsch>"
+}
+
+Bewertungskriterien (Gewichtung):
+- Vertriebs-/Verkaufsaffinität (30%)
+- Selbstmotivation & Disziplin (25%)
+- Kommunikationsfähigkeit & Sprachklarheit (20%)
+- Belastbarkeit & Umgang mit Ablehnung (15%)
+- Verfügbarkeit & Verbindlichkeit (10%)
+
+Schwelle: score >= 60 ⇒ "zusage", sonst "absage".`;
+
+
 function AdminAiSettingsPage() {
   const { toast } = useToast();
   const [tenants, setTenants] = useState<TenantAiSettings[]>([]);
@@ -65,16 +96,33 @@ function AdminAiSettingsPage() {
   const [openaiKeyMasked, setOpenaiKeyMasked] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState(false);
 
+  // KI-Bewerbungsgespräch (Gemini + ElevenLabs + Default-Prompts)
+  const [geminiKey, setGeminiKey] = useState("");
+  const [geminiKeyMasked, setGeminiKeyMasked] = useState<string | null>(null);
+  const [geminiModel, setGeminiModel] = useState("google/gemini-2.5-flash");
+  const [elevenKey, setElevenKey] = useState("");
+  const [elevenKeyMasked, setElevenKeyMasked] = useState<string | null>(null);
+  const [defaultVoiceId, setDefaultVoiceId] = useState("");
+  const [defaultSystemPrompt, setDefaultSystemPrompt] = useState("");
+  const [defaultDecisionPrompt, setDefaultDecisionPrompt] = useState("");
+  const [savingInterview, setSavingInterview] = useState(false);
+
   useEffect(() => { loadTenants(); loadSystemKey(); }, []);
 
   const loadSystemKey = async () => {
-    const { data } = await supabase.from("system_settings").select("openai_api_key").eq("id", 1).maybeSingle();
-    const key = data?.openai_api_key;
-    if (key && key.length > 8) {
-      setOpenaiKeyMasked(`••••••••${key.slice(-4)}`);
-    } else {
-      setOpenaiKeyMasked(null);
-    }
+    const { data } = await supabase
+      .from("system_settings")
+      .select("openai_api_key, gemini_api_key, gemini_model, elevenlabs_api_key, default_voice_id, default_system_prompt, default_decision_prompt")
+      .eq("id", 1)
+      .maybeSingle() as any;
+    const mask = (k: string | null | undefined) => (k && k.length > 8 ? `••••••••${k.slice(-4)}` : null);
+    setOpenaiKeyMasked(mask(data?.openai_api_key));
+    setGeminiKeyMasked(mask(data?.gemini_api_key));
+    setElevenKeyMasked(mask(data?.elevenlabs_api_key));
+    if (data?.gemini_model) setGeminiModel(data.gemini_model);
+    setDefaultVoiceId(data?.default_voice_id ?? "");
+    setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
+    setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
   };
 
   const saveSystemKey = async () => {
@@ -93,6 +141,28 @@ function AdminAiSettingsPage() {
       loadSystemKey();
     }
   };
+
+  const saveInterviewSettings = async () => {
+    setSavingInterview(true);
+    const patch: Record<string, any> = {
+      gemini_model: geminiModel,
+      default_voice_id: defaultVoiceId.trim() || null,
+      default_system_prompt: defaultSystemPrompt.trim() || null,
+      default_decision_prompt: defaultDecisionPrompt.trim() || null,
+    };
+    if (geminiKey.trim()) patch.gemini_api_key = geminiKey.trim();
+    if (elevenKey.trim()) patch.elevenlabs_api_key = elevenKey.trim();
+    const { error } = await supabase.from("system_settings").update(patch).eq("id", 1);
+    setSavingInterview(false);
+    if (error) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Interview-Einstellungen gespeichert" });
+      setGeminiKey(""); setElevenKey("");
+      loadSystemKey();
+    }
+  };
+
 
   const loadTenants = async () => {
     const { data } = await supabase.from("tenants").select("id, name, ai_enabled, ai_system_prompt, ai_escalation_keywords, ai_model, ai_language_style, ai_fallback_text, whatsapp_number, ai_faq_entries") as any;
@@ -197,6 +267,100 @@ function AdminAiSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* KI-Bewerbungsgespräch (Gemini + ElevenLabs + Default-Prompts) */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-heading flex items-center gap-2">
+            <Bot className="h-4 w-4" /> KI-Bewerbungsgespräch (Gemini + ElevenLabs)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-[11px] text-muted-foreground">
+            Globale Konfiguration für KI-geführte Bewerbungsgespräche (Chat + Voice).
+            Pro Landing-Page können System-Prompt, Decision-Prompt und Voice-ID einzeln überschrieben werden.
+          </p>
+
+          {/* Gemini Key */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium flex items-center gap-1.5"><Key className="h-3 w-3" /> Gemini API Key</label>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Aktuell:</span>
+              {geminiKeyMasked
+                ? <code className="text-xs px-2 py-0.5 rounded bg-muted">{geminiKeyMasked}</code>
+                : <span className="text-xs text-destructive">Nicht gesetzt</span>}
+            </div>
+            <div className="flex gap-2">
+              <Input type="password" value={geminiKey} onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="AIza..." className="text-xs h-8" autoComplete="off" />
+            </div>
+            <p className="text-[10px] text-muted-foreground">Kostenlos auf aistudio.google.com erstellen.</p>
+          </div>
+
+          {/* Gemini Modell */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Gemini Modell</label>
+            <Select value={geminiModel} onValueChange={setGeminiModel}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (empfohlen, schnell + günstig)</SelectItem>
+                <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash Preview (neuer, experimentell)</SelectItem>
+                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (teurer, stärker)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* ElevenLabs Key */}
+          <div className="space-y-2 pt-2 border-t">
+            <label className="text-xs font-medium flex items-center gap-1.5"><Key className="h-3 w-3" /> ElevenLabs API Key</label>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Aktuell:</span>
+              {elevenKeyMasked
+                ? <code className="text-xs px-2 py-0.5 rounded bg-muted">{elevenKeyMasked}</code>
+                : <span className="text-xs text-destructive">Nicht gesetzt</span>}
+            </div>
+            <Input type="password" value={elevenKey} onChange={(e) => setElevenKey(e.target.value)}
+              placeholder="sk_..." className="text-xs h-8" autoComplete="off" />
+          </div>
+
+          {/* Default Voice-ID */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Default Voice-ID (ElevenLabs)</label>
+            <Input value={defaultVoiceId} onChange={(e) => setDefaultVoiceId(e.target.value)}
+              placeholder="z.B. XrExE9yKIg1WjnnlVkGX (Matilda)" className="text-xs h-8" />
+            <p className="text-[10px] text-muted-foreground">
+              Beispiele: <code>XrExE9yKIg1WjnnlVkGX</code> Matilda DE/EN · <code>JBFqnCBsd6RMkjVDRZzb</code> George ·
+              <code>EXAVITQu4vr4xnSDxMaL</code> Sarah. Pro Landing überschreibbar.
+            </p>
+          </div>
+
+          {/* Default System Prompt */}
+          <div className="space-y-2 pt-2 border-t">
+            <label className="text-xs font-medium">Default System-Prompt (Interview-Verhalten)</label>
+            <Textarea value={defaultSystemPrompt} onChange={(e) => setDefaultSystemPrompt(e.target.value)}
+              className="text-xs font-mono" rows={10} />
+            <p className="text-[10px] text-muted-foreground">
+              Wird verwendet, wenn die Landing-Page keinen eigenen Prompt hat.
+            </p>
+          </div>
+
+          {/* Default Decision Prompt */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Default Decision-Prompt (Zusage/Absage-Entscheidung)</label>
+            <Textarea value={defaultDecisionPrompt} onChange={(e) => setDefaultDecisionPrompt(e.target.value)}
+              className="text-xs font-mono" rows={10} />
+            <p className="text-[10px] text-muted-foreground">
+              Muss als JSON-Antwort formuliert sein: <code>{`{score, decision, reason}`}</code>.
+            </p>
+          </div>
+
+          <Button onClick={saveInterviewSettings} disabled={savingInterview} size="sm" className="h-8">
+            <Save className="h-3.5 w-3.5 mr-1" /> {savingInterview ? "Speichern…" : "Interview-Einstellungen speichern"}
+          </Button>
+        </CardContent>
+      </Card>
+
+
 
       {tenants.length > 1 && (
         <Select value={selectedId} onValueChange={onSelectTenant}>

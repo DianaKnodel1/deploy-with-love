@@ -40,6 +40,7 @@ function AdminApplicationsPage() {
   const [search, setSearch] = useState("");
   const [showTest, setShowTest] = useState(false);
   const [bookingFilter, setBookingFilter] = useState<"all" | "pending" | "scheduled" | "cancelled" | "no_show">("all");
+  const [flowTab, setFlowTab] = useState<"all" | "classic" | "fast" | "broker">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -393,8 +394,14 @@ function AdminApplicationsPage() {
     }
   };
 
+  const flowOf = (a: any): "classic" | "fast" | "broker" => {
+    if (a.flow_type === "broker" || (a.booking_status && a.booking_status !== "none")) return "broker";
+    if (a.flow_type === "fast") return "fast";
+    return "classic";
+  };
   const filtered = applications.filter((a: any) => {
     if (!showTest && a.is_test === true) return false;
+    if (flowTab !== "all" && flowOf(a) !== flowTab) return false;
     if (bookingFilter !== "all" && (a.booking_status ?? "none") !== bookingFilter) return false;
     return (
       (a.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
@@ -402,7 +409,9 @@ function AdminApplicationsPage() {
     );
   });
   const testCount = applications.filter((a: any) => a.is_test === true).length;
-  const brokerCount = applications.filter((a: any) => (a.flow_type === "broker") || (a.booking_status && a.booking_status !== "none")).length;
+  const classicCount = applications.filter((a: any) => !a.is_test && flowOf(a) === "classic").length;
+  const fastCount = applications.filter((a: any) => !a.is_test && flowOf(a) === "fast").length;
+  const brokerCount = applications.filter((a: any) => !a.is_test && flowOf(a) === "broker").length;
 
   const { paged, page, setPage, pageCount, rangeFrom, rangeTo, total } = usePagination(filtered, 25);
 
@@ -490,6 +499,30 @@ function AdminApplicationsPage() {
             { key: "status", label: "Status" }, { key: "created_at", label: "Datum" },
           ])}><Download className="h-3.5 w-3.5" /> CSV</Button>
         </div>
+      </div>
+
+      {/* Flow-Type Tabs */}
+      <div className="flex items-center gap-1 border-b border-border">
+        {([
+          { k: "all", label: "Alle", count: classicCount + fastCount + brokerCount },
+          { k: "classic", label: "Klassisch", count: classicCount, hint: "Manuell akzeptieren → Zusage-Mail → Registrierung" },
+          { k: "fast", label: "Fast-Track", count: fastCount, hint: "Auto-Akzept → direkt zur Portal-Registrierung" },
+          { k: "broker", label: "Vermittlung / Chat", count: brokerCount, hint: "Termin + KI-Interview → Partnerfirma" },
+        ] as const).map((t) => (
+          <button
+            key={t.k}
+            type="button"
+            onClick={() => setFlowTab(t.k as any)}
+            title={(t as any).hint}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              flowTab === t.k
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label} <span className="ml-1 text-xs opacity-70">({t.count})</span>
+          </button>
+        ))}
       </div>
 
       {queueStatus && (queueStatus.counts.queued + queueStatus.counts.sent + queueStatus.counts.failed > 0) && (
