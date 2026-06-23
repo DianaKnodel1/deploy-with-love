@@ -268,6 +268,100 @@ function AdminAiSettingsPage() {
         </CardContent>
       </Card>
 
+      {/* KI-Bewerbungsgespräch (Gemini + ElevenLabs + Default-Prompts) */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-heading flex items-center gap-2">
+            <Bot className="h-4 w-4" /> KI-Bewerbungsgespräch (Gemini + ElevenLabs)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-[11px] text-muted-foreground">
+            Globale Konfiguration für KI-geführte Bewerbungsgespräche (Chat + Voice).
+            Pro Landing-Page können System-Prompt, Decision-Prompt und Voice-ID einzeln überschrieben werden.
+          </p>
+
+          {/* Gemini Key */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium flex items-center gap-1.5"><Key className="h-3 w-3" /> Gemini API Key</label>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Aktuell:</span>
+              {geminiKeyMasked
+                ? <code className="text-xs px-2 py-0.5 rounded bg-muted">{geminiKeyMasked}</code>
+                : <span className="text-xs text-destructive">Nicht gesetzt</span>}
+            </div>
+            <div className="flex gap-2">
+              <Input type="password" value={geminiKey} onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="AIza..." className="text-xs h-8" autoComplete="off" />
+            </div>
+            <p className="text-[10px] text-muted-foreground">Kostenlos auf aistudio.google.com erstellen.</p>
+          </div>
+
+          {/* Gemini Modell */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Gemini Modell</label>
+            <Select value={geminiModel} onValueChange={setGeminiModel}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (empfohlen, schnell + günstig)</SelectItem>
+                <SelectItem value="google/gemini-3-flash-preview">Gemini 3 Flash Preview (neuer, experimentell)</SelectItem>
+                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (teurer, stärker)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* ElevenLabs Key */}
+          <div className="space-y-2 pt-2 border-t">
+            <label className="text-xs font-medium flex items-center gap-1.5"><Key className="h-3 w-3" /> ElevenLabs API Key</label>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Aktuell:</span>
+              {elevenKeyMasked
+                ? <code className="text-xs px-2 py-0.5 rounded bg-muted">{elevenKeyMasked}</code>
+                : <span className="text-xs text-destructive">Nicht gesetzt</span>}
+            </div>
+            <Input type="password" value={elevenKey} onChange={(e) => setElevenKey(e.target.value)}
+              placeholder="sk_..." className="text-xs h-8" autoComplete="off" />
+          </div>
+
+          {/* Default Voice-ID */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Default Voice-ID (ElevenLabs)</label>
+            <Input value={defaultVoiceId} onChange={(e) => setDefaultVoiceId(e.target.value)}
+              placeholder="z.B. XrExE9yKIg1WjnnlVkGX (Matilda)" className="text-xs h-8" />
+            <p className="text-[10px] text-muted-foreground">
+              Beispiele: <code>XrExE9yKIg1WjnnlVkGX</code> Matilda DE/EN · <code>JBFqnCBsd6RMkjVDRZzb</code> George ·
+              <code>EXAVITQu4vr4xnSDxMaL</code> Sarah. Pro Landing überschreibbar.
+            </p>
+          </div>
+
+          {/* Default System Prompt */}
+          <div className="space-y-2 pt-2 border-t">
+            <label className="text-xs font-medium">Default System-Prompt (Interview-Verhalten)</label>
+            <Textarea value={defaultSystemPrompt} onChange={(e) => setDefaultSystemPrompt(e.target.value)}
+              className="text-xs font-mono" rows={10} />
+            <p className="text-[10px] text-muted-foreground">
+              Wird verwendet, wenn die Landing-Page keinen eigenen Prompt hat.
+            </p>
+          </div>
+
+          {/* Default Decision Prompt */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Default Decision-Prompt (Zusage/Absage-Entscheidung)</label>
+            <Textarea value={defaultDecisionPrompt} onChange={(e) => setDefaultDecisionPrompt(e.target.value)}
+              className="text-xs font-mono" rows={10} />
+            <p className="text-[10px] text-muted-foreground">
+              Muss als JSON-Antwort formuliert sein: <code>{`{score, decision, reason}`}</code>.
+            </p>
+          </div>
+
+          <Button onClick={saveInterviewSettings} disabled={savingInterview} size="sm" className="h-8">
+            <Save className="h-3.5 w-3.5 mr-1" /> {savingInterview ? "Speichern…" : "Interview-Einstellungen speichern"}
+          </Button>
+        </CardContent>
+      </Card>
+
+
+
       {tenants.length > 1 && (
         <Select value={selectedId} onValueChange={onSelectTenant}>
           <SelectTrigger className="max-w-xs"><SelectValue placeholder="Tenant wählen" /></SelectTrigger>
