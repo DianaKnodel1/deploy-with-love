@@ -31,6 +31,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ApplicationStatusBadge, normalizeAppStatus } from "@/components/ApplicationStatusBadge";
 
 function AdminApplicationsPage() {
   const { applications, loading, loadData } = useAdminData();
@@ -43,6 +44,7 @@ function AdminApplicationsPage() {
   const [flowTab, setFlowTab] = useState<"all" | "classic" | "fast" | "broker">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmAccept, setConfirmAccept] = useState<typeof applications[0] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [resendInvitesLoading, setResendInvitesLoading] = useState(false);
@@ -238,8 +240,8 @@ function AdminApplicationsPage() {
     }
   };
 
-  const acceptApplication = async (app: typeof applications[0], e: React.MouseEvent) => {
-    e.stopPropagation();
+  const acceptApplication = async (app: typeof applications[0], e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setActionLoading(app.id);
     try {
       const { error: updateError } = await supabase.from("applications").update({ status: "akzeptiert" }).eq("id", app.id);
@@ -672,7 +674,12 @@ function AdminApplicationsPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex flex-col gap-1 items-start">
-                        <Badge variant="secondary" className={`text-[10px] ${statusColor(app.status)}`}>{statusLabel(app.status)}</Badge>
+                        <ApplicationStatusBadge
+                          status={normalizeAppStatus({
+                            status: app.status,
+                            registered_at: (app as any).registered_at ?? null,
+                          })}
+                        />
                         {bookingBadge((app as any).booking_status, (app as any).scheduled_at)}
                       </div>
                     </td>
@@ -685,11 +692,12 @@ function AdminApplicationsPage() {
                               variant="default"
                               size="sm"
                               className="h-8 text-xs gap-1 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm"
-                              onClick={(e) => acceptApplication(app, e)}
+                              onClick={(e) => { e.stopPropagation(); setConfirmAccept(app); }}
                               disabled={isLoading}
+                              title="Zusage senden – Vorschau anzeigen"
                             >
                               {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                              Annehmen
+                              Zusage senden
                             </Button>
                             <Button
                               variant="outline"
@@ -955,6 +963,69 @@ function AdminApplicationsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setQueueDetailsOpen(false)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Zusage senden – Vorschau-Dialog */}
+      <Dialog open={!!confirmAccept} onOpenChange={(o) => { if (!o) setConfirmAccept(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Zusage senden</DialogTitle>
+            <DialogDescription>
+              {confirmAccept ? (
+                <>
+                  Vorschau der Willkommens-Mail an <strong>{confirmAccept.email}</strong>.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          {confirmAccept && (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-md border bg-muted/30 p-3 space-y-1.5">
+                <div className="text-xs text-muted-foreground">An</div>
+                <div className="font-medium">
+                  {confirmAccept.first_name && confirmAccept.last_name
+                    ? `${confirmAccept.first_name} ${confirmAccept.last_name}`
+                    : confirmAccept.full_name}{" "}
+                  <span className="text-muted-foreground">&lt;{confirmAccept.email}&gt;</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-2">Tenant</div>
+                <div>
+                  {confirmAccept.tenant_id && tenantMap[confirmAccept.tenant_id]?.name
+                    ? tenantMap[confirmAccept.tenant_id].name
+                    : <span className="text-orange-600">⚠️ Kein Tenant</span>}
+                </div>
+                <div className="text-xs text-muted-foreground mt-2">Registrierungs-Link (im Mail-Body)</div>
+                <code className="block text-[11px] break-all text-muted-foreground">
+                  {buildPortalLink(confirmAccept.tenant_id)}
+                </code>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Die Mail nutzt die in „E-Mail-Templates → Willkommen" hinterlegte Vorlage des Tenants
+                (Betreff &amp; Inhalt, mit Platzhaltern für Name &amp; Link).
+                Nach dem Senden wird der Status auf <strong>Akzeptiert</strong> gesetzt.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmAccept(null)}>Abbrechen</Button>
+            <Button
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
+              disabled={!confirmAccept || actionLoading === confirmAccept?.id}
+              onClick={async () => {
+                if (!confirmAccept) return;
+                const app = confirmAccept;
+                setConfirmAccept(null);
+                await acceptApplication(app);
+              }}
+            >
+              {actionLoading === confirmAccept?.id ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Sende…</>
+              ) : (
+                <><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Jetzt Zusage senden</>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

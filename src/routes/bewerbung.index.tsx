@@ -3,7 +3,7 @@
 // /bewerbung/verbinden) weitergeleitet. Andernfalls erhält er eine
 // passende Statusmeldung.
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Mail, CalendarCheck2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,25 @@ type LookupResult =
   | { found: true; booked: true; message: string }
   | { found: true; booked: false; redirect_url?: string; message?: string };
 
+const REDIRECT_SECONDS = 15;
+
 function BewerbungLookupPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<LookupResult | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      if (redirectUrl) window.location.href = redirectUrl;
+      return;
+    }
+    const t = setTimeout(() => setCountdown((c) => (c === null ? null : c - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, redirectUrl]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +65,8 @@ function BewerbungLookupPage() {
       }
       setResult(data as LookupResult);
       if (data?.found && !data?.booked && data?.redirect_url) {
-        setTimeout(() => { window.location.href = data.redirect_url; }, 600);
+        setRedirectUrl(data.redirect_url);
+        setCountdown(REDIRECT_SECONDS);
       }
     } catch (err: any) {
       const msg = err?.message || "Unbekannter Fehler";
@@ -120,9 +135,24 @@ function BewerbungLookupPage() {
               </>
             )}
             {result.found && "booked" in result && !result.booked && "redirect_url" in result && result.redirect_url && (
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Du wirst zur Terminbuchung weitergeleitet…</span>
+              <div className="space-y-3">
+                <p className="font-medium text-emerald-700 dark:text-emerald-400">Bewerbung angenommen 🎉</p>
+                <p className="text-sm">
+                  Sie werden gleich ins Mitarbeiter-Portal geleitet zur Registrierung!
+                </p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>
+                    Weiterleitung in <strong className="text-foreground tabular-nums">{countdown ?? REDIRECT_SECONDS}</strong> Sekunden…
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={() => { if (redirectUrl) window.location.href = redirectUrl; }}
+                >
+                  Jetzt weiter zur Registrierung
+                </Button>
               </div>
             )}
             {result.found && "booked" in result && !result.booked && !("redirect_url" in result && result.redirect_url) && (

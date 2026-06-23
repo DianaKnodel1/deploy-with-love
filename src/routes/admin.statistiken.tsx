@@ -8,6 +8,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCohortStats, type CohortRow, type CohortTotals } from "@/lib/landing-cohorts.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, TrendingUp } from "lucide-react";
@@ -27,19 +28,29 @@ const PRESETS = [
 function StatistikenPage() {
   const fn = useServerFn(getCohortStats);
   const [days, setDays] = useState(7);
+  const [tenantId, setTenantId] = useState<string>(""); // "" = alle
+  const [tenants, setTenants] = useState<Array<{ id: string; name: string }>>([]);
   const [rows, setRows] = useState<CohortRow[]>([]);
   const [totals, setTotals] = useState<CohortTotals | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    supabase.from("tenants").select("id, name").order("name").then(({ data }) => {
+      setTenants((data ?? []) as Array<{ id: string; name: string }>);
+    });
+  }, []);
+
   const reload = () => {
     setLoading(true); setErr(null);
-    fn({ data: { days } as any })
+    const payload: any = { days };
+    if (tenantId) payload.tenant_id = tenantId;
+    fn({ data: payload })
       .then((r: any) => { setRows(r.rows ?? []); setTotals(r.totals ?? null); if (r.error) setErr(r.error); })
       .catch((e: any) => setErr(e?.message ?? "Fehler"))
       .finally(() => setLoading(false));
   };
-  useEffect(reload, [days]);
+  useEffect(reload, [days, tenantId]);
 
   const fmtDate = (k: string) => {
     const [y, m, d] = k.split("-");
@@ -59,7 +70,16 @@ function StatistikenPage() {
             Tageweise Aufschlüsselung: Bewerbung → Freigabe → Interview → Annahme → Mitarbeiter. Test-Bewerbungen sind ausgeschlossen.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            value={tenantId}
+            onChange={(e) => setTenantId(e.target.value)}
+            title="Auf ein Unternehmen einschränken"
+          >
+            <option value="">Alle Unternehmen</option>
+            {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             value={days}
