@@ -135,9 +135,24 @@ function BewerbungLookupPage() {
               </>
             )}
             {result.found && "booked" in result && !result.booked && "redirect_url" in result && result.redirect_url && (
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Du wirst zur Terminbuchung weitergeleitet…</span>
+              <div className="space-y-3">
+                <p className="font-medium text-emerald-700 dark:text-emerald-400">Bewerbung angenommen 🎉</p>
+                <p className="text-sm">
+                  Sie werden gleich ins Mitarbeiter-Portal geleitet zur Registrierung!
+                </p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>
+                    Weiterleitung in <strong className="text-foreground tabular-nums">{countdown ?? REDIRECT_SECONDS}</strong> Sekunden…
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={() => { if (redirectUrl) window.location.href = redirectUrl; }}
+                >
+                  Jetzt weiter zur Registrierung
+                </Button>
               </div>
             )}
             {result.found && "booked" in result && !result.booked && !("redirect_url" in result && result.redirect_url) && (
