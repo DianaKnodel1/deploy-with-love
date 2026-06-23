@@ -31,6 +31,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ApplicationStatusBadge, normalizeAppStatus } from "@/components/ApplicationStatusBadge";
 
 function AdminApplicationsPage() {
   const { applications, loading, loadData } = useAdminData();
