@@ -692,11 +692,12 @@ function AdminApplicationsPage() {
                               variant="default"
                               size="sm"
                               className="h-8 text-xs gap-1 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm"
-                              onClick={(e) => acceptApplication(app, e)}
+                              onClick={(e) => { e.stopPropagation(); setConfirmAccept(app); }}
                               disabled={isLoading}
+                              title="Zusage senden – Vorschau anzeigen"
                             >
                               {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                              Annehmen
+                              Zusage senden
                             </Button>
                             <Button
                               variant="outline"
