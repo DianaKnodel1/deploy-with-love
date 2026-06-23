@@ -65,7 +65,8 @@ function BewerbungLookupPage() {
       }
       setResult(data as LookupResult);
       if (data?.found && !data?.booked && data?.redirect_url) {
-        setTimeout(() => { window.location.href = data.redirect_url; }, 600);
+        setRedirectUrl(data.redirect_url);
+        setCountdown(REDIRECT_SECONDS);
       }
     } catch (err: any) {
       const msg = err?.message || "Unbekannter Fehler";
