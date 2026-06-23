@@ -240,8 +240,8 @@ function AdminApplicationsPage() {
     }
   };
 
-  const acceptApplication = async (app: typeof applications[0], e: React.MouseEvent) => {
-    e.stopPropagation();
+  const acceptApplication = async (app: typeof applications[0], e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setActionLoading(app.id);
     try {
       const { error: updateError } = await supabase.from("applications").update({ status: "akzeptiert" }).eq("id", app.id);
