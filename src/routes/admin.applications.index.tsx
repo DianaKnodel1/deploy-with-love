@@ -40,6 +40,7 @@ function AdminApplicationsPage() {
   const [search, setSearch] = useState("");
   const [showTest, setShowTest] = useState(false);
   const [bookingFilter, setBookingFilter] = useState<"all" | "pending" | "scheduled" | "cancelled" | "no_show">("all");
+  const [flowTab, setFlowTab] = useState<"all" | "classic" | "fast" | "broker">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -393,8 +394,14 @@ function AdminApplicationsPage() {
     }
   };
 
+  const flowOf = (a: any): "classic" | "fast" | "broker" => {
+    if (a.flow_type === "broker" || (a.booking_status && a.booking_status !== "none")) return "broker";
+    if (a.flow_type === "fast") return "fast";
+    return "classic";
+  };
   const filtered = applications.filter((a: any) => {
     if (!showTest && a.is_test === true) return false;
+    if (flowTab !== "all" && flowOf(a) !== flowTab) return false;
     if (bookingFilter !== "all" && (a.booking_status ?? "none") !== bookingFilter) return false;
     return (
       (a.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
@@ -402,7 +409,9 @@ function AdminApplicationsPage() {
     );
   });
   const testCount = applications.filter((a: any) => a.is_test === true).length;
-  const brokerCount = applications.filter((a: any) => (a.flow_type === "broker") || (a.booking_status && a.booking_status !== "none")).length;
+  const classicCount = applications.filter((a: any) => !a.is_test && flowOf(a) === "classic").length;
+  const fastCount = applications.filter((a: any) => !a.is_test && flowOf(a) === "fast").length;
+  const brokerCount = applications.filter((a: any) => !a.is_test && flowOf(a) === "broker").length;
 
   const { paged, page, setPage, pageCount, rangeFrom, rangeTo, total } = usePagination(filtered, 25);
 
