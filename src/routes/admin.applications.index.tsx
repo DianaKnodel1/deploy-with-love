@@ -44,6 +44,7 @@ function AdminApplicationsPage() {
   const [flowTab, setFlowTab] = useState<"all" | "classic" | "fast" | "broker">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmAccept, setConfirmAccept] = useState<typeof applications[0] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [resendInvitesLoading, setResendInvitesLoading] = useState(false);
