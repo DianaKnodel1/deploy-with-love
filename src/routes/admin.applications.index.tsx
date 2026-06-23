@@ -501,6 +501,30 @@ function AdminApplicationsPage() {
         </div>
       </div>
 
+      {/* Flow-Type Tabs */}
+      <div className="flex items-center gap-1 border-b border-border">
+        {([
+          { k: "all", label: "Alle", count: classicCount + fastCount + brokerCount },
+          { k: "classic", label: "Klassisch", count: classicCount, hint: "Manuell akzeptieren → Zusage-Mail → Registrierung" },
+          { k: "fast", label: "Fast-Track", count: fastCount, hint: "Auto-Akzept → direkt zur Portal-Registrierung" },
+          { k: "broker", label: "Vermittlung / Chat", count: brokerCount, hint: "Termin + KI-Interview → Partnerfirma" },
+        ] as const).map((t) => (
+          <button
+            key={t.k}
+            type="button"
+            onClick={() => setFlowTab(t.k as any)}
+            title={(t as any).hint}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              flowTab === t.k
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label} <span className="ml-1 text-xs opacity-70">({t.count})</span>
+          </button>
+        ))}
+      </div>
+
       {queueStatus && (queueStatus.counts.queued + queueStatus.counts.sent + queueStatus.counts.failed > 0) && (
         <div className="flex items-center gap-4 rounded-xl border bg-card px-4 py-2.5 text-xs">
           <span className="font-medium text-muted-foreground">Drip-Queue:</span>
