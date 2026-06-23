@@ -70,7 +70,16 @@ function StatistikenPage() {
             Tageweise Aufschlüsselung: Bewerbung → Freigabe → Interview → Annahme → Mitarbeiter. Test-Bewerbungen sind ausgeschlossen.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            value={tenantId}
+            onChange={(e) => setTenantId(e.target.value)}
+            title="Auf ein Unternehmen einschränken"
+          >
+            <option value="">Alle Unternehmen</option>
+            {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             value={days}
