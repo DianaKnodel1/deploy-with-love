@@ -65,16 +65,33 @@ function AdminAiSettingsPage() {
   const [openaiKeyMasked, setOpenaiKeyMasked] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState(false);
 
+  // KI-Bewerbungsgespräch (Gemini + ElevenLabs + Default-Prompts)
+  const [geminiKey, setGeminiKey] = useState("");
+  const [geminiKeyMasked, setGeminiKeyMasked] = useState<string | null>(null);
+  const [geminiModel, setGeminiModel] = useState("google/gemini-2.5-flash");
+  const [elevenKey, setElevenKey] = useState("");
+  const [elevenKeyMasked, setElevenKeyMasked] = useState<string | null>(null);
+  const [defaultVoiceId, setDefaultVoiceId] = useState("");
+  const [defaultSystemPrompt, setDefaultSystemPrompt] = useState("");
+  const [defaultDecisionPrompt, setDefaultDecisionPrompt] = useState("");
+  const [savingInterview, setSavingInterview] = useState(false);
+
   useEffect(() => { loadTenants(); loadSystemKey(); }, []);
 
   const loadSystemKey = async () => {
-    const { data } = await supabase.from("system_settings").select("openai_api_key").eq("id", 1).maybeSingle();
-    const key = data?.openai_api_key;
-    if (key && key.length > 8) {
-      setOpenaiKeyMasked(`••••••••${key.slice(-4)}`);
-    } else {
-      setOpenaiKeyMasked(null);
-    }
+    const { data } = await supabase
+      .from("system_settings")
+      .select("openai_api_key, gemini_api_key, gemini_model, elevenlabs_api_key, default_voice_id, default_system_prompt, default_decision_prompt")
+      .eq("id", 1)
+      .maybeSingle() as any;
+    const mask = (k: string | null | undefined) => (k && k.length > 8 ? `••••••••${k.slice(-4)}` : null);
+    setOpenaiKeyMasked(mask(data?.openai_api_key));
+    setGeminiKeyMasked(mask(data?.gemini_api_key));
+    setElevenKeyMasked(mask(data?.elevenlabs_api_key));
+    if (data?.gemini_model) setGeminiModel(data.gemini_model);
+    setDefaultVoiceId(data?.default_voice_id ?? "");
+    setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
+    setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
   };
 
   const saveSystemKey = async () => {
