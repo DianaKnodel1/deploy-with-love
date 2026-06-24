@@ -193,9 +193,11 @@ function AdminSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={signOut}
-                className="text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent text-[12.5px] font-medium gap-3 py-2"
+                className="h-auto p-2 gap-3 rounded-xl text-[13px] font-medium text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent"
               >
-                <LogOut className="h-[17px] w-[17px] shrink-0" strokeWidth={1.75} />
+                <span className="grid place-items-center h-7 w-7 rounded-lg bg-slate-500 text-white shadow-sm shrink-0">
+                  <LogOut className="h-[15px] w-[15px]" strokeWidth={2.25} />
+                </span>
                 {!collapsed && <span>Abmelden</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
