@@ -148,26 +148,6 @@ function AdminSidebar() {
       </SidebarMenuItem>
     );
   };
-            activeClassName="bg-blue-600! text-white! shadow-[0_2px_8px_-2px_rgba(37,99,235,0.45)] hover:bg-blue-600!"
-          >
-            <item.icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.75} />
-            {!collapsed && <span className="truncate min-w-0">{item.title}</span>}
-            {count > 0 && (
-              <span
-                className={
-                  collapsed
-                    ? "absolute top-1 right-1 inline-flex h-3.5 min-w-[14px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-medium items-center justify-center leading-none"
-                    : "ml-auto inline-flex h-[18px] min-w-[18px] w-auto px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-semibold items-center justify-center leading-none shrink-0"
-                }
-              >
-                {count > 99 ? "99+" : count}
-              </span>
-            )}
-          </NavLink>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
