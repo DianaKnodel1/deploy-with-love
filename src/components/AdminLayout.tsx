@@ -27,8 +27,25 @@ type NavItem = {
   icon: typeof LayoutGrid;
   end?: boolean;
   badgeKey?: BadgeKey;
+  tint?: string; // bg color class for icon tile
 };
 type NavGroup = { label: string; items: NavItem[] };
+
+// Icon-Kachel-Farben pro Item (Screenshot-Look)
+const TINT = {
+  blue: "bg-blue-500",
+  indigo: "bg-indigo-500",
+  violet: "bg-violet-500",
+  pink: "bg-pink-500",
+  rose: "bg-rose-500",
+  orange: "bg-orange-500",
+  amber: "bg-amber-500",
+  emerald: "bg-emerald-500",
+  teal: "bg-teal-500",
+  cyan: "bg-cyan-500",
+  sky: "bg-sky-500",
+  slate: "bg-slate-500",
+} as const;
 
 // Gruppierte Navigation – übersichtlicher als flache Liste.
 const dashboardItem: NavItem = { title: "Dashboard", url: "/admin", icon: LayoutDashboard, end: true };
