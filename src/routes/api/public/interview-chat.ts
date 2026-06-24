@@ -163,8 +163,12 @@ export const Route = createFileRoute("/api/public/interview-chat")({
 
         const history: Msg[] = Array.isArray(app.interview_messages) ? (app.interview_messages as any) : [];
 
+        // Map recommendation -> ai_decision (Funnel)
+        const toAiDecision = (rec: "invite" | "reject" | "unsure") =>
+          rec === "invite" ? "zusage" : rec === "reject" ? "absage" : "pending";
+
         // ──────────────────────────────────────────────────────────────
-        if (action === "end") {
+        if (action === "end" || timedOut) {
           if (history.length === 0) return json({ error: "Kein Verlauf vorhanden" }, 400);
           const result = await runSummary(history);
           await supabaseAdmin
@@ -174,10 +178,12 @@ export const Route = createFileRoute("/api/public/interview-chat")({
               interview_summary: result.summary,
               interview_score: result.score,
               interview_recommendation: result.recommendation,
+              ai_decision: toAiDecision(result.recommendation),
+              ai_reason: result.summary,
               interview_completed_at: new Date().toISOString(),
             } as any)
             .eq("id", applicationId);
-          return json({ ok: true, ended: true, ...result });
+          return json({ ok: true, ended: true, timedOut, ...result });
         }
 
         // Baue Messages für AI
@@ -218,6 +224,8 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           updates.interview_summary = result.summary;
           updates.interview_score = result.score;
           updates.interview_recommendation = result.recommendation;
+          updates.ai_decision = toAiDecision(result.recommendation);
+          updates.ai_reason = result.summary;
           updates.interview_completed_at = new Date().toISOString();
         }
 
