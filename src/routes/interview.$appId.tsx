@@ -50,14 +50,15 @@ function InterviewPage() {
       });
   }, [landing]);
 
-  // Init: Bewerbung + Verlauf laden, ggf. KI-Gruß holen
+  // Init: Bewerbung + Verlauf laden — erst NACH Einwilligung
   useEffect(() => {
+    if (!consent) return;
     let cancelled = false;
     async function init() {
       try {
         const { data: app, error: e1 } = await supabase
           .from("applications")
-          .select("interview_messages, interview_status, interview_mode")
+          .select("interview_messages, interview_status, interview_mode, interview_started_at")
           .eq("id", appId)
           .maybeSingle();
         if (e1) throw new Error(e1.message);
@@ -73,8 +74,11 @@ function InterviewPage() {
           return;
         }
 
+        if (app.interview_started_at) {
+          setStartedAt(new Date(app.interview_started_at as string).getTime());
+        }
+
         if (history.length === 0) {
-          // Frage KI-Gruß ab
           const res = await fetch("/api/public/interview-chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -84,6 +88,7 @@ function InterviewPage() {
           if (!res.ok) throw new Error(data?.error ?? "Init fehlgeschlagen");
           if (cancelled) return;
           setMessages(data.history ?? []);
+          if (!startedAt) setStartedAt(Date.now());
         } else {
           if (cancelled) return;
           setMessages(history);
@@ -97,7 +102,21 @@ function InterviewPage() {
     }
     init();
     return () => { cancelled = true; };
-  }, [appId]);
+  }, [appId, consent]);
+
+  // Countdown
+  useEffect(() => {
+    if (!startedAt || ended) return;
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      const left = Math.max(0, MAX_SEC - elapsed);
+      setRemainingSec(left);
+      if (left === 0 && !ended) setEnded(true);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startedAt, ended]);
 
   // Auto-scroll
   useEffect(() => {
