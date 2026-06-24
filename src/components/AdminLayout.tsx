@@ -48,68 +48,66 @@ const TINT = {
 } as const;
 
 // Gruppierte Navigation – übersichtlicher als flache Liste.
-const dashboardItem: NavItem = { title: "Dashboard", url: "/admin", icon: LayoutDashboard, end: true };
+const dashboardItem: NavItem = { title: "Dashboard", url: "/admin", icon: LayoutDashboard, end: true, tint: TINT.blue };
 
 const navGroups: NavGroup[] = [
   {
     label: "Personen",
     items: [
-      { title: "Bewerbungen", url: "/admin/applications", icon: FileText, badgeKey: "newApplications" },
-      { title: "Mitarbeiter", url: "/admin/employees", icon: Users },
-      { title: "KYC", url: "/admin/kyc", icon: ShieldCheck, badgeKey: "pendingKyc" },
-      { title: "Verträge", url: "/admin/contracts", icon: FileText },
+      { title: "Bewerbungen", url: "/admin/applications", icon: FileText, badgeKey: "newApplications", tint: TINT.indigo },
+      { title: "Mitarbeiter", url: "/admin/employees", icon: Users, tint: TINT.violet },
+      { title: "KYC", url: "/admin/kyc", icon: ShieldCheck, badgeKey: "pendingKyc", tint: TINT.emerald },
+      { title: "Verträge", url: "/admin/contracts", icon: FileText, tint: TINT.sky },
     ],
   },
   {
     label: "Aufträge",
     items: [
-      { title: "Aufträge", url: "/admin/tasks", icon: ClipboardList },
-      { title: "Prüfungen", url: "/admin/reviews", icon: CheckSquare },
-      { title: "Nachbesserungen", url: "/admin/revisions", icon: RotateCcw },
-      { title: "Uploads", url: "/admin/uploads", icon: Upload },
-      { title: "Termine", url: "/admin/appointments", icon: CalendarDays },
+      { title: "Aufträge", url: "/admin/tasks", icon: ClipboardList, tint: TINT.orange },
+      { title: "Prüfungen", url: "/admin/reviews", icon: CheckSquare, tint: TINT.emerald },
+      { title: "Nachbesserungen", url: "/admin/revisions", icon: RotateCcw, tint: TINT.amber },
+      { title: "Uploads", url: "/admin/uploads", icon: Upload, tint: TINT.cyan },
+      { title: "Termine", url: "/admin/appointments", icon: CalendarDays, tint: TINT.pink },
     ],
   },
   {
     label: "Kommunikation",
     items: [
-      { title: "Chat", url: "/admin/chat", icon: MessageCircle, badgeKey: "unreadChat" },
-      { title: "SMS", url: "/admin/sms", icon: Phone },
-      { title: "Post", url: "/admin/post", icon: Mailbox },
-      { title: "E-Mail-Center", url: "/admin/email-center", icon: Mail },
-
+      { title: "Chat", url: "/admin/chat", icon: MessageCircle, badgeKey: "unreadChat", tint: TINT.blue },
+      { title: "SMS", url: "/admin/sms", icon: Phone, tint: TINT.teal },
+      { title: "Post", url: "/admin/post", icon: Mailbox, tint: TINT.rose },
+      { title: "E-Mail-Center", url: "/admin/email-center", icon: Mail, tint: TINT.indigo },
     ],
   },
   {
     label: "Finanzen",
     items: [
-      { title: "Transaktionen", url: "/admin/transactions", icon: Wallet },
+      { title: "Transaktionen", url: "/admin/transactions", icon: Wallet, tint: TINT.emerald },
     ],
   },
   {
     label: "Vermittlung",
     items: [
-      { title: "Übersicht", url: "/admin/vermittlung", icon: Handshake, end: true },
-      { title: "Partner-Firmen", url: "/admin/partner-companies", icon: Handshake },
-      { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
+      { title: "Übersicht", url: "/admin/vermittlung", icon: Handshake, end: true, tint: TINT.violet },
+      { title: "Partner-Firmen", url: "/admin/partner-companies", icon: Handshake, tint: TINT.pink },
+      { title: "Calendly", url: "/admin/calendly", icon: CalendarClock, tint: TINT.sky },
     ],
   },
   {
     label: "Auswertung",
     items: [
-      { title: "Statistiken", url: "/admin/statistiken", icon: BarChart3 },
+      { title: "Statistiken", url: "/admin/statistiken", icon: BarChart3, tint: TINT.amber },
     ],
   },
   {
     label: "System",
     items: [
-      { title: "Landing-Generator", url: "/admin/landing-generator", icon: Globe },
-      { title: "Infrastruktur", url: "/admin/infrastructure", icon: Server },
-      { title: "Domains", url: "/admin/domains", icon: Globe },
-      { title: "Einstellungen", url: "/admin/settings", icon: Settings },
+      { title: "Landing-Generator", url: "/admin/landing-generator", icon: Globe, tint: TINT.cyan },
+      { title: "Infrastruktur", url: "/admin/infrastructure", icon: Server, tint: TINT.slate },
+      { title: "Domains", url: "/admin/domains", icon: Globe, tint: TINT.teal },
+      { title: "Einstellungen", url: "/admin/settings", icon: Settings, tint: TINT.slate },
     ],
   },
-
 ];
 
 function AdminSidebar() {
@@ -120,13 +118,36 @@ function AdminSidebar() {
 
   const renderItem = (item: NavItem) => {
     const count = item.badgeKey ? badges[item.badgeKey] : 0;
+    const tint = item.tint ?? TINT.slate;
     return (
       <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton asChild>
+        <SidebarMenuButton asChild className="h-auto p-0">
           <NavLink
             to={item.url}
             end={item.end}
-            className="relative flex! flex-row! flex-nowrap! items-center! gap-2.5 px-2.5 h-auto! min-h-9 rounded-lg text-[12.5px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors overflow-hidden whitespace-nowrap"
+            className="group relative flex! flex-row! flex-nowrap! items-center! gap-3 px-2 py-1.5 rounded-xl text-[13px] font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent transition-colors overflow-hidden whitespace-nowrap"
+            activeClassName="bg-sidebar-accent! text-sidebar-foreground! font-semibold"
+          >
+            <span className={`grid place-items-center h-7 w-7 rounded-lg ${tint} text-white shadow-sm shrink-0`}>
+              <item.icon className="h-[15px] w-[15px]" strokeWidth={2.25} />
+            </span>
+            {!collapsed && <span className="truncate min-w-0">{item.title}</span>}
+            {count > 0 && (
+              <span
+                className={
+                  collapsed
+                    ? "absolute top-0.5 right-0.5 inline-flex h-3.5 min-w-[14px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-medium items-center justify-center leading-none"
+                    : "ml-auto inline-flex h-[18px] min-w-[18px] w-auto px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-semibold items-center justify-center leading-none shrink-0"
+                }
+              >
+                {count > 99 ? "99+" : count}
+              </span>
+            )}
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
             activeClassName="bg-blue-600! text-white! shadow-[0_2px_8px_-2px_rgba(37,99,235,0.45)] hover:bg-blue-600!"
           >
             <item.icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.75} />
