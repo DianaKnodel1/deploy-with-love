@@ -137,13 +137,18 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Lade Bewerbung + Landing-Prompt
         const { data: app, error: appErr } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, source_slug, interview_messages, interview_status, interview_mode")
+          .select("id, full_name, source_slug, interview_messages, interview_status, interview_mode, interview_started_at")
           .eq("id", applicationId)
           .maybeSingle();
         if (appErr || !app) return json({ error: "Bewerbung nicht gefunden" }, 404);
         if (app.interview_status === "done" || app.interview_status === "taken_over") {
           return json({ error: "Interview bereits abgeschlossen", status: app.interview_status }, 409);
         }
+
+        // Hartes 10-Min-Limit ab erstem Start
+        const MAX_DURATION_MS = 10 * 60 * 1000;
+        const startedAt = app.interview_started_at ? new Date(app.interview_started_at as string).getTime() : null;
+        const timedOut = startedAt !== null && Date.now() - startedAt > MAX_DURATION_MS;
 
         let systemPrompt = DEFAULT_SYSTEM_PROMPT;
         if (app.source_slug) {
