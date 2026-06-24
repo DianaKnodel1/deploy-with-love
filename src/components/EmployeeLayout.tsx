@@ -176,27 +176,33 @@ function EmployeeSidebar({
             <SidebarMenu className="gap-0.5">
               {items.map((item) => {
                 const locked = item.requiresActive && !isActive;
+                const tint = item.tint ?? TINT.slate;
                 return (
                   <SidebarMenuItem key={item.title} data-tour={`nav-${item.url.replace("/", "")}`}>
-                    <SidebarMenuButton asChild className="h-auto py-0">
+                    <SidebarMenuButton asChild className="h-auto p-0">
                       <NavLink
                         to={locked ? "#" : item.url}
                         end
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm",
+                          "flex items-center gap-3 px-2 py-1.5 rounded-xl transition-colors text-[13px] font-medium",
                           locked
                             ? "text-sidebar-foreground/30 pointer-events-none cursor-not-allowed"
                             : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                         )}
-                        activeClassName={locked ? "" : "!bg-blue-600 !text-white font-semibold shadow-[0_2px_8px_-2px_rgba(37,99,235,0.45)] hover:!bg-blue-600"}
+                        activeClassName={locked ? "" : "!bg-sidebar-accent !text-sidebar-foreground font-semibold"}
                         onClick={(e: React.MouseEvent) => { if (locked) e.preventDefault(); }}
                       >
-                        {locked ? (
-                          <Lock className="h-[18px] w-[18px] shrink-0" />
-                        ) : (
-                          <item.icon className="h-[18px] w-[18px] shrink-0 text-sidebar-foreground/70" strokeWidth={2} />
-                        )}
-                        {!collapsed && <span className="flex-1">{item.title}</span>}
+                        <span className={cn(
+                          "grid place-items-center h-7 w-7 rounded-lg text-white shadow-sm shrink-0",
+                          locked ? "bg-slate-400/60" : tint
+                        )}>
+                          {locked ? (
+                            <Lock className="h-[15px] w-[15px]" strokeWidth={2.25} />
+                          ) : (
+                            <item.icon className="h-[15px] w-[15px]" strokeWidth={2.25} />
+                          )}
+                        </span>
+                        {!collapsed && <span className="flex-1 truncate">{item.title}</span>}
                         {!collapsed && item.dot && (
                           <span
                             className={cn(
