@@ -29,8 +29,13 @@ function InterviewPage() {
   const [initializing, setInitializing] = useState(true);
   const [ended, setEnded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [remainingSec, setRemainingSec] = useState<number>(600);
   const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const MAX_SEC = 600; // 10 Minuten
 
   // Branding laden
   useEffect(() => {
@@ -45,14 +50,15 @@ function InterviewPage() {
       });
   }, [landing]);
 
-  // Init: Bewerbung + Verlauf laden, ggf. KI-Gruß holen
+  // Init: Bewerbung + Verlauf laden — erst NACH Einwilligung
   useEffect(() => {
+    if (!consent) return;
     let cancelled = false;
     async function init() {
       try {
         const { data: app, error: e1 } = await supabase
           .from("applications")
-          .select("interview_messages, interview_status, interview_mode")
+          .select("interview_messages, interview_status, interview_mode, interview_started_at")
           .eq("id", appId)
           .maybeSingle();
         if (e1) throw new Error(e1.message);
@@ -68,8 +74,11 @@ function InterviewPage() {
           return;
         }
 
+        if (app.interview_started_at) {
+          setStartedAt(new Date(app.interview_started_at as string).getTime());
+        }
+
         if (history.length === 0) {
-          // Frage KI-Gruß ab
           const res = await fetch("/api/public/interview-chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -79,6 +88,7 @@ function InterviewPage() {
           if (!res.ok) throw new Error(data?.error ?? "Init fehlgeschlagen");
           if (cancelled) return;
           setMessages(data.history ?? []);
+          if (!startedAt) setStartedAt(Date.now());
         } else {
           if (cancelled) return;
           setMessages(history);
@@ -92,7 +102,21 @@ function InterviewPage() {
     }
     init();
     return () => { cancelled = true; };
-  }, [appId]);
+  }, [appId, consent]);
+
+  // Countdown
+  useEffect(() => {
+    if (!startedAt || ended) return;
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      const left = Math.max(0, MAX_SEC - elapsed);
+      setRemainingSec(left);
+      if (left === 0 && !ended) setEnded(true);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startedAt, ended]);
 
   // Auto-scroll
   useEffect(() => {
@@ -152,15 +176,50 @@ function InterviewPage() {
     return `${base}/bewerbung/verbinden?app=${encodeURIComponent(appId)}&landing=${encodeURIComponent(landing)}`;
   }, [portal, landing, appId]);
 
+  const mm = Math.floor(remainingSec / 60).toString().padStart(2, "0");
+  const ss = (remainingSec % 60).toString().padStart(2, "0");
+
+  // Consent-Gate (DSGVO + EU AI Act)
+  if (!consent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 p-4">
+        <div className="max-w-lg w-full bg-white dark:bg-slate-900 rounded-2xl border border-border p-6 space-y-4 shadow-sm">
+          {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-10 object-contain" />}
+          <h1 className="text-xl font-semibold">Bewerbungsgespräch mit {company}</h1>
+          <div className="text-sm text-muted-foreground space-y-2">
+            <p><strong>Sie sprechen gleich mit einer KI</strong> (künstlichen Intelligenz), nicht mit einer realen Person.</p>
+            <p>Das Gespräch dauert <strong>maximal 10 Minuten</strong> und besteht aus 6–8 Fragen zu Ihrer Person, Motivation und Erfahrung.</p>
+            <p>Ihre Antworten werden zur Bewerbungsauswertung gespeichert und für maximal 6 Monate aufbewahrt. Es findet keine Audio-Aufnahme statt.</p>
+          </div>
+          <Button
+            size="lg"
+            className="w-full"
+            style={{ background: primary }}
+            onClick={() => setConsent(true)}
+          >
+            Verstanden, Gespräch starten
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
       <header className="border-b border-border bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-8 object-contain" />}
-          <div>
-            <h1 className="text-sm font-semibold text-foreground">Bewerbungsgespräch mit {company}</h1>
-            <p className="text-xs text-muted-foreground">KI-gestütztes Erstgespräch · Dauert ca. 5 Minuten</p>
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-8 object-contain" />}
+            <div>
+              <h1 className="text-sm font-semibold text-foreground">Bewerbungsgespräch mit {company}</h1>
+              <p className="text-xs text-muted-foreground">KI-Erstgespräch · max. 10 Minuten</p>
+            </div>
           </div>
+          {startedAt && !ended && (
+            <div className={`text-sm font-mono tabular-nums ${remainingSec < 60 ? "text-destructive" : "text-muted-foreground"}`}>
+              {mm}:{ss}
+            </div>
+          )}
         </div>
       </header>
 

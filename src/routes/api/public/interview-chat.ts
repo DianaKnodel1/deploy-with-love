@@ -137,13 +137,18 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Lade Bewerbung + Landing-Prompt
         const { data: app, error: appErr } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, source_slug, interview_messages, interview_status, interview_mode")
+          .select("id, full_name, source_slug, interview_messages, interview_status, interview_mode, interview_started_at")
           .eq("id", applicationId)
           .maybeSingle();
         if (appErr || !app) return json({ error: "Bewerbung nicht gefunden" }, 404);
         if (app.interview_status === "done" || app.interview_status === "taken_over") {
           return json({ error: "Interview bereits abgeschlossen", status: app.interview_status }, 409);
         }
+
+        // Hartes 10-Min-Limit ab erstem Start
+        const MAX_DURATION_MS = 10 * 60 * 1000;
+        const startedAt = app.interview_started_at ? new Date(app.interview_started_at as string).getTime() : null;
+        const timedOut = startedAt !== null && Date.now() - startedAt > MAX_DURATION_MS;
 
         let systemPrompt = DEFAULT_SYSTEM_PROMPT;
         if (app.source_slug) {
@@ -158,8 +163,12 @@ export const Route = createFileRoute("/api/public/interview-chat")({
 
         const history: Msg[] = Array.isArray(app.interview_messages) ? (app.interview_messages as any) : [];
 
+        // Map recommendation -> ai_decision (Funnel)
+        const toAiDecision = (rec: "invite" | "reject" | "unsure") =>
+          rec === "invite" ? "zusage" : rec === "reject" ? "absage" : "pending";
+
         // ──────────────────────────────────────────────────────────────
-        if (action === "end") {
+        if (action === "end" || timedOut) {
           if (history.length === 0) return json({ error: "Kein Verlauf vorhanden" }, 400);
           const result = await runSummary(history);
           await supabaseAdmin
@@ -169,10 +178,12 @@ export const Route = createFileRoute("/api/public/interview-chat")({
               interview_summary: result.summary,
               interview_score: result.score,
               interview_recommendation: result.recommendation,
+              ai_decision: toAiDecision(result.recommendation),
+              ai_reason: result.summary,
               interview_completed_at: new Date().toISOString(),
             } as any)
             .eq("id", applicationId);
-          return json({ ok: true, ended: true, ...result });
+          return json({ ok: true, ended: true, timedOut, ...result });
         }
 
         // Baue Messages für AI
@@ -213,6 +224,8 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           updates.interview_summary = result.summary;
           updates.interview_score = result.score;
           updates.interview_recommendation = result.recommendation;
+          updates.ai_decision = toAiDecision(result.recommendation);
+          updates.ai_reason = result.summary;
           updates.interview_completed_at = new Date().toISOString();
         }
 
