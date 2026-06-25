@@ -48,6 +48,10 @@ const REMINDER_DEFAULTS = {
     subject: "Erinnerung: Dein Termin in 30 Minuten",
     body: `Hallo {{first_name}},\n\nkurze Erinnerung: dein Termin startet in 30 Minuten ({{appointment_time}} Uhr am {{appointment_date}}).\n\nBitte sei rechtzeitig bereit.\n\n{{cta:Zum Portal|{{portal_link}}}}\n\nViele Grüße\n{{tenant_name}}`,
   },
+  chat: {
+    subject: "Neue Nachricht von {{team_leader_name}} – {{tenant_name}}",
+    body: `Hi {{first_name}},\n\ndu hast {{unread_count}} ungelesene Nachricht(en) von {{team_leader_name}} im Mitarbeiter-Portal.\n\nBitte logge dich kurz ein und antworte – so geht's für dich am schnellsten weiter.\n\n{{cta:Jetzt einloggen|{{login_link}}}}\n\nFalls der Button nicht funktioniert: {{login_link}}`,
+  },
 
 };
 
@@ -85,6 +89,8 @@ interface TenantEmail {
   reminder_recovery_bewerber_body: string | null;
   reminder_appointment_subject: string | null;
   reminder_appointment_body: string | null;
+  reminder_chat_subject: string | null;
+  reminder_chat_body: string | null;
 }
 
 const PLACEHOLDERS = [
@@ -291,7 +297,7 @@ function AdminEmailTemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
-  type TestTemplateKey = "welcome" | "reset" | "invite" | "confirm" | "completion" | "no_booking" | "recovery_ma" | "recovery_bew" | "appointment";
+  type TestTemplateKey = "welcome" | "reset" | "invite" | "confirm" | "completion" | "no_booking" | "recovery_ma" | "recovery_bew" | "appointment" | "chat";
   const [testType, setTestType] = useState<TestTemplateKey>("welcome");
   const { toast } = useToast();
 
@@ -319,10 +325,12 @@ function AdminEmailTemplatesPage() {
   const [rRecoveryBewBody, setRRecoveryBewBody] = useState("");
   const [rAppointmentSubject, setRAppointmentSubject] = useState("");
   const [rAppointmentBody, setRAppointmentBody] = useState("");
+  const [rChatSubject, setRChatSubject] = useState("");
+  const [rChatBody, setRChatBody] = useState("");
 
   const loadTenants = async () => {
     setLoading(true);
-    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_recovery_bewerber_subject, reminder_recovery_bewerber_body, reminder_appointment_subject, reminder_appointment_body";
+    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_recovery_bewerber_subject, reminder_recovery_bewerber_body, reminder_appointment_subject, reminder_appointment_body, reminder_chat_subject, reminder_chat_body";
     // Fallback: ohne neue Reminder-Spalten (Migrationen 20260606200000 + 20260608120000), falls noch nicht angewandt.
     const FALLBACK_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body";
 
@@ -386,6 +394,8 @@ function AdminEmailTemplatesPage() {
     setRRecoveryBewBody(t.reminder_recovery_bewerber_body || REMINDER_DEFAULTS.recovery_bewerber.body);
     setRAppointmentSubject(t.reminder_appointment_subject || REMINDER_DEFAULTS.appointment_30min.subject);
     setRAppointmentBody(t.reminder_appointment_body || REMINDER_DEFAULTS.appointment_30min.body);
+    setRChatSubject(t.reminder_chat_subject || REMINDER_DEFAULTS.chat.subject);
+    setRChatBody(t.reminder_chat_body || REMINDER_DEFAULTS.chat.body);
   };
 
   useEffect(() => {
@@ -432,6 +442,8 @@ function AdminEmailTemplatesPage() {
         reminder_recovery_bewerber_body: rRecoveryBewBody,
         reminder_appointment_subject: rAppointmentSubject,
         reminder_appointment_body: rAppointmentBody,
+        reminder_chat_subject: rChatSubject,
+        reminder_chat_body: rChatBody,
       } as any)
       .eq("id", selectedTenantId);
     setSaving(false);
@@ -454,6 +466,7 @@ function AdminEmailTemplatesPage() {
       case "recovery_ma": return { subject: rRecoveryMaSubject, body: rRecoveryMaBody };
       case "recovery_bew": return { subject: rRecoveryBewSubject, body: rRecoveryBewBody };
       case "appointment": return { subject: rAppointmentSubject, body: rAppointmentBody };
+      case "chat": return { subject: rChatSubject, body: rChatBody };
     }
   };
 
@@ -636,6 +649,7 @@ function AdminEmailTemplatesPage() {
                 <TabsTrigger value="no_booking" className="text-xs">Keine Buchung (7 Tage)</TabsTrigger>
                 <TabsTrigger value="recovery" className="text-xs">Domain-Wechsel</TabsTrigger>
                 <TabsTrigger value="appointment" className="text-xs">30 Min vor Termin</TabsTrigger>
+                <TabsTrigger value="chat" className="text-xs">Chat-Reminder</TabsTrigger>
               </TabsList>
               <TabsContent value="invite">
                 <TemplateEditor
@@ -697,6 +711,18 @@ function AdminEmailTemplatesPage() {
                   tenant={selectedTenant}
                 />
               </TabsContent>
+              <TabsContent value="chat">
+                <div className="rounded-md border border-violet-300 bg-violet-50 dark:bg-violet-950/30 dark:border-violet-700 px-3 py-2 mb-3 text-[11px] text-violet-900 dark:text-violet-200">
+                  Wird manuell aus dem <strong>Admin-Chat</strong> per Button „📨 Erinnerung senden" verschickt, wenn ein Mitarbeiter ungelesene Nachrichten hat. Rate-Limit: max. 1× pro 24 h pro Empfänger. Zusätzlicher Platzhalter: <code>{"{{unread_count}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Chat-Reminder"
+                  subject={rChatSubject} onSubjectChange={setRChatSubject}
+                  body={rChatBody} onBodyChange={setRChatBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+              </TabsContent>
             </Tabs>
           </TabsContent>
         </Tabs>
@@ -742,6 +768,7 @@ function AdminEmailTemplatesPage() {
                     <SelectItem value="recovery_ma">Domain-Wechsel: Mitarbeiter</SelectItem>
                     <SelectItem value="recovery_bew">Domain-Wechsel: Bewerber</SelectItem>
                     <SelectItem value="appointment">30 Min vor Termin</SelectItem>
+                    <SelectItem value="chat">Chat-Reminder</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

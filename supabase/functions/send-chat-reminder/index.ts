@@ -97,7 +97,7 @@ serve(async (req) => {
 
     const { data: tenant } = await admin
       .from("tenants")
-      .select("id, name, domain, logo_url, primary_color, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, is_active, emails_paused, emails_paused_reason")
+      .select("id, name, domain, logo_url, primary_color, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, is_active, emails_paused, emails_paused_reason, email_signature, team_leader_name, reminder_chat_subject, reminder_chat_body")
       .eq("id", profile.tenant_id)
       .maybeSingle();
     if (!tenant) return json({ error: "Tenant nicht gefunden" }, 404);
@@ -113,35 +113,52 @@ serve(async (req) => {
     const senderEmail = tenant.sender_email ?? tenant.smtp_username;
     const brand = tenant.primary_color ?? "#0f172a";
     const firstName = (profile.full_name ?? "").split(" ")[0] || "Hallo";
-    const leader = leaderName?.trim() || "deinem Teamleiter";
+    const leader = leaderName?.trim() || tenant.team_leader_name || "deinem Teamleiter";
     const loginUrl = `https://${tenant.domain}/login`;
-    const subject = `Neue Nachricht von ${leader} – ${tenant.name}`;
+
+    // Template aus Tenant (oder Default), Platzhalter ersetzen
+    const DEFAULT_SUBJECT = "Neue Nachricht von {{team_leader_name}} – {{tenant_name}}";
+    const DEFAULT_BODY = `Hi {{first_name}},\n\ndu hast {{unread_count}} ungelesene Nachricht(en) von {{team_leader_name}} im Mitarbeiter-Portal.\n\nBitte logge dich kurz ein und antworte – so geht's für dich am schnellsten weiter.\n\n{{cta:Jetzt einloggen|{{login_link}}}}\n\nFalls der Button nicht funktioniert: {{login_link}}`;
+    const tplSubject = (tenant.reminder_chat_subject || DEFAULT_SUBJECT);
+    const tplBody = (tenant.reminder_chat_body || DEFAULT_BODY);
+
+    const vars: Record<string, string> = {
+      first_name: firstName,
+      team_leader_name: leader,
+      tenant_name: tenant.name,
+      company_name: tenant.name,
+      login_link: loginUrl,
+      portal_link: loginUrl,
+      email: to,
+      unread_count: String(count),
+    };
+    const replaceVars = (s: string) =>
+      s.replace(/\{\{(\w+)\}\}/g, (_m, k) => (vars[k] !== undefined ? vars[k] : `{{${k}}}`));
+    const subject = replaceVars(tplSubject);
+
+    // Body: erst Vars ersetzen, dann CTA-Syntax, dann Newlines + Links
+    let bodyResolved = replaceVars(tplBody);
+    bodyResolved = bodyResolved.replace(/\{\{cta:([^|}]+)\|([^}]+)\}\}/g, (_m, label, href) => {
+      const url = replaceVars(String(href).trim());
+      return `<table cellpadding="0" cellspacing="0" style="margin:16px 0"><tr><td style="background:${brand};border-radius:8px"><a href="${url}" style="display:inline-block;padding:14px 28px;color:#fff;text-decoration:none;font-weight:600;font-size:15px">${escapeHtml(String(label).trim())}</a></td></tr></table>`;
+    });
+    const bodyHtml = bodyResolved
+      .split(/\n/).map((line) => /<table|<a |<div|<p|<h[1-6]/.test(line) ? line : escapeHtml(line)).join("<br>");
 
     const logo = tenant.logo_url
       ? `<img src="${tenant.logo_url}" alt="${escapeHtml(tenant.name)}" style="max-height:40px;margin-bottom:24px"/>`
       : `<div style="font-weight:700;font-size:20px;margin-bottom:24px;color:${brand}">${escapeHtml(tenant.name)}</div>`;
+    const sig = tenant.email_signature
+      ? `<hr style="border:none;border-top:1px solid #e2e8f0;margin:32px 0"/><div style="font-size:12px;color:#94a3b8;line-height:1.5">${escapeHtml(tenant.email_signature).replace(/\n/g, "<br>")}</div>`
+      : `<hr style="border:none;border-top:1px solid #e2e8f0;margin:32px 0"/><p style="font-size:12px;color:#94a3b8;margin:0">Diese E-Mail wurde an ${escapeHtml(to)} gesendet.</p>`;
 
     const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px"><tr><td align="center">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px;max-width:560px">
 <tr><td>
 ${logo}
-<h1 style="font-size:22px;margin:0 0 16px;color:#0f172a">Hi ${escapeHtml(firstName)},</h1>
-<p style="font-size:15px;line-height:1.6;color:#475569;margin:0 0 16px">
-du hast <strong>${count} ungelesene Nachricht${count === 1 ? "" : "en"}</strong> von <strong>${escapeHtml(leader)}</strong> im Mitarbeiter-Portal.
-</p>
-<p style="font-size:15px;line-height:1.6;color:#475569;margin:0 0 24px">
-Bitte logge dich kurz ein und antworte – so geht's für dich am schnellsten weiter.
-</p>
-<table cellpadding="0" cellspacing="0"><tr><td style="background:${brand};border-radius:8px">
-<a href="${loginUrl}" style="display:inline-block;padding:14px 28px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px">Jetzt einloggen</a>
-</td></tr></table>
-<p style="font-size:13px;color:#94a3b8;margin:32px 0 0;line-height:1.5">
-Falls der Button nicht funktioniert:<br/>
-<a href="${loginUrl}" style="color:${brand};word-break:break-all">${loginUrl}</a>
-</p>
-<hr style="border:none;border-top:1px solid #e2e8f0;margin:32px 0"/>
-<p style="font-size:12px;color:#94a3b8;margin:0">Diese E-Mail wurde an ${escapeHtml(to)} gesendet.</p>
+<div style="font-size:15px;line-height:1.6;color:#475569">${bodyHtml}</div>
+${sig}
 </td></tr></table>
 </td></tr></table>
 </body></html>`;
