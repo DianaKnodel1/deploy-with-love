@@ -711,6 +711,18 @@ function AdminEmailTemplatesPage() {
                   tenant={selectedTenant}
                 />
               </TabsContent>
+              <TabsContent value="chat">
+                <div className="rounded-md border border-violet-300 bg-violet-50 dark:bg-violet-950/30 dark:border-violet-700 px-3 py-2 mb-3 text-[11px] text-violet-900 dark:text-violet-200">
+                  Wird manuell aus dem <strong>Admin-Chat</strong> per Button „📨 Erinnerung senden" verschickt, wenn ein Mitarbeiter ungelesene Nachrichten hat. Rate-Limit: max. 1× pro 24 h pro Empfänger. Zusätzlicher Platzhalter: <code>{"{{unread_count}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Chat-Reminder"
+                  subject={rChatSubject} onSubjectChange={setRChatSubject}
+                  body={rChatBody} onBodyChange={setRChatBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+              </TabsContent>
             </Tabs>
           </TabsContent>
         </Tabs>
