@@ -89,6 +89,8 @@ interface TenantEmail {
   reminder_recovery_bewerber_body: string | null;
   reminder_appointment_subject: string | null;
   reminder_appointment_body: string | null;
+  reminder_chat_subject: string | null;
+  reminder_chat_body: string | null;
 }
 
 const PLACEHOLDERS = [
