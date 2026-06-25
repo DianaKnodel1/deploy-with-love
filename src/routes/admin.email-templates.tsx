@@ -394,6 +394,8 @@ function AdminEmailTemplatesPage() {
     setRRecoveryBewBody(t.reminder_recovery_bewerber_body || REMINDER_DEFAULTS.recovery_bewerber.body);
     setRAppointmentSubject(t.reminder_appointment_subject || REMINDER_DEFAULTS.appointment_30min.subject);
     setRAppointmentBody(t.reminder_appointment_body || REMINDER_DEFAULTS.appointment_30min.body);
+    setRChatSubject(t.reminder_chat_subject || REMINDER_DEFAULTS.chat.subject);
+    setRChatBody(t.reminder_chat_body || REMINDER_DEFAULTS.chat.body);
   };
 
   useEffect(() => {
