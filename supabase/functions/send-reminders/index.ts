@@ -265,6 +265,11 @@ async function canSend(
   const isBounced = await isEmailBounced(admin, email);
   if (isBounced) return { ok: false, nextAttempt: 0, reason: "email_bounced" };
 
+  // Cold-Status: Bewerbung wurde nach 3 Remindern manuell parkiert → Auto-Reminder aussetzen.
+  const { data: cold } = await admin
+    .from("applications").select("id").ilike("email", email).eq("status_cold", true).limit(1).maybeSingle();
+  if (cold) return { ok: false, nextAttempt: 0, reason: "cold_lead" };
+
   const { data, error } = await admin
     .from("reminder_log")
     .select("attempt, sent_at, status")
