@@ -42,8 +42,9 @@ export type CohortTotals = {
   bewerbungen: number;
   freigegeben: number;
   mitarbeiter: number;
-  avg_conversion: number;  // angenommen_total / freigegeben_total
-  avg_per_day: number;     // bewerbungen / days
+  gesamt_conversion: number;   // mitarbeiter / bewerbungen (echte End-zu-End-Conversion)
+  avg_conversion: number;      // freigegeben / bewerbungen (Stufen-Conversion)
+  avg_per_day: number;
   avg_employees_per_day: number;
 };
 
@@ -67,11 +68,12 @@ export const getCohortStats = createServerFn({ method: "POST" })
     const since = new Date(Date.now() - data.days * 86400_000);
     const sinceIso = since.toISOString();
 
-    // 1) Bewerbungen
+    // 1) Bewerbungen — nur neue Flows (broker/fasttrack), "klassisch" wird ignoriert
     let appQ = supabase
       .from("applications")
       .select("id, email, tenant_id, status, flow_type, booking_status, created_at, is_test")
       .eq("is_test", false)
+      .in("flow_type", ["broker", "fasttrack"])
       .gte("created_at", sinceIso);
     if (data.tenant_id) appQ = appQ.eq("tenant_id", data.tenant_id);
     const { data: apps, error: appErr } = await appQ;
@@ -155,7 +157,8 @@ export const getCohortStats = createServerFn({ method: "POST" })
       bewerbungen: sum(rows, "bewerbungen"),
       freigegeben: sum(rows, "freigegeben"),
       mitarbeiter: sum(rows, "mitarbeiter"),
-      avg_conversion: pct(sum(rows, "angenommen"), sum(rows, "freigegeben")),
+      gesamt_conversion: pct(sum(rows, "mitarbeiter"), sum(rows, "bewerbungen")),
+      avg_conversion: pct(sum(rows, "freigegeben"), sum(rows, "bewerbungen")),
       avg_per_day: round(sum(rows, "bewerbungen") / Math.max(1, data.days), 1),
       avg_employees_per_day: round(sum(rows, "mitarbeiter") / Math.max(1, data.days), 1),
     };
@@ -175,5 +178,5 @@ function round(n: number, digits = 1): number {
   return Math.round(n * f) / f;
 }
 function emptyTotals(): CohortTotals {
-  return { bewerbungen: 0, freigegeben: 0, mitarbeiter: 0, avg_conversion: 0, avg_per_day: 0, avg_employees_per_day: 0 };
+  return { bewerbungen: 0, freigegeben: 0, mitarbeiter: 0, gesamt_conversion: 0, avg_conversion: 0, avg_per_day: 0, avg_employees_per_day: 0 };
 }
