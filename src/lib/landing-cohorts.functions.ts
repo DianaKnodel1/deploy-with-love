@@ -156,7 +156,8 @@ export const getCohortStats = createServerFn({ method: "POST" })
       bewerbungen: sum(rows, "bewerbungen"),
       freigegeben: sum(rows, "freigegeben"),
       mitarbeiter: sum(rows, "mitarbeiter"),
-      avg_conversion: pct(sum(rows, "angenommen"), sum(rows, "freigegeben")),
+      gesamt_conversion: pct(sum(rows, "mitarbeiter"), sum(rows, "bewerbungen")),
+      avg_conversion: pct(sum(rows, "freigegeben"), sum(rows, "bewerbungen")),
       avg_per_day: round(sum(rows, "bewerbungen") / Math.max(1, data.days), 1),
       avg_employees_per_day: round(sum(rows, "mitarbeiter") / Math.max(1, data.days), 1),
     };
