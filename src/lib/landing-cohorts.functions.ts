@@ -68,11 +68,12 @@ export const getCohortStats = createServerFn({ method: "POST" })
     const since = new Date(Date.now() - data.days * 86400_000);
     const sinceIso = since.toISOString();
 
-    // 1) Bewerbungen
+    // 1) Bewerbungen — nur neue Flows (broker/fasttrack), "klassisch" wird ignoriert
     let appQ = supabase
       .from("applications")
       .select("id, email, tenant_id, status, flow_type, booking_status, created_at, is_test")
       .eq("is_test", false)
+      .in("flow_type", ["broker", "fasttrack"])
       .gte("created_at", sinceIso);
     if (data.tenant_id) appQ = appQ.eq("tenant_id", data.tenant_id);
     const { data: apps, error: appErr } = await appQ;
