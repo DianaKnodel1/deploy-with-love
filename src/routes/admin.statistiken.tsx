@@ -130,12 +130,12 @@ function StatistikenPage() {
                   <tr>
                     <th className="text-left py-2 px-3 font-medium">Datum</th>
                     <th className="text-right py-2 px-3 font-medium">Bewerbungen</th>
-                    <th className="text-right py-2 px-3 font-medium">Freigegeben</th>
-                    <th className="text-right py-2 px-3 font-medium">Interview Mails</th>
-                    <th className="text-right py-2 px-3 font-medium">Interview gebucht</th>
+                    <th className="text-right py-2 px-3 font-medium">Termin gebucht</th>
+                    <th className="text-right py-2 px-3 font-medium">Interview-Mails</th>
+                    <th className="text-right py-2 px-3 font-medium">Termin wahrgenommen</th>
                     <th className="text-right py-2 px-3 font-medium">Angenommen</th>
                     <th className="text-right py-2 px-3 font-medium">Reg-Mails</th>
-                    <th className="text-right py-2 px-3 font-medium">Mitarbeiter</th>
+                    <th className="text-right py-2 px-3 font-medium">Registriert</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -186,13 +186,13 @@ function StatistikenPage() {
           <CardTitle className="text-sm">Was zeigen die Spalten?</CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground space-y-1.5">
-          <p><strong className="text-foreground">Bewerbungen:</strong> Anzahl neuer Bewerbungen, die am jeweiligen Tag eingegangen sind (ohne Test).</p>
-          <p><strong className="text-foreground">Freigegeben:</strong> Davon manuell akzeptiert (Status „akzeptiert").</p>
-          <p><strong className="text-foreground">Interview-Mails:</strong> Vermittlungs-Bewerbungen, denen eine Calendly-Einladung verfügbar ist (Broker-Flow, booking_status ≠ none).</p>
-          <p><strong className="text-foreground">Interview gebucht:</strong> Tatsächlich gebuchter Calendly-Termin (booking_status = scheduled/completed).</p>
+          <p><strong className="text-foreground">Bewerbungen:</strong> Anzahl neuer Bewerbungen am Tag (ohne Test).</p>
+          <p><strong className="text-foreground">Termin gebucht:</strong> Calendly-Termin aus der Bewerbung gebucht (Status „akzeptiert" entspricht Freigabe).</p>
+          <p><strong className="text-foreground">Interview-Mails:</strong> Vermittlungs-Bewerbungen mit Calendly-Einladung (Broker-Flow, booking_status ≠ none).</p>
+          <p><strong className="text-foreground">Termin wahrgenommen:</strong> Tatsächlich wahrgenommener Calendly-Termin (booking_status = scheduled/completed).</p>
           <p><strong className="text-foreground">Angenommen:</strong> Finale Annahme nach Interview / direkte Annahme bei Fast-Track.</p>
           <p><strong className="text-foreground">Reg-Mails:</strong> An diesem Tag versendete Registrierungs-/Einladungsmails.</p>
-          <p><strong className="text-foreground">Mitarbeiter:</strong> Tatsächlich neu registrierte Profile, deren E-Mail eine Bewerbung im Zeitraum hat.</p>
+          <p><strong className="text-foreground">Registriert:</strong> Tatsächlich neu registrierte Profile, deren E-Mail eine Bewerbung im Zeitraum hat.</p>
         </CardContent>
       </Card>
     </div>
