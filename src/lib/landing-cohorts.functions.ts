@@ -177,5 +177,5 @@ function round(n: number, digits = 1): number {
   return Math.round(n * f) / f;
 }
 function emptyTotals(): CohortTotals {
-  return { bewerbungen: 0, freigegeben: 0, mitarbeiter: 0, avg_conversion: 0, avg_per_day: 0, avg_employees_per_day: 0 };
+  return { bewerbungen: 0, freigegeben: 0, mitarbeiter: 0, gesamt_conversion: 0, avg_conversion: 0, avg_per_day: 0, avg_employees_per_day: 0 };
 }
