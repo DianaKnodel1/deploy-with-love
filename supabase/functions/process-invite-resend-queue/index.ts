@@ -172,14 +172,24 @@ serve(async (req) => {
       sent++;
     } catch (e: any) {
       const attempts = (row.attempts ?? 0) + 1;
+      const isCold = attempts >= 3;
       await admin.from("invite_resend_queue").update({
-        status: attempts >= 3 ? "failed" : "queued",
+        status: isCold ? "failed" : "queued",
         attempts,
         last_error: String(e?.message ?? e).slice(0, 500),
-        scheduled_at: attempts >= 3 ? undefined : new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        scheduled_at: isCold ? undefined : new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       }).eq("id", row.id);
+      // Anti-Spam-Hard-Cap: nach 3 Versuchen → Bewerbung cold (manueller Eingriff im Admin).
+      if (isCold && row.application_id) {
+        await admin.from("applications").update({
+          status_cold: true,
+          cold_at: new Date().toISOString(),
+          cold_reason: "invite_resend_max",
+        }).eq("id", row.application_id).eq("status_cold", false);
+      }
       failed++;
     }
+
 
     // kleine Streuung zwischen Sends (kurz halten — Edge-Runtime-Wall-Limit)
     await new Promise(r => setTimeout(r, 200 + Math.floor(Math.random() * 300)));

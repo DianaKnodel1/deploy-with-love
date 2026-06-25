@@ -364,6 +364,7 @@ async function maybeMarkCold(
     if (tenantId) q = q.eq("tenant_id", tenantId);
     await q;
   } catch { /* best-effort */ }
+}
 
 // Cap-Check pro Tenant + Typ
 function capReached(ctx: SendCtx, tenantId: string, type: ReminderType): boolean {
