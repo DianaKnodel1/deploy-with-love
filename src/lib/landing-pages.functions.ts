@@ -59,6 +59,7 @@ const SaveInput = z.object({
   interview_mode: z.enum(["chat", "voice", "both"]).default("chat"),
   interview_voice_id: z.string().max(80).nullable().optional(),
   interview_system_prompt: z.string().max(8000).nullable().optional(),
+  linked_fasttrack_landing_id: z.string().uuid().nullable().optional(),
 });
 
 async function requireAdmin(ctx: { supabase: any; userId: string }) {
@@ -102,7 +103,7 @@ export const listLandingPages = createServerFn({ method: "GET" })
     await requireAdmin(context);
     const { data, error } = await context.supabase
       .from("landing_pages")
-      .select("id, slug, domain, tenant_id, theme_id, flow_type, source_slug, is_published, logo_url, created_at, updated_at, branding")
+      .select("id, slug, domain, tenant_id, theme_id, flow_type, source_slug, is_published, logo_url, created_at, updated_at, branding, linked_fasttrack_landing_id")
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { rows: data ?? [] };
@@ -157,6 +158,7 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       interview_mode: data.interview_mode ?? "chat",
       interview_voice_id: data.interview_voice_id ?? null,
       interview_system_prompt: data.interview_system_prompt ?? null,
+      linked_fasttrack_landing_id: data.linked_fasttrack_landing_id ?? null,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
