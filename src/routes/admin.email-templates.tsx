@@ -768,6 +768,7 @@ function AdminEmailTemplatesPage() {
                     <SelectItem value="recovery_ma">Domain-Wechsel: Mitarbeiter</SelectItem>
                     <SelectItem value="recovery_bew">Domain-Wechsel: Bewerber</SelectItem>
                     <SelectItem value="appointment">30 Min vor Termin</SelectItem>
+                    <SelectItem value="chat">Chat-Reminder</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
