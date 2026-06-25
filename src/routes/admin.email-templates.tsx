@@ -325,6 +325,8 @@ function AdminEmailTemplatesPage() {
   const [rRecoveryBewBody, setRRecoveryBewBody] = useState("");
   const [rAppointmentSubject, setRAppointmentSubject] = useState("");
   const [rAppointmentBody, setRAppointmentBody] = useState("");
+  const [rChatSubject, setRChatSubject] = useState("");
+  const [rChatBody, setRChatBody] = useState("");
 
   const loadTenants = async () => {
     setLoading(true);
