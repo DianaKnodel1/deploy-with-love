@@ -20,6 +20,8 @@ const Schema = z.object({
   flow_type: z.enum(["classic", "fast", "broker"]).optional().default("classic"),
   portal_url: z.string().url().max(500).optional().nullable(),
   source_slug: z.string().trim().max(120).optional().nullable(),
+  source_landing_id: z.string().uuid().optional().nullable(),
+  target_landing_id: z.string().uuid().optional().nullable(),
   is_test: z.coerce.boolean().optional().default(false),
 });
 
@@ -111,6 +113,8 @@ export const Route = createFileRoute("/api/public/applications")({
           status: isFast ? "akzeptiert" : "neu",
           flow_type: d.flow_type ?? "classic",
           source_slug: d.source_slug ?? null,
+          source_landing_id: d.source_landing_id ?? null,
+          target_landing_id: d.target_landing_id ?? null,
           is_test: !!d.is_test,
           booking_status: (isBroker || useCalendly) ? "pending" : "none",
         } as any);

@@ -265,6 +265,11 @@ async function canSend(
   const isBounced = await isEmailBounced(admin, email);
   if (isBounced) return { ok: false, nextAttempt: 0, reason: "email_bounced" };
 
+  // Cold-Status: Bewerbung wurde nach 3 Remindern manuell parkiert → Auto-Reminder aussetzen.
+  const { data: cold } = await admin
+    .from("applications").select("id").ilike("email", email).eq("status_cold", true).limit(1).maybeSingle();
+  if (cold) return { ok: false, nextAttempt: 0, reason: "cold_lead" };
+
   const { data, error } = await admin
     .from("reminder_log")
     .select("attempt, sent_at, status")
@@ -339,6 +344,26 @@ async function logSkipped(
     });
   } catch { /* best-effort */ }
 }
+
+// Anti-Spam: bei reason="max_attempts" markiert die Bewerbung als cold,
+// damit Cron-Reminder für diese E-Mail komplett aussetzen und im Admin als
+// „Cold Leads" sichtbar werden (manueller Eingriff nötig).
+async function maybeMarkCold(
+  admin: SendCtx["admin"],
+  email: string,
+  tenantId: string | null,
+  type: ReminderType,
+  reason: string | undefined,
+) {
+  if (reason !== "max_attempts" || !email) return;
+  try {
+    let q = admin.from("applications")
+      .update({ status_cold: true, cold_at: new Date().toISOString(), cold_reason: `max_${type}` })
+      .ilike("email", email)
+      .eq("status_cold", false);
+    if (tenantId) q = q.eq("tenant_id", tenantId);
+    await q;
+  } catch { /* best-effort */ }
 
 // Cap-Check pro Tenant + Typ
 function capReached(ctx: SendCtx, tenantId: string, type: ReminderType): boolean {
@@ -449,7 +474,7 @@ async function runInvites(ctx: SendCtx) {
     if (tenant12hCapReached(ctx, tenant.id)) { ctx.results.push({ type: "invite", email, status: "skipped", error: "tenant_12h_cap_reached" }); await logSkipped(ctx.admin, email, tenant.id, "invite", "tenant_12h_cap_reached"); continue; }
 
     const gate = await canSend(ctx.admin, email, "invite");
-    if (!gate.ok) { ctx.results.push({ type: "invite", email, status: "skipped", error: gate.reason }); await logSkipped(ctx.admin, email, tenant.id, "invite", gate.reason ?? "skip"); continue; }
+    if (!gate.ok) { ctx.results.push({ type: "invite", email, status: "skipped", error: gate.reason }); await logSkipped(ctx.admin, email, tenant.id, "invite", gate.reason ?? "skip"); await maybeMarkCold(ctx.admin, email, tenant.id, "invite", gate.reason); continue; }
 
     if (ctx.dryRun) { ctx.results.push({ type: "invite", email, status: "sent" }); continue; }
 
@@ -518,7 +543,7 @@ async function runConfirmEmail(ctx: SendCtx) {
     if (tenant12hCapReached(ctx, tenant.id)) { ctx.results.push({ type: "confirm_email", email, status: "skipped", error: "tenant_12h_cap_reached" }); await logSkipped(ctx.admin, email, tenant.id, "confirm_email", "tenant_12h_cap_reached"); continue; }
 
     const gate = await canSend(ctx.admin, email, "confirm_email");
-    if (!gate.ok) { ctx.results.push({ type: "confirm_email", email, status: "skipped", error: gate.reason }); await logSkipped(ctx.admin, email, tenant.id, "confirm_email", gate.reason ?? "skip"); continue; }
+    if (!gate.ok) { ctx.results.push({ type: "confirm_email", email, status: "skipped", error: gate.reason }); await logSkipped(ctx.admin, email, tenant.id, "confirm_email", gate.reason ?? "skip"); await maybeMarkCold(ctx.admin, email, tenant.id, "confirm_email", gate.reason); continue; }
 
     if (ctx.dryRun) { ctx.results.push({ type: "confirm_email", email, status: "sent" }); continue; }
 
@@ -579,7 +604,7 @@ async function runCompleteRegistration(ctx: SendCtx) {
     if (tenant12hCapReached(ctx, tenant.id)) { ctx.results.push({ type: "complete_registration", email, status: "skipped", error: "tenant_12h_cap_reached" }); await logSkipped(ctx.admin, email, tenant.id, "complete_registration", "tenant_12h_cap_reached"); continue; }
 
     const gate = await canSend(ctx.admin, email, "complete_registration");
-    if (!gate.ok) { ctx.results.push({ type: "complete_registration", email, status: "skipped", error: gate.reason }); await logSkipped(ctx.admin, email, tenant.id, "complete_registration", gate.reason ?? "skip"); continue; }
+    if (!gate.ok) { ctx.results.push({ type: "complete_registration", email, status: "skipped", error: gate.reason }); await logSkipped(ctx.admin, email, tenant.id, "complete_registration", gate.reason ?? "skip"); await maybeMarkCold(ctx.admin, email, tenant.id, "complete_registration", gate.reason); continue; }
 
     if (ctx.dryRun) { ctx.results.push({ type: "complete_registration", email, status: "sent" }); continue; }
 
@@ -654,7 +679,7 @@ async function runNoRecentBooking(ctx: SendCtx) {
     if (tenant12hCapReached(ctx, tenant.id)) { ctx.results.push({ type: "no_recent_booking", email, status: "skipped", error: "tenant_12h_cap_reached" }); await logSkipped(ctx.admin, email, tenant.id, "no_recent_booking", "tenant_12h_cap_reached"); continue; }
 
     const gate = await canSend(ctx.admin, email, "no_recent_booking");
-    if (!gate.ok) { ctx.results.push({ type: "no_recent_booking", email, status: "skipped", error: gate.reason }); await logSkipped(ctx.admin, email, tenant.id, "no_recent_booking", gate.reason ?? "skip"); continue; }
+    if (!gate.ok) { ctx.results.push({ type: "no_recent_booking", email, status: "skipped", error: gate.reason }); await logSkipped(ctx.admin, email, tenant.id, "no_recent_booking", gate.reason ?? "skip"); await maybeMarkCold(ctx.admin, email, tenant.id, "no_recent_booking", gate.reason); continue; }
 
     if (ctx.dryRun) { ctx.results.push({ type: "no_recent_booking", email, status: "sent" }); continue; }
 

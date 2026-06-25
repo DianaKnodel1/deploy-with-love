@@ -61,6 +61,7 @@ type Branding = {
   interview_mode: "chat" | "voice" | "both";
   interview_voice_id: string;
   interview_system_prompt: string;
+  linked_fasttrack_landing_id: string;
 };
 
 const EMPTY: Branding = {
@@ -99,6 +100,7 @@ const EMPTY: Branding = {
   interview_mode: "chat",
   interview_voice_id: "XrExE9yKIg1WjnnlVkGX",
   interview_system_prompt: "",
+  linked_fasttrack_landing_id: "",
 };
 
 function LandingGeneratorPage() {
@@ -494,6 +496,7 @@ document.addEventListener('submit', function(e){
         interview_mode: branding.interview_mode || "chat",
         interview_voice_id: branding.interview_voice_id || null,
         interview_system_prompt: branding.interview_system_prompt || null,
+        linked_fasttrack_landing_id: branding.linked_fasttrack_landing_id || null,
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
       } as any });
@@ -534,6 +537,7 @@ document.addEventListener('submit', function(e){
         interview_mode: row.interview_mode ?? "chat",
         interview_voice_id: row.interview_voice_id ?? "XrExE9yKIg1WjnnlVkGX",
         interview_system_prompt: row.interview_system_prompt ?? "",
+        linked_fasttrack_landing_id: row.linked_fasttrack_landing_id ?? "",
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
@@ -977,6 +981,25 @@ document.addEventListener('submit', function(e){
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
+                  </Field>
+                  <Field label="→ Weiterleitung nach CTA-Klick auf Fasttrack-Landing">
+                    <select
+                      className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                      value={branding.linked_fasttrack_landing_id}
+                      onChange={(e) => setBranding((b) => ({ ...b, linked_fasttrack_landing_id: e.target.value }))}
+                    >
+                      <option value="">— keine Weiterleitung —</option>
+                      {landings
+                        .filter((l) => l.flow_type === "fast" && l.id !== editingId)
+                        .map((l) => (
+                          <option key={l.id} value={l.id}>
+                            {l.branding?.firmenname || l.slug} · {l.domain}
+                          </option>
+                        ))}
+                    </select>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Bewerber wird beim CTA-Klick auf die gewählte Fasttrack-Page weitergeleitet (mit <code>?ref=&lt;diese-landing-id&gt;</code>). Die Bewerbung wird dort erzeugt; Tracking läuft über <code>source_landing_id</code> → <code>target_landing_id</code>.
+                    </p>
                   </Field>
                 </div>
               )}

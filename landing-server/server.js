@@ -16,7 +16,7 @@ const PORTAL_API_ENDPOINT = process.env.PORTAL_API_ENDPOINT || "";
 const PORT = Number(process.env.PORT || 3001);
 const CACHE_TTL_MS = 60_000;
 
-const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published";
+const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain)";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const themesDir = join(__dirname, "themes");
 const cache = new Map();
@@ -118,6 +118,11 @@ function injectLandingConfig(html, row) {
   const apiEndpoint = String(rawApi || "").trim().replace(/[.,;\s]+$/g, "");
   const portalUrl = row.branding?.portal_url || "";
   const wa = row.branding?.whatsapp_enabled ? String(row.branding?.whatsapp_number || "").replace(/[^0-9]/g, "") : "";
+  // Vermittlung → Fasttrack: CTA leitet auf gewählte Fasttrack-Domain weiter (?ref=<broker_id>).
+  let fasttrackRedirect = "";
+  if (row.flow_type === "broker" && row.linked_fasttrack_landing_id && row.linked_fasttrack?.domain) {
+    fasttrackRedirect = `https://${row.linked_fasttrack.domain}/?ref=${row.id}`;
+  }
   const cleanHtml = html.replace(/<script>\s*window\.PORTAL_API\s*=\s*[\s\S]*?<\/script>\s*/gi, "");
   const block = `<script>
 window.PORTAL_API = "${esc(apiEndpoint)}";
@@ -125,7 +130,48 @@ window.PORTAL_URL = "${esc(portalUrl)}";
 window.TENANT_ID = "${esc(row.tenant_id || "")}";
 window.FLOW_TYPE = "${esc(row.flow_type)}";
 window.SOURCE_SLUG = "${esc(row.source_slug || row.slug)}";
+window.LANDING_ID = "${esc(row.id || "")}";
 window.WHATSAPP_NUMBER = "${esc(wa)}";
+window.FASTTRACK_REDIRECT_URL = "${esc(fasttrackRedirect)}";
+(function(){
+  if (!window.FASTTRACK_REDIRECT_URL) return;
+  function go(e){ if(e){e.preventDefault();e.stopPropagation();} location.href = window.FASTTRACK_REDIRECT_URL; }
+  document.addEventListener("DOMContentLoaded", function(){
+    document.querySelectorAll("form").forEach(function(f){ f.addEventListener("submit", go, true); });
+    document.querySelectorAll("a[href='#bewerben'],a[href='#bewerbung'],a[href='#form'],a[data-cta],button[type=submit]").forEach(function(el){ el.addEventListener("click", go, true); });
+  });
+})();
+(function(){
+  // Fasttrack-Empfang: ?ref=<broker_landing_id> aus URL nach window.SOURCE_LANDING_ID übernehmen
+  // und in jeden POST an PORTAL_API (Bewerbungs-Endpoint) source_landing_id + target_landing_id injizieren.
+  try {
+    var u = new URL(location.href);
+    var ref = u.searchParams.get("ref");
+    if (ref && /^[0-9a-f-]{36}$/i.test(ref)) {
+      window.SOURCE_LANDING_ID = ref;
+      try { sessionStorage.setItem("vermittlung_ref", ref); } catch(_){}
+    } else {
+      try { var s = sessionStorage.getItem("vermittlung_ref"); if (s) window.SOURCE_LANDING_ID = s; } catch(_){}
+    }
+  } catch(_){}
+  var origFetch = window.fetch;
+  if (typeof origFetch !== "function") return;
+  window.fetch = function(input, init){
+    try {
+      var url = typeof input === "string" ? input : (input && input.url) || "";
+      var api = window.PORTAL_API || "";
+      if (api && url && url.indexOf(api) === 0 && init && init.body && typeof init.body === "string") {
+        var b = JSON.parse(init.body);
+        if (typeof b === "object" && b !== null) {
+          if (window.SOURCE_LANDING_ID && !b.source_landing_id) b.source_landing_id = window.SOURCE_LANDING_ID;
+          if (window.LANDING_ID && !b.target_landing_id) b.target_landing_id = window.LANDING_ID;
+          init = Object.assign({}, init, { body: JSON.stringify(b) });
+        }
+      }
+    } catch(_){}
+    return origFetch.call(this, input, init);
+  };
+})();
 </script>`;
   return /<\/head>/i.test(cleanHtml) ? cleanHtml.replace(/<\/head>/i, block + "</head>") : block + cleanHtml;
 }

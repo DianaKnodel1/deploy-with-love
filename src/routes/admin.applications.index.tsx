@@ -40,6 +40,7 @@ function AdminApplicationsPage() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [showTest, setShowTest] = useState(false);
+  const [coldFilter, setColdFilter] = useState<"hide" | "only" | "all">("hide");
   const [bookingFilter, setBookingFilter] = useState<"all" | "pending" | "scheduled" | "cancelled" | "no_show">("all");
   const [flowTab, setFlowTab] = useState<"all" | "classic" | "fast" | "broker">("all");
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -403,6 +404,8 @@ function AdminApplicationsPage() {
   };
   const filtered = applications.filter((a: any) => {
     if (!showTest && a.is_test === true) return false;
+    if (coldFilter === "hide" && a.status_cold === true) return false;
+    if (coldFilter === "only" && a.status_cold !== true) return false;
     if (flowTab !== "all" && flowOf(a) !== flowTab) return false;
     if (bookingFilter !== "all" && (a.booking_status ?? "none") !== bookingFilter) return false;
     return (
@@ -484,6 +487,16 @@ function AdminApplicationsPage() {
               Test ({testCount})
             </label>
           )}
+          <select
+            className="h-9 px-2 rounded-md border border-input bg-background text-xs"
+            value={coldFilter}
+            onChange={(e) => setColdFilter(e.target.value as any)}
+            title="Cold-Leads: Bewerbungen, die nach 3 erfolglosen Remindern automatisch parkiert wurden."
+          >
+            <option value="hide">🔥 Cold-Leads ausblenden</option>
+            <option value="only">🧊 Nur Cold-Leads</option>
+            <option value="all">Alle anzeigen</option>
+          </select>
           <ImportApplicationsDialog onImported={loadData} />
           <Button
             variant="outline"
