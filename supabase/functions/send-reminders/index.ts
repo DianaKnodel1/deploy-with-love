@@ -340,6 +340,26 @@ async function logSkipped(
   } catch { /* best-effort */ }
 }
 
+// Anti-Spam: bei reason="max_attempts" markiert die Bewerbung als cold,
+// damit Cron-Reminder für diese E-Mail komplett aussetzen und im Admin als
+// „Cold Leads" sichtbar werden (manueller Eingriff nötig).
+async function maybeMarkCold(
+  admin: SendCtx["admin"],
+  email: string,
+  tenantId: string | null,
+  type: ReminderType,
+  reason: string | undefined,
+) {
+  if (reason !== "max_attempts" || !email) return;
+  try {
+    let q = admin.from("applications")
+      .update({ status_cold: true, cold_at: new Date().toISOString(), cold_reason: `max_${type}` })
+      .ilike("email", email)
+      .eq("status_cold", false);
+    if (tenantId) q = q.eq("tenant_id", tenantId);
+    await q;
+  } catch { /* best-effort */ }
+
 // Cap-Check pro Tenant + Typ
 function capReached(ctx: SendCtx, tenantId: string, type: ReminderType): boolean {
   const key = `${tenantId}:${type}`;
