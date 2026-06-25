@@ -42,8 +42,9 @@ export type CohortTotals = {
   bewerbungen: number;
   freigegeben: number;
   mitarbeiter: number;
-  avg_conversion: number;  // angenommen_total / freigegeben_total
-  avg_per_day: number;     // bewerbungen / days
+  gesamt_conversion: number;   // mitarbeiter / bewerbungen (echte End-zu-End-Conversion)
+  avg_conversion: number;      // freigegeben / bewerbungen (Stufen-Conversion)
+  avg_per_day: number;
   avg_employees_per_day: number;
 };
 
