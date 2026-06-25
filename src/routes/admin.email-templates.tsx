@@ -442,6 +442,8 @@ function AdminEmailTemplatesPage() {
         reminder_recovery_bewerber_body: rRecoveryBewBody,
         reminder_appointment_subject: rAppointmentSubject,
         reminder_appointment_body: rAppointmentBody,
+        reminder_chat_subject: rChatSubject,
+        reminder_chat_body: rChatBody,
       } as any)
       .eq("id", selectedTenantId);
     setSaving(false);
