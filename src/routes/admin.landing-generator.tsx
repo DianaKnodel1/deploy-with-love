@@ -61,6 +61,7 @@ type Branding = {
   interview_mode: "chat" | "voice" | "both";
   interview_voice_id: string;
   interview_system_prompt: string;
+  linked_fasttrack_landing_id: string;
 };
 
 const EMPTY: Branding = {
