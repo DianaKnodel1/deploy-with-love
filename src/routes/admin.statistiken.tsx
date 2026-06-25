@@ -99,9 +99,9 @@ function StatistikenPage() {
           <Kpi label="Bewerbungen gesamt" value={totals.bewerbungen} tone="default" />
           <Kpi label="Freigegeben gesamt" value={totals.freigegeben} tone="primary" />
           <Kpi label="Mitarbeiter gesamt" value={totals.mitarbeiter} tone="success" />
-          <Kpi label="Ø Conversion (von freigegeben)" value={`${totals.avg_conversion}%`} tone="primary" />
+          <Kpi label="Gesamt-Conversion (Bew. → Mitarbeiter)" value={`${totals.gesamt_conversion}%`} tone="success" />
+          <Kpi label="Freigabe-Quote (Bew. → freigegeben)" value={`${totals.avg_conversion}%`} tone="primary" />
           <Kpi label="Ø Bewerbungen/Tag" value={totals.avg_per_day} tone="default" />
-          <Kpi label="Ø Mitarbeiter/Tag" value={totals.avg_employees_per_day} tone="success" />
         </div>
       )}
 
