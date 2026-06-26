@@ -96,12 +96,16 @@ function AdminAiSettingsPage() {
   const [openaiKeyMasked, setOpenaiKeyMasked] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState(false);
 
-  // KI-Bewerbungsgespräch (Gemini + ElevenLabs + Default-Prompts)
+  // KI-Bewerbungsgespräch (Gemini + ElevenLabs + apinet + Default-Prompts)
   const [geminiKey, setGeminiKey] = useState("");
   const [geminiKeyMasked, setGeminiKeyMasked] = useState<string | null>(null);
   const [geminiModel, setGeminiModel] = useState("google/gemini-2.5-flash");
   const [elevenKey, setElevenKey] = useState("");
   const [elevenKeyMasked, setElevenKeyMasked] = useState<string | null>(null);
+  const [elevenAgentId, setElevenAgentId] = useState("");
+  const [apinetKey, setApinetKey] = useState("");
+  const [apinetKeyMasked, setApinetKeyMasked] = useState<string | null>(null);
+  const [apinetModel, setApinetModel] = useState("gemini-2.5-flash");
   const [defaultVoiceId, setDefaultVoiceId] = useState("");
   const [defaultSystemPrompt, setDefaultSystemPrompt] = useState("");
   const [defaultDecisionPrompt, setDefaultDecisionPrompt] = useState("");
@@ -112,14 +116,17 @@ function AdminAiSettingsPage() {
   const loadSystemKey = async () => {
     const { data } = await supabase
       .from("system_settings")
-      .select("openai_api_key, gemini_api_key, gemini_model, elevenlabs_api_key, default_voice_id, default_system_prompt, default_decision_prompt")
+      .select("openai_api_key, gemini_api_key, gemini_model, elevenlabs_api_key, elevenlabs_agent_id, apinet_api_key, apinet_model, default_voice_id, default_system_prompt, default_decision_prompt")
       .eq("id", 1)
       .maybeSingle() as any;
     const mask = (k: string | null | undefined) => (k && k.length > 8 ? `••••••••${k.slice(-4)}` : null);
     setOpenaiKeyMasked(mask(data?.openai_api_key));
     setGeminiKeyMasked(mask(data?.gemini_api_key));
     setElevenKeyMasked(mask(data?.elevenlabs_api_key));
+    setApinetKeyMasked(mask(data?.apinet_api_key));
     if (data?.gemini_model) setGeminiModel(data.gemini_model);
+    if (data?.apinet_model) setApinetModel(data.apinet_model);
+    setElevenAgentId(data?.elevenlabs_agent_id ?? "");
     setDefaultVoiceId(data?.default_voice_id ?? "");
     setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
     setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
@@ -146,19 +153,22 @@ function AdminAiSettingsPage() {
     setSavingInterview(true);
     const patch: Record<string, any> = {
       gemini_model: geminiModel,
+      apinet_model: apinetModel,
+      elevenlabs_agent_id: elevenAgentId.trim() || null,
       default_voice_id: defaultVoiceId.trim() || null,
       default_system_prompt: defaultSystemPrompt.trim() || null,
       default_decision_prompt: defaultDecisionPrompt.trim() || null,
     };
     if (geminiKey.trim()) patch.gemini_api_key = geminiKey.trim();
     if (elevenKey.trim()) patch.elevenlabs_api_key = elevenKey.trim();
+    if (apinetKey.trim()) patch.apinet_api_key = apinetKey.trim();
     const { error } = await supabase.from("system_settings").update(patch).eq("id", 1);
     setSavingInterview(false);
     if (error) {
       toast({ title: "Fehler", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Interview-Einstellungen gespeichert" });
-      setGeminiKey(""); setElevenKey("");
+      setGeminiKey(""); setElevenKey(""); setApinetKey("");
       loadSystemKey();
     }
   };
@@ -321,6 +331,34 @@ function AdminAiSettingsPage() {
             </div>
             <Input type="password" value={elevenKey} onChange={(e) => setElevenKey(e.target.value)}
               placeholder="sk_..." className="text-xs h-8" autoComplete="off" />
+          </div>
+
+          {/* ElevenLabs Agent ID */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium">ElevenLabs Agent ID (Conversational AI)</label>
+            <Input value={elevenAgentId} onChange={(e) => setElevenAgentId(e.target.value)}
+              placeholder="z.B. agent_01abc..." className="text-xs h-8" autoComplete="off" />
+            <p className="text-[10px] text-muted-foreground">
+              ElevenLabs → Conversational AI → dein Agent → Agent-ID aus URL. Wird für Voice-Bewerbungsgespräche genutzt.
+            </p>
+          </div>
+
+          {/* apinet.cloud */}
+          <div className="space-y-2 pt-2 border-t">
+            <label className="text-xs font-medium flex items-center gap-1.5"><Key className="h-3 w-3" /> apinet.cloud API Key</label>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Aktuell:</span>
+              {apinetKeyMasked
+                ? <code className="text-xs px-2 py-0.5 rounded bg-muted">{apinetKeyMasked}</code>
+                : <span className="text-xs text-muted-foreground">Nicht gesetzt (optional)</span>}
+            </div>
+            <Input type="password" value={apinetKey} onChange={(e) => setApinetKey(e.target.value)}
+              placeholder="sk-..." className="text-xs h-8" autoComplete="off" />
+            <Input value={apinetModel} onChange={(e) => setApinetModel(e.target.value)}
+              placeholder="gemini-2.5-flash" className="text-xs h-8" />
+            <p className="text-[10px] text-muted-foreground">
+              Optional: OpenAI-kompatibles Gateway als Alternative zu Lovable AI. Endpoint: <code>https://apinet.cloud/v1</code>.
+            </p>
           </div>
 
           {/* Default Voice-ID */}
