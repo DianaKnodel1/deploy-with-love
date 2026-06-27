@@ -138,7 +138,7 @@ function AdminAiSettingsPage() {
       return;
     }
     setSavingKey(true);
-    const { error } = await supabase.from("system_settings").update({ openai_api_key: openaiKey.trim() }).eq("id", 1);
+    const { error } = await supabase.from("system_settings").upsert({ id: 1, openai_api_key: openaiKey.trim() }, { onConflict: "id" });
     setSavingKey(false);
     if (error) {
       toast({ title: "Fehler", description: error.message, variant: "destructive" });
