@@ -42,12 +42,19 @@ if (!build) {
 const { handlerPath, clientDir } = build;
 
 const mod = await import(handlerPath);
-const handler = mod.default ?? mod;
+function findFetch(o, depth = 0) {
+  if (!o || depth > 4) return null;
+  if (typeof o.fetch === "function") return o;
+  if (o.default) return findFetch(o.default, depth + 1);
+  return null;
+}
+const handler = findFetch(mod);
 
-if (typeof handler?.fetch !== "function") {
-  console.error(`[serve] ${handlerPath} exportiert kein { fetch } default.`);
+if (!handler) {
+  console.error(`[serve] ${handlerPath} exportiert kein { fetch }. Keys: ${Object.keys(mod).join(",")} | default keys: ${mod.default ? Object.keys(mod.default).join(",") : "n/a"}`);
   process.exit(1);
 }
+
 
 const port = Number(process.env.PORT ?? 3000);
 const hostname = process.env.HOST ?? "127.0.0.1";
