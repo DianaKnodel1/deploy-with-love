@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
-    "start": "PORT=${PORT:-3000} HOST=${HOST:-127.0.0.1} bun scripts/serve.mjs",
+    "start": "NITRO_PORT=${PORT:-3000} NITRO_HOST=${HOST:-127.0.0.1} node .output/server/index.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
