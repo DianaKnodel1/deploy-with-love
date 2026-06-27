@@ -15,12 +15,16 @@ const rootDir = resolve(here, "..");
 
 const buildCandidates = [
   {
-    handlerPath: resolve(rootDir, ".output", "server", "index.mjs"),
-    clientDir: resolve(rootDir, ".output", "public"),
+    handlerPath: resolve(rootDir, "dist", "server", "index.mjs"),
+    clientDir: resolve(rootDir, "dist", "client"),
   },
   {
     handlerPath: resolve(rootDir, "dist", "server", "server.js"),
     clientDir: resolve(rootDir, "dist", "client"),
+  },
+  {
+    handlerPath: resolve(rootDir, ".output", "server", "index.mjs"),
+    clientDir: resolve(rootDir, ".output", "public"),
   },
 ];
 
@@ -41,12 +45,17 @@ const mod = await import(handlerPath);
 const handler = mod.default ?? mod;
 
 if (typeof handler?.fetch !== "function") {
-  console.error("[serve] dist/server/server.js exportiert kein { fetch } default.");
+  console.error(`[serve] ${handlerPath} exportiert kein { fetch } default.`);
   process.exit(1);
 }
 
 const port = Number(process.env.PORT ?? 3000);
 const hostname = process.env.HOST ?? "127.0.0.1";
+const serverContext = {
+  waitUntil(promise) {
+    Promise.resolve(promise).catch((err) => console.error("[serve] waitUntil rejected:", err));
+  },
+};
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -133,7 +142,7 @@ const server = createServer(async (req, res) => {
       headers: req.headers,
       body: hasBody ? await readBody(req) : undefined,
     };
-    const response = await handler.fetch(new Request(url, init), process.env, {});
+    const response = await handler.fetch(new Request(url, init), process.env, serverContext);
 
     res.writeHead(response.status, Object.fromEntries(response.headers));
     if (req.method === "HEAD" || !response.body) {
