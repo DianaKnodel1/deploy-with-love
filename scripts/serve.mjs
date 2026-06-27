@@ -51,6 +51,11 @@ if (typeof handler?.fetch !== "function") {
 
 const port = Number(process.env.PORT ?? 3000);
 const hostname = process.env.HOST ?? "127.0.0.1";
+const serverContext = {
+  waitUntil(promise) {
+    Promise.resolve(promise).catch((err) => console.error("[serve] waitUntil rejected:", err));
+  },
+};
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -137,7 +142,7 @@ const server = createServer(async (req, res) => {
       headers: req.headers,
       body: hasBody ? await readBody(req) : undefined,
     };
-    const response = await handler.fetch(new Request(url, init), process.env, {});
+    const response = await handler.fetch(new Request(url, init), process.env, serverContext);
 
     res.writeHead(response.status, Object.fromEntries(response.headers));
     if (req.method === "HEAD" || !response.body) {
