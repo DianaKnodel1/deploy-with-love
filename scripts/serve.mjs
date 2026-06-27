@@ -15,12 +15,16 @@ const rootDir = resolve(here, "..");
 
 const buildCandidates = [
   {
-    handlerPath: resolve(rootDir, ".output", "server", "index.mjs"),
-    clientDir: resolve(rootDir, ".output", "public"),
+    handlerPath: resolve(rootDir, "dist", "server", "index.mjs"),
+    clientDir: resolve(rootDir, "dist", "client"),
   },
   {
     handlerPath: resolve(rootDir, "dist", "server", "server.js"),
     clientDir: resolve(rootDir, "dist", "client"),
+  },
+  {
+    handlerPath: resolve(rootDir, ".output", "server", "index.mjs"),
+    clientDir: resolve(rootDir, ".output", "public"),
   },
 ];
 
@@ -41,7 +45,7 @@ const mod = await import(handlerPath);
 const handler = mod.default ?? mod;
 
 if (typeof handler?.fetch !== "function") {
-  console.error("[serve] dist/server/server.js exportiert kein { fetch } default.");
+  console.error(`[serve] ${handlerPath} exportiert kein { fetch } default.`);
   process.exit(1);
 }
 
