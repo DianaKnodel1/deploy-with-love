@@ -11,8 +11,31 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { Readable } from "node:stream";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const handlerPath = resolve(here, "..", "dist", "server", "server.js");
-const clientDir = resolve(here, "..", "dist", "client");
+const rootDir = resolve(here, "..");
+
+const buildCandidates = [
+  {
+    handlerPath: resolve(rootDir, ".output", "server", "index.mjs"),
+    clientDir: resolve(rootDir, ".output", "public"),
+  },
+  {
+    handlerPath: resolve(rootDir, "dist", "server", "server.js"),
+    clientDir: resolve(rootDir, "dist", "client"),
+  },
+];
+
+const build = buildCandidates.find(
+  (candidate) => existsSync(candidate.handlerPath) && existsSync(candidate.clientDir),
+);
+
+if (!build) {
+  console.error(
+    "[serve] Kein gebautes Portal gefunden. Bitte erst `bun run build` ausführen. Erwartet .output/server/index.mjs + .output/public oder dist/server/server.js + dist/client.",
+  );
+  process.exit(1);
+}
+
+const { handlerPath, clientDir } = build;
 
 const mod = await import(handlerPath);
 const handler = mod.default ?? mod;
