@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/admin/ai-settings")({
   component: AdminAiSettingsPage,
@@ -14,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Bot, Save, Plus, Trash2, Key } from "lucide-react";
+import { loadAiSettings, saveAiInterviewSettings, saveOpenAiKey } from "@/lib/ai-settings.functions";
 
 interface FaqEntry { q: string; a: string; }
 
@@ -78,6 +80,9 @@ Schwelle: score >= 60 ⇒ "zusage", sonst "absage".`;
 
 function AdminAiSettingsPage() {
   const { toast } = useToast();
+  const loadAiSettingsFn = useServerFn(loadAiSettings);
+  const saveOpenAiKeyFn = useServerFn(saveOpenAiKey);
+  const saveAiInterviewSettingsFn = useServerFn(saveAiInterviewSettings);
   const [tenants, setTenants] = useState<TenantAiSettings[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [aiEnabled, setAiEnabled] = useState(true);
@@ -114,22 +119,21 @@ function AdminAiSettingsPage() {
   useEffect(() => { loadTenants(); loadSystemKey(); }, []);
 
   const loadSystemKey = async () => {
-    const { data } = await supabase
-      .from("system_settings")
-      .select("openai_api_key, gemini_api_key, gemini_model, elevenlabs_api_key, elevenlabs_agent_id, apinet_api_key, apinet_model, default_voice_id, default_system_prompt, default_decision_prompt")
-      .eq("id", 1)
-      .maybeSingle() as any;
-    const mask = (k: string | null | undefined) => (k && k.length > 8 ? `••••••••${k.slice(-4)}` : null);
-    setOpenaiKeyMasked(mask(data?.openai_api_key));
-    setGeminiKeyMasked(mask(data?.gemini_api_key));
-    setElevenKeyMasked(mask(data?.elevenlabs_api_key));
-    setApinetKeyMasked(mask(data?.apinet_api_key));
-    if (data?.gemini_model) setGeminiModel(data.gemini_model);
-    if (data?.apinet_model) setApinetModel(data.apinet_model);
-    setElevenAgentId(data?.elevenlabs_agent_id ?? "");
-    setDefaultVoiceId(data?.default_voice_id ?? "");
-    setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
-    setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
+    try {
+      const data = await loadAiSettingsFn({ data: {} as any }) as any;
+      setOpenaiKeyMasked(data?.openai_api_key_masked ?? null);
+      setGeminiKeyMasked(data?.gemini_api_key_masked ?? null);
+      setElevenKeyMasked(data?.elevenlabs_api_key_masked ?? null);
+      setApinetKeyMasked(data?.apinet_api_key_masked ?? null);
+      if (data?.gemini_model) setGeminiModel(data.gemini_model);
+      if (data?.apinet_model) setApinetModel(data.apinet_model);
+      setElevenAgentId(data?.elevenlabs_agent_id ?? "");
+      setDefaultVoiceId(data?.default_voice_id ?? "");
+      setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
+      setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
+    } catch (e: any) {
+      toast({ title: "AI Settings konnten nicht geladen werden", description: e?.message ?? String(e), variant: "destructive" });
+    }
   };
 
   const saveSystemKey = async () => {
@@ -138,14 +142,15 @@ function AdminAiSettingsPage() {
       return;
     }
     setSavingKey(true);
-    const { error } = await supabase.from("system_settings").update({ openai_api_key: openaiKey.trim() } as any).eq("id", 1);
-    setSavingKey(false);
-    if (error) {
-      toast({ title: "Fehler", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      const data = await saveOpenAiKeyFn({ data: { openai_api_key: openaiKey.trim() } }) as any;
       toast({ title: "OpenAI Key gespeichert" });
       setOpenaiKey("");
-      loadSystemKey();
+      setOpenaiKeyMasked(data?.openai_api_key_masked ?? null);
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setSavingKey(false);
     }
   };
 
@@ -162,14 +167,23 @@ function AdminAiSettingsPage() {
     if (geminiKey.trim()) patch.gemini_api_key = geminiKey.trim();
     if (elevenKey.trim()) patch.elevenlabs_api_key = elevenKey.trim();
     if (apinetKey.trim()) patch.apinet_api_key = apinetKey.trim();
-    const { error } = await supabase.from("system_settings").update(patch as any).eq("id", 1);
-    setSavingInterview(false);
-    if (error) {
-      toast({ title: "Fehler", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      const data = await saveAiInterviewSettingsFn({ data: patch as any }) as any;
       toast({ title: "Interview-Einstellungen gespeichert" });
       setGeminiKey(""); setElevenKey(""); setApinetKey("");
-      loadSystemKey();
+      setGeminiKeyMasked(data?.gemini_api_key_masked ?? null);
+      setElevenKeyMasked(data?.elevenlabs_api_key_masked ?? null);
+      setApinetKeyMasked(data?.apinet_api_key_masked ?? null);
+      if (data?.gemini_model) setGeminiModel(data.gemini_model);
+      if (data?.apinet_model) setApinetModel(data.apinet_model);
+      setElevenAgentId(data?.elevenlabs_agent_id ?? "");
+      setDefaultVoiceId(data?.default_voice_id ?? "");
+      setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
+      setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setSavingInterview(false);
     }
   };
 
