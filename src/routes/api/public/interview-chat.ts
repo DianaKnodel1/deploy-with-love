@@ -151,15 +151,25 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         const timedOut = startedAt !== null && Date.now() - startedAt > MAX_DURATION_MS;
 
         let systemPrompt = DEFAULT_SYSTEM_PROMPT;
+        let companyName = "unserem Unternehmen";
+        let recruiterName = "Sabine Schneider";
         if (app.source_slug) {
           const { data: lp } = await supabaseAdmin
             .from("landing_pages")
-            .select("interview_system_prompt")
+            .select("interview_system_prompt, recruiter_name, branding")
             .eq("source_slug", app.source_slug)
             .maybeSingle();
           const custom = (lp as any)?.interview_system_prompt?.trim();
           if (custom) systemPrompt = custom;
+          const fn = (lp as any)?.branding?.firmenname?.trim?.();
+          if (fn) companyName = fn;
+          const rn = (lp as any)?.recruiter_name?.trim?.();
+          if (rn) recruiterName = rn;
         }
+        // Platzhalter pro Landing personalisieren
+        systemPrompt = systemPrompt
+          .replace(/\{company\}/g, companyName)
+          .replace(/\{recruiter\}/g, recruiterName);
 
         const history: Msg[] = Array.isArray(app.interview_messages) ? (app.interview_messages as any) : [];
 
