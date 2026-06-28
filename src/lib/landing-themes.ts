@@ -31,10 +31,6 @@ import teilCss from "../landing-themes/theme-eilers-replica/style.css?raw";
 import teilJs from "../landing-themes/theme-eilers-replica/script.js?raw";
 import teilMeta from "../landing-themes/theme-eilers-replica/meta.json";
 
-import teffHtml from "../landing-themes/theme-effica-copy/template.html?raw";
-import teffCss from "../landing-themes/theme-effica-copy/style.css?raw";
-import teffJs from "../landing-themes/theme-effica-copy/script.js?raw";
-import teffMeta from "../landing-themes/theme-effica-copy/meta.json";
 
 import tmirHtml from "../landing-themes/theme-mirror-site/template.html?raw";
 import tmirCss from "../landing-themes/theme-mirror-site/style.css?raw";
@@ -69,7 +65,7 @@ export const THEMES: ThemeFiles[] = [
   { id: tazbMeta.id, name: tazbMeta.name, description: tazbMeta.description, html: tazbHtml, css: tazbCss, js: tazbJs, slots: pickSlots(tazbMeta) },
   { id: tysywMeta.id, name: tysywMeta.name, description: tysywMeta.description, html: tysywHtml, css: tysywCss, js: tysywJs, slots: pickSlots(tysywMeta) },
   { id: teilMeta.id, name: teilMeta.name, description: teilMeta.description, html: teilHtml, css: teilCss, js: teilJs, slots: pickSlots(teilMeta) },
-  { id: teffMeta.id, name: teffMeta.name, description: teffMeta.description, html: teffHtml, css: teffCss, js: teffJs, slots: pickSlots(teffMeta) },
+  
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
 ];
 
