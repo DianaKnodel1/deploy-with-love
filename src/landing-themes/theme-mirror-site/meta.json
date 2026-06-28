@@ -74,7 +74,10 @@
     { "key": "social_instagram",  "label": "Instagram URL",            "default": "#" },
     { "key": "social_linkedin",   "label": "LinkedIn URL",             "default": "#" },
 
-    { "key": "impressum_url",     "label": "Impressum URL",            "default": "#impressum" },
-    { "key": "datenschutz_url",   "label": "Datenschutz URL",          "default": "#datenschutz" }
+    { "key": "impressum_url",     "label": "Impressum URL (leer = interne Sektion)",   "default": "#impressum" },
+    { "key": "datenschutz_url",   "label": "Datenschutz URL (leer = interne Sektion)", "default": "#datenschutz" },
+
+    { "key": "impressum_html",    "label": "Impressum Inhalt (HTML erlaubt)",          "default": "<p><strong>{{firmenname}}</strong><br/>{{address}}<br/>Telefon: {{contact_phone}}<br/>E-Mail: {{contact_email}}</p><p>Vertretungsberechtigt: Geschäftsführung<br/>Umsatzsteuer-ID: DE000000000<br/>Handelsregister: HRB 00000</p><p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Geschäftsführung, Anschrift wie oben.</p>" },
+    { "key": "datenschutz_html",  "label": "Datenschutz Inhalt (HTML erlaubt)",        "default": "<p>Diese Datenschutzerklärung informiert über die Verarbeitung personenbezogener Daten beim Besuch dieser Website.</p><p><strong>Verantwortlicher:</strong> {{firmenname}}, {{address}}, E-Mail: {{contact_email}}.</p><p><strong>Server-Logfiles:</strong> Beim Aufruf werden technische Daten (IP, Browser, Zeitstempel) verarbeitet, um den Betrieb zu sichern (Art. 6 Abs. 1 lit. f DSGVO).</p><p><strong>Kontaktaufnahme:</strong> Bei Anfragen verarbeiten wir Ihre Angaben zur Bearbeitung gemäß Art. 6 Abs. 1 lit. b/f DSGVO.</p><p><strong>Ihre Rechte:</strong> Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit, Widerspruch sowie Beschwerde bei einer Aufsichtsbehörde.</p>" }
   ]
 }
