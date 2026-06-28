@@ -150,16 +150,19 @@ export const generateLandingZip = createServerFn({ method: "POST" })
     // Domain user-freundlich säubern (https://, trailing slash entfernen)
     const cleanedBranding = { ...data.branding, landing_domain: cleanLandingDomain(data.branding.landing_domain) };
 
-    // CTA-Fallback: Wenn cta_url leer/relativ ist, auf absolute Portal-URL umbiegen,
-    // damit "Jetzt bewerben" auf der Landing-Domain nicht ins Leere (about:blank/404) führt.
+    // CTA-Fallback: cta_url MUSS absolut auf das Portal zeigen, sonst landet
+    // "Jetzt bewerben" auf der Landing-Domain im Nichts (about:blank / 404).
     const portalBase = (cleanedBranding.portal_url || "").replace(/\/+$/, "");
     const ctaRaw = (slots.cta_url ?? "").trim();
-    if (portalBase) {
-      if (!ctaRaw || ctaRaw.startsWith("/")) {
-        slots.cta_url = `${portalBase}${ctaRaw && ctaRaw.startsWith("/") ? ctaRaw : "/bewerbung"}`;
+    const isAbsolute = /^https?:\/\//i.test(ctaRaw);
+    if (!isAbsolute) {
+      if (!portalBase) {
+        throw new Error(
+          "Portal-URL fehlt: Bitte 'Portal-URL' im Generator setzen (z. B. https://mb-portal.com), damit der 'Jetzt bewerben'-Button absolut auf das Portal verlinkt.",
+        );
       }
-    } else if (!ctaRaw) {
-      slots.cta_url = "/bewerbung";
+      const path = ctaRaw.startsWith("/") ? ctaRaw : "/bewerbung";
+      slots.cta_url = `${portalBase}${path}`;
     }
 
     let html = applyPlaceholders(theme.html, cleanedBranding, slots);
