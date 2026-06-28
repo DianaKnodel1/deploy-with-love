@@ -146,10 +146,24 @@ export const generateLandingZip = createServerFn({ method: "POST" })
     const theme = getTheme(data.themeId);
     if (!theme) throw new Error(`Theme nicht gefunden: ${data.themeId}`);
 
-    const slots = data.slots ?? {};
+    const slots = { ...(data.slots ?? {}) };
     // Domain user-freundlich säubern (https://, trailing slash entfernen)
     const cleanedBranding = { ...data.branding, landing_domain: cleanLandingDomain(data.branding.landing_domain) };
+
+    // CTA-Fallback: Wenn cta_url leer/relativ ist, auf absolute Portal-URL umbiegen,
+    // damit "Jetzt bewerben" auf der Landing-Domain nicht ins Leere (about:blank/404) führt.
+    const portalBase = (cleanedBranding.portal_url || "").replace(/\/+$/, "");
+    const ctaRaw = (slots.cta_url ?? "").trim();
+    if (portalBase) {
+      if (!ctaRaw || ctaRaw.startsWith("/")) {
+        slots.cta_url = `${portalBase}${ctaRaw && ctaRaw.startsWith("/") ? ctaRaw : "/bewerbung"}`;
+      }
+    } else if (!ctaRaw) {
+      slots.cta_url = "/bewerbung";
+    }
+
     let html = applyPlaceholders(theme.html, cleanedBranding, slots);
+
     html = cleanEmptyMetaTags(html, cleanedBranding);
     html = injectLandingConfig(html, cleanedBranding);
     const css = applyPlaceholders(theme.css, cleanedBranding, slots);
