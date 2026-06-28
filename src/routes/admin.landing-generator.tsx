@@ -1011,10 +1011,15 @@ document.addEventListener('submit', function(e){
                 </div>
               )}
 
-              {/* Calendly-Zwischenseite (broker oder optional) */}
+              {/* Calendly-Zwischenseite — nur Klassisch + Vermittlung. Fast-Track geht direkt ins Portal. */}
+              {branding.flow_type === "fast" ? (
+                <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
+                  📅 <span className="font-semibold">Calendly:</span> Wird bei Fast-Track <strong>nicht</strong> verwendet — Bewerber werden direkt zur Portal-Registrierung weitergeleitet. Calendly liegt bei der <a href="/admin/partner-companies" className="underline">Partner-Firma</a> und wird nur von Vermittlungs-Landings genutzt.
+                </div>
+              ) : (
               <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
                 <Label className="text-xs font-semibold">
-                  📅 Calendly-Buchung {branding.flow_type === "broker" ? "(Pflicht für Vermittlung)" : "(optional)"}
+                  📅 Calendly-Buchung {branding.flow_type === "broker" ? "(Pflicht für Vermittlung — meist via Partner-Firma vererbt)" : "(optional)"}
                 </Label>
                 <p className="text-[11px] text-muted-foreground">
                   Nach erfolgreicher Bewerbung erscheint inline auf der Landing der Erfolgsblock mit Button „Jetzt Termin buchen". Calendly öffnet in einem neuen Tab — <strong>keine</strong> automatische Weiterleitung. Webhook-Konfiguration unter <a href="/admin/calendly" className="underline">Vermittlung → Calendly</a>.
@@ -1037,6 +1042,8 @@ document.addEventListener('submit', function(e){
                   </p>
                 </Field>
               </div>
+              )}
+
 
             </CardContent>
           </Card>
