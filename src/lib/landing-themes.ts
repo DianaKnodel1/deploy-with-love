@@ -1,6 +1,11 @@
 // Theme-Registry: HTML/CSS/JS als raw Strings, damit sie im Server-Function-Bundle
 // (Cloudflare Workers) verfügbar sind — kein FS-Zugriff zur Laufzeit.
 
+import sharedFormHtml from "../landing-themes/_shared/form-section.html?raw";
+import sharedFormCss from "../landing-themes/_shared/form-section.css?raw";
+import sharedFormJs from "../landing-themes/_shared/form-section.js?raw";
+
+
 import t10Html from "../landing-themes/theme-10/template.html?raw";
 import t10Css from "../landing-themes/theme-10/style.css?raw";
 import t10Js from "../landing-themes/theme-10/script.js?raw";
