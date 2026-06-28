@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { listCalendlyAccounts, saveCalendlyAccount, deleteCalendlyAccount } from "@/lib/calendly.functions";
+import { listCalendlyAccounts, saveCalendlyAccount, deleteCalendlyAccount, registerCalendlyWebhook } from "@/lib/calendly.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
