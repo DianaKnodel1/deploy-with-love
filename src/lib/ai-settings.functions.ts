@@ -7,8 +7,10 @@ const SETTINGS_COLUMNS =
 
 const maskSecret = (value: string | null | undefined) => {
   const clean = value?.trim();
-  if (!clean || clean.length <= 8) return null;
-  return `••••••••${clean.slice(-4)}`;
+  if (!clean) return null;
+  if (clean.length <= 4) return "••••";
+  const tail = clean.slice(-Math.min(4, Math.max(2, clean.length - 2)));
+  return `••••••••${tail}`;
 };
 
 async function requireAdmin(ctx: { supabase: any; userId: string }) {
