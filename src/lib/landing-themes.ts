@@ -31,10 +31,6 @@ import teilCss from "../landing-themes/theme-eilers-replica/style.css?raw";
 import teilJs from "../landing-themes/theme-eilers-replica/script.js?raw";
 import teilMeta from "../landing-themes/theme-eilers-replica/meta.json";
 
-import teffHtml from "../landing-themes/theme-effica-copy/template.html?raw";
-import teffCss from "../landing-themes/theme-effica-copy/style.css?raw";
-import teffJs from "../landing-themes/theme-effica-copy/script.js?raw";
-import teffMeta from "../landing-themes/theme-effica-copy/meta.json";
 
 import tmirHtml from "../landing-themes/theme-mirror-site/template.html?raw";
 import tmirCss from "../landing-themes/theme-mirror-site/style.css?raw";
