@@ -821,10 +821,12 @@ document.addEventListener('submit', function(e){
                   <Input value={branding.api_endpoint} onChange={set("api_endpoint")} placeholder={apiPlaceholder} />
                   <p className="text-[10px] text-muted-foreground mt-1">Immer das zentrale Portal-Backend: <code>https://portal.mb-portal.com/api/public/applications</code></p>
                 </Field>
-                <Field label="Mitarbeiter-Portal URL * (Redirect nach Fast-Track-Bewerbung)">
-                  <Input value={branding.portal_url} onChange={set("portal_url")} placeholder="https://portal.uwk-consulting.de" />
-                  <p className="text-[10px] text-muted-foreground mt-1">Tenant-eigenes Portal. Bei Fast-Track wird der Bewerber hierhin zu <code>/register</code> weitergeleitet.</p>
-                </Field>
+                {branding.flow_type === "fast" && (
+                  <Field label="Mitarbeiter-Portal URL * (Redirect nach Fast-Track-Bewerbung)">
+                    <Input value={branding.portal_url} onChange={set("portal_url")} placeholder="https://portal.uwk-consulting.de" />
+                    <p className="text-[10px] text-muted-foreground mt-1">Tenant-eigenes Portal. Bei Fast-Track wird der Bewerber hierhin zu <code>/register</code> weitergeleitet.</p>
+                  </Field>
+                )}
                 <Field label="Supabase URL (optional — nur bei Direkt-Insert)">
                   <Input value={branding.supabase_url} onChange={set("supabase_url")} placeholder="leer lassen" />
                 </Field>
