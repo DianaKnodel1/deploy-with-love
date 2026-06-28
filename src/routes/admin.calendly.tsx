@@ -108,7 +108,25 @@ function AdminCalendlyPage() {
             </div>
             <div>
               <Label>Webhook Signing Key</Label>
-              <Input value={signingKey} onChange={(e) => setSigningKey(e.target.value)} placeholder="aus Calendly nach Webhook-Erstellung" required type="password" />
+              <div className="flex gap-2">
+                <Input value={signingKey} onChange={(e) => setSigningKey(e.target.value)} placeholder="aus Calendly nach Webhook-Erstellung (oder generieren)" required type="text" className="font-mono text-xs" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    const bytes = new Uint8Array(32);
+                    crypto.getRandomValues(bytes);
+                    const key = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+                    setSigningKey(key);
+                    try { await navigator.clipboard.writeText(key); } catch {}
+                  }}
+                >
+                  Generieren
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Klick auf <strong>Generieren</strong> erstellt einen 64-Zeichen Key und kopiert ihn in die Zwischenablage. Diesen Key auch beim Calendly-Webhook eintragen (als <code>signing_key</code>).
+              </p>
             </div>
             <Button type="submit" disabled={saving}>Speichern</Button>
           </form>
