@@ -28,29 +28,15 @@ function AdminCalendlyPage() {
   const [userUri, setUserUri] = useState("");
   const [signingKey, setSigningKey] = useState("");
   const [saving, setSaving] = useState(false);
-  const [pat, setPat] = useState("");
-  const [registering, setRegistering] = useState(false);
   const [patPerRow, setPatPerRow] = useState<Record<string, string>>({});
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+
 
   const portalOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const webhookUrl = `${portalOrigin}/api/public/calendly-webhook`;
 
-  async function handleRegister() {
-    if (!pat || !signingKey) {
-      toast({ title: "PAT und Signing Key benötigt", variant: "destructive" });
-      return;
-    }
-    setRegistering(true);
-    try {
-      const r: any = await registerWebhook({ data: { personal_access_token: pat, webhook_url: webhookUrl, signing_key: signingKey } });
-      if (r?.user_uri && !userUri) setUserUri(r.user_uri);
-      toast({ title: "Webhook in Calendly registriert ✅", description: r?.user_uri });
-      setPat("");
-    } catch (e: any) {
-      toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
-    } finally { setRegistering(false); }
-  }
+
+
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
@@ -152,24 +138,6 @@ function AdminCalendlyPage() {
             <Button type="submit" disabled={saving}>Speichern</Button>
           </form>
 
-          <div className="mt-6 pt-6 border-t space-y-3">
-            <Label>Webhook direkt in Calendly registrieren (optional)</Label>
-            <p className="text-xs text-muted-foreground">
-              Statt curl: hier deinen Calendly <strong>Personal Access Token</strong> einfügen
-              (<a href="https://calendly.com/integrations/api_webhooks" target="_blank" rel="noreferrer" className="underline">calendly.com/integrations/api_webhooks</a> → „Generate New Token"),
-              dann wird der Webhook automatisch angelegt. Der Token wird <strong>nicht gespeichert</strong>.
-            </p>
-            <Input
-              value={pat}
-              onChange={(e) => setPat(e.target.value)}
-              placeholder="eyJraWQiOi... (Calendly PAT)"
-              type="password"
-              className="font-mono text-xs"
-            />
-            <Button type="button" variant="secondary" onClick={handleRegister} disabled={registering}>
-              {registering ? "Registriere…" : "Webhook in Calendly anlegen"}
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
