@@ -17,7 +17,7 @@ export const listCalendlyAccounts = createServerFn({ method: "GET" })
     await requireAdmin(context);
     const { data, error } = await context.supabase
       .from("calendly_accounts")
-      .select("id, tenant_id, display_name, calendly_user_uri, created_at")
+      .select("id, tenant_id, display_name, calendly_user_uri, webhook_signing_key, created_at")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { rows: data ?? [] };
