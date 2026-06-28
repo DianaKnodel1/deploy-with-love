@@ -353,6 +353,12 @@ function AdminAiSettingsPage() {
           {/* ElevenLabs Agent ID */}
           <div className="space-y-2">
             <label className="text-xs font-medium">ElevenLabs Agent ID (Conversational AI)</label>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground">Aktuell:</span>
+              {elevenAgentId
+                ? <code className="text-xs px-2 py-0.5 rounded bg-muted break-all">{elevenAgentId}</code>
+                : <span className="text-xs text-destructive">Nicht gesetzt</span>}
+            </div>
             <Input value={elevenAgentId} onChange={(e) => setElevenAgentId(e.target.value)}
               placeholder="z.B. agent_01abc..." className="text-xs h-8" autoComplete="off" />
             <p className="text-[10px] text-muted-foreground">
