@@ -36,8 +36,10 @@ a { color: inherit; text-decoration: none; }
 }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 22px; }
-.logo-img { max-height: 36px; width: auto; }
-.logo-img[src=""] { display: none; }
+.logo-img { max-height: 40px; width: auto; }
+.logo-img[src=""], .logo-img:not([src]) { display: none; }
+.logo:has(.logo-img[src]:not([src=""])) .logo-mark,
+.logo:has(.logo-img[src]:not([src=""])) .logo-text { display: none; }
 .logo-mark { display: inline-flex; }
 .nav-desktop { display: none; gap: 32px; font-weight: 500; color: #475569; }
 .nav-desktop a:hover { color: #14b8a6; }
