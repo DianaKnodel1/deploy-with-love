@@ -74,7 +74,7 @@
 
     { "key": "cta_subtext",       "label": "CTA-Untertext",            "type": "textarea", "default": "45 Minuten, persönlich, unverbindlich. Sie erhalten eine erste fundierte Einschätzung — wir entscheiden gemeinsam, ob eine Zusammenarbeit Sinn ergibt." },
     { "key": "cta_url",           "label": "CTA Button URL",           "type": "text",     "default": "mailto:kontakt@eilers-gmbh.com" },
-    { "key": "cta_label",         "label": "CTA Button Beschriftung",  "type": "text",     "default": "Erstgespräch vereinbaren" },
+    { "key": "cta_label",         "label": "CTA Button Beschriftung",  "type": "text",     "default": "Jetzt bewerben" },
     { "key": "contact_email",     "label": "E-Mail-Adresse",           "type": "text",     "default": "kontakt@eilers-gmbh.com" },
     { "key": "contact_phone",     "label": "Telefon",                  "type": "text",     "default": "+49 431 000 00 00" },
     { "key": "contact_address",   "label": "Adresse",                  "type": "text",     "default": "Kiel, Schleswig-Holstein" },
