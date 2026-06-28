@@ -1,4 +1,4 @@
-// Admin-UI für Partner-Firmen (Vermittlungs-Profile, broker flow).
+// Admin-UI für Fast-Track-Firmen (Vermittlungs-Profile, broker flow).
 import { createFileRoute } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
@@ -105,7 +105,7 @@ function PartnerCompaniesPage() {
         button_label: form.button_label || "Jetzt Termin buchen",
         redirect_delay_ms: form.redirect_delay_ms ?? 2500,
       } });
-      toast({ title: form.id ? "Aktualisiert" : "Partner-Firma angelegt" });
+      toast({ title: form.id ? "Aktualisiert" : "Fast-Track-Firma angelegt" });
       setForm(EMPTY);
       q.refetch();
     } catch (e: any) {
@@ -116,7 +116,7 @@ function PartnerCompaniesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Partner-Firma wirklich löschen? Landings, die diese Firma referenzieren, verlieren die Zuordnung.")) return;
+    if (!confirm("Fast-Track-Firma wirklich löschen? Landings, die diese Firma referenzieren, verlieren die Zuordnung.")) return;
     await del({ data: { id } });
     toast({ title: "Gelöscht" });
     q.refetch();
@@ -125,7 +125,7 @@ function PartnerCompaniesPage() {
   return (
     <div className="container max-w-5xl py-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Partner-Firmen (Vermittlung)</h1>
+        <h1 className="text-2xl font-bold">Fast-Track-Firmen (Vermittlung)</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Wiederverwendbare Vermittlungs-Profile für den <strong>Vermittlungs-Flow</strong> (AZB-Style):
           Bewerber sieht „Sie werden mit <em>[Firma]</em> verbunden" → bucht Termin in deren Calendly →
@@ -137,7 +137,7 @@ function PartnerCompaniesPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {form.id ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-            {form.id ? "Partner-Firma bearbeiten" : "Neue Partner-Firma"}
+            {form.id ? "Fast-Track-Firma bearbeiten" : "Neue Fast-Track-Firma"}
           </CardTitle>
           <CardDescription>
             Diese Firma kannst du anschließend im Landing-Generator je Landing-Page auswählen.
@@ -210,13 +210,13 @@ function PartnerCompaniesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Hinterlegte Partner-Firmen ({rows.length})</CardTitle>
+          <CardTitle>Hinterlegte Fast-Track-Firmen ({rows.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {q.isLoading && <p className="text-sm text-muted-foreground">Lade…</p>}
           {q.error && <p className="text-sm text-red-600">{(q.error as any)?.message ?? String(q.error)}</p>}
           {!q.isLoading && rows.length === 0 && (
-            <p className="text-sm text-muted-foreground">Noch keine Partner-Firmen angelegt.</p>
+            <p className="text-sm text-muted-foreground">Noch keine Fast-Track-Firmen angelegt.</p>
           )}
           <ul className="space-y-2">
             {rows.map((r) => (

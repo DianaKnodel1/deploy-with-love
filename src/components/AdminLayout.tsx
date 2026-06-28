@@ -73,7 +73,7 @@ const navGroups: NavGroup[] = [
     label: "Vermittlung",
     items: [
       { title: "Übersicht", url: "/admin/vermittlung", icon: Handshake, end: true },
-      { title: "Partner-Firmen", url: "/admin/partner-companies", icon: Handshake },
+      { title: "Fast-Track-Firmen", url: "/admin/partner-companies", icon: Handshake },
       { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
     ],
   },
