@@ -31,6 +31,11 @@ import teilCss from "../landing-themes/theme-eilers-replica/style.css?raw";
 import teilJs from "../landing-themes/theme-eilers-replica/script.js?raw";
 import teilMeta from "../landing-themes/theme-eilers-replica/meta.json";
 
+import tazbRepHtml from "../landing-themes/theme-azb-replica/template.html?raw";
+import tazbRepCss from "../landing-themes/theme-azb-replica/style.css?raw";
+import tazbRepJs from "../landing-themes/theme-azb-replica/script.js?raw";
+import tazbRepMeta from "../landing-themes/theme-azb-replica/meta.json";
+
 
 import tmirHtml from "../landing-themes/theme-mirror-site/template.html?raw";
 import tmirCss from "../landing-themes/theme-mirror-site/style.css?raw";
@@ -65,7 +70,8 @@ export const THEMES: ThemeFiles[] = [
   { id: tazbMeta.id, name: tazbMeta.name, description: tazbMeta.description, html: tazbHtml, css: tazbCss, js: tazbJs, slots: pickSlots(tazbMeta) },
   { id: tysywMeta.id, name: tysywMeta.name, description: tysywMeta.description, html: tysywHtml, css: tysywCss, js: tysywJs, slots: pickSlots(tysywMeta) },
   { id: teilMeta.id, name: teilMeta.name, description: teilMeta.description, html: teilHtml, css: teilCss, js: teilJs, slots: pickSlots(teilMeta) },
-  
+  { id: tazbRepMeta.id, name: tazbRepMeta.name, description: tazbRepMeta.description, html: tazbRepHtml, css: tazbRepCss, js: tazbRepJs, slots: pickSlots(tazbRepMeta) },
+
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
 ];
 
