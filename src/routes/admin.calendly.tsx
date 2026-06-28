@@ -35,21 +35,8 @@ function AdminCalendlyPage() {
   const portalOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const webhookUrl = `${portalOrigin}/api/public/calendly-webhook`;
 
-  async function handleRegister() {
-    if (!pat || !signingKey) {
-      toast({ title: "PAT und Signing Key benötigt", variant: "destructive" });
-      return;
-    }
-    setRegistering(true);
-    try {
-      const r: any = await registerWebhook({ data: { personal_access_token: pat, webhook_url: webhookUrl, signing_key: signingKey } });
-      if (r?.user_uri && !userUri) setUserUri(r.user_uri);
-      toast({ title: "Webhook in Calendly registriert ✅", description: r?.user_uri });
-      setPat("");
-    } catch (e: any) {
-      toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
-    } finally { setRegistering(false); }
-  }
+
+
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
