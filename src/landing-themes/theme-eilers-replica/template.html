@@ -18,8 +18,9 @@
 <header class="site-header" id="top">
   <div class="container header-inner">
     <a href="#top" class="brand">
-      <svg class="brand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-      <span class="brand-text">{{logo_text}}</span>
+      <img class="brand-logo" src="{{logo_image}}" alt="{{firmenname}}" onerror="this.remove()" />
+      <svg class="brand-icon brand-fallback" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      <span class="brand-text brand-fallback">{{logo_text}}</span>
     </a>
     <nav class="primary-nav" id="primary-nav">
       <a href="#top" class="nav-link active">Home</a>
@@ -369,8 +370,9 @@
   <div class="container footer-grid">
     <div class="footer-brand-col">
       <div class="brand brand-footer">
-        <svg class="brand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-        <span class="brand-text">{{logo_text}}</span>
+        <img class="brand-logo" src="{{logo_image}}" alt="{{firmenname}}" onerror="this.remove()" />
+        <svg class="brand-icon brand-fallback" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        <span class="brand-text brand-fallback">{{logo_text}}</span>
       </div>
       <p class="footer-desc">{{firmenname}} — betriebswirtschaftliche und strategische Unternehmensberatung mit Sitz in {{sitz_stadt}}. Eigentümergeführt, persönlich, ergebnisorientiert.</p>
       <div class="footer-pills">
