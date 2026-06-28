@@ -149,6 +149,25 @@ function AdminCalendlyPage() {
             </div>
             <Button type="submit" disabled={saving}>Speichern</Button>
           </form>
+
+          <div className="mt-6 pt-6 border-t space-y-3">
+            <Label>Webhook direkt in Calendly registrieren (optional)</Label>
+            <p className="text-xs text-muted-foreground">
+              Statt curl: hier deinen Calendly <strong>Personal Access Token</strong> einfügen
+              (<a href="https://calendly.com/integrations/api_webhooks" target="_blank" rel="noreferrer" className="underline">calendly.com/integrations/api_webhooks</a> → „Generate New Token"),
+              dann wird der Webhook automatisch angelegt. Der Token wird <strong>nicht gespeichert</strong>.
+            </p>
+            <Input
+              value={pat}
+              onChange={(e) => setPat(e.target.value)}
+              placeholder="eyJraWQiOi... (Calendly PAT)"
+              type="password"
+              className="font-mono text-xs"
+            />
+            <Button type="button" variant="secondary" onClick={handleRegister} disabled={registering}>
+              {registering ? "Registriere…" : "Webhook in Calendly anlegen"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
