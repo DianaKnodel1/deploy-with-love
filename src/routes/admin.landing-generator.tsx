@@ -241,6 +241,17 @@ function LandingGeneratorPage() {
     // Logo durch data-URL ersetzen, sonst Platzhalter-Pixel
     const logoSrc = logoDataUrl ?? "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40'><rect width='100%' height='100%' fill='%23e2e8f0'/><text x='50%' y='55%' text-anchor='middle' font-family='sans-serif' font-size='12' fill='%2364748b'>Logo</text></svg>";
     html = html.replace(/assets\/logo\.[a-z]+/gi, logoSrc);
+    // Alle übrigen Theme-Assets (Bilder, SVGs) ebenfalls als data-URL inlinen,
+    // sonst zeigt der Blob-/srcdoc-Preview „kaputtes Bild" – im ZIP funktioniert es,
+    // weil dort die assets/ neben der index.html landen.
+    const bundle = THEME_ASSETS[themeId] ?? {};
+    for (const [fname, b64] of Object.entries(bundle)) {
+      if (/^logo\./i.test(fname)) continue;
+      const dataUrl = assetToDataUrl(fname, b64);
+      // sowohl in src="assets/x" als auch in url('assets/x') / url("assets/x") ersetzen
+      const escaped = fname.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      html = html.replace(new RegExp(`assets\\/${escaped}`, "gi"), dataUrl);
+    }
     // script.js entfernen (Preview ohne Submit) + Mini-Smooth-Scroll injizieren,
     // damit Hash-Links (#angebot etc.) im srcdoc-iframe nicht das Doc neuladen
     // → andernfalls bleibt der iframe in "Laden..." hängen.
