@@ -12,6 +12,20 @@ import {
 } from "@/lib/landing-pages.functions";
 import { listPartnerCompanies } from "@/lib/partner-companies.functions";
 import { THEME_LIST, THEMES } from "@/lib/landing-themes";
+import { THEME_ASSETS } from "@/lib/theme-assets.generated";
+
+const ASSET_MIME: Record<string, string> = {
+  png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
+  gif: "image/gif", svg: "image/svg+xml", ico: "image/x-icon", avif: "image/avif",
+};
+function assetToDataUrl(filename: string, b64: string): string {
+  const ext = (filename.split(".").pop() || "").toLowerCase();
+  const mime = ASSET_MIME[ext] || "application/octet-stream";
+  if (mime === "image/svg+xml") {
+    try { return `data:image/svg+xml;utf8,${encodeURIComponent(atob(b64))}`; } catch { /* fallthrough */ }
+  }
+  return `data:${mime};base64,${b64}`;
+}
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
