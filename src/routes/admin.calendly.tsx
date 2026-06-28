@@ -28,10 +28,9 @@ function AdminCalendlyPage() {
   const [userUri, setUserUri] = useState("");
   const [signingKey, setSigningKey] = useState("");
   const [saving, setSaving] = useState(false);
-  const [pat, setPat] = useState("");
-  const [registering, setRegistering] = useState(false);
   const [patPerRow, setPatPerRow] = useState<Record<string, string>>({});
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+
 
   const portalOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const webhookUrl = `${portalOrigin}/api/public/calendly-webhook`;
