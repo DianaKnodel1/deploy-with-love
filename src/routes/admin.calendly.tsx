@@ -183,14 +183,59 @@ function AdminCalendlyPage() {
           )}
           <ul className="space-y-2">
             {rows.map((r: any) => (
-              <li key={r.id} className="flex items-center justify-between border rounded-md p-3">
-                <div>
-                  <div className="font-medium">{r.display_name}</div>
-                  {r.calendly_user_uri && <div className="text-xs text-muted-foreground">{r.calendly_user_uri}</div>}
+              <li key={r.id} className="border rounded-md p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{r.display_name}</div>
+                    {r.calendly_user_uri
+                      ? <div className="text-xs text-muted-foreground">{r.calendly_user_uri}</div>
+                      : <div className="text-xs text-amber-600">Noch keine User-URI — Webhook registrieren füllt sie automatisch.</div>}
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}>
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}>
-                  <Trash2 className="h-4 w-4 text-red-600" />
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    placeholder="Calendly PAT (nur einmal nötig)"
+                    type="password"
+                    className="font-mono text-xs"
+                    value={patPerRow[r.id] ?? ""}
+                    onChange={(e) => setPatPerRow((p) => ({ ...p, [r.id]: e.target.value }))}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={registeringId === r.id}
+                    onClick={async () => {
+                      const token = (patPerRow[r.id] ?? "").trim();
+                      if (!token) { toast({ title: "PAT eingeben", variant: "destructive" }); return; }
+                      setRegisteringId(r.id);
+                      try {
+                        const res: any = await registerWebhook({ data: {
+                          personal_access_token: token,
+                          webhook_url: webhookUrl,
+                          signing_key: r.webhook_signing_key,
+                        }});
+                        if (res?.user_uri) {
+                          await save({ data: {
+                            id: r.id,
+                            display_name: r.display_name,
+                            calendly_user_uri: res.user_uri,
+                            webhook_signing_key: r.webhook_signing_key,
+                          }});
+                        }
+                        toast({ title: "Webhook registriert ✅", description: res?.user_uri });
+                        setPatPerRow((p) => ({ ...p, [r.id]: "" }));
+                        q.refetch();
+                      } catch (e: any) {
+                        toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
+                      } finally { setRegisteringId(null); }
+                    }}
+                  >
+                    {registeringId === r.id ? "Registriere…" : "Webhook in Calendly registrieren"}
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
