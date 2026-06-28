@@ -223,3 +223,8 @@ em{font-style:italic;font-weight:400;color:var(--amber);}
 .legal-content{max-width:52rem;font-size:.95rem;line-height:1.75;color:rgba(15,30,58,.78);}
 .legal-content p{margin-bottom:1rem;}
 .legal-content strong{color:var(--navy-900,#0f1e3a);}
+
+/* Logo-Image-Slot: zeigt Custom-Logo, sonst Wortmarke + Icon */
+.brand-logo { max-height: 40px; width: auto; display: block; }
+.brand-logo:not([src]), .brand-logo[src=""] { display: none; }
+.brand:has(.brand-logo[src]:not([src=""])) .brand-fallback { display: none; }
