@@ -11,6 +11,8 @@
     { "key": "nav_label_career", "label": "Nav: Karriere", "type": "text", "default": "Karriere" },
     { "key": "nav_label_contact", "label": "Nav: Kontakt", "type": "text", "default": "Kontakt" },
     { "key": "nav_cta_label", "label": "Nav-CTA Label", "type": "text", "default": "Jetzt bewerben" },
+    { "key": "cta_url", "label": "Bewerbungs-URL (Jetzt bewerben)", "type": "text", "default": "/bewerbung" },
+    { "key": "cta_label", "label": "CTA-Button-Beschriftung", "type": "text", "default": "Jetzt bewerben" },
 
     { "key": "hero_title", "label": "Hero-Überschrift", "type": "longtext", "default": "Ihre digitale Zukunft beginnt heute." },
     { "key": "hero_image", "label": "Hero-Bild (URL)", "type": "image", "default": "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1400&q=80" },
