@@ -239,11 +239,14 @@ function AdminAiSettingsPage() {
     setSaving(false);
     if (error) {
       toast({ title: "Fehler", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "AI-Einstellungen gespeichert" });
-      loadTenants();
+      return;
     }
+    // Auch die globalen Interview-/API-Key-Einstellungen mitspeichern,
+    // damit der untere "Speichern"-Button keine Keys verschluckt.
+    await saveInterviewSettings();
+    loadTenants();
   };
+
 
   if (loading) return <div className="p-5"><div className="h-64 bg-muted/50 rounded-xl animate-pulse" /></div>;
 
