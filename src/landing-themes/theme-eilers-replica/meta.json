@@ -78,7 +78,9 @@
     { "key": "contact_email",     "label": "E-Mail-Adresse",           "type": "text",     "example": "kontakt@eilers-gmbh.com" },
     { "key": "contact_phone",     "label": "Telefon",                  "type": "text",     "example": "+49 431 000 00 00" },
     { "key": "contact_address",   "label": "Adresse",                  "type": "text",     "example": "Kiel, Schleswig-Holstein" },
-    { "key": "impressum_url",     "label": "Impressum-URL",            "type": "text",     "example": "/impressum" },
-    { "key": "datenschutz_url",   "label": "Datenschutz-URL",          "type": "text",     "example": "/datenschutz" }
+    { "key": "impressum_url",     "label": "Impressum-URL (leer = interne Sektion)",   "type": "text",     "example": "#impressum" },
+    { "key": "datenschutz_url",   "label": "Datenschutz-URL (leer = interne Sektion)", "type": "text",     "example": "#datenschutz" },
+    { "key": "impressum_html",    "label": "Impressum Inhalt (HTML erlaubt)",          "type": "textarea", "example": "<p><strong>{{firmenname}}</strong><br/>{{contact_address}}<br/>Telefon: {{contact_phone}}<br/>E-Mail: {{contact_email}}</p><p>Vertretungsberechtigt: Geschäftsführung<br/>Handelsregister: {{hrb_nummer}}<br/>Stammkapital: {{stammkapital}}</p><p>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: Geschäftsführung, Anschrift wie oben.</p>" },
+    { "key": "datenschutz_html",  "label": "Datenschutz Inhalt (HTML erlaubt)",        "type": "textarea", "example": "<p>Diese Datenschutzerklärung informiert über die Verarbeitung personenbezogener Daten beim Besuch dieser Website.</p><p><strong>Verantwortlicher:</strong> {{firmenname}}, {{contact_address}}, E-Mail: {{contact_email}}.</p><p><strong>Server-Logfiles:</strong> Beim Aufruf werden technische Daten (IP, Browser, Zeitstempel) verarbeitet, um den Betrieb zu sichern (Art. 6 Abs. 1 lit. f DSGVO).</p><p><strong>Kontaktaufnahme:</strong> Bei Anfragen verarbeiten wir Ihre Angaben zur Bearbeitung gemäß Art. 6 Abs. 1 lit. b/f DSGVO.</p><p><strong>Ihre Rechte:</strong> Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit, Widerspruch sowie Beschwerde bei einer Aufsichtsbehörde.</p>" }
   ]
 }
