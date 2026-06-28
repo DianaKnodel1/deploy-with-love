@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "prebuild": "node scripts/build-theme-assets.mjs",
     "build": "vite build",
+    "prebuild:dev": "node scripts/build-theme-assets.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "start": "PORT=${PORT:-3000} HOST=${HOST:-127.0.0.1} bun scripts/serve.mjs",
