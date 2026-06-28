@@ -451,7 +451,7 @@ document.addEventListener('submit', function(e){
     if (branding.flow_type !== "broker" && !branding.api_endpoint) return "API-Endpoint ist für Klassisch/Fast-Track Pflicht.";
     if (!branding.landing_domain.trim()) return "Landing-Domain fehlt.";
     if (branding.flow_type === "fast" && !branding.portal_url.trim()) return "Fast-Track braucht Portal-URL.";
-    if (branding.flow_type === "broker" && !branding.calendly_url.trim()) return "Vermittlung braucht entweder eine Partner-Firma oder einen Calendly-Link.";
+    if (branding.flow_type === "broker" && !branding.calendly_url.trim()) return "Vermittlung braucht entweder eine Fast-Track-Firma oder einen Calendly-Link.";
     if (!branding.tenant_id.trim()) return "Tenant-ID fehlt.";
     return null;
   };
@@ -889,7 +889,7 @@ document.addEventListener('submit', function(e){
                   >
                     <div className="font-semibold mb-1">🤝 Vermittlung</div>
                     <p className="text-muted-foreground text-[11px]">
-                      AZB-Style: „Sie werden mit <em>[Partner]</em> verbunden" → Calendly-Termin → Webhook setzt <code>scheduled</code>. <strong>Partner-Firma oder Calendly-Link Pflicht.</strong>
+                      AZB-Style: „Sie werden mit <em>[Partner]</em> verbunden" → Calendly-Termin → Webhook setzt <code>scheduled</code>. <strong>Fast-Track-Firma oder Calendly-Link Pflicht.</strong>
                     </p>
                   </button>
                 </div>
@@ -961,16 +961,16 @@ document.addEventListener('submit', function(e){
 
 
 
-              {/* Vermittlung: Partner-Firma wählen */}
+              {/* Vermittlung: Fast-Track-Firma wählen */}
               {branding.flow_type === "broker" && (
                 <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-3">
                   <div>
                     <Label className="text-xs font-semibold">🤝 Vermittlungs-Konfiguration</Label>
                     <p className="text-[11px] text-muted-foreground mt-1">
-                      Verknüpft diese Landing mit einer <strong>Partner-Firma</strong> (separate Verwaltung unter <a href="/admin/partner-companies" className="underline">Vermittlung → Partner-Firmen</a>). Daraus werden automatisch Firmenname, Logo, Calendly-Link und Portal-Register-URL für den Erfolgsblock („Wir verbinden Sie mit …") gezogen. Die Felder unten überschreiben die Partner-Werte falls gesetzt.
+                      Verknüpft diese Landing mit einer <strong>Fast-Track-Firma</strong> (separate Verwaltung unter <a href="/admin/partner-companies" className="underline">Vermittlung → Fast-Track-Firmen</a>). Daraus werden automatisch Firmenname, Logo, Calendly-Link und Portal-Register-URL für den Erfolgsblock („Wir verbinden Sie mit …") gezogen. Die Felder unten überschreiben die Fast-Track-Werte falls gesetzt.
                     </p>
                   </div>
-                  <Field label="Partner-Firma">
+                  <Field label="Fast-Track-Firma">
                     <select
                       className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
                       value={branding.partner_company_id}
@@ -1016,12 +1016,12 @@ document.addEventListener('submit', function(e){
               {/* Calendly-Zwischenseite — nur Klassisch + Vermittlung. Fast-Track geht direkt ins Portal. */}
               {branding.flow_type === "fast" ? (
                 <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
-                  📅 <span className="font-semibold">Calendly:</span> Wird bei Fast-Track <strong>nicht</strong> verwendet — Bewerber werden direkt zur Portal-Registrierung weitergeleitet. Calendly liegt bei der <a href="/admin/partner-companies" className="underline">Partner-Firma</a> und wird nur von Vermittlungs-Landings genutzt.
+                  📅 <span className="font-semibold">Calendly:</span> Wird bei Fast-Track <strong>nicht</strong> verwendet — Bewerber werden direkt zur Portal-Registrierung weitergeleitet. Calendly liegt bei der <a href="/admin/partner-companies" className="underline">Fast-Track-Firma</a> und wird nur von Vermittlungs-Landings genutzt.
                 </div>
               ) : (
               <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
                 <Label className="text-xs font-semibold">
-                  📅 Calendly-Buchung {branding.flow_type === "broker" ? "(Pflicht für Vermittlung — meist via Partner-Firma vererbt)" : "(optional)"}
+                  📅 Calendly-Buchung {branding.flow_type === "broker" ? "(Pflicht für Vermittlung — meist via Fast-Track-Firma vererbt)" : "(optional)"}
                 </Label>
                 <p className="text-[11px] text-muted-foreground">
                   Nach erfolgreicher Bewerbung erscheint inline auf der Landing der Erfolgsblock mit Button „Jetzt Termin buchen". Calendly öffnet in einem neuen Tab — <strong>keine</strong> automatische Weiterleitung. Webhook-Konfiguration unter <a href="/admin/calendly" className="underline">Vermittlung → Calendly</a>.

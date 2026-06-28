@@ -1,4 +1,4 @@
-// Vermittlungs-Übersicht: kombiniert Vermittlungs-Landings + Partner-Firmen + Calendly-Status.
+// Vermittlungs-Übersicht: kombiniert Vermittlungs-Landings + Fast-Track-Firmen + Calendly-Status.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ function VermittlungOverview() {
           <Handshake className="h-6 w-6" /> Vermittlung
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Bewerbungen werden über deine Landing-Page eingesammelt und direkt an eine Partner-Firma
+          Bewerbungen werden über deine Landing-Page eingesammelt und direkt an eine Fast-Track-Firma
           weitergereicht (Terminbuchung via Calendly). Der Bewerber sieht nach dem Absenden inline:
           „Wir verbinden Sie mit [Partner]" und einen Button zur Terminbuchung.
         </p>
@@ -53,7 +53,7 @@ function VermittlungOverview() {
                 <>Lege zuerst einen <Link to="/admin/calendly" className="underline">Calendly-Account</Link> an. </>
               )}
               {partners.length === 0 && (
-                <>Lege dann eine <Link to="/admin/partner-companies" className="underline">Partner-Firma</Link> an.</>
+                <>Lege dann eine <Link to="/admin/partner-companies" className="underline">Fast-Track-Firma</Link> an.</>
               )}
             </div>
           </CardContent>
@@ -70,7 +70,7 @@ function VermittlungOverview() {
         />
         <StatCard
           icon={<Handshake className="h-5 w-5" />}
-          label="Partner-Firmen"
+          label="Fast-Track-Firmen"
           value={partners.length}
           to="/admin/partner-companies"
           cta="Partner verwalten"
