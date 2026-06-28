@@ -61,6 +61,29 @@ async function ensureSettingsRow() {
   return created;
 }
 
+async function saveSettingsPatch(patch: Record<string, any>) {
+  const admin = await getAdminClient();
+  const { data: row, error } = await admin
+    .from("system_settings")
+    .upsert({ id: 1, ...patch }, { onConflict: "id" })
+    .select(SETTINGS_COLUMNS)
+    .single();
+
+  if (error) throw new Error(error.message);
+  if (!row) throw new Error("AI-Einstellungen wurden nicht gespeichert: keine Datenbankzeile zurückgegeben.");
+
+  const mismatched = Object.entries(patch).filter(([key, value]) => {
+    if (value === undefined) return false;
+    return (row as any)[key] !== value;
+  });
+
+  if (mismatched.length > 0) {
+    throw new Error(`AI-Einstellungen wurden nicht übernommen: ${mismatched.map(([key]) => key).join(", ")}`);
+  }
+
+  return row;
+}
+
 export const loadAiSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -76,15 +99,7 @@ export const saveOpenAiKey = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
-    await ensureSettingsRow();
-    const admin = await getAdminClient();
-    const { data: row, error } = await admin
-      .from("system_settings")
-      .update({ openai_api_key: data.openai_api_key })
-      .eq("id", 1)
-      .select(SETTINGS_COLUMNS)
-      .single();
-    if (error) throw new Error(error.message);
+    const row = await saveSettingsPatch({ openai_api_key: data.openai_api_key });
     return toClientSettings(row);
   });
 
@@ -105,8 +120,6 @@ export const saveAiInterviewSettings = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InterviewSettingsInput.parse(input))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
-    await ensureSettingsRow();
-    const admin = await getAdminClient();
     const patch: Record<string, any> = {
       gemini_model: data.gemini_model,
       apinet_model: data.apinet_model,
@@ -119,12 +132,6 @@ export const saveAiInterviewSettings = createServerFn({ method: "POST" })
     if (data.elevenlabs_api_key) patch.elevenlabs_api_key = data.elevenlabs_api_key;
     if (data.apinet_api_key) patch.apinet_api_key = data.apinet_api_key;
 
-    const { data: row, error } = await admin
-      .from("system_settings")
-      .update(patch)
-      .eq("id", 1)
-      .select(SETTINGS_COLUMNS)
-      .single();
-    if (error) throw new Error(error.message);
+    const row = await saveSettingsPatch(patch);
     return toClientSettings(row);
   });
