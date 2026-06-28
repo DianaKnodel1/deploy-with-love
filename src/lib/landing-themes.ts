@@ -65,7 +65,7 @@ export const THEMES: ThemeFiles[] = [
   { id: tazbMeta.id, name: tazbMeta.name, description: tazbMeta.description, html: tazbHtml, css: tazbCss, js: tazbJs, slots: pickSlots(tazbMeta) },
   { id: tysywMeta.id, name: tysywMeta.name, description: tysywMeta.description, html: tysywHtml, css: tysywCss, js: tysywJs, slots: pickSlots(tysywMeta) },
   { id: teilMeta.id, name: teilMeta.name, description: teilMeta.description, html: teilHtml, css: teilCss, js: teilJs, slots: pickSlots(teilMeta) },
-  { id: teffMeta.id, name: teffMeta.name, description: teffMeta.description, html: teffHtml, css: teffCss, js: teffJs, slots: pickSlots(teffMeta) },
+  
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
 ];
 
