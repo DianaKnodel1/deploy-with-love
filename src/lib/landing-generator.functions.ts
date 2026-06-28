@@ -150,19 +150,15 @@ export const generateLandingZip = createServerFn({ method: "POST" })
     // Domain user-freundlich säubern (https://, trailing slash entfernen)
     const cleanedBranding = { ...data.branding, landing_domain: cleanLandingDomain(data.branding.landing_domain) };
 
-    // CTA-Fallback: cta_url MUSS absolut auf das Portal zeigen, sonst landet
-    // "Jetzt bewerben" auf der Landing-Domain im Nichts (about:blank / 404).
+    // CTA-Fallback: Falls ein Theme noch {{cta_url}} verwendet, immer absolut machen.
+    // Themes mit Shared-Inline-Formular (TTS/Eilers/AZB) springen stattdessen auf
+    // den Anker #bewerbung-form und brauchen das gar nicht.
     const portalBase = (cleanedBranding.portal_url || "").replace(/\/+$/, "");
     const ctaRaw = (slots.cta_url ?? "").trim();
     const isAbsolute = /^https?:\/\//i.test(ctaRaw);
     if (!isAbsolute) {
-      if (!portalBase) {
-        throw new Error(
-          "Portal-URL fehlt: Bitte 'Portal-URL' im Generator setzen (z. B. https://mb-portal.com), damit der 'Jetzt bewerben'-Button absolut auf das Portal verlinkt.",
-        );
-      }
       const path = ctaRaw.startsWith("/") ? ctaRaw : "/bewerbung";
-      slots.cta_url = `${portalBase}${path}`;
+      slots.cta_url = portalBase ? `${portalBase}${path}` : "#bewerbung-form";
     }
 
     let html = applyPlaceholders(theme.html, cleanedBranding, slots);
