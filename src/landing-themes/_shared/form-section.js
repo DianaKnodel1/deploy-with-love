@@ -1,0 +1,68 @@
+/* Shared inline application form handler + success modal. */
+(function(){
+  function fmtWa(num){var d=String(num||'').replace(/[^0-9]/g,'');if(!d)return '';return d.length>4?'+'+d.slice(0,2)+' '+d.slice(2,5)+' '+d.slice(5):'+'+d;}
+  function showModal(opts){
+    opts=opts||{};var isFast=!!opts.fast;var broker=opts.broker||null;var wa=String(opts.whatsapp||'').replace(/[^0-9]/g,'');
+    var ov=document.createElement('div');ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;backdrop-filter:blur(2px);';
+    var box=document.createElement('div');
+    box.style.cssText='background:#fff;color:#0f172a;max-width:480px;width:100%;border-radius:14px;padding:32px 28px;box-shadow:0 20px 60px -10px rgba(0,0,0,.35);font-family:inherit;position:relative;text-align:center;';
+    var cls=document.createElement('button');cls.type='button';cls.innerHTML='&times;';cls.setAttribute('aria-label','Schließen');
+    cls.style.cssText='position:absolute;top:10px;right:14px;background:none;border:0;font-size:24px;line-height:1;cursor:pointer;color:#64748b;';
+    cls.onclick=function(){ov.remove();};
+    var chk=document.createElement('div');chk.style.cssText='width:64px;height:64px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;';
+    chk.innerHTML='<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    var h=document.createElement('h3');h.style.cssText='margin:0 0 10px;font-size:24px;font-weight:700;line-height:1.25;';
+    var p=document.createElement('p');p.style.cssText='margin:0 0 20px;color:#475569;font-size:15px;line-height:1.55;';
+    box.appendChild(cls);box.appendChild(chk);box.appendChild(h);box.appendChild(p);
+    if(broker){
+      h.textContent=broker.intro_headline||'Herzlichen Glückwunsch!';
+      p.textContent=broker.intro_subline||'Wir haben Ihre Bewerbung erfolgreich erhalten.';
+      var pc=document.createElement('div');pc.style.cssText='background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin:0 0 22px;';
+      if(broker.partner_logo){var lg=document.createElement('img');lg.src=broker.partner_logo;lg.alt=broker.partner_name||'';lg.style.cssText='max-height:36px;margin:0 auto 10px;display:block;';pc.appendChild(lg);}
+      var pl=document.createElement('div');pl.textContent='Wir verbinden Sie mit';pl.style.cssText='font-size:13px;color:#475569;margin-bottom:6px;';
+      var pn=document.createElement('div');pn.textContent=broker.partner_name||'';pn.style.cssText='font-size:17px;font-weight:700;color:#0f172a;';
+      pc.appendChild(pl);pc.appendChild(pn);box.appendChild(pc);
+      if(broker.calendly_url){var cta=document.createElement('a');cta.href=broker.calendly_url;cta.target='_blank';cta.rel='noopener';cta.textContent=(broker.button_label||'Jetzt Termin buchen')+'  →';
+        cta.style.cssText='display:inline-block;background:#22c55e;color:#fff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px;font-size:16px;';box.appendChild(cta);}
+    } else if(isFast){
+      h.textContent='Vielen Dank für Ihre Bewerbung';
+      p.textContent='Im nächsten Schritt werden Sie zum Mitarbeiter-Portal für die Registrierung weitergeleitet.';
+      if(opts.redirectUrl){var gn=document.createElement('button');gn.type='button';gn.textContent='Jetzt zum Portal →';
+        gn.style.cssText='display:block;width:100%;background:#0f172a;color:#fff;border:0;padding:12px 18px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;margin-bottom:12px;';
+        var ri=document.createElement('p');ri.style.cssText='margin:0 0 12px;font-size:13px;color:#64748b;';var s=10;ri.textContent='Automatische Weiterleitung in '+s+' Sekunden …';
+        box.appendChild(gn);box.appendChild(ri);var go=function(){window.location.href=opts.redirectUrl;};gn.onclick=go;
+        var t=setInterval(function(){s-=1;if(s<=0){clearInterval(t);go();return;}ri.textContent='Automatische Weiterleitung in '+s+' Sekunden …';},1000);}
+    } else {
+      h.textContent='Vielen Dank für Ihre Bewerbung';
+      if(wa){p.textContent='Wir haben Ihre Bewerbung erhalten und melden uns binnen 10 Tagen zurück.';
+        var c=document.createElement('div');c.style.cssText='background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:16px;text-align:left;';
+        c.innerHTML='<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#2563eb;margin-bottom:8px;">SCHNELLER KONTAKT</div><p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">Melden Sie sich bei WhatsApp unter <strong>'+fmtWa(wa)+'</strong>, um auf dem neusten Stand zu bleiben.</p><a href="https://wa.me/'+wa+'?text='+encodeURIComponent('Hallo, ich habe gerade meine Bewerbung abgeschickt.')+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#22c55e;color:#fff;text-decoration:none;font-weight:600;padding:12px 16px;border-radius:8px;font-size:15px;">WhatsApp-Chat starten</a>';
+        box.appendChild(c);} else {p.textContent='Wir haben Ihre Unterlagen erhalten und melden uns i.d.R. innerhalb von 10 Tagen per E-Mail bei Ihnen.';}
+    }
+    var cb=document.createElement('button');cb.type='button';cb.textContent='Schließen';
+    cb.style.cssText='background:#fff;border:1px solid #cbd5e1;color:#0f172a;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;margin-top:18px;';
+    cb.onclick=function(){ov.remove();};box.appendChild(cb);ov.appendChild(box);
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});document.body.appendChild(ov);
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    var form=document.getElementById('application-form');var status=document.getElementById('form-status');if(!form)return;
+    form.addEventListener('submit',function(e){
+      e.preventDefault();status.className='lv-form-status';status.textContent='Wird gesendet…';
+      var raw=Object.fromEntries(new FormData(form).entries());
+      var first=(raw.first_name||'').toString().trim();var last=(raw.last_name||'').toString().trim();var street=(raw.street||'').toString().trim();
+      var data={first_name:first||null,last_name:last||null,full_name:(first+' '+last).trim(),email:raw.email,phone:raw.phone||null,
+        postal_code:raw.postal_code||null,city:raw.city||null,message:street?'Adresse: '+street:null};
+      data.domain=(window.location&&window.location.hostname?window.location.hostname:'').replace(/^www\./,'');
+      data.flow_type=window.FLOW_TYPE||'classic';
+      if(window.TENANT_ID)data.tenant_id=window.TENANT_ID;
+      if(window.PORTAL_URL)data.portal_url=window.PORTAL_URL;
+      if(window.SOURCE_SLUG)data.source_slug=window.SOURCE_SLUG;
+      fetch(window.PORTAL_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+        .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+        .then(function(res){form.reset();status.className='lv-form-status success';status.textContent='Bewerbung erfolgreich gesendet.';
+          showModal({fast:(window.FLOW_TYPE||'classic')==='fast',whatsapp:window.WHATSAPP_NUMBER||'',redirectUrl:(res&&res.redirect_url)||'',broker:(res&&res.broker)||null});})
+        .catch(function(){status.className='lv-form-status error';status.textContent='Da ist etwas schiefgelaufen. Bitte später erneut versuchen.';});
+    });
+  });
+})();
