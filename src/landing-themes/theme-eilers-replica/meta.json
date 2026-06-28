@@ -73,7 +73,7 @@
     { "key": "svc5_image",  "label": "Service 5 Bild",         "type": "image",    "default": "assets/change-management.jpg" },
 
     { "key": "cta_subtext",       "label": "CTA-Untertext",            "type": "textarea", "default": "45 Minuten, persönlich, unverbindlich. Sie erhalten eine erste fundierte Einschätzung — wir entscheiden gemeinsam, ob eine Zusammenarbeit Sinn ergibt." },
-    { "key": "cta_url",           "label": "CTA Button URL",           "type": "text",     "default": "mailto:kontakt@eilers-gmbh.com" },
+    { "key": "cta_url",           "label": "CTA Button URL",           "type": "text",     "default": "/bewerbung" },
     { "key": "cta_label",         "label": "CTA Button Beschriftung",  "type": "text",     "default": "Jetzt bewerben" },
     { "key": "contact_email",     "label": "E-Mail-Adresse",           "type": "text",     "default": "kontakt@eilers-gmbh.com" },
     { "key": "contact_phone",     "label": "Telefon",                  "type": "text",     "default": "+49 431 000 00 00" },

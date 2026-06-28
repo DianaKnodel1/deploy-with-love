@@ -65,7 +65,7 @@
     { "key": "address",           "label": "Adresse",                  "default": "Musterstraße 1, 10115 Berlin" },
     { "key": "oeffnungszeiten",   "label": "Öffnungszeiten Hinweis",   "default": "Mo–Fr 9–17 Uhr, Sa 9–12 Uhr" },
 
-    { "key": "cta_url",           "label": "CTA / Bewerbungs-URL",     "default": "#bewerbung" },
+    { "key": "cta_url",           "label": "CTA / Bewerbungs-URL",     "default": "/bewerbung" },
     { "key": "cta_label",         "label": "CTA Button Beschriftung",  "default": "Jetzt Bewerben" },
 
     { "key": "footer_about",      "label": "Footer Über-uns Text",     "default": "Wir vermitteln einfache, flexible Jobs, die Sie von zu Hause aus erledigen können. Keine Vorerfahrung nötig – jeder hat bei uns die Chance auf einen Job." },
