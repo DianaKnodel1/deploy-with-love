@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>{seo_title}</title>
-<meta name="description" content="{seo_description}" />
-<meta property="og:title" content="{seo_title}" />
-<meta property="og:description" content="{seo_description}" />
+<title>{{seo_title}}</title>
+<meta name="description" content="{{seo_description}}" />
+<meta property="og:title" content="{{seo_title}}" />
+<meta property="og:description" content="{{seo_description}}" />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -21,8 +21,8 @@
     <div class="bpo-container">
       <div class="bpo-header-inner">
         <a href="#top" class="bpo-logo">
-          <img src="assets/logo.svg" alt="{firmenname} Logo" width="36" height="36" />
-          <span>{logo_text}</span>
+          <img src="assets/logo.svg" alt="{{firmenname}} Logo" width="36" height="36" />
+          <span>{{logo_text}}</span>
         </a>
         <nav class="bpo-nav" aria-label="Hauptnavigation">
           <a href="#top">Stellenangebote</a>
@@ -30,7 +30,7 @@
           <a href="#leistungen">Leistungen</a>
           <a href="#blog">Blog</a>
         </nav>
-        <a href="{cta_url}" class="bpo-btn bpo-btn-header">Jetzt Bewerben</a>
+        <a href="{{cta_url}}" class="bpo-btn bpo-btn-header">Jetzt Bewerben</a>
         <button class="bpo-menu-toggle" id="menuToggle" aria-label="Menü öffnen" aria-expanded="false" aria-controls="mobileNav">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
@@ -40,7 +40,7 @@
         <a href="#ueber-uns">Über Uns</a>
         <a href="#leistungen">Leistungen</a>
         <a href="#blog">Blog</a>
-        <a href="{cta_url}" class="bpo-btn">Jetzt Bewerben</a>
+        <a href="{{cta_url}}" class="bpo-btn">Jetzt Bewerben</a>
       </div>
     </div>
   </header>
@@ -49,8 +49,8 @@
   <section class="bpo-hero bpo-hero-desktop" id="top" style="background-image:url('assets/slider6.png');">
     <div class="bpo-container">
       <div class="text">
-        <h1>{hero_pre} <span>{hero_jobtitle}</span></h1>
-        <p>{hero_subtext}</p>
+        <h1>{{hero_pre}} <span>{{hero_jobtitle}}</span></h1>
+        <p>{{hero_subtext}}</p>
       </div>
     </div>
   </section>
@@ -59,10 +59,10 @@
   <section class="bpo-hero bpo-hero-mobile" style="background-image:url('assets/slider6.png');">
     <div class="bpo-container bpo-hero-mobile-inner">
       <div class="text">
-        <h1 class="bpo-hero-mobile-h1">{hero_pre}</h1>
+        <h1 class="bpo-hero-mobile-h1">{{hero_pre}}</h1>
       </div>
       <div class="bpo-hero-mobile-sub">
-        <p>{hero_subtext}</p>
+        <p>{{hero_subtext}}</p>
       </div>
     </div>
   </section>
@@ -75,13 +75,13 @@
         <svg class="bg-icon" width="130" height="130" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M20 6h-4V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-10-2h4v2h-4V4z"/>
         </svg>
-        <span>{schedule_label}</span>
-        <h4>{schedule_jobtitle}</h4>
+        <span>{{schedule_label}}</span>
+        <h4>{{schedule_jobtitle}}</h4>
         <p>
-          <span class="price">{schedule_pay}</span>
-          {schedule_description}
+          <span class="price">{{schedule_pay}}</span>
+          {{schedule_description}}
         </p>
-        <a href="{cta_url}">MEHR ERFAHREN
+        <a href="{{cta_url}}">MEHR ERFAHREN
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       </div>
@@ -106,8 +106,8 @@
               <path d="M8 12h8M12 8v8"/>
             </svg>
           </div>
-          <h3>{feature_1_title}</h3>
-          <p>{feature_1_desc}</p>
+          <h3>{{feature_1_title}}</h3>
+          <p>{{feature_1_desc}}</p>
         </div>
 
         <!-- Feature 2: Für jeden geeignet — users -->
@@ -120,8 +120,8 @@
               <path d="M21 21v-2a4 4 0 0 0-3-3.87"/>
             </svg>
           </div>
-          <h3>{feature_2_title}</h3>
-          <p>{feature_2_desc}</p>
+          <h3>{{feature_2_title}}</h3>
+          <p>{{feature_2_desc}}</p>
         </div>
 
         <!-- Feature 3: Arbeiten von zu Hause — mobile phone -->
@@ -132,8 +132,8 @@
               <circle cx="12" cy="18" r="1" fill="currentColor"/>
             </svg>
           </div>
-          <h3>{feature_3_title}</h3>
-          <p>{feature_3_desc}</p>
+          <h3>{{feature_3_title}}</h3>
+          <p>{{feature_3_desc}}</p>
         </div>
 
       </div>
@@ -144,31 +144,31 @@
   <section class="bpo-section bpo-why" id="ueber-uns" style="padding-top:0;">
     <div class="bpo-container">
       <div class="bpo-section-title">
-        <h2>{why_title}</h2>
+        <h2>{{why_title}}</h2>
         <img src="assets/section-img.svg" alt="" aria-hidden="true" />
-        <p>{why_text}</p>
+        <p>{{why_text}}</p>
       </div>
       <div class="bpo-grid bpo-grid-2">
         <div>
           <h3>Wer wir sind</h3>
-          <p>{why_para1}</p>
-          <p style="margin-top:16px;">{why_para2}</p>
+          <p>{{why_para1}}</p>
+          <p style="margin-top:16px;">{{why_para2}}</p>
           <ul class="bpo-list">
             <li>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-              {why_bullet1}
+              {{why_bullet1}}
             </li>
             <li>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-              {why_bullet2}
+              {{why_bullet2}}
             </li>
             <li>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-              {why_bullet3}
+              {{why_bullet3}}
             </li>
             <li>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-              {why_bullet4}
+              {{why_bullet4}}
             </li>
           </ul>
         </div>
@@ -197,8 +197,8 @@
               <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
             </svg>
           </div>
-          <h4><a href="{cta_url}">{service_1_title}</a></h4>
-          <p>{service_1_desc}</p>
+          <h4><a href="{{cta_url}}">{{service_1_title}}</a></h4>
+          <p>{{service_1_desc}}</p>
         </div>
 
         <!-- Service 2 — user-circle -->
@@ -210,8 +210,8 @@
               <circle cx="12" cy="12" r="10"/>
             </svg>
           </div>
-          <h4><a href="{cta_url}">{service_2_title}</a></h4>
-          <p>{service_2_desc}</p>
+          <h4><a href="{{cta_url}}">{{service_2_title}}</a></h4>
+          <p>{{service_2_desc}}</p>
         </div>
 
         <!-- Service 3 — calendar-check -->
@@ -225,8 +225,8 @@
               <polyline points="9 16 11 18 15 14"/>
             </svg>
           </div>
-          <h4><a href="{cta_url}">{service_3_title}</a></h4>
-          <p>{service_3_desc}</p>
+          <h4><a href="{{cta_url}}">{{service_3_title}}</a></h4>
+          <p>{{service_3_desc}}</p>
         </div>
 
         <!-- Service 4 — shield -->
@@ -237,8 +237,8 @@
               <polyline points="9 12 11 14 15 10"/>
             </svg>
           </div>
-          <h4><a href="{cta_url}">{service_4_title}</a></h4>
-          <p>{service_4_desc}</p>
+          <h4><a href="{{cta_url}}">{{service_4_title}}</a></h4>
+          <p>{{service_4_desc}}</p>
         </div>
 
         <!-- Service 5 — mobile/smartphone -->
@@ -249,8 +249,8 @@
               <line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2.5"/>
             </svg>
           </div>
-          <h4><a href="{cta_url}">{service_5_title}</a></h4>
-          <p>{service_5_desc}</p>
+          <h4><a href="{{cta_url}}">{{service_5_title}}</a></h4>
+          <p>{{service_5_desc}}</p>
         </div>
 
         <!-- Service 6 — smile -->
@@ -263,8 +263,8 @@
               <line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5"/>
             </svg>
           </div>
-          <h4><a href="{cta_url}">{service_6_title}</a></h4>
-          <p>{service_6_desc}</p>
+          <h4><a href="{{cta_url}}">{{service_6_title}}</a></h4>
+          <p>{{service_6_desc}}</p>
         </div>
 
       </div>
@@ -283,34 +283,34 @@
 
         <div class="bpo-news">
           <div class="bpo-news-head">
-            <img src="assets/blog5.jpg" alt="{blog_post_1_title}" loading="lazy" />
+            <img src="assets/blog5.jpg" alt="{{blog_post_1_title}}" loading="lazy" />
           </div>
           <div class="bpo-news-body">
-            <div class="date">{blog_post_1_date}</div>
-            <h2><a href="{cta_url}">{blog_post_1_title}</a></h2>
-            <p>{blog_post_1_excerpt}</p>
+            <div class="date">{{blog_post_1_date}}</div>
+            <h2><a href="{{cta_url}}">{{blog_post_1_title}}</a></h2>
+            <p>{{blog_post_1_excerpt}}</p>
           </div>
         </div>
 
         <div class="bpo-news">
           <div class="bpo-news-head">
-            <img src="assets/blog4.jpg" alt="{blog_post_2_title}" loading="lazy" />
+            <img src="assets/blog4.jpg" alt="{{blog_post_2_title}}" loading="lazy" />
           </div>
           <div class="bpo-news-body">
-            <div class="date">{blog_post_2_date}</div>
-            <h2><a href="{cta_url}">{blog_post_2_title}</a></h2>
-            <p>{blog_post_2_excerpt}</p>
+            <div class="date">{{blog_post_2_date}}</div>
+            <h2><a href="{{cta_url}}">{{blog_post_2_title}}</a></h2>
+            <p>{{blog_post_2_excerpt}}</p>
           </div>
         </div>
 
         <div class="bpo-news">
           <div class="bpo-news-head">
-            <img src="assets/blog6.jpg" alt="{blog_post_3_title}" loading="lazy" />
+            <img src="assets/blog6.jpg" alt="{{blog_post_3_title}}" loading="lazy" />
           </div>
           <div class="bpo-news-body">
-            <div class="date">{blog_post_3_date}</div>
-            <h2><a href="{cta_url}">{blog_post_3_title}</a></h2>
-            <p>{blog_post_3_excerpt}</p>
+            <div class="date">{{blog_post_3_date}}</div>
+            <h2><a href="{{cta_url}}">{{blog_post_3_title}}</a></h2>
+            <p>{{blog_post_3_excerpt}}</p>
           </div>
         </div>
 
@@ -325,7 +325,7 @@
 
         <div>
           <h2>Über uns</h2>
-          <p>{footer_about}</p>
+          <p>{{footer_about}}</p>
         </div>
 
         <div>
@@ -335,12 +335,12 @@
               <li><a href="#ueber-uns">›&nbsp;Über Uns</a></li>
               <li><a href="#leistungen">›&nbsp;Leistungen</a></li>
               <li><a href="#blog">›&nbsp;Blog</a></li>
-              <li><a href="{cta_url}">›&nbsp;Bewerben</a></li>
+              <li><a href="{{cta_url}}">›&nbsp;Bewerben</a></li>
             </ul>
             <ul>
               <li><a href="#newsletter">›&nbsp;Newsletter</a></li>
-              <li><a href="{datenschutz_url}">›&nbsp;Datenschutz</a></li>
-              <li><a href="{impressum_url}">›&nbsp;Impressum</a></li>
+              <li><a href="{{datenschutz_url}}">›&nbsp;Datenschutz</a></li>
+              <li><a href="{{impressum_url}}">›&nbsp;Impressum</a></li>
               <li><a href="#agb">›&nbsp;AGB</a></li>
             </ul>
           </div>
@@ -355,28 +355,28 @@
             <li>Sonntag<span>geschlossen</span></li>
           </ul>
           <p style="margin-top:18px;font-size:13px;">
-            <a href="mailto:{contact_email}" style="color:inherit;opacity:0.85;">{contact_email}</a><br/>
-            <a href="tel:{contact_phone}" style="color:inherit;opacity:0.85;">{contact_phone}</a>
+            <a href="mailto:{{contact_email}}" style="color:inherit;opacity:0.85;">{{contact_email}}</a><br/>
+            <a href="tel:{{contact_phone}}" style="color:inherit;opacity:0.85;">{{contact_phone}}</a>
           </p>
         </div>
 
         <div id="newsletter">
           <h2>Newsletter</h2>
           <p>Bleiben Sie informiert über aktuelle Jobs und Angebote.</p>
-          <form class="bpo-newsletter" onsubmit="event.preventDefault(); window.location.href='{cta_url}';">
+          <form class="bpo-newsletter" onsubmit="event.preventDefault(); window.location.href='{{cta_url}}';">
             <input type="email" placeholder="E-Mail Adresse" aria-label="E-Mail Adresse" />
             <button type="submit" aria-label="Anmelden">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
           </form>
           <div style="margin-top:24px;display:flex;gap:12px;">
-            <a href="{social_facebook}" class="bpo-social" aria-label="Facebook" style="color:inherit;">
+            <a href="{{social_facebook}}" class="bpo-social" aria-label="Facebook" style="color:inherit;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
             </a>
-            <a href="{social_instagram}" class="bpo-social" aria-label="Instagram" style="color:inherit;">
+            <a href="{{social_instagram}}" class="bpo-social" aria-label="Instagram" style="color:inherit;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/></svg>
             </a>
-            <a href="{social_linkedin}" class="bpo-social" aria-label="LinkedIn" style="color:inherit;">
+            <a href="{{social_linkedin}}" class="bpo-social" aria-label="LinkedIn" style="color:inherit;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
             </a>
           </div>
@@ -386,9 +386,9 @@
     </div>
     <div class="bpo-copyright">
       <div class="bpo-container">
-        <p>© Copyright <span id="year"></span> | {firmenname} | Alle Rechte vorbehalten
-          &nbsp;·&nbsp; <a href="{impressum_url}" style="color:inherit;opacity:0.7;">Impressum</a>
-          &nbsp;·&nbsp; <a href="{datenschutz_url}" style="color:inherit;opacity:0.7;">Datenschutz</a>
+        <p>© Copyright <span id="year"></span> | {{firmenname}} | Alle Rechte vorbehalten
+          &nbsp;·&nbsp; <a href="{{impressum_url}}" style="color:inherit;opacity:0.7;">Impressum</a>
+          &nbsp;·&nbsp; <a href="{{datenschutz_url}}" style="color:inherit;opacity:0.7;">Datenschutz</a>
         </p>
       </div>
     </div>
