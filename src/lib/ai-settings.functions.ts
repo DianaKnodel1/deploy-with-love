@@ -13,6 +13,12 @@ const maskSecret = (value: string | null | undefined) => {
   return `••••••••${tail}`;
 };
 
+const cleanNullableText = (value: unknown) => {
+  if (typeof value !== "string") return null;
+  const clean = value.trim();
+  return clean.length > 0 ? clean : null;
+};
+
 async function requireAdmin(ctx: { supabase: any; userId: string }) {
   const { data, error } = await ctx.supabase
     .from("user_roles")
@@ -30,12 +36,12 @@ function toClientSettings(row: any) {
     gemini_api_key_masked: maskSecret(row?.gemini_api_key),
     gemini_model: row?.gemini_model ?? null,
     elevenlabs_api_key_masked: maskSecret(row?.elevenlabs_api_key),
-    elevenlabs_agent_id: row?.elevenlabs_agent_id ?? null,
+    elevenlabs_agent_id: cleanNullableText(row?.elevenlabs_agent_id),
     apinet_api_key_masked: maskSecret(row?.apinet_api_key),
     apinet_model: row?.apinet_model ?? null,
-    default_voice_id: row?.default_voice_id ?? null,
-    default_system_prompt: row?.default_system_prompt ?? null,
-    default_decision_prompt: row?.default_decision_prompt ?? null,
+    default_voice_id: cleanNullableText(row?.default_voice_id),
+    default_system_prompt: cleanNullableText(row?.default_system_prompt),
+    default_decision_prompt: cleanNullableText(row?.default_decision_prompt),
   };
 }
 
@@ -65,9 +71,12 @@ async function ensureSettingsRow() {
 
 async function saveSettingsPatch(patch: Record<string, any>) {
   const admin = await getAdminClient();
+  await ensureSettingsRow();
+
   const { data: row, error } = await admin
     .from("system_settings")
-    .upsert({ id: 1, ...patch }, { onConflict: "id" })
+    .update(patch)
+    .eq("id", 1)
     .select(SETTINGS_COLUMNS)
     .single();
 
@@ -125,10 +134,10 @@ export const saveAiInterviewSettings = createServerFn({ method: "POST" })
     const patch: Record<string, any> = {
       gemini_model: data.gemini_model,
       apinet_model: data.apinet_model,
-      elevenlabs_agent_id: data.elevenlabs_agent_id || null,
-      default_voice_id: data.default_voice_id || null,
-      default_system_prompt: data.default_system_prompt || null,
-      default_decision_prompt: data.default_decision_prompt || null,
+      elevenlabs_agent_id: cleanNullableText(data.elevenlabs_agent_id),
+      default_voice_id: cleanNullableText(data.default_voice_id),
+      default_system_prompt: cleanNullableText(data.default_system_prompt),
+      default_decision_prompt: cleanNullableText(data.default_decision_prompt),
     };
     if (data.gemini_api_key) patch.gemini_api_key = data.gemini_api_key;
     if (data.elevenlabs_api_key) patch.elevenlabs_api_key = data.elevenlabs_api_key;

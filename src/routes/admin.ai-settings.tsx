@@ -108,6 +108,7 @@ function AdminAiSettingsPage() {
   const [elevenKey, setElevenKey] = useState("");
   const [elevenKeyMasked, setElevenKeyMasked] = useState<string | null>(null);
   const [elevenAgentId, setElevenAgentId] = useState("");
+  const [savedElevenAgentId, setSavedElevenAgentId] = useState<string | null>(null);
   const [apinetKey, setApinetKey] = useState("");
   const [apinetKeyMasked, setApinetKeyMasked] = useState<string | null>(null);
   const [apinetModel, setApinetModel] = useState("gemini-2.5-flash");
@@ -118,19 +119,25 @@ function AdminAiSettingsPage() {
 
   useEffect(() => { loadTenants(); loadSystemKey(); }, []);
 
+  const applySystemSettings = (data: any) => {
+    setOpenaiKeyMasked(data?.openai_api_key_masked ?? null);
+    setGeminiKeyMasked(data?.gemini_api_key_masked ?? null);
+    setElevenKeyMasked(data?.elevenlabs_api_key_masked ?? null);
+    setApinetKeyMasked(data?.apinet_api_key_masked ?? null);
+    if (data?.gemini_model) setGeminiModel(data.gemini_model);
+    if (data?.apinet_model) setApinetModel(data.apinet_model);
+    const savedAgentId = data?.elevenlabs_agent_id?.trim?.() || "";
+    setSavedElevenAgentId(savedAgentId || null);
+    setElevenAgentId(savedAgentId);
+    setDefaultVoiceId(data?.default_voice_id ?? "");
+    setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
+    setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
+  };
+
   const loadSystemKey = async () => {
     try {
       const data = await loadAiSettingsFn({ data: {} as any }) as any;
-      setOpenaiKeyMasked(data?.openai_api_key_masked ?? null);
-      setGeminiKeyMasked(data?.gemini_api_key_masked ?? null);
-      setElevenKeyMasked(data?.elevenlabs_api_key_masked ?? null);
-      setApinetKeyMasked(data?.apinet_api_key_masked ?? null);
-      if (data?.gemini_model) setGeminiModel(data.gemini_model);
-      if (data?.apinet_model) setApinetModel(data.apinet_model);
-      setElevenAgentId(data?.elevenlabs_agent_id ?? "");
-      setDefaultVoiceId(data?.default_voice_id ?? "");
-      setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
-      setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
+      applySystemSettings(data);
     } catch (e: any) {
       toast({ title: "AI Settings konnten nicht geladen werden", description: e?.message ?? String(e), variant: "destructive" });
     }
@@ -156,10 +163,11 @@ function AdminAiSettingsPage() {
 
   const saveInterviewSettings = async () => {
     setSavingInterview(true);
+    const nextElevenAgentId = elevenAgentId.trim();
     const patch: Record<string, any> = {
       gemini_model: geminiModel,
       apinet_model: apinetModel,
-      elevenlabs_agent_id: elevenAgentId.trim() || null,
+      elevenlabs_agent_id: nextElevenAgentId || null,
       default_voice_id: defaultVoiceId.trim() || null,
       default_system_prompt: defaultSystemPrompt.trim() || null,
       default_decision_prompt: defaultDecisionPrompt.trim() || null,
@@ -169,17 +177,13 @@ function AdminAiSettingsPage() {
     if (apinetKey.trim()) patch.apinet_api_key = apinetKey.trim();
     try {
       const data = await saveAiInterviewSettingsFn({ data: patch as any }) as any;
+      if (nextElevenAgentId && data?.elevenlabs_agent_id !== nextElevenAgentId) {
+        throw new Error("ElevenLabs Agent-ID wurde vom Server nicht übernommen.");
+      }
+      const fresh = await loadAiSettingsFn({ data: {} as any }) as any;
       toast({ title: "Interview-Einstellungen gespeichert" });
       setGeminiKey(""); setElevenKey(""); setApinetKey("");
-      setGeminiKeyMasked(data?.gemini_api_key_masked ?? null);
-      setElevenKeyMasked(data?.elevenlabs_api_key_masked ?? null);
-      setApinetKeyMasked(data?.apinet_api_key_masked ?? null);
-      if (data?.gemini_model) setGeminiModel(data.gemini_model);
-      if (data?.apinet_model) setApinetModel(data.apinet_model);
-      setElevenAgentId(data?.elevenlabs_agent_id ?? "");
-      setDefaultVoiceId(data?.default_voice_id ?? "");
-      setDefaultSystemPrompt(data?.default_system_prompt ?? DEFAULT_SYSTEM_PROMPT);
-      setDefaultDecisionPrompt(data?.default_decision_prompt ?? DEFAULT_DECISION_PROMPT);
+      applySystemSettings(fresh);
     } catch (e: any) {
       toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
     } finally {
@@ -354,9 +358,9 @@ function AdminAiSettingsPage() {
           <div className="space-y-2">
             <label className="text-xs font-medium">ElevenLabs Agent ID (Conversational AI)</label>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-muted-foreground">Aktuell:</span>
-              {elevenAgentId
-                ? <code className="text-xs px-2 py-0.5 rounded bg-muted break-all">{elevenAgentId}</code>
+              <span className="text-[11px] text-muted-foreground">Gespeichert:</span>
+              {savedElevenAgentId
+                ? <code className="text-xs px-2 py-0.5 rounded bg-muted break-all">{savedElevenAgentId}</code>
                 : <span className="text-xs text-destructive">Nicht gesetzt</span>}
             </div>
             <Input value={elevenAgentId} onChange={(e) => setElevenAgentId(e.target.value)}
