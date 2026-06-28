@@ -58,15 +58,32 @@ function pickSlots(meta: any): ThemeSlot[] {
   return Array.isArray(meta?.slots) ? (meta.slots as ThemeSlot[]) : [];
 }
 
+// Themes, die KEINE eigene Bewerbungs-Sektion haben (TTS/Eilers/AZB), bekommen
+// das Shared-Formular automatisch vor </body> + zugehöriges CSS/JS injiziert.
+// CTAs in diesen Themes zeigen auf #bewerbung-form.
+const SHARED_FORM_THEMES = new Set([
+  "theme-tts-consultant",
+  "theme-eilers-replica",
+  "theme-azb-replica",
+]);
+
+function withSharedForm(t: ThemeFiles): ThemeFiles {
+  if (!SHARED_FORM_THEMES.has(t.id)) return t;
+  const html = /<\/body>/i.test(t.html)
+    ? t.html.replace(/<\/body>/i, `${sharedFormHtml}\n</body>`)
+    : `${t.html}\n${sharedFormHtml}`;
+  return { ...t, html, css: `${t.css}\n\n${sharedFormCss}`, js: `${t.js}\n\n${sharedFormJs}` };
+}
+
 export const THEMES: ThemeFiles[] = [
   { id: t10Meta.id, name: t10Meta.name, description: t10Meta.description, html: t10Html, css: t10Css, js: t10Js, slots: pickSlots(t10Meta) },
   { id: tttsMeta.id, name: tttsMeta.name, description: tttsMeta.description, html: tttsHtml, css: tttsCss, js: tttsJs, slots: pickSlots(tttsMeta) },
   { id: tpgMeta.id, name: tpgMeta.name, description: tpgMeta.description, html: tpgHtml, css: tpgCss, js: tpgJs, slots: pickSlots(tpgMeta) },
   { id: teilMeta.id, name: teilMeta.name, description: teilMeta.description, html: teilHtml, css: teilCss, js: teilJs, slots: pickSlots(teilMeta) },
   { id: tazbRepMeta.id, name: tazbRepMeta.name, description: tazbRepMeta.description, html: tazbRepHtml, css: tazbRepCss, js: tazbRepJs, slots: pickSlots(tazbRepMeta) },
-
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
-];
+].map(withSharedForm);
+
 
 export function getTheme(id: string): ThemeFiles | undefined {
   return THEMES.find((t) => t.id === id);
