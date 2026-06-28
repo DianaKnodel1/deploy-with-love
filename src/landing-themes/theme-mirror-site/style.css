@@ -51,6 +51,15 @@ img    { max-width: 100%; display: block; }
 }
 .bpo-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
 .bpo-btn-header { flex-shrink: 0; }
+.bpo-btn-cta {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  padding: 13px 28px; font-size: 15px; font-weight: 700;
+  border-radius: 999px; letter-spacing: 0.3px;
+  box-shadow: 0 6px 18px -6px rgba(37, 99, 235, 0.55);
+}
+.bpo-btn-cta:hover { box-shadow: 0 10px 24px -6px rgba(37, 99, 235, 0.7); transform: translateY(-2px); }
+.bpo-btn-cta svg { transition: transform 0.2s; }
+.bpo-btn-cta:hover svg { transform: translateX(3px); }
 
 .bpo-menu-toggle { display: none; background: none; border: 0; color: var(--heading); cursor: pointer; padding: 4px; line-height: 1; }
 
