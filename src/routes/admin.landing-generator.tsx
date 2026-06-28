@@ -893,7 +893,12 @@ document.addEventListener('submit', function(e){
                 </div>
               </div>
 
-              {/* KI-Bewerbungsgespräch */}
+              {/* KI-Bewerbungsgespräch — nur Fast-Track + Klassisch. Bei Vermittlung erbt der Lead die Einstellung der verknüpften Fast-Track-Landing. */}
+              {branding.flow_type === "broker" ? (
+                <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-[11px] text-muted-foreground">
+                  🤖 <span className="font-semibold">KI-Bewerbungsgespräch:</span> Wird von der verknüpften Fast-Track-Landing gesteuert (Vermittlungen leiten nur weiter und buchen Calendly — das Interview findet beim Fast-Track-Partner statt).
+                </div>
+              ) : (
               <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
                 <div>
                   <Label className="text-xs font-semibold">🤖 KI-Bewerbungsgespräch</Label>
@@ -949,6 +954,8 @@ document.addEventListener('submit', function(e){
                   />
                 </Field>
               </div>
+              )}
+
 
 
 
