@@ -150,9 +150,10 @@ export const generateLandingZip = createServerFn({ method: "POST" })
     // Domain user-freundlich säubern (https://, trailing slash entfernen)
     const cleanedBranding = { ...data.branding, landing_domain: cleanLandingDomain(data.branding.landing_domain) };
 
-    // CTA-Fallback: Falls ein Theme noch {{cta_url}} verwendet, immer absolut machen.
-    // Themes mit Shared-Inline-Formular (TTS/Eilers/AZB) springen stattdessen auf
-    // den Anker #bewerbung-form und brauchen das gar nicht.
+    // Impressum/Datenschutz immer als echte Unterseiten — Slots überschreiben.
+    slots.impressum_url = "impressum.html";
+    slots.datenschutz_url = "datenschutz.html";
+
     const portalBase = (cleanedBranding.portal_url || "").replace(/\/+$/, "");
     const ctaRaw = (slots.cta_url ?? "").trim();
     const isAbsolute = /^https?:\/\//i.test(ctaRaw);
@@ -163,20 +164,27 @@ export const generateLandingZip = createServerFn({ method: "POST" })
 
     let html = applyPlaceholders(theme.html, cleanedBranding, slots);
 
-    // Relative /bewerbung Links auf absolute Portal-URL umschreiben, damit
-    // sie von der Landing-Domain aus nicht ins Leere zeigen (about:blank#blocked).
     if (portalBase) {
       html = html.replace(/href=(["'])\/bewerbung(\/[^"']*)?(\?[^"']*)?(#[^"']*)?\1/gi,
         (_m, q, p = "", qs = "", h = "") => `href=${q}${portalBase}/bewerbung${p}${qs}${h}${q}`);
     }
+
+    // Inline-Sektionen für Impressum/Datenschutz aus index.html entfernen —
+    // diese leben jetzt als eigene Unterseiten.
+    html = html.replace(/<section[^>]*id=["'](?:impressum|datenschutz)["'][\s\S]*?<\/section>\s*/gi, "");
 
     html = cleanEmptyMetaTags(html, cleanedBranding);
     html = injectLandingConfig(html, cleanedBranding);
     const css = applyPlaceholders(theme.css, cleanedBranding, slots);
     const js = applyPlaceholders(theme.js, cleanedBranding, slots);
 
+    const impressumHtml = buildLegalPage("Impressum", renderImpressum(cleanedBranding), cleanedBranding);
+    const datenschutzHtml = buildLegalPage("Datenschutz", renderDatenschutz(cleanedBranding), cleanedBranding);
+
     const zip = new JSZip();
     zip.file("index.html", html);
+    zip.file("impressum.html", impressumHtml);
+    zip.file("datenschutz.html", datenschutzHtml);
     zip.file("style.css", css);
     zip.file("script.js", js);
     zip.file(
