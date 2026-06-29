@@ -321,7 +321,7 @@ export const generateLandingZip = createServerFn({ method: "POST" })
         const filename = `logo.${ext}`;
         zip.folder("assets")!.file(filename, parsed.bytes);
         if (ext !== "png") {
-          const finalHtml = html.replace("assets/logo.png", `assets/${filename}`);
+          const finalHtml = html.split("assets/logo.png").join(`assets/${filename}`);
           zip.file("index.html", finalHtml);
         }
       }
