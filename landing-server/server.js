@@ -68,9 +68,13 @@ function requestJson(url, headers) {
 function loadTheme(id) {
   const safeId = basename(String(id || "")).replace(/[^a-z0-9_-]/gi, "");
   if (!safeId) return null;
-  if (themeCache.has(safeId)) return themeCache.get(safeId);
+  const cached = themeCache.get(safeId);
+  if (cached && Date.now() - cached.ts < THEME_CACHE_TTL_MS) return cached.theme;
   const dir = join(themesDir, safeId);
-  if (!existsSync(dir)) return null;
+  if (!existsSync(dir)) {
+    themeCache.set(safeId, { ts: Date.now(), theme: null });
+    return null;
+  }
   try {
     const theme = {
       id: safeId,
@@ -78,13 +82,14 @@ function loadTheme(id) {
       css: readFileSync(join(dir, "style.css"), "utf8"),
       js: readFileSync(join(dir, "script.js"), "utf8"),
     };
-    themeCache.set(safeId, theme);
+    themeCache.set(safeId, { ts: Date.now(), theme });
     return theme;
   } catch (e) {
     console.warn(`[themes] Skip ${safeId}: ${e?.message || e}`);
     return null;
   }
 }
+
 
 async function loadLanding(domain) {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
