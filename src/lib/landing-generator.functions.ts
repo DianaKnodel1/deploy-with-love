@@ -246,6 +246,11 @@ export const generateLandingZip = createServerFn({ method: "POST" })
     slots.impressum_url = "impressum.html";
     slots.datenschutz_url = "datenschutz.html";
 
+    // Hochgeladenes Logo/Favicon automatisch in {{logo_image}}/{{favicon_image}}
+    // spiegeln, damit Themes wie Eilers/TTS/AZB den Branding-Upload anzeigen.
+    if (data.logoDataUrl && !slots.logo_image) slots.logo_image = "assets/logo.png";
+    if (data.faviconDataUrl && !slots.favicon_image) slots.favicon_image = "assets/favicon.png";
+
     const portalBase = (cleanedBranding.portal_url || "").replace(/\/+$/, "");
     const ctaRaw = (slots.cta_url ?? "").trim();
     const isAbsolute = /^https?:\/\//i.test(ctaRaw);
@@ -316,7 +321,7 @@ export const generateLandingZip = createServerFn({ method: "POST" })
         const filename = `logo.${ext}`;
         zip.folder("assets")!.file(filename, parsed.bytes);
         if (ext !== "png") {
-          const finalHtml = html.replace("assets/logo.png", `assets/${filename}`);
+          const finalHtml = html.split("assets/logo.png").join(`assets/${filename}`);
           zip.file("index.html", finalHtml);
         }
       }
