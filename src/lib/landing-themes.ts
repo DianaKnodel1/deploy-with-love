@@ -6,6 +6,13 @@ import sharedFormCss from "../landing-themes/_shared/form-section.css?raw";
 import sharedFormJs from "../landing-themes/_shared/form-section.js?raw";
 import azbFormHtml from "../landing-themes/_shared/form-section-azb.html?raw";
 import azbFormCss from "../landing-themes/_shared/form-section-azb.css?raw";
+import ttsFormHtml from "../landing-themes/_shared/form-section-tts.html?raw";
+import ttsFormCss from "../landing-themes/_shared/form-section-tts.css?raw";
+import eilFormHtml from "../landing-themes/_shared/form-section-eilers.html?raw";
+import eilFormCss from "../landing-themes/_shared/form-section-eilers.css?raw";
+import mirFormHtml from "../landing-themes/_shared/form-section-mirror.html?raw";
+import mirFormCss from "../landing-themes/_shared/form-section-mirror.css?raw";
+
 
 
 import t10Html from "../landing-themes/theme-10/template.html?raw";
