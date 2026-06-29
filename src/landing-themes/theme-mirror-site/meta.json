@@ -7,6 +7,9 @@
   "slots": [
     { "key": "firmenname",        "label": "Firmenname",                "default": "BPO Solutions" },
     { "key": "logo_text",         "label": "Logo-Text (kurz)",          "default": "BPO" },
+    { "key": "logo_image",        "label": "Logo (Bild-URL, optional)", "default": "assets/logo.svg" },
+    { "key": "favicon_image",     "label": "Favicon (Bild-URL, optional)", "default": "" },
+    { "key": "seo_image",         "label": "SEO/OG Bild (URL, optional)", "default": "" },
     { "key": "landing_domain",    "label": "Domain",                    "default": "bpo-solutions.net" },
     { "key": "portal_url",        "label": "Login-Portal URL",          "default": "https://app.bpo-solutions.net" },
     { "key": "seo_title",         "label": "SEO Titel",                 "default": "BPO Solutions — Arbeiten von zu Hause als Anwendungsprüfer" },
