@@ -16,7 +16,7 @@ const PORTAL_API_ENDPOINT = process.env.PORTAL_API_ENDPOINT || "";
 const PORT = Number(process.env.PORT || 3001);
 const CACHE_TTL_MS = 60_000;
 
-const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain)";
+const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding)";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Themes-Verzeichnis: zuerst ENV, dann Portal-Repo (automatisch), dann lokales themes/
 function resolveThemesDir() {
