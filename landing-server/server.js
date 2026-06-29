@@ -18,9 +18,27 @@ const CACHE_TTL_MS = 60_000;
 
 const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain)";
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const themesDir = join(__dirname, "themes");
+// Themes-Verzeichnis: zuerst ENV, dann Portal-Repo (automatisch), dann lokales themes/
+function resolveThemesDir() {
+  const candidates = [
+    process.env.THEMES_DIR,
+    "/opt/apps/portal/src/landing-themes",
+    join(__dirname, "..", "portal", "src", "landing-themes"),
+    join(__dirname, "themes"),
+  ].filter(Boolean);
+  for (const p of candidates) {
+    if (existsSync(p)) {
+      console.log(`[themes] using ${p}`);
+      return p;
+    }
+  }
+  return join(__dirname, "themes");
+}
+const themesDir = resolveThemesDir();
 const cache = new Map();
 const themeCache = new Map();
+const THEME_CACHE_TTL_MS = 30_000;
+
 
 function requestJson(url, headers) {
   return new Promise((resolve, reject) => {
