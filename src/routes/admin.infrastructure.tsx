@@ -258,6 +258,9 @@ function ServerRow({ row, onTogglePause, onDelete, onRotate, onResync, onShowBoo
     online: "default", pending: "outline", paused: "secondary", offline: "destructive",
   };
   const statusLabel: Record<string, string> = { online: "Online", pending: "Wartend", paused: "Pausiert", offline: "Offline" };
+  const resyncReq = row.themes_resync_requested_at ? new Date(row.themes_resync_requested_at).getTime() : 0;
+  const resyncDone = row.themes_resync_done_at ? new Date(row.themes_resync_done_at).getTime() : 0;
+  const resyncPending = resyncReq > 0 && resyncReq > resyncDone;
   return (
     <TableRow>
       <TableCell className="font-medium">{row.name}</TableCell>
