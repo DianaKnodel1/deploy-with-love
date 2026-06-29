@@ -102,7 +102,7 @@ const EMPTY: Branding = {
   supabase_url: "",
   supabase_anon_key: "",
   tenant_id: "",
-  flow_type: "classic",
+  flow_type: "fast",
   source_slug: "",
   calendly_url: "",
   intermediate_company_name: "",
@@ -885,25 +885,10 @@ document.addEventListener('submit', function(e){
                 <Textarea rows={4} value={branding.impressum} onChange={set("impressum")} />
               </Field>
 
-              {/* Flow-Typ */}
+              {/* Flow-Typ — "Klassisch" wurde entfernt; nur noch Fast-Track + Vermittlung. */}
               <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
                 <Label className="text-xs font-semibold">Bewerbungs-Flow</Label>
-                <div className="grid sm:grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setBranding((b) => ({ ...b, flow_type: "classic" }))}
-                    className={cn(
-                      "text-left rounded-md border-2 p-3 transition-all text-xs",
-                      branding.flow_type === "classic"
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40",
-                    )}
-                  >
-                    <div className="font-semibold mb-1">🟡 Klassisch</div>
-                    <p className="text-muted-foreground text-[11px]">
-                      Bewerbung landet als <code>neu</code> im Admin. Du akzeptierst manuell → System verschickt Einladungs-Mail.
-                    </p>
-                  </button>
+                <div className="grid sm:grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setBranding((b) => ({ ...b, flow_type: "fast" }))}
@@ -916,7 +901,7 @@ document.addEventListener('submit', function(e){
                   >
                     <div className="font-semibold mb-1">⚡ Fast-Track</div>
                     <p className="text-muted-foreground text-[11px]">
-                      Bewerbung wird sofort <code>akzeptiert</code> + Auto-Redirect zu <code>portal_url/register</code>. <strong>Portal-URL Pflicht.</strong>
+                      Bewerbung kommt über Vermittlung + Calendly-Buchung rein. Der Bewerber erhält per E-Mail einen Magic-Link zu seinem KI-Bewerbungsgespräch. <strong>Portal-URL Pflicht.</strong>
                     </p>
                   </button>
                   <button
@@ -931,7 +916,7 @@ document.addEventListener('submit', function(e){
                   >
                     <div className="font-semibold mb-1">🤝 Vermittlung</div>
                     <p className="text-muted-foreground text-[11px]">
-                      AZB-Style: „Sie werden mit <em>[Partner]</em> verbunden" → Calendly-Termin → Webhook setzt <code>scheduled</code>. <strong>Fast-Track-Firma oder Calendly-Link Pflicht.</strong>
+                      Vorgeschaltete Landing: CTA öffnet Modal „Sie werden mit <em>[Partner]</em> verbunden" → Calendly-Termin der verknüpften Fast-Track-Firma. <strong>Fast-Track-Firma verknüpfen.</strong>
                     </p>
                   </button>
                 </div>

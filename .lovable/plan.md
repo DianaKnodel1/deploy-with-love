@@ -1,90 +1,65 @@
-# End-to-End Testlauf — kompletter Bewerber-Flow
-
 ## Ziel
-Einmal durchspielen: **personalservice-gmbh.com** (Vermittlung) → Bewerbung → Weiterleitung an **UWK Consulting** (Fast-Track) → Calendly-Termin → KI-Bewerbungsgespräch → Chat.
 
----
+"Klassisch" aus UI ausblenden. Neuer Bewerbungs-Flow: Vermittlung → Calendly → E-Mail mit Magic-Link → Fasttrack `/bewerbung` → KI-Interview. Direkter Zugang auf Fasttrack-Landings leitet auf das Mitarbeiter-Portal weiter.
 
-## Phase 1 — Setup im Admin (einmalig)
+## Flow im Überblick
 
-### 1.1 Fast-Track-Firma „UWK Consulting" anlegen
-`/admin/partner-companies` → **Neue Fast-Track-Firma**
-- Name: `UWK Consulting`
-- Logo-URL
-- Calendly-URL: `https://calendly.com/<uwk>/erstgespraech`
-- Portal-Registrierungs-URL: `https://portal.uwk-consulting.com/register`
-- Intro-Headline/Subline (optional, sonst Default)
+```text
+Vermittlung-Landing (personalservice-gmbh.de)
+        │ CTA klick
+        ▼
+   Broker-Modal "Wir verbinden Sie mit <Partner>"
+        │ Jetzt Termin buchen
+        ▼
+Calendly (Event-Type der verknüpften Fasttrack-Firma)
+        │ Buchung mit E-Mail + utm_source=<broker_landing_id>
+        ▼
+Calendly-Webhook → Portal
+    • application anlegen (flow_type=fast, source = Broker)
+    • Magic-Link generieren (Token in applications.magic_token)
+    • E-Mail "Ihr Bewerbungsgespräch" an Invitee
+        │ Klick auf Link
+        ▼
+Fasttrack-Landing  https://<fasttrack-domain>/bewerbung?token=...
+    • Token → Application laden → direkt ins KI-Interview
+    • Ohne Token: Redirect auf Mitarbeiter-Portal (Login)
+```
 
-### 1.2 Calendly-Account verknüpfen
-`/admin/calendly` → **Neuer Account**
-- Display-Name: `UWK Sabine`
-- PAT eintragen → Webhook „Generieren" klicken (signiert + registriert automatisch)
+## Änderungen
 
-### 1.3 Fast-Track-Landing „UWK" erstellen
-`/admin/landing-generator` → **Neue Landing**
-- Flow-Typ: **Fast-Track**
-- Domain: `karriere.uwk-consulting.com`
-- Slug: `uwk`
-- Branding (Farben, Logo, Recruiter-Name z.B. „Sabine Schneider")
-- KI-Interview: **aktiv** (Sprache: DE, Modell: Gemini 2.5 Flash via apinet)
-- Portal-Redirect: `https://portal.uwk-consulting.com/register`
-- Speichern → Publizieren
+### 1. UI: "Klassisch" ausblenden
+- `src/routes/admin.landing-generator.tsx`: `flow_type`-Auswahl filtert `classic` raus. Bestehende classic-Landings bleiben funktional, neue Pages nur noch `fast` / `broker`.
+- `src/routes/admin.applications.index.tsx`: Filter-Dropdown ohne "Klassisch".
+- `src/lib/landing-pages.functions.ts`: kein Schema-Change, nur Default `flow_type='fast'`.
 
-### 1.4 Vermittlungs-Landing „personalservice" erstellen
-`/admin/landing-generator` → **Neue Landing**
-- Flow-Typ: **Vermittlung**
-- Domain: `personalservice-gmbh.com`
-- Slug: `home`
-- Fast-Track-Firma: **UWK Consulting** (erbt Calendly + Portal)
-- Verknüpfte Fast-Track-Landing: **UWK** (für CTA-Redirect mit `?ref=<broker_id>`)
-- Speichern → Publizieren
+### 2. Calendly-Webhook erweitert
+- `src/routes/api/public/calendly-webhook.ts` (bestehend): bei `invitee.created` zusätzlich:
+  - Application-Row anlegen (oder bestehende per E-Mail mergen)
+  - `magic_token` (uuid) generieren + `magic_token_expires_at` (7 Tage)
+  - via `sendTransactionalEmail` Template `bewerbung-magic-link` schicken mit `https://<fasttrack-domain>/bewerbung?token=<uuid>`
+  - `<fasttrack-domain>` aus verknüpfter Landing (utm_source = broker_landing_id → linked_fast_landing → domain)
 
----
+### 3. DB-Migration
+- `applications.magic_token text unique`, `magic_token_expires_at timestamptz`
+- Index auf `magic_token`
+- GRANT bleibt unverändert (service_role schreibt, RPC liest)
 
-## Phase 2 — Bewerber-Flow durchspielen
+### 4. RPC für Token-Lookup
+- `get_application_by_magic_token(_token text)` security definer, liefert `application_id, status, interview_state` wenn Token gültig + nicht abgelaufen.
 
-### 2.1 Vermittlung
-1. Bewerber öffnet `https://personalservice-gmbh.com`
-2. Füllt Formular aus → POST `/api/public/applications`
-3. Application angelegt: `flow_type=broker`, `booking_status=pending`, `source_landing_id=<personalservice>`
-4. Inline-Erfolgs-Modal: „Wir verbinden Sie mit **UWK Consulting**" + Button **„Jetzt Termin buchen"**
+### 5. `/bewerbung` umbauen
+- `src/routes/bewerbung.index.tsx`:
+  - Query-Param `token` lesen
+  - **Mit Token**: RPC aufrufen → bei Treffer Redirect/Embed `/interview/$appId`; sonst Fehler "Link ungültig oder abgelaufen".
+  - **Ohne Token**: Redirect auf `<portal_url>/login` (aus `window.PORTAL_URL`, vom Landing-Renderer injiziert) — kein Bewerbungs-Formular mehr.
 
-### 2.2 Calendly
-5. Klick → öffnet Calendly in neuem Tab (mit Prefill name/email)
-6. Bewerber bucht Termin
-7. Calendly-Webhook trifft `/api/public/calendly-webhook` → `booking_status=scheduled`, `scheduled_at=<datum>`
-8. Calendly schickt Bestätigungs-E-Mail mit Termin
+### 6. E-Mail-Template
+- `src/lib/email-templates/bewerbung-magic-link.tsx` mit Branding der Firma (logo_url, primary_color aus Landing-branding) und CTA-Button auf den Link. In `registry.ts` registrieren.
 
-### 2.3 Übergang zu Fast-Track (am Termintag)
-9. Bewerber bekommt Reminder mit Link zur Fast-Track-Landing `karriere.uwk-consulting.com?ref=<broker_id>`
-10. Klickt → Fast-Track-Bewerbung (oder Kurzform „Termin bestätigt, weiter")
-11. Application erweitert: `flow_type=fast`, `target_landing_id=<uwk>`, Auto-Akzept
+### 7. Landing-Server
+- `landing-server/server.js`: Broker-Modal-Text & Calendly-Link bleiben. Nur Fasttrack-CTAs (kein broker, kein bewerbung-Modal mehr nötig auf Fasttrack-Page direkt) zeigen — Direktbewerbung über Landing ist deaktiviert; CTA-Click ohne Token öffnet `/bewerbung` → das redirectet aufs Portal.
 
-### 2.4 KI-Interview
-12. Weiterleitung zu `/interview/<appId>` (KI-Recruiterin Sabine)
-13. ElevenLabs-Voice-Agent + Gemini-LLM führen Gespräch
-14. Transkript + Score wird auf `applications` gespeichert
-15. Nach Abschluss: Redirect zu Portal-Registrierung
+## Offene Klärung vor Code
+Soll der Magic-Link **direkt** auf `/interview/$appId` führen (ohne `/bewerbung`-Zwischenseite), oder bleibt `/bewerbung?token=` als Landing mit Branding + "Jetzt Gespräch starten"-Button (vermeidet versehentliches Auto-Mic-Recording beim E-Mail-Preview-Aufruf durch Spam-Scanner)?
 
-### 2.5 Portal + Chat
-16. Bewerber registriert sich im Portal → `profiles`-Row, Rolle `employee`
-17. Admin sieht Bewerbung unter `/admin/applications/<id>` mit Transkript
-18. Chat zwischen Admin/Recruiter und Bewerber via `/admin/chat`
-
----
-
-## Phase 3 — Was ich jetzt brauche, um loszulegen
-
-Vor dem Implementieren bitte bestätigen:
-
-1. **Sind alle Migrations auf der Backend-DB schon ausgeführt?**
-   - `20260619000000_broker_flow.sql`, `20260618100000_calendly_integration.sql`, `20260625000000_vermittlung_link_and_cold.sql`, `20260626000000_ai_settings_agent_apinet.sql`, `20260628100000_landing_recruiter_name.sql`
-2. **Existieren bereits Daten** (UWK-Firma, Calendly-Account, Landings) oder soll ich von Null starten?
-3. **Test-Modus**: echter Calendly-Account + Domains live, oder nur Smoke-Test auf `localhost` mit Mock-Webhook?
-
-## Was ich dann tue
-- **Lücken im Code identifizieren** (z.B. fehlt evtl. die `?ref=`-Auswertung auf Fast-Track-Landings, oder der automatische Übergang von `broker`-App → `fast`-App nach Calendly-Webhook).
-- Pro Lücke ein gezielter Patch, kein großes Refactoring.
-- Am Ende: Checkliste mit `curl`-/UI-Schritten, mit der du den Flow auf deinen Servern verifizieren kannst.
-
-Sag mir, wo wir stehen (Punkte 1–3), dann fange ich an.
+Empfehlung: **`/bewerbung?token=`** als Zwischenseite mit Button — Mail-Scanner triggern sonst das Interview.

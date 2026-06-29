@@ -73,6 +73,7 @@ import { Route as ApiPublicDomainHealthCronRouteImport } from './routes/api/publ
 import { Route as ApiPublicCalendlyWebhookRouteImport } from './routes/api/public/calendly-webhook'
 import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
 import { Route as ApiPublicApplicationLookupRouteImport } from './routes/api/public/application-lookup'
+import { Route as ApiPublicApplicationByTokenRouteImport } from './routes/api/public/application-by-token'
 import { Route as AdminEmployeesUserIdRouteImport } from './routes/admin.employees.$userId'
 import { Route as AdminAssignmentsAssignmentIdRouteImport } from './routes/admin.assignments.$assignmentId'
 import { Route as AdminApplicationsAppIdRouteImport } from './routes/admin.applications.$appId'
@@ -404,6 +405,12 @@ const ApiPublicApplicationLookupRoute =
     path: '/api/public/application-lookup',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicApplicationByTokenRoute =
+  ApiPublicApplicationByTokenRouteImport.update({
+    id: '/api/public/application-by-token',
+    path: '/api/public/application-by-token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminEmployeesUserIdRoute = AdminEmployeesUserIdRouteImport.update({
   id: '/employees/$userId',
   path: '/employees/$userId',
@@ -496,6 +503,7 @@ export interface FileRoutesByFullPath {
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
@@ -566,6 +574,7 @@ export interface FileRoutesByTo {
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
@@ -639,6 +648,7 @@ export interface FileRoutesById {
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
@@ -712,6 +722,7 @@ export interface FileRouteTypes {
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
     | '/api/public/calendly-webhook'
@@ -782,6 +793,7 @@ export interface FileRouteTypes {
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
     | '/api/public/calendly-webhook'
@@ -854,6 +866,7 @@ export interface FileRouteTypes {
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
     | '/api/public/calendly-webhook'
@@ -882,6 +895,7 @@ export interface RootRouteChildren {
   BewerbungVerbindenRoute: typeof BewerbungVerbindenRoute
   InterviewAppIdRoute: typeof InterviewAppIdRoute
   BewerbungIndexRoute: typeof BewerbungIndexRoute
+  ApiPublicApplicationByTokenRoute: typeof ApiPublicApplicationByTokenRoute
   ApiPublicApplicationLookupRoute: typeof ApiPublicApplicationLookupRoute
   ApiPublicApplicationsRoute: typeof ApiPublicApplicationsRoute
   ApiPublicCalendlyWebhookRoute: typeof ApiPublicCalendlyWebhookRoute
@@ -1343,6 +1357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicApplicationLookupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/application-by-token': {
+      id: '/api/public/application-by-token'
+      path: '/api/public/application-by-token'
+      fullPath: '/api/public/application-by-token'
+      preLoaderRoute: typeof ApiPublicApplicationByTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/employees/$userId': {
       id: '/admin/employees/$userId'
       path: '/employees/$userId'
@@ -1527,6 +1548,7 @@ const rootRouteChildren: RootRouteChildren = {
   BewerbungVerbindenRoute: BewerbungVerbindenRoute,
   InterviewAppIdRoute: InterviewAppIdRoute,
   BewerbungIndexRoute: BewerbungIndexRoute,
+  ApiPublicApplicationByTokenRoute: ApiPublicApplicationByTokenRoute,
   ApiPublicApplicationLookupRoute: ApiPublicApplicationLookupRoute,
   ApiPublicApplicationsRoute: ApiPublicApplicationsRoute,
   ApiPublicCalendlyWebhookRoute: ApiPublicCalendlyWebhookRoute,

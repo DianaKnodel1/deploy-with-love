@@ -72,28 +72,75 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
         const eventUri = inv?.uri ?? inv?.event ?? null;
         const inviteeUri = inv?.uri ?? null;
         const email = String(inv?.email ?? "").toLowerCase();
+        const fullName = String(inv?.name ?? "").trim();
         const startTime = inv?.scheduled_event?.start_time ?? null;
-        // utm_content from prefill carries our application_id
+        // utm_content from prefill carries our application_id (legacy flow).
+        // utm_source carries the broker landing slug/id.
         const tracking = inv?.tracking ?? {};
         const appIdFromUtm = tracking?.utm_content || tracking?.salesforce_uuid || null;
+        const brokerSourceSlug = String(tracking?.utm_source ?? "").trim() || null;
+
+        // Resolve target Fast-Track landing (where /bewerbung lives) from the
+        // broker landing's linked_fasttrack_landing_id, or directly via slug/id.
+        let targetLanding: { id: string; tenant_id: string | null; domain: string | null } | null = null;
+        if (brokerSourceSlug) {
+          // Try as broker landing slug first → linked fast-track landing.
+          const { data: brokerLp } = await supabaseAdmin
+            .from("landing_pages")
+            .select("id, linked_fasttrack_landing_id")
+            .or(`source_slug.eq.${brokerSourceSlug},slug.eq.${brokerSourceSlug},id.eq.${brokerSourceSlug}`)
+            .maybeSingle();
+          const targetId = (brokerLp as any)?.linked_fasttrack_landing_id ?? (brokerLp as any)?.id ?? null;
+          if (targetId) {
+            const { data: lp } = await supabaseAdmin
+              .from("landing_pages")
+              .select("id, tenant_id, domain")
+              .eq("id", targetId)
+              .maybeSingle();
+            if (lp) targetLanding = lp as any;
+          }
+        }
 
         // Find matching application
         let appRow: any = null;
         if (appIdFromUtm) {
           const { data } = await supabaseAdmin
             .from("applications")
-            .select("id, tenant_id, email")
+            .select("id, tenant_id, email, magic_token")
             .eq("id", appIdFromUtm).maybeSingle();
           if (data) appRow = data;
         }
         if (!appRow && email) {
           const { data } = await supabaseAdmin
             .from("applications")
-            .select("id, tenant_id, email, booking_status, created_at")
+            .select("id, tenant_id, email, booking_status, magic_token, created_at")
             .eq("email", email)
             .order("created_at", { ascending: false })
             .limit(1).maybeSingle();
           if (data) appRow = data;
+        }
+
+        // Auto-create application if booking arrived without an existing one
+        // (new flow: Vermittlung → Calendly → Webhook → application + magic link).
+        if (!appRow && email && event === "invitee.created") {
+          const newId = crypto.randomUUID();
+          const tenantId = targetLanding?.tenant_id ?? null;
+          const { error: insErr } = await supabaseAdmin.from("applications").insert({
+            id: newId,
+            full_name: fullName || email,
+            email,
+            tenant_id: tenantId,
+            status: "akzeptiert",
+            flow_type: "fast",
+            source_slug: brokerSourceSlug,
+            target_landing_id: targetLanding?.id ?? null,
+            booking_status: "scheduled",
+          } as any);
+          if (insErr) {
+            console.error("[calendly-webhook] auto-create application failed:", insErr);
+          } else {
+            appRow = { id: newId, tenant_id: tenantId, email };
+          }
         }
 
         if (!appRow) {
@@ -111,20 +158,65 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
         else if (event === "invitee.canceled") newStatus = "cancelled";
         else if (event === "invitee_no_show.created") newStatus = "no_show";
 
+        // Generate (or reuse) magic token for invitee.created
+        let magicToken: string | null = appRow.magic_token ?? null;
+        if (event === "invitee.created" && !magicToken) {
+          magicToken = crypto.randomUUID() + "-" + crypto.randomUUID().slice(0, 8);
+        }
+        const expiresAt = event === "invitee.created"
+          ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+          : null;
+
         if (newStatus) {
-          await supabaseAdmin.from("applications").update({
+          const upd: any = {
             booking_status: newStatus,
             scheduled_at: startTime ?? null,
             calendly_event_uri: eventUri ?? null,
             calendly_invitee_uri: inviteeUri ?? null,
-          }).eq("id", appRow.id);
+          };
+          if (event === "invitee.created" && magicToken) {
+            upd.magic_token = magicToken;
+            upd.magic_token_expires_at = expiresAt;
+          }
+          await supabaseAdmin.from("applications").update(upd).eq("id", appRow.id);
+        }
+
+        // Send magic-link email so the candidate can launch the AI interview
+        if (event === "invitee.created" && magicToken && email && targetLanding?.domain) {
+          try {
+            const magicLink = `https://${targetLanding.domain}/bewerbung?token=${magicToken}`;
+            const parts = (fullName || "").split(/\s+/);
+            const firstName = parts[0] ?? "";
+            const lastName = parts.slice(1).join(" ");
+            const tenantId = appRow.tenant_id ?? targetLanding.tenant_id;
+            if (tenantId) {
+              const { error: mailErr } = await supabaseAdmin.functions.invoke(
+                "send-invitation-email",
+                {
+                  body: {
+                    to: email,
+                    fullName: fullName || email,
+                    firstName, lastName,
+                    registrationLink: magicLink,
+                    tenantId,
+                    subject: "Ihr Bewerbungsgespräch ist bereit",
+                    headline: "Termin bestätigt",
+                    intro: "vielen Dank für Ihre Terminbuchung. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch über den folgenden Link:",
+                    buttonLabel: "Bewerbungsgespräch starten",
+                    templateName: "bewerbung_magic_link",
+                  },
+                },
+              );
+              if (mailErr) console.warn("[calendly-webhook] magic link mail:", mailErr);
+            }
+          } catch (e) { console.warn("[calendly-webhook] magic link mail error:", e); }
         }
 
         await supabaseAdmin.from("automation_log").insert({
           action: `calendly.${event ?? "unknown"}`,
           status: "ok",
           target: appRow.email ?? email,
-          payload: { application_id: appRow.id, scheduled_at: startTime, status: newStatus },
+          payload: { application_id: appRow.id, scheduled_at: startTime, status: newStatus, magic_link_sent: !!(event === "invitee.created" && magicToken && targetLanding?.domain) },
         });
 
         return Response.json({ ok: true, application_id: appRow.id, status: newStatus });
