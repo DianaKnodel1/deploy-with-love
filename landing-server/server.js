@@ -188,7 +188,12 @@ function cleanEmptyMeta(html, branding, domain) {
 function renderHtml(row, host) {
   const theme = loadTheme(row.theme_id);
   if (!theme) return { body: `Theme nicht gefunden: ${row.theme_id}`, status: 500 };
-  let html = applyPlaceholders(theme.html, row.branding, row.slots);
+  // Branding-Logo automatisch in {{logo_image}}/{{favicon_image}}-Slots spiegeln,
+  // damit Themes wie Eilers/TTS/AZB den hochgeladenen Logo nutzen.
+  const slots = { ...(row.slots || {}) };
+  if (row.logo_url && !slots.logo_image) slots.logo_image = "/assets/logo";
+  if (row.favicon_url && !slots.favicon_image) slots.favicon_image = "/assets/favicon";
+  let html = applyPlaceholders(theme.html, row.branding, slots);
   html = cleanEmptyMeta(html, row.branding, host);
   html = injectLandingConfig(html, row);
   if (row.logo_url) html = html.replace(/assets\/logo\.[a-z]+/gi, "/assets/logo");
