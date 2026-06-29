@@ -65,6 +65,7 @@ const SHARED_FORM_THEMES = new Set([
   "theme-tts-consultant",
   "theme-eilers-replica",
   "theme-azb-replica",
+  "theme-mirror-site",
 ]);
 
 function withSharedForm(t: ThemeFiles): ThemeFiles {
