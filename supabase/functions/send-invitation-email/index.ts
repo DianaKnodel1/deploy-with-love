@@ -25,6 +25,12 @@ interface Payload {
   lastName?: string;
   registrationLink: string;
   tenantId: string;
+  /** Optional overrides for non-default flows (e.g. magic-link / interview link). */
+  subject?: string;
+  headline?: string;
+  intro?: string;
+  buttonLabel?: string;
+  templateName?: string;
 }
 
 serve(async (req) => {
