@@ -201,10 +201,9 @@ window.BROKER_CALENDLY_URL = "${esc(brokerCalendlyUrl)}";
     o.id = "__broker_modal";
     o.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,sans-serif;";
     o.innerHTML = '<div style="background:#fff;max-width:480px;width:100%;border-radius:16px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">'+
-      '<div style="font-size:48px;margin-bottom:12px;">\uD83E\uDD1D</div>'+
       '<h2 style="margin:0 0 12px;font-size:22px;color:#111;">Wir verbinden Sie mit '+ (window.BROKER_PARTNER_NAME||"unserem Partner") +'</h2>'+
-      '<p style="margin:0 0 24px;color:#555;line-height:1.5;">Buchen Sie jetzt Ihren kostenlosen Beratungstermin \u2014 unser Partner meldet sich pers\u00f6nlich bei Ihnen.</p>'+
-      '<a id="__broker_cta" href="'+ calendly +'" target="_blank" rel="noopener" style="display:inline-block;background:#10b981;color:#fff;padding:14px 28px;border-radius:10px;font-weight:600;text-decoration:none;font-size:16px;">\uD83D\uDCC5 Jetzt Termin buchen</a>'+
+      '<p style="margin:0 0 24px;color:#555;line-height:1.5;">Buchen Sie jetzt Ihr kostenloses Bewerbungsgespr\u00e4ch.</p>'+
+      '<a id="__broker_cta" href="'+ calendly +'" target="_blank" rel="noopener" style="display:inline-block;background:#10b981;color:#fff;padding:14px 28px;border-radius:10px;font-weight:600;text-decoration:none;font-size:16px;">Jetzt Termin buchen</a>'+
       '<button id="__broker_close" style="display:block;margin:18px auto 0;background:none;border:none;color:#888;cursor:pointer;font-size:14px;">Abbrechen</button>'+
       '</div>';
     document.body.appendChild(o);
