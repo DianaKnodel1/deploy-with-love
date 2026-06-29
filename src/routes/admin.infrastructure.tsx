@@ -129,6 +129,14 @@ function ServersTab() {
     } catch (e: any) { toast({ title: "Fehler", description: e.message, variant: "destructive" }); }
   };
 
+  const onResync = async (id: string, name: string) => {
+    try {
+      await resync({ data: { id } });
+      toast({ title: "Themes-Resync angefordert", description: `${name}: Server lädt Themes beim nächsten Heartbeat (≤60s) neu.` });
+      reload();
+    } catch (e: any) { toast({ title: "Fehler", description: e.message, variant: "destructive" }); }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
