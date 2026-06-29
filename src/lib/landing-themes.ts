@@ -72,10 +72,13 @@ const SHARED_FORM_THEMES = new Set([
 
 function withSharedForm(t: ThemeFiles): ThemeFiles {
   if (!SHARED_FORM_THEMES.has(t.id)) return t;
+  const isAzb = t.id === "theme-azb-replica";
+  const formHtml = isAzb ? azbFormHtml : sharedFormHtml;
+  const formCss = isAzb ? azbFormCss : sharedFormCss;
   const html = /<\/body>/i.test(t.html)
-    ? t.html.replace(/<\/body>/i, `${sharedFormHtml}\n</body>`)
-    : `${t.html}\n${sharedFormHtml}`;
-  return { ...t, html, css: `${t.css}\n\n${sharedFormCss}`, js: `${t.js}\n\n${sharedFormJs}` };
+    ? t.html.replace(/<\/body>/i, `${formHtml}\n</body>`)
+    : `${t.html}\n${formHtml}`;
+  return { ...t, html, css: `${t.css}\n\n${formCss}`, js: `${t.js}\n\n${sharedFormJs}` };
 }
 
 export const THEMES: ThemeFiles[] = [
