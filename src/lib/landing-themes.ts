@@ -4,6 +4,8 @@
 import sharedFormHtml from "../landing-themes/_shared/form-section.html?raw";
 import sharedFormCss from "../landing-themes/_shared/form-section.css?raw";
 import sharedFormJs from "../landing-themes/_shared/form-section.js?raw";
+import azbFormHtml from "../landing-themes/_shared/form-section-azb.html?raw";
+import azbFormCss from "../landing-themes/_shared/form-section-azb.css?raw";
 
 
 import t10Html from "../landing-themes/theme-10/template.html?raw";
