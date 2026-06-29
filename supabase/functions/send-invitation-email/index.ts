@@ -37,8 +37,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { to, fullName, firstName, lastName, registrationLink, tenantId } =
-      (await req.json()) as Payload;
+    const body = (await req.json()) as Payload;
+    const { to, fullName, firstName, lastName, registrationLink, tenantId,
+      subject: subjectOverride, headline: headlineOverride,
+      intro: introOverride, buttonLabel: buttonLabelOverride,
+      templateName: templateNameOverride } = body;
 
     if (!to || !registrationLink || !tenantId) {
       return json({ error: "Missing required fields: to, registrationLink, tenantId" }, 400);
