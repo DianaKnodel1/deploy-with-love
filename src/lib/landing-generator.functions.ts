@@ -129,6 +129,98 @@ function parseDataUrl(dataUrl: string): { mime: string; bytes: Uint8Array } | nu
   return { mime, bytes };
 }
 
+function escapeHtml(s: string): string {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+}
+
+function renderImpressum(b: z.infer<typeof BrandingSchema>): string {
+  const addr = [b.strasse, [b.plz, b.stadt].filter(Boolean).join(" ")].filter(Boolean).map(escapeHtml).join("<br/>");
+  const rows: string[] = [];
+  rows.push(`<p><strong>${escapeHtml(b.firmenname)}</strong><br/>${addr}</p>`);
+  if (b.geschaeftsfuehrer) rows.push(`<p><strong>Vertreten durch:</strong><br/>${escapeHtml(b.geschaeftsfuehrer)}</p>`);
+  const contact: string[] = [];
+  if (b.telefon) contact.push(`Telefon: <a href="tel:${escapeHtml(b.telefon)}">${escapeHtml(b.telefon)}</a>`);
+  if (b.email) contact.push(`E-Mail: <a href="mailto:${escapeHtml(b.email)}">${escapeHtml(b.email)}</a>`);
+  if (contact.length) rows.push(`<h3>Kontakt</h3><p>${contact.join("<br/>")}</p>`);
+  const reg: string[] = [];
+  if (b.registergericht) reg.push(`Registergericht: ${escapeHtml(b.registergericht)}`);
+  if (b.hrb) reg.push(`Registernummer: ${escapeHtml(b.hrb)}`);
+  if (reg.length) rows.push(`<h3>Registereintrag</h3><p>${reg.join("<br/>")}</p>`);
+  const tax: string[] = [];
+  if (b.ust_id) tax.push(`USt-IdNr.: ${escapeHtml(b.ust_id)}`);
+  if (b.steuernummer) tax.push(`Steuernummer: ${escapeHtml(b.steuernummer)}`);
+  if (tax.length) rows.push(`<h3>Umsatzsteuer</h3><p>${tax.join("<br/>")}</p>`);
+  if (b.impressum) rows.push(`<div>${b.impressum}</div>`);
+  rows.push(`<p style="margin-top:24px;font-size:13px;opacity:.7;">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV: ${escapeHtml(b.geschaeftsfuehrer || b.firmenname)}, ${addr.replace(/<br\/>/g, ", ")}</p>`);
+  return rows.join("\n");
+}
+
+function renderDatenschutz(b: z.infer<typeof BrandingSchema>): string {
+  const name = escapeHtml(b.firmenname);
+  const email = escapeHtml(b.email);
+  return `
+    <h3>1. Verantwortlicher</h3>
+    <p>Verantwortlich für die Datenverarbeitung auf dieser Website ist:<br/>
+    ${name}<br/>${escapeHtml(b.strasse)}<br/>${escapeHtml([b.plz, b.stadt].filter(Boolean).join(" "))}<br/>
+    E-Mail: <a href="mailto:${email}">${email}</a></p>
+
+    <h3>2. Erhebung und Verarbeitung personenbezogener Daten</h3>
+    <p>Wir verarbeiten personenbezogene Daten, die Sie uns über das Bewerbungsformular zur Verfügung stellen (z.&nbsp;B. Name, Anschrift, Geburtsdatum, Kontaktdaten), zur Durchführung des Bewerbungsverfahrens gemäß Art.&nbsp;6 Abs.&nbsp;1 lit.&nbsp;b DSGVO sowie § 26 BDSG.</p>
+
+    <h3>3. Speicherdauer</h3>
+    <p>Ihre Bewerbungsdaten werden bis zu 6 Monate nach Abschluss des Verfahrens gespeichert und anschließend gelöscht, sofern keine längere Aufbewahrungspflicht besteht oder Sie in eine längere Speicherung eingewilligt haben.</p>
+
+    <h3>4. Empfänger</h3>
+    <p>Eine Weitergabe an Dritte erfolgt nur, wenn dies zur Durchführung des Bewerbungsverfahrens erforderlich ist (z.&nbsp;B. an Partnerunternehmen im Rahmen einer Vermittlung) oder Sie eingewilligt haben.</p>
+
+    <h3>5. Ihre Rechte</h3>
+    <p>Sie haben das Recht auf Auskunft (Art.&nbsp;15 DSGVO), Berichtigung (Art.&nbsp;16 DSGVO), Löschung (Art.&nbsp;17 DSGVO), Einschränkung der Verarbeitung (Art.&nbsp;18 DSGVO), Datenübertragbarkeit (Art.&nbsp;20 DSGVO) sowie das Recht auf Widerspruch (Art.&nbsp;21 DSGVO). Anfragen richten Sie bitte an <a href="mailto:${email}">${email}</a>.</p>
+
+    <h3>6. Beschwerderecht</h3>
+    <p>Sie haben das Recht, sich bei einer Datenschutzaufsichtsbehörde über die Verarbeitung Ihrer personenbezogenen Daten zu beschweren.</p>
+
+    <h3>7. SSL-Verschlüsselung</h3>
+    <p>Diese Website nutzt aus Sicherheitsgründen eine SSL-/TLS-Verschlüsselung zur Übertragung vertraulicher Inhalte.</p>
+  `;
+}
+
+function buildLegalPage(title: string, body: string, b: z.infer<typeof BrandingSchema>): string {
+  const t = escapeHtml(title);
+  const firm = escapeHtml(b.firmenname);
+  return `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>${t} – ${firm}</title>
+<meta name="robots" content="noindex,follow" />
+<link rel="stylesheet" href="style.css" />
+<style>
+  .legal-page { max-width: 820px; margin: 0 auto; padding: 64px 24px 96px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color:#1a1a1a; line-height:1.7; }
+  .legal-page h1 { font-size: 36px; margin: 0 0 8px; }
+  .legal-page h3 { font-size: 18px; margin: 28px 0 8px; }
+  .legal-page p { margin: 0 0 12px; }
+  .legal-page a { color: #2563eb; }
+  .legal-back { display:inline-block; margin-bottom: 24px; color:#64748b; text-decoration:none; font-size:14px; }
+  .legal-back:hover { color:#1a1a1a; }
+  .legal-footer { max-width:820px; margin: 0 auto; padding: 24px; border-top:1px solid #e5e7eb; font-size:13px; color:#64748b; text-align:center; }
+</style>
+</head>
+<body>
+<main class="legal-page">
+  <a href="index.html" class="legal-back">← Zurück zur Startseite</a>
+  <h1>${t}</h1>
+  ${body}
+</main>
+<footer class="legal-footer">
+  © ${new Date().getFullYear()} ${firm} ·
+  <a href="impressum.html">Impressum</a> ·
+  <a href="datenschutz.html">Datenschutz</a>
+</footer>
+</body>
+</html>`;
+}
+
 export const generateLandingZip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
