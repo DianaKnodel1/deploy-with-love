@@ -106,9 +106,28 @@ async function loadLanding(domain) {
 }
 
 function applyPlaceholders(src, branding, slots) {
+  // Computed Aliase, damit Slot-Defaults wie {{address}} / {{contact_email}} / {{contact_phone}}
+  // automatisch aus den Branding-Firmendaten gefüllt werden.
+  const b = { ...(branding || {}) };
+  const addrParts = [b.strasse, [b.plz, b.stadt].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  const aliases = {
+    address: b.address || addrParts,
+    contact_address: b.contact_address || addrParts,
+    contact_email: b.contact_email || b.email || "",
+    contact_phone: b.contact_phone || b.telefon || "",
+    sitz_stadt: b.sitz_stadt || b.stadt || "",
+  };
+  const merged = { ...aliases, ...b, ...(slots || {}) };
+  // 3 Passes: Slot-Defaults können selbst {{branding}}-Platzhalter enthalten.
   let out = src;
-  for (const [k, v] of Object.entries(branding || {})) out = out.split(`{{${k}}}`).join(String(v || ""));
-  for (const [k, v] of Object.entries(slots || {})) out = out.split(`{{${k}}}`).join(String(v || ""));
+  for (let i = 0; i < 3; i++) {
+    let changed = false;
+    for (const [k, v] of Object.entries(merged)) {
+      const token = `{{${k}}}`;
+      if (out.includes(token)) { out = out.split(token).join(String(v ?? "")); changed = true; }
+    }
+    if (!changed) break;
+  }
   return out;
 }
 
