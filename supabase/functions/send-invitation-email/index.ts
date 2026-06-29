@@ -136,6 +136,7 @@ Diese E-Mail wurde an ${escapeHtml(to)} gesendet.
       subject,
       tenant_id: tenant.id,
       tenant_name: tenant.name,
+      template_name: templateNameOverride || "invitation",
     };
 
     const verifyRes = await verifyOrPause(supabaseAdmin, tenant, transporter);
