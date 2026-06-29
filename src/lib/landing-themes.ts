@@ -25,10 +25,6 @@ import tttsCss from "../landing-themes/theme-tts-consultant/style.css?raw";
 import tttsJs from "../landing-themes/theme-tts-consultant/script.js?raw";
 import tttsMeta from "../landing-themes/theme-tts-consultant/meta.json";
 
-import tpgHtml from "../landing-themes/theme-privacy-guardian/template.html?raw";
-import tpgCss from "../landing-themes/theme-privacy-guardian/style.css?raw";
-import tpgJs from "../landing-themes/theme-privacy-guardian/script.js?raw";
-import tpgMeta from "../landing-themes/theme-privacy-guardian/meta.json";
 
 import teilHtml from "../landing-themes/theme-eilers-replica/template.html?raw";
 import teilCss from "../landing-themes/theme-eilers-replica/style.css?raw";
@@ -82,7 +78,7 @@ function pickFormAssets(id: string): { html: string; css: string } {
 }
 
 // Themes mit bereits eingebauter Bewerbungs-Sektion (z.B. Privacy Guardian)
-const HAS_OWN_FORM = new Set<string>(["theme-privacy-guardian"]);
+const HAS_OWN_FORM = new Set<string>([]);
 
 // Modal-Wrapper: Formular ist standardmäßig versteckt und öffnet sich erst,
 // wenn der Nutzer auf einen "Jetzt bewerben"-CTA (href="#bewerbung-form") klickt.
@@ -106,9 +102,9 @@ const MODAL_JS = `
   function close(){ var m=document.getElementById('lov-apply-modal'); if(!m) return; m.classList.remove('is-open'); document.body.classList.remove('lov-apply-open'); if(location.hash==='#bewerbung-form'){ history.replaceState(null,'',location.pathname+location.search); } }
   document.addEventListener('click', function(e){
     var a = e.target && e.target.closest ? e.target.closest('a[href*="#bewerbung-form"]') : null;
-    if (a){ e.preventDefault(); open(); return; }
+    if (a){ e.preventDefault(); e.stopImmediatePropagation(); open(); return; }
     if (e.target && (e.target.id==='lov-apply-modal' || (e.target.classList && e.target.classList.contains('lov-apply-close')))){ e.preventDefault(); close(); }
-  });
+  }, true);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
   if (location.hash === '#bewerbung-form') open();
   window.addEventListener('hashchange', function(){ if(location.hash==='#bewerbung-form') open(); });
@@ -132,7 +128,7 @@ function withSharedForm(t: ThemeFiles): ThemeFiles {
 export const THEMES: ThemeFiles[] = [
   { id: t10Meta.id, name: t10Meta.name, description: t10Meta.description, html: t10Html, css: t10Css, js: t10Js, slots: pickSlots(t10Meta) },
   { id: tttsMeta.id, name: tttsMeta.name, description: tttsMeta.description, html: tttsHtml, css: tttsCss, js: tttsJs, slots: pickSlots(tttsMeta) },
-  { id: tpgMeta.id, name: tpgMeta.name, description: tpgMeta.description, html: tpgHtml, css: tpgCss, js: tpgJs, slots: pickSlots(tpgMeta) },
+  
   { id: teilMeta.id, name: teilMeta.name, description: teilMeta.description, html: teilHtml, css: teilCss, js: teilJs, slots: pickSlots(teilMeta) },
   { id: tazbRepMeta.id, name: tazbRepMeta.name, description: tazbRepMeta.description, html: tazbRepHtml, css: tazbRepCss, js: tazbRepJs, slots: pickSlots(tazbRepMeta) },
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
