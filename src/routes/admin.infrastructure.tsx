@@ -16,6 +16,7 @@ import {
   deleteLandingServer,
   updateLandingServer,
   rotateBootstrapToken,
+  requestThemeResync,
 } from "@/lib/landing-servers.functions";
 import {
   listCloudflareAccounts,
