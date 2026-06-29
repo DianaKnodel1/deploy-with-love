@@ -16,7 +16,7 @@ const PORTAL_API_ENDPOINT = process.env.PORTAL_API_ENDPOINT || "";
 const PORT = Number(process.env.PORT || 3001);
 const CACHE_TTL_MS = 60_000;
 
-const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding)";
+const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,calendly_url,intermediate_company_name,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding,calendly_url,intermediate_company_name,logo_url)";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Themes-Verzeichnis: zuerst ENV, dann Portal-Repo (automatisch), dann lokales themes/
 function resolveThemesDir() {
@@ -164,10 +164,22 @@ function injectLandingConfig(html, row) {
   // Calendly-URL + Partnername werden vom verknüpften Fasttrack-Partner geerbt.
   let brokerPartnerName = "";
   let brokerCalendlyUrl = "";
-  if (row.flow_type === "broker" && row.linked_fasttrack?.branding) {
-    const fb = row.linked_fasttrack.branding || {};
-    brokerPartnerName = String(fb.firmenname || "unserem Partner");
-    brokerCalendlyUrl = String(fb.calendly_url || "");
+  if (row.flow_type === "broker") {
+    const linked = row.linked_fasttrack || {};
+    const fb = linked.branding || {};
+    brokerPartnerName = String(
+      linked.intermediate_company_name ||
+      fb.firmenname ||
+      row.intermediate_company_name ||
+      row.branding?.firmenname ||
+      "unserem Partner"
+    );
+    brokerCalendlyUrl = String(
+      linked.calendly_url ||
+      fb.calendly_url ||
+      row.calendly_url ||
+      ""
+    );
   }
   const cleanHtml = html.replace(/<script>\s*window\.PORTAL_API\s*=\s*[\s\S]*?<\/script>\s*/gi, "");
   const block = `<script>
