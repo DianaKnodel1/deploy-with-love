@@ -239,7 +239,7 @@ function ServersTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r) => <ServerRow key={r.id} row={r} onTogglePause={onTogglePause} onDelete={onDelete} onRotate={onRotate} onShowBootstrap={(t) => setBootstrapFor({ id: r.id, name: r.name, token: t })} />)}
+              {rows.map((r) => <ServerRow key={r.id} row={r} onTogglePause={onTogglePause} onDelete={onDelete} onRotate={onRotate} onResync={onResync} onShowBootstrap={(t) => setBootstrapFor({ id: r.id, name: r.name, token: t })} />)}
             </TableBody>
           </Table>
         )}
