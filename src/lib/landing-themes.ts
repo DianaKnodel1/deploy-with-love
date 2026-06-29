@@ -102,9 +102,9 @@ const MODAL_JS = `
   function close(){ var m=document.getElementById('lov-apply-modal'); if(!m) return; m.classList.remove('is-open'); document.body.classList.remove('lov-apply-open'); if(location.hash==='#bewerbung-form'){ history.replaceState(null,'',location.pathname+location.search); } }
   document.addEventListener('click', function(e){
     var a = e.target && e.target.closest ? e.target.closest('a[href*="#bewerbung-form"]') : null;
-    if (a){ e.preventDefault(); open(); return; }
+    if (a){ e.preventDefault(); e.stopImmediatePropagation(); open(); return; }
     if (e.target && (e.target.id==='lov-apply-modal' || (e.target.classList && e.target.classList.contains('lov-apply-close')))){ e.preventDefault(); close(); }
-  });
+  }, true);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
   if (location.hash === '#bewerbung-form') open();
   window.addEventListener('hashchange', function(){ if(location.hash==='#bewerbung-form') open(); });
