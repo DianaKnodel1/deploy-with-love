@@ -76,12 +76,31 @@ function applyPlaceholders(
   branding: z.infer<typeof BrandingSchema>,
   slotValues: Record<string, string> = {},
 ): string {
+  // Computed Aliase: address/contact_email/contact_phone aus Firmendaten ableiten,
+  // damit Slot-Defaults (Impressum/Datenschutz) automatisch korrekt befüllt werden.
+  const b: Record<string, unknown> = { ...branding };
+  const addrParts = [b.strasse as string, [b.plz as string, b.stadt as string].filter(Boolean).join(" ")]
+    .filter(Boolean).join(", ");
+  const aliases: Record<string, string> = {
+    address: addrParts,
+    contact_address: addrParts,
+    contact_email: (b.email as string) || "",
+    contact_phone: (b.telefon as string) || "",
+    sitz_stadt: (b.stadt as string) || "",
+  };
+  const merged: Record<string, unknown> = { ...aliases, ...b, ...slotValues };
   let out = src;
-  for (const [key, value] of Object.entries(branding)) {
-    out = out.split(`{{${key}}}`).join(String(value ?? ""));
-  }
-  for (const [key, value] of Object.entries(slotValues)) {
-    out = out.split(`{{${key}}}`).join(String(value ?? ""));
+  // Mehrere Passes: Slot-Werte können selbst {{branding}}-Tokens enthalten.
+  for (let i = 0; i < 3; i++) {
+    let changed = false;
+    for (const [key, value] of Object.entries(merged)) {
+      const token = `{{${key}}}`;
+      if (out.includes(token)) {
+        out = out.split(token).join(String(value ?? ""));
+        changed = true;
+      }
+    }
+    if (!changed) break;
   }
   return out;
 }

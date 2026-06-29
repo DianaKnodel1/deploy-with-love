@@ -212,16 +212,28 @@ function LandingGeneratorPage() {
       const seoTitle = branding.seo_title || (branding.firmenname ? `${branding.firmenname} — Karriere & Beratung` : "Landing-Page");
       const seoDesc = branding.seo_description || (branding.firmenname ? `${branding.firmenname} — Jetzt bewerben.` : "");
       const previewBranding = { ...branding, seo_title: seoTitle, seo_description: seoDesc };
-      for (const [k, v] of Object.entries(previewBranding)) {
-        out = out.split(`{{${k}}}`).join(String(v ?? ""));
-      }
-      // Hochgeladenes Logo/Favicon in {{logo_image}}/{{favicon_image}} spiegeln,
-      // damit Themes wie Eilers/TTS/AZB den Upload sofort in der Live-Vorschau zeigen.
+      // Hochgeladenes Logo/Favicon in {{logo_image}}/{{favicon_image}} spiegeln.
       const previewSlots: Record<string, string> = { ...(slotValues as Record<string, string>) };
       if (logoDataUrl && !previewSlots.logo_image) previewSlots.logo_image = logoDataUrl;
       if (faviconDataUrl && !previewSlots.favicon_image) previewSlots.favicon_image = faviconDataUrl;
-      for (const [k, v] of Object.entries(previewSlots)) {
-        out = out.split(`{{${k}}}`).join(String(v ?? ""));
+      // Computed Aliase: address/contact_email/contact_phone aus Firmendaten.
+      const addrParts = [previewBranding.strasse, [previewBranding.plz, previewBranding.stadt].filter(Boolean).join(" ")]
+        .filter(Boolean).join(", ");
+      const aliases: Record<string, string> = {
+        address: addrParts,
+        contact_address: addrParts,
+        contact_email: previewBranding.email || "",
+        contact_phone: previewBranding.telefon || "",
+        sitz_stadt: previewBranding.stadt || "",
+      };
+      const merged: Record<string, unknown> = { ...aliases, ...previewBranding, ...previewSlots };
+      for (let i = 0; i < 3; i++) {
+        let changed = false;
+        for (const [k, v] of Object.entries(merged)) {
+          const token = `{{${k}}}`;
+          if (out.includes(token)) { out = out.split(token).join(String(v ?? "")); changed = true; }
+        }
+        if (!changed) break;
       }
       return out;
     };
