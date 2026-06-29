@@ -67,19 +67,32 @@ function pickSlots(meta: any): ThemeSlot[] {
   return Array.isArray(meta?.slots) ? (meta.slots as ThemeSlot[]) : [];
 }
 
-// Themes, die KEINE eigene Bewerbungs-Sektion haben (TTS/Eilers/AZB), bekommen
-// das Shared-Formular automatisch vor </body> + zugehöriges CSS/JS injiziert.
-// CTAs in diesen Themes zeigen auf #bewerbung-form.
-// Inline-Bewerbungsformular wurde entfernt: Jedes Theme soll für sich stehen
-// und CTAs verlinken auf die separate /bewerbung Seite (Portal). So bleibt die
-// Landing übersichtlich und unterscheidet sich klar pro Theme.
-// Referenzen behalten, damit Vite die Imports nicht als unused entfernt.
+// Jedes Theme bekommt eine eigene Bewerbungs-Sektion (inline, direkt auf der
+// Landing Page). CTAs zeigen auf #bewerbung-form. Das /bewerbung im Portal
+// ist ausschließlich für das geführte Bewerbungsgespräch (Chat/Tel) gedacht
+// und nicht für Stammdaten-Eingabe.
 void sharedFormHtml; void sharedFormCss; void sharedFormJs;
-void azbFormHtml; void azbFormCss; void ttsFormHtml; void ttsFormCss;
-void eilFormHtml; void eilFormCss; void mirFormHtml; void mirFormCss;
+
+function pickFormAssets(id: string): { html: string; css: string } {
+  if (id === "theme-tts-consultant") return { html: ttsFormHtml, css: ttsFormCss };
+  if (id === "theme-eilers-replica") return { html: eilFormHtml, css: eilFormCss };
+  if (id === "theme-azb-replica") return { html: azbFormHtml, css: azbFormCss };
+  if (id === "theme-mirror-site") return { html: mirFormHtml, css: mirFormCss };
+  return { html: sharedFormHtml, css: sharedFormCss };
+}
+
+// Themes mit bereits eingebauter Bewerbungs-Sektion (z.B. Privacy Guardian)
+const HAS_OWN_FORM = new Set<string>(["theme-privacy-guardian"]);
 
 function withSharedForm(t: ThemeFiles): ThemeFiles {
-  return t;
+  if (HAS_OWN_FORM.has(t.id)) return t;
+  const { html: formHtml, css: formCss } = pickFormAssets(t.id);
+  const injectedHtml = t.html.includes("</body>")
+    ? t.html.replace("</body>", `${formHtml}\n</body>`)
+    : t.html + formHtml;
+  const injectedCss = `${t.css}\n\n/* ===== Inline Bewerbungs-Sektion ===== */\n${formCss}`;
+  const injectedJs = t.js.includes("application-form") ? t.js : `${t.js}\n\n${sharedFormJs}`;
+  return { ...t, html: injectedHtml, css: injectedCss, js: injectedJs };
 }
 
 
@@ -91,6 +104,7 @@ export const THEMES: ThemeFiles[] = [
   { id: tazbRepMeta.id, name: tazbRepMeta.name, description: tazbRepMeta.description, html: tazbRepHtml, css: tazbRepCss, js: tazbRepJs, slots: pickSlots(tazbRepMeta) },
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
 ].map(withSharedForm);
+
 
 
 export function getTheme(id: string): ThemeFiles | undefined {
