@@ -78,7 +78,7 @@ function pickFormAssets(id: string): { html: string; css: string } {
 }
 
 // Themes mit bereits eingebauter Bewerbungs-Sektion (z.B. Privacy Guardian)
-const HAS_OWN_FORM = new Set<string>(["theme-privacy-guardian"]);
+const HAS_OWN_FORM = new Set<string>([]);
 
 // Modal-Wrapper: Formular ist standardmäßig versteckt und öffnet sich erst,
 // wenn der Nutzer auf einen "Jetzt bewerben"-CTA (href="#bewerbung-form") klickt.
