@@ -163,6 +163,13 @@ export const generateLandingZip = createServerFn({ method: "POST" })
 
     let html = applyPlaceholders(theme.html, cleanedBranding, slots);
 
+    // Relative /bewerbung Links auf absolute Portal-URL umschreiben, damit
+    // sie von der Landing-Domain aus nicht ins Leere zeigen (about:blank#blocked).
+    if (portalBase) {
+      html = html.replace(/href=(["'])\/bewerbung(\/[^"']*)?(\?[^"']*)?(#[^"']*)?\1/gi,
+        (_m, q, p = "", qs = "", h = "") => `href=${q}${portalBase}/bewerbung${p}${qs}${h}${q}`);
+    }
+
     html = cleanEmptyMetaTags(html, cleanedBranding);
     html = injectLandingConfig(html, cleanedBranding);
     const css = applyPlaceholders(theme.css, cleanedBranding, slots);
