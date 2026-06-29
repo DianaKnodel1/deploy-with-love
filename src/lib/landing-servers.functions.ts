@@ -144,6 +144,28 @@ export const rotateBootstrapToken = createServerFn({ method: "POST" })
     return row;
   });
 
+export const requestThemeResync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { data: row, error } = await context.supabase
+      .from("landing_servers")
+      .update({ themes_resync_requested_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .select("id, name, themes_resync_requested_at")
+      .single();
+    if (error) throw new Error(error.message);
+    await context.supabase.from("automation_log").insert({
+      action: "server.themes_resync_requested",
+      target: row.name,
+      status: "ok",
+      actor_id: context.userId,
+      payload: {},
+    });
+    return row;
+  });
+
 /**
  * Wählt den passendsten Server für eine neue Landing.
  * Strategie: Least-Full unter online + nicht-pausierten Servern mit freier Kapazität.

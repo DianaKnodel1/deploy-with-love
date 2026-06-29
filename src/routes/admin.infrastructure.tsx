@@ -16,6 +16,7 @@ import {
   deleteLandingServer,
   updateLandingServer,
   rotateBootstrapToken,
+  requestThemeResync,
 } from "@/lib/landing-servers.functions";
 import {
   listCloudflareAccounts,
@@ -63,6 +64,7 @@ function ServersTab() {
   const del = useServerFn(deleteLandingServer);
   const update = useServerFn(updateLandingServer);
   const rotate = useServerFn(rotateBootstrapToken);
+  const resync = useServerFn(requestThemeResync);
 
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,6 +126,14 @@ function ServersTab() {
       const r = await rotate({ data: { id } });
       setBootstrapFor({ id, name, token: r.bootstrap_token });
       toast({ title: "Token rotiert" });
+    } catch (e: any) { toast({ title: "Fehler", description: e.message, variant: "destructive" }); }
+  };
+
+  const onResync = async (id: string, name: string) => {
+    try {
+      await resync({ data: { id } });
+      toast({ title: "Themes-Resync angefordert", description: `${name}: Server lädt Themes beim nächsten Heartbeat (≤60s) neu.` });
+      reload();
     } catch (e: any) { toast({ title: "Fehler", description: e.message, variant: "destructive" }); }
   };
 
@@ -229,7 +239,7 @@ function ServersTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((r) => <ServerRow key={r.id} row={r} onTogglePause={onTogglePause} onDelete={onDelete} onRotate={onRotate} onShowBootstrap={(t) => setBootstrapFor({ id: r.id, name: r.name, token: t })} />)}
+              {rows.map((r) => <ServerRow key={r.id} row={r} onTogglePause={onTogglePause} onDelete={onDelete} onRotate={onRotate} onResync={onResync} onShowBootstrap={(t) => setBootstrapFor({ id: r.id, name: r.name, token: t })} />)}
             </TableBody>
           </Table>
         )}
@@ -240,7 +250,7 @@ function ServersTab() {
   );
 }
 
-function ServerRow({ row, onTogglePause, onDelete, onRotate, onShowBootstrap }: any) {
+function ServerRow({ row, onTogglePause, onDelete, onRotate, onResync, onShowBootstrap }: any) {
   const heartbeatAge = row.last_heartbeat_at ? Date.now() - new Date(row.last_heartbeat_at).getTime() : null;
   const isStale = heartbeatAge !== null && heartbeatAge > 5 * 60_000;
   const effectiveStatus = row.status === "paused" ? "paused" : row.status === "pending" ? "pending" : isStale ? "offline" : "online";
@@ -248,6 +258,9 @@ function ServerRow({ row, onTogglePause, onDelete, onRotate, onShowBootstrap }: 
     online: "default", pending: "outline", paused: "secondary", offline: "destructive",
   };
   const statusLabel: Record<string, string> = { online: "Online", pending: "Wartend", paused: "Pausiert", offline: "Offline" };
+  const resyncReq = row.themes_resync_requested_at ? new Date(row.themes_resync_requested_at).getTime() : 0;
+  const resyncDone = row.themes_resync_done_at ? new Date(row.themes_resync_done_at).getTime() : 0;
+  const resyncPending = resyncReq > 0 && resyncReq > resyncDone;
   return (
     <TableRow>
       <TableCell className="font-medium">{row.name}</TableCell>
@@ -258,6 +271,7 @@ function ServerRow({ row, onTogglePause, onDelete, onRotate, onShowBootstrap }: 
       <TableCell className="text-right space-x-1">
         <Button variant="ghost" size="sm" onClick={() => onShowBootstrap(row.bootstrap_token)} title="Bootstrap-Befehl"><Copy className="w-4 h-4" /></Button>
         <Button variant="ghost" size="sm" onClick={() => onRotate(row.id, row.name)} title="Token rotieren"><KeyRound className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => onResync(row.id, row.name)} title={resyncPending ? "Resync läuft (≤60s)…" : "Themes neu laden"} disabled={resyncPending}><RefreshCw className={`w-4 h-4 ${resyncPending ? "animate-spin text-primary" : ""}`} /></Button>
         <Button variant="ghost" size="sm" onClick={() => onTogglePause(row)} title="Pausieren/Aktivieren"><Power className="w-4 h-4" /></Button>
         <Button variant="ghost" size="sm" onClick={() => onDelete(row.id, row.name)} title="Löschen"><Trash2 className="w-4 h-4 text-destructive" /></Button>
       </TableCell>

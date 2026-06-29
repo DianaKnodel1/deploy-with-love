@@ -16,20 +16,48 @@ const PACKAGE_JSON = `{
 `;
 
 const HEARTBEAT_SH = `#!/usr/bin/env bash
-# Liest .env (HEARTBEAT_URL, BOOTSTRAP_TOKEN), schickt alle 60s einen Heartbeat.
+# Liest .env (HEARTBEAT_URL, BOOTSTRAP_TOKEN, SERVER_FILES_BASE), schickt alle 60s einen Heartbeat.
+# Wenn das Portal { resync_needed: true } antwortet, werden alle Themes neu geladen.
 set -euo pipefail
 [ -f /opt/landing-server/.env ] && set -a && . /opt/landing-server/.env && set +a
+THEMES_DIR=/opt/landing-server/themes
+
+resync_themes() {
+  echo "[heartbeat] Themes-Resync angefordert — lade neu …" >&2
+  mkdir -p "$THEMES_DIR"
+  THEMES_JSON=$(curl -fsSL "$SERVER_FILES_BASE/themes.json" 2>/dev/null || echo '{"themes":[]}')
+  echo "$THEMES_JSON" | sed -n 's/.*"themes":\\[\\([^]]*\\)\\].*/\\1/p' | tr ',' '\\n' | sed 's/[" ]//g' | while read -r THEME_ID; do
+    [ -z "$THEME_ID" ] && continue
+    mkdir -p "$THEMES_DIR/$THEME_ID"
+    for F in template.html style.css script.js; do
+      curl -fsSL "$SERVER_FILES_BASE/themes/$THEME_ID/$F" -o "$THEMES_DIR/$THEME_ID/$F" 2>/dev/null || true
+    done
+  done
+  systemctl restart landing-server.service 2>/dev/null || true
+  echo "[heartbeat] Themes-Resync fertig." >&2
+}
+
 while true; do
   COUNT=0
+  RESYNC_FLAG=""
   if curl -fsS http://127.0.0.1:3001/_health >/dev/null 2>&1; then
-    curl -sS -X POST "$HEARTBEAT_URL" \\
+    RESP=$(curl -sS -X POST "$HEARTBEAT_URL" \\
       -H 'Content-Type: application/json' \\
-      --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"landing_count\\":$COUNT,\\"agent_version\\":\\"1.0.0\\"}" \\
-      >/dev/null 2>&1 || true
+      --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"landing_count\\":$COUNT,\\"agent_version\\":\\"1.1.0\\"$RESYNC_FLAG}" \\
+      2>/dev/null || echo '')
+    if echo "$RESP" | grep -q '"resync_needed":true'; then
+      resync_themes
+      # Bestätigung an Portal
+      curl -sS -X POST "$HEARTBEAT_URL" \\
+        -H 'Content-Type: application/json' \\
+        --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"resync_done\\":true,\\"agent_version\\":\\"1.1.0\\"}" \\
+        >/dev/null 2>&1 || true
+    fi
   fi
   sleep 60
 done
 `;
+
 
 export const Route = createFileRoute("/api/public/landing-server-files/$")({
   server: {
