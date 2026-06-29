@@ -250,7 +250,7 @@ function ServersTab() {
   );
 }
 
-function ServerRow({ row, onTogglePause, onDelete, onRotate, onShowBootstrap }: any) {
+function ServerRow({ row, onTogglePause, onDelete, onRotate, onResync, onShowBootstrap }: any) {
   const heartbeatAge = row.last_heartbeat_at ? Date.now() - new Date(row.last_heartbeat_at).getTime() : null;
   const isStale = heartbeatAge !== null && heartbeatAge > 5 * 60_000;
   const effectiveStatus = row.status === "paused" ? "paused" : row.status === "pending" ? "pending" : isStale ? "offline" : "online";
