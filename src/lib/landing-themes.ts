@@ -77,16 +77,23 @@ const SHARED_FORM_THEMES = new Set([
   "theme-mirror-site",
 ]);
 
+function pickFormAssets(themeId: string): { html: string; css: string } {
+  if (themeId === "theme-azb-replica") return { html: azbFormHtml, css: azbFormCss };
+  if (themeId === "theme-tts-consultant") return { html: ttsFormHtml, css: ttsFormCss };
+  if (themeId === "theme-eilers-replica") return { html: eilFormHtml, css: eilFormCss };
+  if (themeId === "theme-mirror-site") return { html: mirFormHtml, css: mirFormCss };
+  return { html: sharedFormHtml, css: sharedFormCss };
+}
+
 function withSharedForm(t: ThemeFiles): ThemeFiles {
   if (!SHARED_FORM_THEMES.has(t.id)) return t;
-  const isAzb = t.id === "theme-azb-replica";
-  const formHtml = isAzb ? azbFormHtml : sharedFormHtml;
-  const formCss = isAzb ? azbFormCss : sharedFormCss;
+  const { html: formHtml, css: formCss } = pickFormAssets(t.id);
   const html = /<\/body>/i.test(t.html)
     ? t.html.replace(/<\/body>/i, `${formHtml}\n</body>`)
     : `${t.html}\n${formHtml}`;
   return { ...t, html, css: `${t.css}\n\n${formCss}`, js: `${t.js}\n\n${sharedFormJs}` };
 }
+
 
 export const THEMES: ThemeFiles[] = [
   { id: t10Meta.id, name: t10Meta.name, description: t10Meta.description, html: t10Html, css: t10Css, js: t10Js, slots: pickSlots(t10Meta) },
