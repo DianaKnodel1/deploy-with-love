@@ -64,6 +64,7 @@ function ServersTab() {
   const del = useServerFn(deleteLandingServer);
   const update = useServerFn(updateLandingServer);
   const rotate = useServerFn(rotateBootstrapToken);
+  const resync = useServerFn(requestThemeResync);
 
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
