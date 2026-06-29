@@ -520,7 +520,6 @@ function AdminApplicationsPage() {
       <div className="flex items-center gap-1 border-b border-border">
         {([
           { k: "all", label: "Alle", count: classicCount + fastCount + brokerCount },
-          { k: "classic", label: "Klassisch", count: classicCount, hint: "Manuell akzeptieren → Zusage-Mail → Registrierung" },
           { k: "fast", label: "Fast-Track", count: fastCount, hint: "Auto-Akzept → direkt zur Portal-Registrierung" },
           { k: "broker", label: "Vermittlung / Chat", count: brokerCount, hint: "Termin + KI-Interview → Partnerfirma" },
         ] as const).map((t) => (
