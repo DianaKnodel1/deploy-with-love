@@ -70,28 +70,16 @@ function pickSlots(meta: any): ThemeSlot[] {
 // Themes, die KEINE eigene Bewerbungs-Sektion haben (TTS/Eilers/AZB), bekommen
 // das Shared-Formular automatisch vor </body> + zugehöriges CSS/JS injiziert.
 // CTAs in diesen Themes zeigen auf #bewerbung-form.
-const SHARED_FORM_THEMES = new Set([
-  "theme-tts-consultant",
-  "theme-eilers-replica",
-  "theme-azb-replica",
-  "theme-mirror-site",
-]);
-
-function pickFormAssets(themeId: string): { html: string; css: string } {
-  if (themeId === "theme-azb-replica") return { html: azbFormHtml, css: azbFormCss };
-  if (themeId === "theme-tts-consultant") return { html: ttsFormHtml, css: ttsFormCss };
-  if (themeId === "theme-eilers-replica") return { html: eilFormHtml, css: eilFormCss };
-  if (themeId === "theme-mirror-site") return { html: mirFormHtml, css: mirFormCss };
-  return { html: sharedFormHtml, css: sharedFormCss };
-}
+// Inline-Bewerbungsformular wurde entfernt: Jedes Theme soll für sich stehen
+// und CTAs verlinken auf die separate /bewerbung Seite (Portal). So bleibt die
+// Landing übersichtlich und unterscheidet sich klar pro Theme.
+// Referenzen behalten, damit Vite die Imports nicht als unused entfernt.
+void sharedFormHtml; void sharedFormCss; void sharedFormJs;
+void azbFormHtml; void azbFormCss; void ttsFormHtml; void ttsFormCss;
+void eilFormHtml; void eilFormCss; void mirFormHtml; void mirFormCss;
 
 function withSharedForm(t: ThemeFiles): ThemeFiles {
-  if (!SHARED_FORM_THEMES.has(t.id)) return t;
-  const { html: formHtml, css: formCss } = pickFormAssets(t.id);
-  const html = /<\/body>/i.test(t.html)
-    ? t.html.replace(/<\/body>/i, `${formHtml}\n</body>`)
-    : `${t.html}\n${formHtml}`;
-  return { ...t, html, css: `${t.css}\n\n${formCss}`, js: `${t.js}\n\n${sharedFormJs}` };
+  return t;
 }
 
 
