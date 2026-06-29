@@ -9,6 +9,7 @@ const Body = z.object({
   token: z.string().min(20).max(200),
   landing_count: z.number().int().min(0).max(100_000).optional(),
   agent_version: z.string().max(40).optional(),
+  renderer_healthy: z.boolean().optional(),
   resync_done: z.boolean().optional(),
 });
 
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/api/public/landing-server-heartbeat")({
 
           const patch: any = {
             last_heartbeat_at: new Date().toISOString(),
-            status: server.status === "paused" ? "paused" : "online",
+            status: server.status === "paused" ? "paused" : body.renderer_healthy === false ? "offline" : "online",
           };
           if (body.agent_version) patch.agent_version = body.agent_version;
 
