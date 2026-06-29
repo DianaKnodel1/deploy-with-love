@@ -25,10 +25,6 @@ import tttsCss from "../landing-themes/theme-tts-consultant/style.css?raw";
 import tttsJs from "../landing-themes/theme-tts-consultant/script.js?raw";
 import tttsMeta from "../landing-themes/theme-tts-consultant/meta.json";
 
-import tpgHtml from "../landing-themes/theme-privacy-guardian/template.html?raw";
-import tpgCss from "../landing-themes/theme-privacy-guardian/style.css?raw";
-import tpgJs from "../landing-themes/theme-privacy-guardian/script.js?raw";
-import tpgMeta from "../landing-themes/theme-privacy-guardian/meta.json";
 
 import teilHtml from "../landing-themes/theme-eilers-replica/template.html?raw";
 import teilCss from "../landing-themes/theme-eilers-replica/style.css?raw";
