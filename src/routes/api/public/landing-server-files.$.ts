@@ -31,7 +31,7 @@ resync_themes() {
   echo "[heartbeat] Themes-Resync angefordert — lade neu …" >&2
   mkdir -p "$THEMES_DIR"
   THEMES_JSON=$(curl -fsSL "$SERVER_FILES_BASE/themes.json" 2>/dev/null || echo '{"themes":[]}')
-  echo "$THEMES_JSON" | sed -n 's/.*"themes":\[\([^]]*\)\].*/\1/p' | tr ',' '\n' | sed 's/[" ]//g' | while read -r THEME_ID; do
+  echo "$THEMES_JSON" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{JSON.parse(s).themes.forEach(t=>console.log(t))}catch{}})' | while read -r THEME_ID; do
     [ -z "$THEME_ID" ] && continue
     mkdir -p "$THEMES_DIR/$THEME_ID"
     for F in template.html style.css script.js; do
