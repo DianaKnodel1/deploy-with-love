@@ -180,7 +180,7 @@ async function logSend(admin: any, tenantId: string, to: string, subject: string
   try {
     await admin.from("email_send_log").insert({
       tenant_id: tenantId,
-      template_name: "invitation",
+      template_name: templateNameOverride || "invitation",
       recipient_email: to,
       status,
       error_message: error ?? null,
