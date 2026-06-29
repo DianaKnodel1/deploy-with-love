@@ -215,7 +215,12 @@ function LandingGeneratorPage() {
       for (const [k, v] of Object.entries(previewBranding)) {
         out = out.split(`{{${k}}}`).join(String(v ?? ""));
       }
-      for (const [k, v] of Object.entries(slotValues)) {
+      // Hochgeladenes Logo/Favicon in {{logo_image}}/{{favicon_image}} spiegeln,
+      // damit Themes wie Eilers/TTS/AZB den Upload sofort in der Live-Vorschau zeigen.
+      const previewSlots: Record<string, string> = { ...(slotValues as Record<string, string>) };
+      if (logoDataUrl && !previewSlots.logo_image) previewSlots.logo_image = logoDataUrl;
+      if (faviconDataUrl && !previewSlots.favicon_image) previewSlots.favicon_image = faviconDataUrl;
+      for (const [k, v] of Object.entries(previewSlots)) {
         out = out.split(`{{${k}}}`).join(String(v ?? ""));
       }
       return out;
