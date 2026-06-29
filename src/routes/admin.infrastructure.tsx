@@ -271,6 +271,7 @@ function ServerRow({ row, onTogglePause, onDelete, onRotate, onResync, onShowBoo
       <TableCell className="text-right space-x-1">
         <Button variant="ghost" size="sm" onClick={() => onShowBootstrap(row.bootstrap_token)} title="Bootstrap-Befehl"><Copy className="w-4 h-4" /></Button>
         <Button variant="ghost" size="sm" onClick={() => onRotate(row.id, row.name)} title="Token rotieren"><KeyRound className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => onResync(row.id, row.name)} title={resyncPending ? "Resync läuft (≤60s)…" : "Themes neu laden"} disabled={resyncPending}><RefreshCw className={`w-4 h-4 ${resyncPending ? "animate-spin text-primary" : ""}`} /></Button>
         <Button variant="ghost" size="sm" onClick={() => onTogglePause(row)} title="Pausieren/Aktivieren"><Power className="w-4 h-4" /></Button>
         <Button variant="ghost" size="sm" onClick={() => onDelete(row.id, row.name)} title="Löschen"><Trash2 className="w-4 h-4 text-destructive" /></Button>
       </TableCell>
