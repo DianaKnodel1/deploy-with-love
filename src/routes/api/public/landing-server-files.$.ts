@@ -49,17 +49,17 @@ while true; do
     RENDERER_HEALTHY=true
   fi
 
-  RESP=$(curl -sS -X POST "$HEARTBEAT_URL" \
-    -H 'Content-Type: application/json' \
-    --data "{\"token\":\"$BOOTSTRAP_TOKEN\",\"landing_count\":$COUNT,\"agent_version\":\"$AGENT_VERSION\",\"renderer_healthy\":$RENDERER_HEALTHY}" \
+  RESP=$(curl -sS -X POST "$HEARTBEAT_URL" \\
+    -H 'Content-Type: application/json' \\
+    --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"landing_count\\":$COUNT,\\"agent_version\\":\\"$AGENT_VERSION\\",\\"renderer_healthy\\":$RENDERER_HEALTHY}" \\
     2>/dev/null || echo '')
 
   if echo "$RESP" | grep -q '"resync_needed":true'; then
     resync_themes
     # Bestätigung an Portal
-    curl -sS -X POST "$HEARTBEAT_URL" \
-      -H 'Content-Type: application/json' \
-      --data "{\"token\":\"$BOOTSTRAP_TOKEN\",\"resync_done\":true,\"agent_version\":\"$AGENT_VERSION\",\"renderer_healthy\":$RENDERER_HEALTHY}" \
+    curl -sS -X POST "$HEARTBEAT_URL" \\
+      -H 'Content-Type: application/json' \\
+      --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"resync_done\\":true,\\"agent_version\\":\\"$AGENT_VERSION\\",\\"renderer_healthy\\":$RENDERER_HEALTHY}" \\
       >/dev/null 2>&1 || true
   fi
   sleep 60
