@@ -84,14 +84,47 @@ function pickFormAssets(id: string): { html: string; css: string } {
 // Themes mit bereits eingebauter Bewerbungs-Sektion (z.B. Privacy Guardian)
 const HAS_OWN_FORM = new Set<string>(["theme-privacy-guardian"]);
 
+// Modal-Wrapper: Formular ist standardmäßig versteckt und öffnet sich erst,
+// wenn der Nutzer auf einen "Jetzt bewerben"-CTA (href="#bewerbung-form") klickt.
+// Dadurch bleibt die Landing kompakt/seriös statt einem überlangen One-Pager.
+const MODAL_CSS = `
+/* ===== Bewerbungs-Modal ===== */
+#lov-apply-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;background:rgba(8,12,24,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#lov-apply-modal.is-open{display:flex}
+#lov-apply-modal .lov-apply-dialog{position:relative;width:100%;max-width:880px;background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;animation:lovApplyIn .25s ease}
+@keyframes lovApplyIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#lov-apply-modal .lov-apply-close{position:absolute;top:14px;right:14px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(15,23,42,.85);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+#lov-apply-modal .lov-apply-close:hover{background:#0f172a}
+#lov-apply-modal .lov-apply-body{max-height:calc(100vh - 80px);overflow-y:auto}
+#lov-apply-modal .lov-apply-body > section{padding-top:32px;padding-bottom:32px}
+body.lov-apply-open{overflow:hidden}
+`;
+const MODAL_JS = `
+(function(){
+  if (window.__lovApplyModalReady) return; window.__lovApplyModalReady = true;
+  function open(){ var m=document.getElementById('lov-apply-modal'); if(!m) return; m.classList.add('is-open'); document.body.classList.add('lov-apply-open'); }
+  function close(){ var m=document.getElementById('lov-apply-modal'); if(!m) return; m.classList.remove('is-open'); document.body.classList.remove('lov-apply-open'); if(location.hash==='#bewerbung-form'){ history.replaceState(null,'',location.pathname+location.search); } }
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a[href*="#bewerbung-form"]') : null;
+    if (a){ e.preventDefault(); open(); return; }
+    if (e.target && (e.target.id==='lov-apply-modal' || (e.target.classList && e.target.classList.contains('lov-apply-close')))){ e.preventDefault(); close(); }
+  });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+  if (location.hash === '#bewerbung-form') open();
+  window.addEventListener('hashchange', function(){ if(location.hash==='#bewerbung-form') open(); });
+})();
+`;
+
 function withSharedForm(t: ThemeFiles): ThemeFiles {
   if (HAS_OWN_FORM.has(t.id)) return t;
   const { html: formHtml, css: formCss } = pickFormAssets(t.id);
+  const modalHtml = `\n<div id="lov-apply-modal" role="dialog" aria-modal="true" aria-label="Bewerbungsformular">\n  <div class="lov-apply-dialog">\n    <button type="button" class="lov-apply-close" aria-label="Schließen">×</button>\n    <div class="lov-apply-body">${formHtml}</div>\n  </div>\n</div>\n`;
   const injectedHtml = t.html.includes("</body>")
-    ? t.html.replace("</body>", `${formHtml}\n</body>`)
-    : t.html + formHtml;
-  const injectedCss = `${t.css}\n\n/* ===== Inline Bewerbungs-Sektion ===== */\n${formCss}`;
-  const injectedJs = t.js.includes("application-form") ? t.js : `${t.js}\n\n${sharedFormJs}`;
+    ? t.html.replace("</body>", `${modalHtml}\n</body>`)
+    : t.html + modalHtml;
+  const injectedCss = `${t.css}\n\n/* ===== Inline Bewerbungs-Sektion ===== */\n${formCss}\n${MODAL_CSS}`;
+  const baseJs = t.js.includes("application-form") ? t.js : `${t.js}\n\n${sharedFormJs}`;
+  const injectedJs = `${baseJs}\n${MODAL_JS}`;
   return { ...t, html: injectedHtml, css: injectedCss, js: injectedJs };
 }
 
