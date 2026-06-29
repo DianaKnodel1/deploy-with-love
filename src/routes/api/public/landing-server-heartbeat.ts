@@ -36,7 +36,12 @@ export const Route = createFileRoute("/api/public/landing-server-heartbeat")({
             status: server.status === "paused" ? "paused" : body.renderer_healthy === false ? "offline" : "online",
           };
           if (body.agent_version) patch.agent_version = body.agent_version;
-          if (typeof body.landing_count === "number") patch.landing_count = body.landing_count;
+          // landing_count autoritativ aus der DB zählen (Agent kennt die DB-Landings nicht)
+          const { count: liveCount } = await supabaseAdmin
+            .from("landing_pages")
+            .select("id", { count: "exact", head: true })
+            .eq("server_id", server.id);
+          patch.landing_count = liveCount ?? 0;
 
           // Resync-Kommando: angefragt UND noch nicht erledigt?
           const reqAt = server.themes_resync_requested_at ? new Date(server.themes_resync_requested_at).getTime() : 0;
