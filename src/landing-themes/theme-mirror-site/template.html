@@ -8,6 +8,12 @@
 <meta property="og:title" content="{{seo_title}}" />
 <meta property="og:description" content="{{seo_description}}" />
 <meta property="og:type" content="website" />
+<meta property="og:url" content="https://{{landing_domain}}/" />
+<meta property="og:image" content="{{seo_image}}" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="canonical" href="https://{{landing_domain}}/" />
+<link rel="icon" href="{{favicon_image}}" />
+<link rel="apple-touch-icon" href="{{favicon_image}}" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
@@ -21,7 +27,7 @@
     <div class="bpo-container">
       <div class="bpo-header-inner">
         <a href="#top" class="bpo-logo">
-          <img src="assets/logo.svg" alt="{{firmenname}} Logo" width="36" height="36" />
+          <img src="{{logo_image}}" alt="{{firmenname}} Logo" width="36" height="36" onerror="this.remove()" />
           <span>{{logo_text}}</span>
         </a>
         <nav class="bpo-nav" aria-label="Hauptnavigation">
