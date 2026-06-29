@@ -1,5 +1,5 @@
 // Public endpoint: Heartbeat von Landing-Servern.
-// Server pingt alle 60s mit { token, landing_count, agent_version }.
+// Server pingt alle 60s mit { token, landing_count, agent_version, renderer_healthy }.
 // Antwort: { ok: true, server_id }. Falls Token unbekannt → 401.
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -36,11 +36,12 @@ export const Route = createFileRoute("/api/public/landing-server-heartbeat")({
             status: server.status === "paused" ? "paused" : body.renderer_healthy === false ? "offline" : "online",
           };
           if (body.agent_version) patch.agent_version = body.agent_version;
+          if (typeof body.landing_count === "number") patch.landing_count = body.landing_count;
 
           // Resync-Kommando: angefragt UND noch nicht erledigt?
           const reqAt = server.themes_resync_requested_at ? new Date(server.themes_resync_requested_at).getTime() : 0;
           const doneAt = server.themes_resync_done_at ? new Date(server.themes_resync_done_at).getTime() : 0;
-          const resyncNeeded = reqAt > 0 && reqAt > doneAt;
+          const resyncNeeded = body.resync_done === true ? false : reqAt > 0 && reqAt > doneAt;
 
           // Wenn der Agent meldet, dass er den Resync abgeschlossen hat, Zeitstempel setzen
           if ((body as any).resync_done === true) {
