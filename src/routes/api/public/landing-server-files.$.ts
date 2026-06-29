@@ -21,7 +21,7 @@ const HEARTBEAT_SH = `#!/usr/bin/env bash
 set -euo pipefail
 [ -f /opt/landing-server/.env ] && set -a && . /opt/landing-server/.env && set +a
 THEMES_DIR=/opt/landing-server/themes
-AGENT_VERSION="1.2.0"
+AGENT_VERSION="1.2.1"
 
 if [ -z "\${SERVER_FILES_BASE:-}" ]; then
   SERVER_FILES_BASE="\${HEARTBEAT_URL%/landing-server-heartbeat}/landing-server-files"
@@ -49,17 +49,19 @@ while true; do
     RENDERER_HEALTHY=true
   fi
 
+  PAYLOAD=$(printf '{"token":"%s","landing_count":%s,"agent_version":"%s","renderer_healthy":%s}' "$BOOTSTRAP_TOKEN" "$COUNT" "$AGENT_VERSION" "$RENDERER_HEALTHY")
   RESP=$(curl -sS -X POST "$HEARTBEAT_URL" \\
     -H 'Content-Type: application/json' \\
-    --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"landing_count\\":$COUNT,\\"agent_version\\":\\"$AGENT_VERSION\\",\\"renderer_healthy\\":$RENDERER_HEALTHY}" \\
+    --data "$PAYLOAD" \\
     2>/dev/null || echo '')
 
   if echo "$RESP" | grep -q '"resync_needed":true'; then
     resync_themes
     # Bestätigung an Portal
+    RESYNC_PAYLOAD=$(printf '{"token":"%s","resync_done":true,"agent_version":"%s","renderer_healthy":%s}' "$BOOTSTRAP_TOKEN" "$AGENT_VERSION" "$RENDERER_HEALTHY")
     curl -sS -X POST "$HEARTBEAT_URL" \\
       -H 'Content-Type: application/json' \\
-      --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"resync_done\\":true,\\"agent_version\\":\\"$AGENT_VERSION\\",\\"renderer_healthy\\":$RENDERER_HEALTHY}" \\
+      --data "$RESYNC_PAYLOAD" \\
       >/dev/null 2>&1 || true
   fi
   sleep 60
