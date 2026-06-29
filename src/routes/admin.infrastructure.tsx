@@ -88,7 +88,11 @@ function ServersTab() {
       }
     } finally { setLoading(false); }
   };
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    reload();
+    const timer = window.setInterval(reload, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const onCreate = async () => {
     setBusy(true);
@@ -253,7 +257,7 @@ function ServersTab() {
 function ServerRow({ row, onTogglePause, onDelete, onRotate, onResync, onShowBootstrap }: any) {
   const heartbeatAge = row.last_heartbeat_at ? Date.now() - new Date(row.last_heartbeat_at).getTime() : null;
   const isStale = heartbeatAge !== null && heartbeatAge > 5 * 60_000;
-  const effectiveStatus = row.status === "paused" ? "paused" : row.status === "pending" ? "pending" : isStale ? "offline" : "online";
+  const effectiveStatus = row.status === "paused" ? "paused" : row.status === "pending" ? "pending" : row.status === "offline" || isStale ? "offline" : "online";
   const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     online: "default", pending: "outline", paused: "secondary", offline: "destructive",
   };

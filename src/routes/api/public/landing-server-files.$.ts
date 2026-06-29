@@ -16,48 +16,55 @@ const PACKAGE_JSON = `{
 `;
 
 const HEARTBEAT_SH = `#!/usr/bin/env bash
-# Liest .env (HEARTBEAT_URL, BOOTSTRAP_TOKEN, SERVER_FILES_BASE), schickt alle 60s einen Heartbeat.
-# Wenn das Portal { resync_needed: true } antwortet, werden alle Themes neu geladen.
+# Liest .env, schickt alle 60s einen Heartbeat und lädt Themes bei Bedarf neu.
+# Wichtig: Der Heartbeat läuft auch dann weiter, wenn der Renderer gerade kaputt ist.
 set -euo pipefail
 [ -f /opt/landing-server/.env ] && set -a && . /opt/landing-server/.env && set +a
 THEMES_DIR=/opt/landing-server/themes
+AGENT_VERSION="1.2.0"
+
+if [ -z "\${SERVER_FILES_BASE:-}" ]; then
+  SERVER_FILES_BASE="\${HEARTBEAT_URL%/landing-server-heartbeat}/landing-server-files"
+fi
 
 resync_themes() {
   echo "[heartbeat] Themes-Resync angefordert — lade neu …" >&2
   mkdir -p "$THEMES_DIR"
   THEMES_JSON=$(curl -fsSL "$SERVER_FILES_BASE/themes.json" 2>/dev/null || echo '{"themes":[]}')
-  echo "$THEMES_JSON" | sed -n 's/.*"themes":\\[\\([^]]*\\)\\].*/\\1/p' | tr ',' '\\n' | sed 's/[" ]//g' | while read -r THEME_ID; do
+  echo "$THEMES_JSON" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{JSON.parse(s).themes.forEach(t=>console.log(t))}catch{}})' | while read -r THEME_ID; do
     [ -z "$THEME_ID" ] && continue
     mkdir -p "$THEMES_DIR/$THEME_ID"
     for F in template.html style.css script.js; do
       curl -fsSL "$SERVER_FILES_BASE/themes/$THEME_ID/$F" -o "$THEMES_DIR/$THEME_ID/$F" 2>/dev/null || true
     done
   done
-  systemctl restart landing-server.service 2>/dev/null || true
+  systemctl restart landing-server.service 2>/dev/null || systemctl restart landing.service 2>/dev/null || true
   echo "[heartbeat] Themes-Resync fertig." >&2
 }
 
 while true; do
   COUNT=0
-  RESYNC_FLAG=""
+  RENDERER_HEALTHY=false
   if curl -fsS http://127.0.0.1:3001/_health >/dev/null 2>&1; then
-    RESP=$(curl -sS -X POST "$HEARTBEAT_URL" \\
-      -H 'Content-Type: application/json' \\
-      --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"landing_count\\":$COUNT,\\"agent_version\\":\\"1.1.0\\"$RESYNC_FLAG}" \\
-      2>/dev/null || echo '')
-    if echo "$RESP" | grep -q '"resync_needed":true'; then
-      resync_themes
-      # Bestätigung an Portal
-      curl -sS -X POST "$HEARTBEAT_URL" \\
-        -H 'Content-Type: application/json' \\
-        --data "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"resync_done\\":true,\\"agent_version\\":\\"1.1.0\\"}" \\
-        >/dev/null 2>&1 || true
-    fi
+    RENDERER_HEALTHY=true
+  fi
+
+  RESP=$(curl -sS -X POST "$HEARTBEAT_URL" \
+    -H 'Content-Type: application/json' \
+    --data "{\"token\":\"$BOOTSTRAP_TOKEN\",\"landing_count\":$COUNT,\"agent_version\":\"$AGENT_VERSION\",\"renderer_healthy\":$RENDERER_HEALTHY}" \
+    2>/dev/null || echo '')
+
+  if echo "$RESP" | grep -q '"resync_needed":true'; then
+    resync_themes
+    # Bestätigung an Portal
+    curl -sS -X POST "$HEARTBEAT_URL" \
+      -H 'Content-Type: application/json' \
+      --data "{\"token\":\"$BOOTSTRAP_TOKEN\",\"resync_done\":true,\"agent_version\":\"$AGENT_VERSION\",\"renderer_healthy\":$RENDERER_HEALTHY}" \
+      >/dev/null 2>&1 || true
   fi
   sleep 60
 done
 `;
-
 
 export const Route = createFileRoute("/api/public/landing-server-files/$")({
   server: {

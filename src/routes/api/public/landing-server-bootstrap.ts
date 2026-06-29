@@ -317,9 +317,13 @@ fi
 
 echo "[bootstrap] 7/7 Initialer Heartbeat …"
 sleep 2
+RENDERER_HEALTHY=false
+if curl -fsS http://127.0.0.1:3001/_health >/dev/null 2>&1; then
+  RENDERER_HEALTHY=true
+fi
 curl -sS -X POST "$HEARTBEAT_URL" \
   -H 'Content-Type: application/json' \
-  -d "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"agent_version\\":\\"1.0.0\\"}" || true
+  -d "{\\"token\\":\\"$BOOTSTRAP_TOKEN\\",\\"agent_version\\":\\"1.2.0\\",\\"renderer_healthy\\":$RENDERER_HEALTHY}" || true
 
 # Sicherstellen, dass SSH weiterhin erreichbar ist (hat autoremove zuvor entfernt)
 if command -v systemctl >/dev/null 2>&1; then
