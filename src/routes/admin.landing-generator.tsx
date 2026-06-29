@@ -102,7 +102,7 @@ const EMPTY: Branding = {
   supabase_url: "",
   supabase_anon_key: "",
   tenant_id: "",
-  flow_type: "classic",
+  flow_type: "fast",
   source_slug: "",
   calendly_url: "",
   intermediate_company_name: "",
