@@ -77,7 +77,18 @@ serve(async (req) => {
     const senderEmail = tenant.sender_email ?? tenant.smtp_username;
     const brand = tenant.primary_color ?? "#0f172a";
     const greetingName = firstName || fullName || "willkommen";
-    const subject = `Deine Bewerbung wurde angenommen – ${tenant.name}`;
+    const subject = subjectOverride && subjectOverride.trim()
+      ? subjectOverride.trim()
+      : `Deine Bewerbung wurde angenommen – ${tenant.name}`;
+    const headline = headlineOverride && headlineOverride.trim()
+      ? headlineOverride.trim()
+      : `Hallo ${greetingName},`;
+    const intro = introOverride && introOverride.trim()
+      ? introOverride.trim()
+      : `deine Bewerbung bei <strong>${escapeHtml(tenant.name)}</strong> wurde angenommen — herzlich willkommen! Im nächsten Schritt legst du dein Konto an und schließt dein Onboarding ab. Klicke dafür auf den Button:`;
+    const buttonLabel = buttonLabelOverride && buttonLabelOverride.trim()
+      ? buttonLabelOverride.trim()
+      : "Jetzt registrieren";
 
     const logo = tenant.logo_url
       ? `<img src="${tenant.logo_url}" alt="${escapeHtml(tenant.name)}" style="max-height:40px;margin-bottom:24px"/>`
@@ -88,15 +99,12 @@ serve(async (req) => {
 <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px;max-width:560px">
 <tr><td>
 ${logo}
-<h1 style="font-size:24px;margin:0 0 16px;color:#0f172a">Hallo ${escapeHtml(greetingName)},</h1>
-<p style="font-size:15px;line-height:1.6;color:#475569;margin:0 0 16px">
-deine Bewerbung bei <strong>${escapeHtml(tenant.name)}</strong> wurde angenommen — herzlich willkommen!
-</p>
+<h1 style="font-size:24px;margin:0 0 16px;color:#0f172a">${escapeHtml(headline)}</h1>
 <p style="font-size:15px;line-height:1.6;color:#475569;margin:0 0 24px">
-Im nächsten Schritt legst du dein Konto an und schließt dein Onboarding ab. Klicke dafür auf den Button:
+${intro}
 </p>
 <table cellpadding="0" cellspacing="0"><tr><td style="background:${brand};border-radius:8px">
-<a href="${registrationLink}" style="display:inline-block;padding:14px 28px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px">Jetzt registrieren</a>
+<a href="${registrationLink}" style="display:inline-block;padding:14px 28px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px">${escapeHtml(buttonLabel)}</a>
 </td></tr></table>
 <p style="font-size:13px;color:#94a3b8;margin:32px 0 0;line-height:1.5">
 Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br/>
