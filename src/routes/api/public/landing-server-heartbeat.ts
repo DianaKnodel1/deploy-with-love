@@ -9,7 +9,9 @@ const Body = z.object({
   token: z.string().min(20).max(200),
   landing_count: z.number().int().min(0).max(100_000).optional(),
   agent_version: z.string().max(40).optional(),
+  resync_done: z.boolean().optional(),
 });
+
 
 export const Route = createFileRoute("/api/public/landing-server-heartbeat")({
   server: {
@@ -22,7 +24,7 @@ export const Route = createFileRoute("/api/public/landing-server-heartbeat")({
 
           const { data: server, error } = await supabaseAdmin
             .from("landing_servers")
-            .select("id, status")
+            .select("id, status, themes_resync_requested_at, themes_resync_done_at")
             .eq("bootstrap_token", body.token)
             .maybeSingle();
           if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
@@ -30,15 +32,23 @@ export const Route = createFileRoute("/api/public/landing-server-heartbeat")({
 
           const patch: any = {
             last_heartbeat_at: new Date().toISOString(),
-            // pending → online beim ersten Heartbeat
             status: server.status === "paused" ? "paused" : "online",
           };
           if (body.agent_version) patch.agent_version = body.agent_version;
-          // landing_count wird normalerweise durch DB-Trigger gepflegt — Heartbeat-Wert
-          // ist nur informativ; wir überschreiben nicht.
+
+          // Resync-Kommando: angefragt UND noch nicht erledigt?
+          const reqAt = server.themes_resync_requested_at ? new Date(server.themes_resync_requested_at).getTime() : 0;
+          const doneAt = server.themes_resync_done_at ? new Date(server.themes_resync_done_at).getTime() : 0;
+          const resyncNeeded = reqAt > 0 && reqAt > doneAt;
+
+          // Wenn der Agent meldet, dass er den Resync abgeschlossen hat, Zeitstempel setzen
+          if ((body as any).resync_done === true) {
+            patch.themes_resync_done_at = new Date().toISOString();
+          }
 
           await supabaseAdmin.from("landing_servers").update(patch).eq("id", server.id);
-          return Response.json({ ok: true, server_id: server.id });
+          return Response.json({ ok: true, server_id: server.id, resync_needed: resyncNeeded });
+
         } catch (e: any) {
           return Response.json({ ok: false, error: e.message }, { status: 400 });
         }
