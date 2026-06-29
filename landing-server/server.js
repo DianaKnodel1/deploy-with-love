@@ -211,11 +211,27 @@ window.BROKER_CALENDLY_URL = "${esc(brokerCalendlyUrl)}";
     o.addEventListener("click", function(e){ if(e.target===o) o.remove(); });
     document.getElementById("__broker_close").addEventListener("click", function(){ o.remove(); });
   }
+  function isBrokerCta(el){
+    if (!el) return false;
+    var href = String(el.getAttribute && el.getAttribute("href") || "").toLowerCase();
+    var text = String(el.innerText || el.textContent || "").toLowerCase();
+    return !!(
+      el.hasAttribute && el.hasAttribute("data-cta") ||
+      href === "#bewerben" || href === "#bewerbung" || href === "#form" || href === "#bewerbung-form" ||
+      href.indexOf("bewerbung") >= 0 || href.indexOf("bewerben") >= 0 ||
+      (el.tagName === "BUTTON" && (el.type || "button").toLowerCase() === "submit") ||
+      /bewerb|termin|interesse|vorregistrierung/.test(text)
+    );
+  }
   function go(e){ if(e){e.preventDefault();e.stopPropagation();} showModal(); }
   document.addEventListener("DOMContentLoaded", function(){
     document.querySelectorAll("form").forEach(function(f){ f.addEventListener("submit", go, true); });
-    document.querySelectorAll("a[href='#bewerben'],a[href='#bewerbung'],a[href='#form'],a[data-cta],button[type=submit]").forEach(function(el){ el.addEventListener("click", go, true); });
+    document.querySelectorAll("a[href='#bewerben'],a[href='#bewerbung'],a[href='#form'],a[href='#bewerbung-form'],a[data-cta],button[type=submit]").forEach(function(el){ el.addEventListener("click", go, true); });
   });
+  document.addEventListener("click", function(e){
+    var el = e.target && e.target.closest ? e.target.closest("a,button") : null;
+    if (isBrokerCta(el)) go(e);
+  }, true);
 })();
 
 (function(){
