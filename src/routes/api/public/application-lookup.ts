@@ -1,9 +1,9 @@
 // Public lookup: Bewerber gibt seine E-Mail ein → wir prüfen, ob es eine
-// Bewerbung gibt und wenn ja, geben wir die passende Calendly-/Verbinden-URL
-// zurück, damit er seinen Termin nachbuchen kann.
+// Bewerbung gibt. Wenn ja, erzeugen/erneuern wir einen Magic-Link und leiten
+// direkt ins KI-Bewerbungsgespräch. Calendly wurde bereits im Vermittlungsflow
+// gebucht und wird hier bewusst NICHT mehr geöffnet.
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -38,6 +38,7 @@ export const Route = createFileRoute("/api/public/application-lookup")({
         }
 
         const email = parsed.data.email.toLowerCase();
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         // Bewerbungen zu dieser E-Mail laden. Wichtig: Es kann Duplikate geben
         // (z.B. Formular-Submit + Calendly-Webhook). Deshalb nicht blind die
@@ -114,58 +115,36 @@ export const Route = createFileRoute("/api/public/application-lookup")({
           || (await loadLandingById(app.source_landing_id))
           || (await loadLandingBySlug(app.source_slug))
         );
-        const calendlyUrl: string | null = targetLanding?.calendly_url ?? null;
         const landingSlug: string | null = targetLanding?.slug ?? app.source_slug ?? null;
 
         const booked = isBooked(app);
-        if (booked) {
-          let magicToken: string | null = app.magic_token ?? null;
-          const expiresAt = app.magic_token_expires_at ? new Date(app.magic_token_expires_at).getTime() : 0;
-          if (!magicToken || !expiresAt || expiresAt <= Date.now()) {
-            magicToken = `${crypto.randomUUID()}-${crypto.randomUUID().slice(0, 8)}`;
-            await supabaseAdmin
-              .from("applications")
-              .update({
-                magic_token: magicToken,
-                magic_token_expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-              } as any)
-              .eq("id", app.id);
+        let magicToken: string | null = app.magic_token ?? null;
+        const expiresAt = app.magic_token_expires_at ? new Date(app.magic_token_expires_at).getTime() : 0;
+        if (!magicToken || !expiresAt || expiresAt <= Date.now()) {
+          magicToken = `${crypto.randomUUID()}-${crypto.randomUUID().slice(0, 8)}`;
+          const { error: tokenError } = await supabaseAdmin
+            .from("applications")
+            .update({
+              magic_token: magicToken,
+              magic_token_expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+              target_landing_id: targetLanding?.id ?? app.target_landing_id ?? null,
+            } as any)
+            .eq("id", app.id);
+          if (tokenError) {
+            console.error("[application-lookup] token update failed", tokenError);
+            return json({ error: "Bewerbungslink konnte nicht erstellt werden." }, 500);
           }
-          const base = (parsed.data.portal_url || new URL(request.url).origin).replace(/\/+$/, "");
-          return json({
-            found: true,
-            booked: true,
-            interview_ready: true,
-            redirect_url: `${base}/bewerbung?token=${encodeURIComponent(magicToken)}`,
-            message: "Dein Termin ist bestätigt. Du wirst jetzt zum KI-Bewerbungsgespräch weitergeleitet.",
-          });
         }
-
-        if (!calendlyUrl || !landingSlug) {
-          return json({
-            found: true,
-            booked: false,
-            message: "Wir haben deine Bewerbung erhalten. Bitte warte auf unsere Rückmeldung per E-Mail.",
-          });
-        }
-
-        // Redirect-URL zur Verbinden-Seite bauen
         const base = (parsed.data.portal_url || new URL(request.url).origin).replace(/\/+$/, "");
-        const parts = String(app.full_name || "").trim().split(/\s+/);
-        const firstName = parts[0] ?? "";
-        const lastName = parts.slice(1).join(" ");
-        const qs = new URLSearchParams({
-          app: app.id,
-          landing: landingSlug,
-          first_name: firstName,
-          last_name: lastName,
-          email: app.email,
-          phone: app.phone ?? "",
-        }).toString();
         return json({
           found: true,
-          booked: false,
-          redirect_url: `${base}/bewerbung/verbinden?${qs}`,
+          booked,
+          interview_ready: true,
+          landing_slug: landingSlug,
+          redirect_url: `${base}/bewerbung?token=${encodeURIComponent(magicToken)}`,
+          message: booked
+            ? "Dein Termin ist bestätigt. Du wirst jetzt zum KI-Bewerbungsgespräch weitergeleitet."
+            : "Deine Bewerbung wurde gefunden. Du wirst jetzt zum KI-Bewerbungsgespräch weitergeleitet.",
         });
       },
     },
