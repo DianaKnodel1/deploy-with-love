@@ -347,12 +347,7 @@ function VoiceInterviewPage() {
       <header className="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0"
-              style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
-            >
-              {recruiterInitials}
-            </div>
+            <Avatar size="md" />
             <div>
               <h1 className="text-sm font-semibold leading-tight">{recruiterName}</h1>
               <p className="text-xs text-muted-foreground leading-tight">
