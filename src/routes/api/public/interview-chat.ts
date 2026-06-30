@@ -1,4 +1,4 @@
-// KI-Bewerbungsgespräch (Chat, schriftlich).
+// Bewerbungsgespräch (Chat, schriftlich).
 // POST /api/public/interview-chat
 //   { applicationId, action: "init" }                → initialer KI-Gruß + erste Frage
 //   { applicationId, action: "message", text }       → Antwort des Bewerbers, AI antwortet
@@ -9,7 +9,6 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -141,6 +140,7 @@ const toApplicationStatus = (rec: "invite" | "reject" | "unsure") =>
   rec === "invite" ? "akzeptiert" : rec === "reject" ? "abgelehnt" : "neu";
 
 async function sendRegistrationInviteAfterAiAccept(app: ApplicationRow, request: Request) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   if (!app.email || !app.tenant_id) {
     return { sent: false, skipped: true, reason: "missing_email_or_tenant" };
   }
@@ -185,9 +185,9 @@ async function sendRegistrationInviteAfterAiAccept(app: ApplicationRow, request:
       lastName,
       registrationLink,
       tenantId: app.tenant_id,
-      subject: "Ihr KI-Bewerbungsgespräch war erfolgreich",
+      subject: "Ihr Bewerbungsgespräch war erfolgreich",
       headline: `Hallo ${firstName || name},`,
-      intro: "Ihr KI-Bewerbungsgespräch wurde positiv bewertet. Im nächsten Schritt legen Sie Ihr Konto an und schließen Ihr Onboarding ab. Klicken Sie dafür auf den Button:",
+      intro: "Ihr Bewerbungsgespräch wurde positiv bewertet. Im nächsten Schritt legen Sie Ihr Konto an und schließen Ihr Onboarding ab. Klicken Sie dafür auf den Button:",
       buttonLabel: "Jetzt registrieren",
       templateName: "ai_acceptance_invitation",
     },
@@ -233,6 +233,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         const parsed = Input.safeParse(payload);
         if (!parsed.success) return json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
         const { applicationId, action, text } = parsed.data;
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         // Lade Bewerbung + Landing-Prompt
         const { data: app, error: appErr } = await supabaseAdmin
@@ -311,7 +312,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
 
         // Bei init: nur Greeting holen, falls History leer; sonst Fehler
         if (action === "init" && history.length > 0) {
-          return json({ reply: history[history.length - 1]?.text ?? "", ended: false, history });
+          return json({ reply: history[history.length - 1]?.text ?? "", ended: false, history, interview_started_at: app.interview_started_at ?? null });
         }
 
         // AI-Antwort
@@ -324,7 +325,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           interview_messages: history,
           interview_mode: app.interview_mode ?? "chat",
         };
-        if (app.interview_status === "pending") {
+        if (!app.interview_started_at && (!app.interview_status || app.interview_status === "pending")) {
           updates.interview_status = "running";
           updates.interview_started_at = new Date().toISOString();
         }
@@ -348,7 +349,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           ? await sendRegistrationInviteAfterAiAccept(app as ApplicationRow, request)
           : undefined;
 
-        return json({ ok: true, reply, ended, history, application_status: ended ? updates.status : undefined, invite_mail: inviteMail });
+        return json({ ok: true, reply, ended, history, application_status: ended ? updates.status : undefined, interview_started_at: updates.interview_started_at ?? app.interview_started_at ?? null, invite_mail: inviteMail });
       },
     },
   },

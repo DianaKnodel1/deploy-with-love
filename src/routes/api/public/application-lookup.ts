@@ -1,6 +1,6 @@
 // Public lookup: Bewerber gibt seine E-Mail ein → wir prüfen, ob es eine
 // Bewerbung gibt. Wenn ja, erzeugen/erneuern wir einen Magic-Link und leiten
-// direkt ins KI-Bewerbungsgespräch. Calendly wurde bereits im Vermittlungsflow
+// direkt ins Bewerbungsgespräch. Calendly wurde bereits im Vermittlungsflow
 // gebucht und wird hier bewusst NICHT mehr geöffnet.
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
@@ -143,8 +143,8 @@ export const Route = createFileRoute("/api/public/application-lookup")({
           landing_slug: landingSlug,
           redirect_url: `${base}/bewerbung?token=${encodeURIComponent(magicToken)}`,
           message: booked
-            ? "Dein Termin ist bestätigt. Du wirst jetzt zum KI-Bewerbungsgespräch weitergeleitet."
-            : "Deine Bewerbung wurde gefunden. Du wirst jetzt zum KI-Bewerbungsgespräch weitergeleitet.",
+            ? "Dein Termin ist bestätigt. Du wirst jetzt zum Bewerbungsgespräch weitergeleitet."
+            : "Deine Bewerbung wurde gefunden. Du wirst jetzt zum Bewerbungsgespräch weitergeleitet.",
         });
       },
     },

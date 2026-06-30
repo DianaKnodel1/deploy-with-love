@@ -1,10 +1,9 @@
-// Öffentliche Chat-Oberfläche für das KI-Bewerbungsgespräch.
+// Öffentliche Chat-Oberfläche für das Bewerbungsgespräch.
 // Aufruf: /interview/<appId>?landing=<slug>&portal=<base>
-// Nach Abschluss: Weiterleitung zu /bewerbung/verbinden (Calendly) wenn vorhanden,
-// sonst Danke-Screen.
+// Nach Abschluss: Danke-Screen; die Entscheidung/E-Mail läuft serverseitig.
 
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, Send, CheckCircle2 } from "lucide-react";
@@ -21,7 +20,7 @@ export const Route = createFileRoute("/interview/$appId")({
 
 function InterviewPage() {
   const { appId } = useParams({ from: "/interview/$appId" });
-  const { landing, portal } = useSearch({ from: "/interview/$appId" }) as { landing: string; portal: string };
+  const { landing } = useSearch({ from: "/interview/$appId" }) as { landing: string; portal: string };
 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -56,43 +55,17 @@ function InterviewPage() {
     let cancelled = false;
     async function init() {
       try {
-        const { data: app, error: e1 } = await supabase
-          .from("applications")
-          .select("interview_messages, interview_status, interview_mode, interview_started_at")
-          .eq("id", appId)
-          .maybeSingle();
-        if (e1) throw new Error(e1.message);
-        if (!app) throw new Error("Bewerbung nicht gefunden");
-
-        const history: Msg[] = Array.isArray(app.interview_messages) ? (app.interview_messages as any) : [];
-
-        if (app.interview_status === "done" || app.interview_status === "taken_over") {
-          if (cancelled) return;
-          setMessages(history);
-          setEnded(true);
-          setInitializing(false);
-          return;
-        }
-
-        if (app.interview_started_at) {
-          setStartedAt(new Date(app.interview_started_at as string).getTime());
-        }
-
-        if (history.length === 0) {
-          const res = await fetch("/api/public/interview-chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ applicationId: appId, action: "init" }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data?.error ?? "Init fehlgeschlagen");
-          if (cancelled) return;
-          setMessages(data.history ?? []);
-          if (!startedAt) setStartedAt(Date.now());
-        } else {
-          if (cancelled) return;
-          setMessages(history);
-        }
+        const res = await fetch("/api/public/interview-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicationId: appId, action: "init" }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error ?? "Start fehlgeschlagen");
+        if (cancelled) return;
+        setMessages(data.history ?? []);
+        if (data.ended) setEnded(true);
+        setStartedAt(data.interview_started_at ? new Date(data.interview_started_at).getTime() : Date.now());
         setInitializing(false);
       } catch (e: any) {
         if (cancelled) return;
@@ -170,12 +143,6 @@ function InterviewPage() {
   const company = branding?.firmenname || "uns";
   const primary = branding?.primary_color || "#2563eb";
 
-  const calendlyHref = useMemo(() => {
-    if (!portal || !landing) return null;
-    const base = portal.replace(/\/+$/, "");
-    return `${base}/bewerbung/verbinden?app=${encodeURIComponent(appId)}&landing=${encodeURIComponent(landing)}`;
-  }, [portal, landing, appId]);
-
   const mm = Math.floor(remainingSec / 60).toString().padStart(2, "0");
   const ss = (remainingSec % 60).toString().padStart(2, "0");
 
@@ -187,7 +154,7 @@ function InterviewPage() {
           {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-10 object-contain" />}
           <h1 className="text-xl font-semibold">Bewerbungsgespräch mit {company}</h1>
           <div className="text-sm text-muted-foreground space-y-2">
-            <p><strong>Sie sprechen gleich mit einer KI</strong> (künstlichen Intelligenz), nicht mit einer realen Person.</p>
+            <p><strong>Das Gespräch wird digital geführt</strong> und automatisiert ausgewertet.</p>
             <p>Das Gespräch dauert <strong>maximal 10 Minuten</strong> und besteht aus 6–8 Fragen zu Ihrer Person, Motivation und Erfahrung.</p>
             <p>Ihre Antworten werden zur Bewerbungsauswertung gespeichert und für maximal 6 Monate aufbewahrt. Es findet keine Audio-Aufnahme statt.</p>
           </div>
@@ -212,7 +179,7 @@ function InterviewPage() {
             {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-8 object-contain" />}
             <div>
               <h1 className="text-sm font-semibold text-foreground">Bewerbungsgespräch mit {company}</h1>
-              <p className="text-xs text-muted-foreground">KI-Erstgespräch · max. 10 Minuten</p>
+              <p className="text-xs text-muted-foreground">Bewerbungsgespräch · max. 10 Minuten</p>
             </div>
           </div>
           {startedAt && !ended && (
@@ -264,13 +231,8 @@ function InterviewPage() {
             <CheckCircle2 className="h-10 w-10 mx-auto" style={{ color: primary }} />
             <h2 className="text-lg font-semibold">Vielen Dank für das Gespräch!</h2>
             <p className="text-sm text-muted-foreground">
-              Ihre Antworten wurden gespeichert. {calendlyHref ? "Sie werden gleich zur Terminbuchung weitergeleitet." : "Wir melden uns in Kürze bei Ihnen."}
+              Ihre Antworten wurden gespeichert. Wir melden uns in Kürze bei Ihnen.
             </p>
-            {calendlyHref && (
-              <Button size="lg" className="w-full" style={{ background: primary }} onClick={() => { window.location.href = calendlyHref!; }}>
-                Weiter zur Terminbuchung
-              </Button>
-            )}
           </div>
         ) : (
           <div className="space-y-2">
