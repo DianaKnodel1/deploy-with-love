@@ -60,19 +60,32 @@ export const Route = createFileRoute("/api/public/application-lookup")({
           });
         }
 
-        // Landing-Info holen, um zu prüfen ob Calendly verfügbar ist
+        // Landing-Info holen, um zu prüfen ob Calendly verfügbar ist.
+        // Bei Vermittlungs-Landings (broker) liegt die Calendly-URL auf der
+        // verknüpften Fast-Track-Landing → notfalls dorthin folgen.
         let calendlyUrl: string | null = null;
         let landingSlug: string | null = app.source_slug ?? null;
         if (landingSlug) {
           const { data: lp } = await supabaseAdmin
             .from("landing_pages")
-            .select("calendly_url, slug")
+            .select("calendly_url, slug, flow_type, linked_fasttrack_landing_id")
             .eq("source_slug", landingSlug)
             .eq("is_published", true)
             .maybeSingle();
           calendlyUrl = (lp as any)?.calendly_url ?? null;
           landingSlug = (lp as any)?.slug ?? landingSlug;
+          const linkedId = (lp as any)?.linked_fasttrack_landing_id ?? null;
+          if (!calendlyUrl && linkedId) {
+            const { data: ft } = await supabaseAdmin
+              .from("landing_pages")
+              .select("calendly_url, slug")
+              .eq("id", linkedId)
+              .maybeSingle();
+            calendlyUrl = (ft as any)?.calendly_url ?? calendlyUrl;
+            landingSlug = (ft as any)?.slug ?? landingSlug;
+          }
         }
+
 
         const booked = app.booking_status === "booked";
         if (booked) {
