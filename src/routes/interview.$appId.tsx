@@ -76,12 +76,12 @@ function InterviewPage() {
     let cancelled = false;
     async function init() {
       try {
-        const res = await fetch("/api/public/interview-chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ applicationId: appId, action: "init" }),
-        });
-        const data = await res.json();
+        const data = await postInterview({ applicationId: appId, action: "init" });
+        if (cancelled) return;
+        setMessages(data.history ?? []);
+        if (data.ended) setEnded(true);
+        setStartedAt(data.interview_started_at ? new Date(data.interview_started_at).getTime() : Date.now());
+        setInitializing(false);
         if (!res.ok) throw new Error(data?.error ?? "Start fehlgeschlagen");
         if (cancelled) return;
         setMessages(data.history ?? []);
