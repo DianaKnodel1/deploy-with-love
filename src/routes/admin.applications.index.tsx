@@ -696,28 +696,9 @@ function AdminApplicationsPage() {
                     <td className="px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-1.5 items-center">
                         {isNew && (
-                          <>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="h-8 text-xs gap-1 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm"
-                              onClick={(e) => { e.stopPropagation(); setConfirmAccept(app); }}
-                              disabled={isLoading}
-                              title="Zusage senden – Vorschau anzeigen"
-                            >
-                              {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                              Zusage senden
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
-                              onClick={(e) => rejectApplication(app, e)}
-                              disabled={isLoading}
-                            >
-                              <XCircle className="h-3.5 w-3.5" /> Ablehnen
-                            </Button>
-                          </>
+                          <span className="text-xs text-muted-foreground italic">
+                            Wartet auf Bewerbungsgespräch
+                          </span>
                         )}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
