@@ -22,7 +22,8 @@ const Input = z.object({
   text: z.string().max(4000).optional(),
 });
 
-const GATEWAY_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const APINET_URL = "https://apinet.cloud/v1/chat/completions";
 const DEFAULT_MODEL = "gemini-2.5-flash";
 
 const DEFAULT_SYSTEM_PROMPT = `Du bist eine freundliche, empathische und professionelle KI-Recruiterin für eine Versicherungs- und Finanzvermittlungsgesellschaft in Deutschland. Du führst ein schriftliches Erstgespräch mit einer Bewerberin oder einem Bewerber.
@@ -83,25 +84,40 @@ function json(body: unknown, status = 200) {
   });
 }
 
-async function loadAiCreds(): Promise<{ apiKey: string; model: string }> {
+async function loadAiCreds(): Promise<{ apiKey: string; model: string; url: string; provider: string }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("system_settings")
-    .select("gemini_api_key, gemini_model")
+    .select("gemini_api_key, gemini_model, apinet_api_key, apinet_model")
     .eq("id", 1)
     .maybeSingle();
   if (error) throw new Error(`system_settings: ${error.message}`);
-  const apiKey = (data as any)?.gemini_api_key?.trim();
-  if (!apiKey) throw new Error("Gemini API Key fehlt in den AI-Einstellungen (Admin → AI Settings).");
-  const model = (data as any)?.gemini_model?.trim() || DEFAULT_MODEL;
-  return { apiKey, model };
+  const apinetKey = (data as any)?.apinet_api_key?.trim();
+  const geminiKey = (data as any)?.gemini_api_key?.trim();
+  if (apinetKey) {
+    return {
+      apiKey: apinetKey,
+      model: (data as any)?.apinet_model?.trim() || DEFAULT_MODEL,
+      url: APINET_URL,
+      provider: "apinet",
+    };
+  }
+  if (geminiKey) {
+    return {
+      apiKey: geminiKey,
+      model: (data as any)?.gemini_model?.trim() || DEFAULT_MODEL,
+      url: GEMINI_URL,
+      provider: "gemini",
+    };
+  }
+  throw new Error("Kein API Key gesetzt (Admin → AI Settings: apinet.cloud oder Gemini).");
 }
 
 async function callGateway(messages: Array<{ role: string; content: string }>, opts?: { jsonMode?: boolean }) {
-  const { apiKey, model } = await loadAiCreds();
+  const { apiKey, model, url, provider } = await loadAiCreds();
   const body: any = { model, messages };
   if (opts?.jsonMode) body.response_format = { type: "json_object" };
-  const res = await fetch(GATEWAY_URL, {
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -111,7 +127,7 @@ async function callGateway(messages: Array<{ role: string; content: string }>, o
   });
   if (!res.ok) {
     const errTxt = await res.text();
-    throw new Error(`Gemini ${res.status}: ${errTxt.slice(0, 400)}`);
+    throw new Error(`${provider} ${res.status}: ${errTxt.slice(0, 400)}`);
   }
   const data = (await res.json()) as any;
   const content = data?.choices?.[0]?.message?.content;
