@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +47,7 @@ export const Route = createFileRoute("/api/public/applications")({
           return json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
         }
         const d = parsed.data;
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const isFast = d.flow_type === "fast";
         const displayName = d.is_test ? `[TEST] ${d.full_name}` : d.full_name;
 
@@ -72,21 +72,36 @@ export const Route = createFileRoute("/api/public/applications")({
           } catch { /* ignore parse errors */ }
         }
 
-        // Broker-Flow: Partner-Firma auf der Landing → AZB-Stil Inline-Erfolg.
-        // Calendly-Flow (legacy, ohne Partner-Firma): direkter Calendly-Link auf der Landing.
+        // Broker-Flow: Partner/Fasttrack wird erst nach erfolgreichem Speichern
+        // als Response zurückgegeben; die Landing zeigt den Calendly-Block dadurch
+        // ausschließlich nach dem Formular-Submit.
         let calendlyOnLanding: string | null = null;
         let partner: any = null;
+        let landingPage: any = null;
         let interviewMode: string | null = null;
         if (d.source_slug) {
-          const { data: lp } = await supabaseAdmin
+          const source = d.source_slug.trim();
+          let lp: any = null;
+          const { data: bySource } = await supabaseAdmin
             .from("landing_pages")
-            .select("calendly_url, partner_company_id, interview_mode")
+            .select("id, slug, source_slug, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding")
             .eq("source_slug", d.source_slug)
             .eq("is_published", true)
             .maybeSingle();
-          calendlyOnLanding = (lp as any)?.calendly_url ?? null;
-          interviewMode = (lp as any)?.interview_mode ?? null;
-          const partnerId = (lp as any)?.partner_company_id ?? null;
+          lp = bySource ?? null;
+          if (!lp) {
+            const { data: bySlug } = await supabaseAdmin
+              .from("landing_pages")
+              .select("id, slug, source_slug, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding")
+              .eq("slug", source)
+              .eq("is_published", true)
+              .maybeSingle();
+            lp = bySlug ?? null;
+          }
+          landingPage = lp;
+          calendlyOnLanding = lp?.calendly_url ?? null;
+          interviewMode = lp?.interview_mode ?? null;
+          const partnerId = lp?.partner_company_id ?? null;
           if (partnerId) {
             const { data: pc } = await supabaseAdmin
               .from("partner_companies")
@@ -94,6 +109,39 @@ export const Route = createFileRoute("/api/public/applications")({
               .eq("id", partnerId)
               .maybeSingle();
             partner = pc ?? null;
+          }
+          if (!partner && d.flow_type === "broker" && lp?.linked_fasttrack_landing_id) {
+            const { data: linked } = await supabaseAdmin
+              .from("landing_pages")
+              .select("domain, calendly_url, intermediate_company_name, logo_url, branding")
+              .eq("id", lp.linked_fasttrack_landing_id)
+              .eq("is_published", true)
+              .maybeSingle();
+            const linkedBranding = (linked as any)?.branding ?? {};
+            const ownBranding = lp?.branding ?? {};
+            if (linked) {
+              partner = {
+                name: (linked as any).intermediate_company_name || linkedBranding.firmenname || lp.intermediate_company_name || ownBranding.firmenname || "unserem Partner",
+                logo_url: (linked as any).logo_url || linkedBranding.logo_image || null,
+                calendly_url: (linked as any).calendly_url || linkedBranding.calendly_url || lp.calendly_url || null,
+                portal_register_url: null,
+                intro_headline: null,
+                intro_subline: null,
+                button_label: "Jetzt Termin buchen",
+              };
+            }
+          }
+          if (!partner && d.flow_type === "broker" && calendlyOnLanding) {
+            const ownBranding = landingPage?.branding ?? {};
+            partner = {
+              name: landingPage?.intermediate_company_name || ownBranding.firmenname || "unserem Partner",
+              logo_url: landingPage?.logo_url || ownBranding.logo_image || null,
+              calendly_url: calendlyOnLanding,
+              portal_register_url: null,
+              intro_headline: null,
+              intro_subline: null,
+              button_label: "Jetzt Termin buchen",
+            };
           }
         }
         const isBroker = d.flow_type === "broker" && !!partner && !d.is_test;

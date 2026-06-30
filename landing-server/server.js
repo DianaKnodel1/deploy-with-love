@@ -160,27 +160,6 @@ function injectLandingConfig(html, row) {
   const apiEndpoint = String(rawApi || "").trim().replace(/[.,;\s]+$/g, "");
   const portalUrl = row.branding?.portal_url || "";
   const wa = row.branding?.whatsapp_enabled ? String(row.branding?.whatsapp_number || "").replace(/[^0-9]/g, "") : "";
-  // Vermittlung (broker) → Modal mit Partner-Info + "Jetzt Termin buchen" (Calendly).
-  // Calendly-URL + Partnername werden vom verknüpften Fasttrack-Partner geerbt.
-  let brokerPartnerName = "";
-  let brokerCalendlyUrl = "";
-  if (row.flow_type === "broker") {
-    const linked = row.linked_fasttrack || {};
-    const fb = linked.branding || {};
-    brokerPartnerName = String(
-      linked.intermediate_company_name ||
-      fb.firmenname ||
-      row.intermediate_company_name ||
-      row.branding?.firmenname ||
-      "unserem Partner"
-    );
-    brokerCalendlyUrl = String(
-      linked.calendly_url ||
-      fb.calendly_url ||
-      row.calendly_url ||
-      ""
-    );
-  }
   const cleanHtml = html.replace(/<script>\s*window\.PORTAL_API\s*=\s*[\s\S]*?<\/script>\s*/gi, "");
   const block = `<script>
 window.PORTAL_API = "${esc(apiEndpoint)}";
@@ -190,35 +169,6 @@ window.FLOW_TYPE = "${esc(row.flow_type)}";
 window.SOURCE_SLUG = "${esc(row.source_slug || row.slug)}";
 window.LANDING_ID = "${esc(row.id || "")}";
 window.WHATSAPP_NUMBER = "${esc(wa)}";
-window.BROKER_PARTNER_NAME = "${esc(brokerPartnerName)}";
-window.BROKER_CALENDLY_URL = "${esc(brokerCalendlyUrl)}";
-(function(){
-  if (window.FLOW_TYPE !== "broker" || !window.BROKER_CALENDLY_URL) return;
-  var calendly = window.BROKER_CALENDLY_URL + (window.BROKER_CALENDLY_URL.indexOf("?")>-1?"&":"?") + "utm_source=" + encodeURIComponent(window.LANDING_ID||"");
-  function showModal(){
-    if (document.getElementById("__broker_modal")) return;
-    var o = document.createElement("div");
-    o.id = "__broker_modal";
-    o.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,sans-serif;";
-    o.innerHTML = '<div style="background:#fff;max-width:480px;width:100%;border-radius:16px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">'+
-      '<h2 style="margin:0 0 12px;font-size:22px;color:#111;">Wir verbinden Sie mit '+ (window.BROKER_PARTNER_NAME||"unserem Partner") +'</h2>'+
-      '<p style="margin:0 0 24px;color:#555;line-height:1.5;">Buchen Sie jetzt Ihr kostenloses Bewerbungsgespr\u00e4ch.</p>'+
-      '<a id="__broker_cta" href="'+ calendly +'" target="_blank" rel="noopener" style="display:inline-block;background:#10b981;color:#fff;padding:14px 28px;border-radius:10px;font-weight:600;text-decoration:none;font-size:16px;">Jetzt Termin buchen</a>'+
-      '<button id="__broker_close" style="display:block;margin:18px auto 0;background:none;border:none;color:#888;cursor:pointer;font-size:14px;">Abbrechen</button>'+
-      '</div>';
-    document.body.appendChild(o);
-    o.addEventListener("click", function(e){ if(e.target===o) o.remove(); });
-    document.getElementById("__broker_close").addEventListener("click", function(){ o.remove(); });
-  }
-  function go(e){ if(e){e.preventDefault();e.stopPropagation();} showModal(); }
-  // Nur bei tatsächlichem Absenden des Bewerbungsformulars triggern,
-  // NICHT beim Klick auf "Jetzt Bewerben" (das öffnet nur das Formular-Modal).
-  document.addEventListener("submit", function(e){
-    var f = e.target;
-    if (!f || f.tagName !== "FORM") return;
-    go(e);
-  }, true);
-})();
 
 (function(){
   // Fasttrack-Empfang: ?ref=<broker_landing_id> aus URL nach window.SOURCE_LANDING_ID übernehmen
