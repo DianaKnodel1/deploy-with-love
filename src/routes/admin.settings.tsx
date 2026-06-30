@@ -171,7 +171,7 @@ function AdminSettingsPage() {
             <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
           </Card>
         </Link>
-        <div className="max-w-2xl mx-auto px-2 pt-2 max-w-none"></div>
+        </div>
 
       <StandardTasksCard />
 
