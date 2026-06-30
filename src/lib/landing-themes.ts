@@ -16,6 +16,9 @@ import cleFormHtml from "../landing-themes/_shared/form-section-cle.html?raw";
 import cleFormCss from "../landing-themes/_shared/form-section-cle.css?raw";
 import ttsbFormHtml from "../landing-themes/_shared/form-section-tts-beratung.html?raw";
 import ttsbFormCss from "../landing-themes/_shared/form-section-tts-beratung.css?raw";
+import ftFormHtml from "../landing-themes/_shared/form-section-for-tel.html?raw";
+import ftFormCss from "../landing-themes/_shared/form-section-for-tel.css?raw";
+
 
 
 
@@ -57,6 +60,12 @@ import ttsbCss from "../landing-themes/theme-tts-beratung/style.css?raw";
 import ttsbJs from "../landing-themes/theme-tts-beratung/script.js?raw";
 import ttsbMeta from "../landing-themes/theme-tts-beratung/meta.json";
 
+import tftHtml from "../landing-themes/theme-for-tel/template.html?raw";
+import tftCss from "../landing-themes/theme-for-tel/style.css?raw";
+import tftJs from "../landing-themes/theme-for-tel/script.js?raw";
+import tftMeta from "../landing-themes/theme-for-tel/meta.json";
+
+
 
 export type ThemeSlot = {
   key: string;
@@ -92,7 +101,9 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-mirror-site") return { html: mirFormHtml, css: mirFormCss };
   if (id === "theme-cle-beratung") return { html: cleFormHtml, css: cleFormCss };
   if (id === "theme-tts-beratung") return { html: ttsbFormHtml, css: ttsbFormCss };
+  if (id === "theme-for-tel") return { html: ftFormHtml, css: ftFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
+
 }
 
 // Themes mit bereits eingebauter Bewerbungs-Sektion (z.B. Privacy Guardian)
@@ -152,6 +163,7 @@ export const THEMES: ThemeFiles[] = [
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
   { id: tcleMeta.id, name: tcleMeta.name, description: tcleMeta.description, html: tcleHtml, css: tcleCss, js: tcleJs, slots: pickSlots(tcleMeta) },
   { id: ttsbMeta.id, name: ttsbMeta.name, description: ttsbMeta.description, html: ttsbHtml, css: ttsbCss, js: ttsbJs, slots: pickSlots(ttsbMeta) },
+  { id: tftMeta.id, name: tftMeta.name, description: tftMeta.description, html: tftHtml, css: tftCss, js: tftJs, slots: pickSlots(tftMeta) },
 ].map(withSharedForm);
 
 
