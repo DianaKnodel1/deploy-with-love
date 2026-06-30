@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/public/application-lookup")({
         // Neueste Bewerbung zu dieser E-Mail
         const { data: apps, error } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, email, phone, source_slug, booking_status, tenant_id, created_at")
+          .select("id, full_name, email, phone, source_slug, source_landing_id, target_landing_id, booking_status, tenant_id, created_at, magic_token, magic_token_expires_at")
           .ilike("email", email)
           .order("created_at", { ascending: false })
           .limit(1);
@@ -60,39 +60,76 @@ export const Route = createFileRoute("/api/public/application-lookup")({
           });
         }
 
-        // Landing-Info holen, um zu prüfen ob Calendly verfügbar ist.
-        // Bei Vermittlungs-Landings (broker) liegt die Calendly-URL auf der
-        // verknüpften Fast-Track-Landing → notfalls dorthin folgen.
-        let calendlyUrl: string | null = null;
-        let landingSlug: string | null = app.source_slug ?? null;
-        if (landingSlug) {
-          const { data: lp } = await supabaseAdmin
+        const landingSelect = "id, calendly_url, slug, source_slug, flow_type, domain, linked_fasttrack_landing_id";
+        const loadLandingById = async (id?: string | null) => {
+          if (!id) return null;
+          const { data } = await supabaseAdmin
             .from("landing_pages")
-            .select("calendly_url, slug, flow_type, linked_fasttrack_landing_id")
-            .eq("source_slug", landingSlug)
+            .select(landingSelect)
+            .eq("id", id)
+            .maybeSingle();
+          return data as any | null;
+        };
+        const loadLandingBySlug = async (slug?: string | null) => {
+          const s = String(slug || "").trim();
+          if (!s) return null;
+          const { data: bySource } = await supabaseAdmin
+            .from("landing_pages")
+            .select(landingSelect)
+            .eq("source_slug", s)
             .eq("is_published", true)
             .maybeSingle();
-          calendlyUrl = (lp as any)?.calendly_url ?? null;
-          landingSlug = (lp as any)?.slug ?? landingSlug;
-          const linkedId = (lp as any)?.linked_fasttrack_landing_id ?? null;
-          if (!calendlyUrl && linkedId) {
-            const { data: ft } = await supabaseAdmin
-              .from("landing_pages")
-              .select("calendly_url, slug")
-              .eq("id", linkedId)
-              .maybeSingle();
-            calendlyUrl = (ft as any)?.calendly_url ?? calendlyUrl;
-            landingSlug = (ft as any)?.slug ?? landingSlug;
+          if (bySource) return bySource as any;
+          const { data: bySlug } = await supabaseAdmin
+            .from("landing_pages")
+            .select(landingSelect)
+            .eq("slug", s)
+            .eq("is_published", true)
+            .maybeSingle();
+          return bySlug as any | null;
+        };
+        const followFasttrack = async (lp: any | null) => {
+          if (!lp) return null;
+          const linkedId = lp.linked_fasttrack_landing_id ?? null;
+          if (linkedId) {
+            const linked = await loadLandingById(linkedId);
+            if (linked) return linked;
           }
-        }
+          return lp;
+        };
 
+        // Landing-Info robust auflösen: alte Datensätze haben oft nur source_slug,
+        // neue Vermittlungen zusätzlich source_landing_id/target_landing_id.
+        const targetLanding = await followFasttrack(
+          (await loadLandingById(app.target_landing_id))
+          || (await loadLandingById(app.source_landing_id))
+          || (await loadLandingBySlug(app.source_slug))
+        );
+        const calendlyUrl: string | null = targetLanding?.calendly_url ?? null;
+        const landingSlug: string | null = targetLanding?.slug ?? app.source_slug ?? null;
 
-        const booked = app.booking_status === "booked";
+        const bookedStatuses = new Set(["scheduled", "completed", "booked", "gebucht", "bestätigt"]);
+        const booked = bookedStatuses.has(String(app.booking_status || ""));
         if (booked) {
+          let magicToken: string | null = app.magic_token ?? null;
+          const expiresAt = app.magic_token_expires_at ? new Date(app.magic_token_expires_at).getTime() : 0;
+          if (!magicToken || (expiresAt && expiresAt <= Date.now())) {
+            magicToken = `${crypto.randomUUID()}-${crypto.randomUUID().slice(0, 8)}`;
+            await supabaseAdmin
+              .from("applications")
+              .update({
+                magic_token: magicToken,
+                magic_token_expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+              } as any)
+              .eq("id", app.id);
+          }
+          const base = (parsed.data.portal_url || new URL(request.url).origin).replace(/\/+$/, "");
           return json({
             found: true,
             booked: true,
-            message: "Für deine Bewerbung ist bereits ein Termin gebucht. Du erhältst die Bestätigung per E-Mail.",
+            interview_ready: true,
+            redirect_url: `${base}/bewerbung?token=${encodeURIComponent(magicToken)}`,
+            message: "Dein Termin ist bestätigt. Du wirst jetzt zum KI-Bewerbungsgespräch weitergeleitet.",
           });
         }
 
