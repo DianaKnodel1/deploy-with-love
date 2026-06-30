@@ -589,6 +589,9 @@ document.addEventListener('submit', function(e){
         interview_voice_id: row.interview_voice_id ?? "XrExE9yKIg1WjnnlVkGX",
         interview_system_prompt: row.interview_system_prompt ?? "",
         linked_fasttrack_landing_id: row.linked_fasttrack_landing_id ?? "",
+        recruiter_name: row.recruiter_name ?? "Sabine Schneider",
+        recruiter_avatar_url: row.recruiter_avatar_url ?? "",
+        recruiter_avatar_data_url: "",
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
