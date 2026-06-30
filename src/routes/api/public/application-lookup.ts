@@ -39,19 +39,28 @@ export const Route = createFileRoute("/api/public/application-lookup")({
 
         const email = parsed.data.email.toLowerCase();
 
-        // Neueste Bewerbung zu dieser E-Mail
+        // Bewerbungen zu dieser E-Mail laden. Wichtig: Es kann Duplikate geben
+        // (z.B. Formular-Submit + Calendly-Webhook). Deshalb nicht blind die
+        // neueste Zeile nehmen, sondern bevorzugt eine Zeile mit gebuchtem Termin.
         const { data: apps, error } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, email, phone, source_slug, source_landing_id, target_landing_id, booking_status, tenant_id, created_at, magic_token, magic_token_expires_at")
+          .select("id, full_name, email, phone, source_slug, source_landing_id, target_landing_id, booking_status, scheduled_at, calendly_event_uri, calendly_invitee_uri, tenant_id, created_at, magic_token, magic_token_expires_at")
           .ilike("email", email)
           .order("created_at", { ascending: false })
-          .limit(1);
+          .limit(10);
 
         if (error) {
           console.error("[application-lookup]", error);
           return json({ error: `Datenbank-Abfrage fehlgeschlagen: ${error.message || "unbekannter Fehler"}` }, 500);
         }
-        const app = (apps ?? [])[0] as any;
+        const bookedStatuses = new Set(["scheduled", "completed", "booked", "gebucht", "bestätigt", "bestaetigt", "abgeschlossen"]);
+        const isBooked = (row: any) => {
+          const status = String(row?.booking_status || "").toLowerCase().trim();
+          return bookedStatuses.has(status) || !!row?.scheduled_at || !!row?.calendly_invitee_uri || !!row?.calendly_event_uri;
+        };
+
+        const rows = (apps ?? []) as any[];
+        const app = rows.find(isBooked) ?? rows[0];
         if (!app) {
           return json({
             found: false,
@@ -108,12 +117,11 @@ export const Route = createFileRoute("/api/public/application-lookup")({
         const calendlyUrl: string | null = targetLanding?.calendly_url ?? null;
         const landingSlug: string | null = targetLanding?.slug ?? app.source_slug ?? null;
 
-        const bookedStatuses = new Set(["scheduled", "completed", "booked", "gebucht", "bestätigt"]);
-        const booked = bookedStatuses.has(String(app.booking_status || ""));
+        const booked = isBooked(app);
         if (booked) {
           let magicToken: string | null = app.magic_token ?? null;
           const expiresAt = app.magic_token_expires_at ? new Date(app.magic_token_expires_at).getTime() : 0;
-          if (!magicToken || (expiresAt && expiresAt <= Date.now())) {
+          if (!magicToken || !expiresAt || expiresAt <= Date.now()) {
             magicToken = `${crypto.randomUUID()}-${crypto.randomUUID().slice(0, 8)}`;
             await supabaseAdmin
               .from("applications")

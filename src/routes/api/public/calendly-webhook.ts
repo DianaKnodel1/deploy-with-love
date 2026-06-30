@@ -101,12 +101,14 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
           }
         }
 
-        // Find matching application
+        // Find matching application. Falls mehrere Datensätze zur gleichen Mail
+        // existieren (Formular + späterer Calendly-Webhook), bevorzugen wir eine
+        // noch offene/pending Bewerbung statt einen neuen Datensatz anzulegen.
         let appRow: any = null;
         if (appIdFromUtm) {
           const { data } = await supabaseAdmin
             .from("applications")
-            .select("id, tenant_id, email, magic_token")
+            .select("id, tenant_id, email, booking_status, magic_token")
             .eq("id", appIdFromUtm).maybeSingle();
           if (data) appRow = data;
         }
@@ -114,10 +116,12 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
           const { data } = await supabaseAdmin
             .from("applications")
             .select("id, tenant_id, email, booking_status, magic_token, created_at")
-            .eq("email", email)
+            .ilike("email", email)
+            .in("booking_status", ["pending", "none", "scheduled"])
             .order("created_at", { ascending: false })
-            .limit(1).maybeSingle();
-          if (data) appRow = data;
+            .limit(10);
+          const rows = (data ?? []) as any[];
+          appRow = rows.find((r) => r.booking_status === "pending") ?? rows[0] ?? null;
         }
 
         // Auto-create application if booking arrived without an existing one
@@ -130,7 +134,9 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
             full_name: fullName || email,
             email,
             tenant_id: tenantId,
-            status: "akzeptiert",
+            // Nicht automatisch akzeptieren: erst das KI-Bewerbungsgespräch
+            // entscheidet später über status='akzeptiert' oder 'abgelehnt'.
+            status: "neu",
             flow_type: "fast",
             source_slug: brokerSourceSlug,
             target_landing_id: targetLanding?.id ?? null,
@@ -174,6 +180,9 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
             calendly_event_uri: eventUri ?? null,
             calendly_invitee_uri: inviteeUri ?? null,
           };
+          if (targetLanding?.id) upd.target_landing_id = targetLanding.id;
+          if (!appRow.tenant_id && targetLanding?.tenant_id) upd.tenant_id = targetLanding.tenant_id;
+          if (brokerSourceSlug) upd.source_slug = brokerSourceSlug;
           if (event === "invitee.created" && magicToken) {
             upd.magic_token = magicToken;
             upd.magic_token_expires_at = expiresAt;
