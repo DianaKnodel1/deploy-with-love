@@ -47,6 +47,7 @@ async function postVoice(body: unknown) {
 }
 
 export const Route = createFileRoute("/interview/voice/$appId")({
+  ssr: false,
   validateSearch: (s: Record<string, unknown>) => ({
     landing: typeof s.landing === "string" ? s.landing : "",
   }),
