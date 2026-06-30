@@ -21,14 +21,14 @@ const HEARTBEAT_SH = `#!/usr/bin/env bash
 set -euo pipefail
 [ -f /opt/landing-server/.env ] && set -a && . /opt/landing-server/.env && set +a
 THEMES_DIR=/opt/landing-server/themes
-AGENT_VERSION="1.2.1"
+AGENT_VERSION="1.3.0"
 
 if [ -z "\${SERVER_FILES_BASE:-}" ]; then
   SERVER_FILES_BASE="\${HEARTBEAT_URL%/landing-server-heartbeat}/landing-server-files"
 fi
 
 resync_themes() {
-  echo "[heartbeat] Themes-Resync angefordert — lade neu …" >&2
+  echo "[heartbeat] Resync angefordert — lade Themes + server.js neu …" >&2
   mkdir -p "$THEMES_DIR"
   THEMES_JSON=$(curl -fsSL "$SERVER_FILES_BASE/themes.json" 2>/dev/null || echo '{"themes":[]}')
   echo "$THEMES_JSON" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{JSON.parse(s).themes.forEach(t=>console.log(t))}catch{}})' | while read -r THEME_ID; do
@@ -38,8 +38,17 @@ resync_themes() {
       curl -fsSL "$SERVER_FILES_BASE/themes/$THEME_ID/$F" -o "$THEMES_DIR/$THEME_ID/$F" 2>/dev/null || true
     done
   done
+  # server.js zusätzlich syncen (atomic via .new + mv)
+  if curl -fsSL "$SERVER_FILES_BASE/server.js" -o /opt/landing-server/server.js.new 2>/dev/null; then
+    if [ -s /opt/landing-server/server.js.new ]; then
+      mv /opt/landing-server/server.js.new /opt/landing-server/server.js
+      echo "[heartbeat] server.js aktualisiert." >&2
+    else
+      rm -f /opt/landing-server/server.js.new
+    fi
+  fi
   systemctl restart landing-server.service 2>/dev/null || systemctl restart landing.service 2>/dev/null || true
-  echo "[heartbeat] Themes-Resync fertig." >&2
+  echo "[heartbeat] Resync fertig." >&2
 }
 
 while true; do
