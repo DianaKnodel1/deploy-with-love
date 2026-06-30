@@ -29,30 +29,26 @@ declare global {
 
 type LookupState =
   | { kind: "loading" }
-  | { kind: "no-token" }
+  | { kind: "email-form" }
   | { kind: "invalid" }
   | { kind: "ready"; appId: string; fullName?: string };
 
 function BewerbungLandingPage() {
   const [state, setState] = useState<LookupState>({ kind: "loading" });
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [lookupMessage, setLookupMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
-    // No token → Direktbewerbung über Landing ist deaktiviert.
     if (!token) {
-      const portal = (window.PORTAL_URL || "").trim();
-      if (portal) {
-        window.location.replace(portal.replace(/\/+$/, "") + "/login");
-        return;
-      }
-      setState({ kind: "no-token" });
+      setState({ kind: "email-form" });
       return;
     }
 
-    // Token → Application laden
     (async () => {
       try {
         const res = await fetch("/api/public/application-by-token", {
@@ -60,15 +56,9 @@ function BewerbungLandingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
-        if (!res.ok) {
-          setState({ kind: "invalid" });
-          return;
-        }
+        if (!res.ok) return setState({ kind: "invalid" });
         const data = await res.json();
-        if (!data?.ok || !data?.application_id) {
-          setState({ kind: "invalid" });
-          return;
-        }
+        if (!data?.ok || !data?.application_id) return setState({ kind: "invalid" });
         setState({ kind: "ready", appId: data.application_id, fullName: data.full_name });
       } catch {
         setState({ kind: "invalid" });
@@ -83,6 +73,35 @@ function BewerbungLandingPage() {
     window.location.href = `${base}/interview/${state.appId}`;
   };
 
+  const submitEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSubmitting(true);
+    setLookupMessage(null);
+    try {
+      const portal = ((typeof window !== "undefined" && window.PORTAL_URL) || "").trim();
+      const res = await fetch("/api/public/application-lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), portal_url: portal || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLookupMessage(data?.error || "Abfrage fehlgeschlagen. Bitte später erneut versuchen.");
+        return;
+      }
+      if (data?.redirect_url) {
+        window.location.href = data.redirect_url;
+        return;
+      }
+      setLookupMessage(data?.message || "Keine weitere Aktion möglich.");
+    } catch {
+      setLookupMessage("Netzwerkfehler. Bitte später erneut versuchen.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
@@ -93,14 +112,35 @@ function BewerbungLandingPage() {
           </>
         )}
 
-        {state.kind === "no-token" && (
+        {state.kind === "email-form" && (
           <>
-            <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-            <h1 className="text-2xl font-bold mb-2">Kein Bewerbungslink</h1>
-            <p className="text-sm text-muted-foreground">
-              Bitte buchen Sie zunächst einen Termin über die Vermittlungsseite. Sie erhalten
-              anschließend per E-Mail einen persönlichen Link zu Ihrem Bewerbungsgespräch.
+            <h1 className="text-2xl font-bold mb-2">Bewerbung fortsetzen</h1>
+            <p className="text-sm text-muted-foreground mb-6">
+              Bitte geben Sie die E-Mail-Adresse ein, mit der Sie sich beworben haben.
+              Wir leiten Sie dann zu Ihrer Terminbuchung oder zum nächsten Schritt weiter.
             </p>
+            <form onSubmit={submitEmail} className="space-y-3 text-left">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ihre@email.de"
+                className="w-full h-12 px-4 rounded-xl border border-slate-300 focus:border-blue-500 focus:outline-none"
+              />
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full h-12 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Weiter <ArrowRight className="w-4 h-4 ml-2" /></>}
+              </Button>
+            </form>
+            {lookupMessage && (
+              <p className="mt-4 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                {lookupMessage}
+              </p>
+            )}
           </>
         )}
 
@@ -137,3 +177,4 @@ function BewerbungLandingPage() {
     </div>
   );
 }
+
