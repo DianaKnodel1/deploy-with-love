@@ -60,6 +60,9 @@ const SaveInput = z.object({
   interview_voice_id: z.string().max(80).nullable().optional(),
   interview_system_prompt: z.string().max(8000).nullable().optional(),
   linked_fasttrack_landing_id: z.string().uuid().nullable().optional(),
+  recruiter_name: z.string().max(120).nullable().optional(),
+  recruiter_avatar_url: z.string().max(500).nullable().optional(),
+  recruiter_avatar_data_url: z.string().max(8_000_000).nullable().optional(),
 });
 
 async function requireAdmin(ctx: { supabase: any; userId: string }) {
