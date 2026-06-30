@@ -101,7 +101,9 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-mirror-site") return { html: mirFormHtml, css: mirFormCss };
   if (id === "theme-cle-beratung") return { html: cleFormHtml, css: cleFormCss };
   if (id === "theme-tts-beratung") return { html: ttsbFormHtml, css: ttsbFormCss };
+  if (id === "theme-for-tel") return { html: ftFormHtml, css: ftFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
+
 }
 
 // Themes mit bereits eingebauter Bewerbungs-Sektion (z.B. Privacy Guardian)
