@@ -62,6 +62,21 @@ unsure  = unsicher / weiteres Gespräch nötig`;
 
 type Msg = { role: "user" | "assistant"; text: string; ts: string };
 
+type ApplicationRow = {
+  id: string;
+  full_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  tenant_id?: string | null;
+  status?: string | null;
+  source_slug?: string | null;
+  interview_messages?: unknown;
+  interview_status?: string | null;
+  interview_mode?: string | null;
+  interview_started_at?: string | null;
+};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -119,6 +134,91 @@ async function runSummary(messages: Msg[]): Promise<{ summary: string; score: nu
   }
 }
 
+const toAiDecision = (rec: "invite" | "reject" | "unsure") =>
+  rec === "invite" ? "zusage" : rec === "reject" ? "absage" : "pending";
+
+const toApplicationStatus = (rec: "invite" | "reject" | "unsure") =>
+  rec === "invite" ? "akzeptiert" : rec === "reject" ? "abgelehnt" : "neu";
+
+async function sendRegistrationInviteAfterAiAccept(app: ApplicationRow, request: Request) {
+  if (!app.email || !app.tenant_id) {
+    return { sent: false, skipped: true, reason: "missing_email_or_tenant" };
+  }
+
+  const email = app.email.toLowerCase().trim();
+  const token = `${crypto.randomUUID()}-${crypto.randomUUID().slice(0, 8)}`;
+  const { data: tokenRow, error: tokenErr } = await supabaseAdmin
+    .from("invitation_tokens")
+    .insert({
+      token,
+      email,
+      tenant_id: app.tenant_id,
+      application_id: app.id,
+    } as any)
+    .select("token")
+    .single();
+
+  if (tokenErr || !tokenRow?.token) {
+    console.error("[interview-chat] invitation token error:", tokenErr);
+    return { sent: false, error: tokenErr?.message ?? "token_failed" };
+  }
+
+  const { data: tenant } = await supabaseAdmin
+    .from("tenants")
+    .select("domain, primary_domain")
+    .eq("id", app.tenant_id)
+    .maybeSingle();
+
+  const activeDomain = (tenant as any)?.primary_domain || (tenant as any)?.domain || null;
+  const fallbackOrigin = new URL(request.url).origin.replace(/\/+$/, "");
+  const base = activeDomain ? `https://portal.${activeDomain}` : fallbackOrigin;
+  const registrationLink = `${base}/register?token=${encodeURIComponent(tokenRow.token)}`;
+  const name = app.full_name || email;
+  const firstName = app.first_name || String(name).trim().split(/\s+/)[0] || "";
+  const lastName = app.last_name || String(name).trim().split(/\s+/).slice(1).join(" ");
+
+  const { error: mailErr } = await supabaseAdmin.functions.invoke("send-invitation-email", {
+    body: {
+      to: email,
+      fullName: name,
+      firstName,
+      lastName,
+      registrationLink,
+      tenantId: app.tenant_id,
+      subject: "Ihr KI-Bewerbungsgespräch war erfolgreich",
+      headline: `Hallo ${firstName || name},`,
+      intro: "Ihr KI-Bewerbungsgespräch wurde positiv bewertet. Im nächsten Schritt legen Sie Ihr Konto an und schließen Ihr Onboarding ab. Klicken Sie dafür auf den Button:",
+      buttonLabel: "Jetzt registrieren",
+      templateName: "ai_acceptance_invitation",
+    },
+  });
+
+  if (mailErr) {
+    console.warn("[interview-chat] invitation mail failed:", mailErr);
+    return { sent: false, error: mailErr.message ?? "mail_failed" };
+  }
+
+  // Falls durch alte/manuelle Prozesse bereits ein Drip-Eintrag offen ist,
+  // überspringen wir ihn, damit keine doppelte Erst-Einladung rausgeht.
+  await supabaseAdmin
+    .from("invite_resend_queue")
+    .update({ status: "skipped", last_error: "ai_accept_invite_sent" } as any)
+    .eq("status", "queued")
+    .eq("email", email)
+    .then(() => {}, () => {});
+
+  await supabaseAdmin.from("activity_log").insert({
+    action: "bewerbung_ai_akzeptiert",
+    entity_type: "application",
+    entity_id: app.id,
+    comment: `KI hat ${name} akzeptiert; Registrierungseinladung wurde versendet.`,
+    old_status: app.status ?? null,
+    new_status: "akzeptiert",
+  } as any).then(() => {}, () => {});
+
+  return { sent: true };
+}
+
 export const Route = createFileRoute("/api/public/interview-chat")({
   server: {
     handlers: {
@@ -137,7 +237,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Lade Bewerbung + Landing-Prompt
         const { data: app, error: appErr } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, source_slug, interview_messages, interview_status, interview_mode, interview_started_at")
+          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at")
           .eq("id", applicationId)
           .maybeSingle();
         if (appErr || !app) return json({ error: "Bewerbung nicht gefunden" }, 404);
@@ -173,17 +273,14 @@ export const Route = createFileRoute("/api/public/interview-chat")({
 
         const history: Msg[] = Array.isArray(app.interview_messages) ? (app.interview_messages as any) : [];
 
-        // Map recommendation -> ai_decision (Funnel)
-        const toAiDecision = (rec: "invite" | "reject" | "unsure") =>
-          rec === "invite" ? "zusage" : rec === "reject" ? "absage" : "pending";
-
         // ──────────────────────────────────────────────────────────────
         if (action === "end" || timedOut) {
           if (history.length === 0) return json({ error: "Kein Verlauf vorhanden" }, 400);
           const result = await runSummary(history);
-          await supabaseAdmin
+          const { error: updErr } = await supabaseAdmin
             .from("applications")
             .update({
+              status: toApplicationStatus(result.recommendation),
               interview_status: "done",
               interview_summary: result.summary,
               interview_score: result.score,
@@ -193,7 +290,11 @@ export const Route = createFileRoute("/api/public/interview-chat")({
               interview_completed_at: new Date().toISOString(),
             } as any)
             .eq("id", applicationId);
-          return json({ ok: true, ended: true, timedOut, ...result });
+          if (updErr) return json({ error: updErr.message }, 500);
+          const inviteMail = result.recommendation === "invite"
+            ? await sendRegistrationInviteAfterAiAccept(app as ApplicationRow, request)
+            : { sent: false, skipped: true };
+          return json({ ok: true, ended: true, timedOut, application_status: toApplicationStatus(result.recommendation), invite_mail: inviteMail, ...result });
         }
 
         // Baue Messages für AI
@@ -230,6 +331,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
 
         if (ended) {
           const result = await runSummary(history);
+          updates.status = toApplicationStatus(result.recommendation);
           updates.interview_status = "done";
           updates.interview_summary = result.summary;
           updates.interview_score = result.score;
@@ -242,7 +344,11 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         const { error: updErr } = await supabaseAdmin.from("applications").update(updates).eq("id", applicationId);
         if (updErr) return json({ error: updErr.message }, 500);
 
-        return json({ ok: true, reply, ended, history });
+        const inviteMail = ended && updates.interview_recommendation === "invite"
+          ? await sendRegistrationInviteAfterAiAccept(app as ApplicationRow, request)
+          : undefined;
+
+        return json({ ok: true, reply, ended, history, application_status: ended ? updates.status : undefined, invite_mail: inviteMail });
       },
     },
   },

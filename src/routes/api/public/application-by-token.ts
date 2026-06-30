@@ -34,23 +34,50 @@ export const Route = createFileRoute("/api/public/application-by-token")({
         if (!parsed.success) return json({ ok: false, error: "Invalid token" }, 400);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data, error } = await (supabaseAdmin as any).rpc(
-          "get_application_by_magic_token",
-          { _token: parsed.data.token },
-        );
+        const { data, error } = await supabaseAdmin
+          .from("applications")
+          .select("id, tenant_id, status, full_name, email, source_slug, source_landing_id, target_landing_id")
+          .eq("magic_token", parsed.data.token)
+          .limit(1)
+          .maybeSingle();
         if (error) {
-          console.error("[application-by-token] rpc error:", error);
+          console.error("[application-by-token] lookup error:", error);
           return json({ ok: false, error: "Server error" }, 500);
         }
-        const row = Array.isArray(data) ? data[0] : data;
+        const row = data as any;
         if (!row) return json({ ok: false, error: "not_found" }, 404);
+
+        let landingSlug: string | null = null;
+        const landingSelect = "id, slug, source_slug, linked_fasttrack_landing_id";
+        const loadLandingById = async (id?: string | null) => {
+          if (!id) return null;
+          const { data } = await supabaseAdmin.from("landing_pages").select(landingSelect).eq("id", id).maybeSingle();
+          return data as any | null;
+        };
+        const loadLandingBySlug = async (slug?: string | null) => {
+          const s = String(slug || "").trim();
+          if (!s) return null;
+          const { data: bySource } = await supabaseAdmin.from("landing_pages").select(landingSelect).eq("source_slug", s).maybeSingle();
+          if (bySource) return bySource as any;
+          const { data: bySlug } = await supabaseAdmin.from("landing_pages").select(landingSelect).eq("slug", s).maybeSingle();
+          return bySlug as any | null;
+        };
+        const primaryLanding =
+          (await loadLandingById(row.target_landing_id)) ||
+          (await loadLandingById(row.source_landing_id)) ||
+          (await loadLandingBySlug(row.source_slug));
+        const finalLanding = primaryLanding?.linked_fasttrack_landing_id
+          ? ((await loadLandingById(primaryLanding.linked_fasttrack_landing_id)) || primaryLanding)
+          : primaryLanding;
+        landingSlug = finalLanding?.slug || finalLanding?.source_slug || row.source_slug || null;
 
         return json({
           ok: true,
-          application_id: row.application_id,
+          application_id: row.id,
           tenant_id: row.tenant_id,
           status: row.status,
           full_name: row.full_name,
+          landing_slug: landingSlug,
         });
       },
     },
