@@ -78,6 +78,7 @@ function VoiceInterviewPage() {
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ended, setEnded] = useState(false);
+  const [endResult, setEndResult] = useState<EndResult | null>(null);
   const [finalizing, setFinalizing] = useState(false);
   const [transcript, setTranscript] = useState<Msg[]>([]);
   const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null } | null>(null);
