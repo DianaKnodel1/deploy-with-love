@@ -109,7 +109,8 @@ function VoiceInterviewPage() {
       finalizedRef.current = true;
       try {
         setFinalizing(true);
-        await postVoice({ action: "end", applicationId: appId });
+        const r = await postVoice({ action: "end", applicationId: appId });
+        setEndResult(r as EndResult);
       } catch (e: any) {
         setError(e?.message ?? "Auswertung fehlgeschlagen");
       } finally {
