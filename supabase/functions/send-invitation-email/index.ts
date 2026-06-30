@@ -76,45 +76,61 @@ serve(async (req) => {
     const senderName = tenant.sender_name ?? tenant.name;
     const senderEmail = tenant.sender_email ?? tenant.smtp_username;
     const brand = tenant.primary_color ?? "#0f172a";
-    const greetingName = firstName || fullName || "willkommen";
+    const greetingName = firstName || (fullName ? fullName.split(" ")[0] : "");
     const subject = subjectOverride && subjectOverride.trim()
       ? subjectOverride.trim()
-      : `Deine Bewerbung wurde angenommen – ${tenant.name}`;
+      : `Willkommen im Team – ${tenant.name}`;
     const headline = headlineOverride && headlineOverride.trim()
       ? headlineOverride.trim()
-      : `Hallo ${greetingName},`;
+      : "Willkommen im Team!";
     const intro = introOverride && introOverride.trim()
       ? introOverride.trim()
-      : `deine Bewerbung bei <strong>${escapeHtml(tenant.name)}</strong> wurde angenommen — herzlich willkommen! Im nächsten Schritt legst du dein Konto an und schließt dein Onboarding ab. Klicke dafür auf den Button:`;
+      : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""}, mein Name ist Sabine Schneider von <strong>${escapeHtml(tenant.name)}</strong>, wir hatten gemeinsam das Bewerbungsgespräch.<br/><br/>Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!`;
     const buttonLabel = buttonLabelOverride && buttonLabelOverride.trim()
       ? buttonLabelOverride.trim()
       : "Jetzt registrieren";
 
     const logo = tenant.logo_url
-      ? `<img src="${tenant.logo_url}" alt="${escapeHtml(tenant.name)}" style="max-height:40px;margin-bottom:24px"/>`
+      ? `<img src="${tenant.logo_url}" alt="${escapeHtml(tenant.name)}" style="max-height:48px;margin-bottom:24px"/>`
       : `<div style="font-weight:700;font-size:20px;margin-bottom:24px;color:${brand}">${escapeHtml(tenant.name)}</div>`;
 
-    const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+    const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px"><tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px;max-width:560px">
-<tr><td>
-${logo}
-<h1 style="font-size:24px;margin:0 0 16px;color:#0f172a">${escapeHtml(headline)}</h1>
-<p style="font-size:15px;line-height:1.6;color:#475569;margin:0 0 24px">
-${intro}
-</p>
-<table cellpadding="0" cellspacing="0"><tr><td style="background:${brand};border-radius:8px">
-<a href="${registrationLink}" style="display:inline-block;padding:14px 28px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px">${escapeHtml(buttonLabel)}</a>
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;max-width:600px;overflow:hidden;box-shadow:0 2px 12px rgba(15,23,42,0.06)">
+<tr><td style="padding:40px 44px 8px">${logo}</td></tr>
+<tr><td style="padding:0 44px">
+<div style="background:linear-gradient(135deg, ${brand} 0%, ${brand}dd 100%);border-radius:12px;padding:32px 28px;text-align:center;color:#ffffff">
+<div style="font-size:42px;line-height:1;margin-bottom:12px">🎉</div>
+<div style="font-size:22px;font-weight:700;margin-bottom:6px">${escapeHtml(headline)}</div>
+<div style="font-size:14px;opacity:0.92">Wir freuen uns, dass Sie dabei sind.</div>
+</div>
+</td></tr>
+<tr><td style="padding:32px 44px 8px">
+<p style="font-size:15px;line-height:1.65;color:#334155;margin:0 0 20px">${intro}</p>
+<div style="font-size:13px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:24px 0 12px">Wie geht es weiter?</div>
+<table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px">
+<tr><td width="44" valign="top" style="padding:6px 0"><div style="width:28px;height:28px;border-radius:50%;background:${brand};color:#fff;text-align:center;line-height:28px;font-weight:700;font-size:13px">1</div></td>
+<td style="padding:8px 0;font-size:15px;color:#0f172a">Registrieren Sie sich im Mitarbeiterportal</td></tr>
+<tr><td width="44" valign="top" style="padding:6px 0"><div style="width:28px;height:28px;border-radius:50%;background:${brand};color:#fff;text-align:center;line-height:28px;font-weight:700;font-size:13px">2</div></td>
+<td style="padding:8px 0;font-size:15px;color:#0f172a">Führen Sie anschließend das Onboarding durch</td></tr>
+</table>
+<table cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 24px"><tr><td style="background:${brand};border-radius:10px">
+<a href="${registrationLink}" style="display:inline-block;padding:15px 36px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.4px;text-transform:uppercase">${escapeHtml(buttonLabel)}</a>
 </td></tr></table>
-<p style="font-size:13px;color:#94a3b8;margin:32px 0 0;line-height:1.5">
-Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br/>
-<a href="${registrationLink}" style="color:${brand};word-break:break-all">${registrationLink}</a>
-</p>
-<hr style="border:none;border-top:1px solid #e2e8f0;margin:32px 0"/>
-<p style="font-size:12px;color:#94a3b8;margin:0">
-Diese E-Mail wurde an ${escapeHtml(to)} gesendet.
-</p>
-</td></tr></table>
+<p style="font-size:12px;color:#94a3b8;margin:0 0 6px;text-align:center">Sollte der Button nicht funktionieren, kopieren Sie bitte den folgenden Link in Ihren Browser:</p>
+<p style="font-size:12px;margin:0 0 28px;text-align:center;word-break:break-all"><a href="${registrationLink}" style="color:${brand}">${registrationLink}</a></p>
+<hr style="border:none;border-top:1px solid #e2e8f0;margin:8px 0 24px"/>
+<p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 18px">Natürlich können Sie sich jederzeit auch direkt an mich wenden. Darüber hinaus ist Ihre Teamleitung im Mitarbeiterchat jederzeit für Sie da.</p>
+<p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px">Wir wünschen Ihnen einen erfolgreichen Start!</p>
+<p style="font-size:14px;line-height:1.5;color:#0f172a;margin:0 0 4px">Mit freundlichen Grüßen</p>
+<p style="font-size:14px;line-height:1.5;color:#0f172a;margin:0;font-weight:600">Sabine Schneider</p>
+<p style="font-size:13px;line-height:1.5;color:#64748b;margin:0">HR Management</p>
+<p style="font-size:13px;line-height:1.5;color:#64748b;margin:0 0 32px">${escapeHtml(tenant.name)}</p>
+</td></tr>
+<tr><td style="padding:0 44px 32px">
+<p style="font-size:11px;color:#94a3b8;margin:0;text-align:center">Diese E-Mail wurde an ${escapeHtml(to)} gesendet.</p>
+</td></tr>
+</table>
 </td></tr></table>
 </body></html>`;
 
