@@ -22,8 +22,8 @@ const Input = z.object({
   text: z.string().max(4000).optional(),
 });
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const GATEWAY_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 const DEFAULT_SYSTEM_PROMPT = `Du bist eine freundliche, empathische und professionelle KI-Recruiterin für eine Versicherungs- und Finanzvermittlungsgesellschaft in Deutschland. Du führst ein schriftliches Erstgespräch mit einer Bewerberin oder einem Bewerber.
 
@@ -83,25 +83,35 @@ function json(body: unknown, status = 200) {
   });
 }
 
+async function loadAiCreds(): Promise<{ apiKey: string; model: string }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("system_settings")
+    .select("gemini_api_key, gemini_model")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) throw new Error(`system_settings: ${error.message}`);
+  const apiKey = (data as any)?.gemini_api_key?.trim();
+  if (!apiKey) throw new Error("Gemini API Key fehlt in den AI-Einstellungen (Admin → AI Settings).");
+  const model = (data as any)?.gemini_model?.trim() || DEFAULT_MODEL;
+  return { apiKey, model };
+}
+
 async function callGateway(messages: Array<{ role: string; content: string }>, opts?: { jsonMode?: boolean }) {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("LOVABLE_API_KEY fehlt");
-  const body: any = {
-    model: MODEL,
-    messages,
-  };
+  const { apiKey, model } = await loadAiCreds();
+  const body: any = { model, messages };
   if (opts?.jsonMode) body.response_format = { type: "json_object" };
   const res = await fetch(GATEWAY_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
     const errTxt = await res.text();
-    throw new Error(`AI Gateway ${res.status}: ${errTxt}`);
+    throw new Error(`Gemini ${res.status}: ${errTxt.slice(0, 400)}`);
   }
   const data = (await res.json()) as any;
   const content = data?.choices?.[0]?.message?.content;
