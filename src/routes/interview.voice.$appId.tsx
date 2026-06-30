@@ -415,12 +415,7 @@ function VoiceInterviewPage() {
 
           {connected && isSpeaking && (
             <div className="flex gap-2 justify-start">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
-                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
-              >
-                {recruiterInitials}
-              </div>
+              <Avatar size="sm" />
               <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1">
                 <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                 <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
