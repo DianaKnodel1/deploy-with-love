@@ -14,6 +14,8 @@ import mirFormHtml from "../landing-themes/_shared/form-section-mirror.html?raw"
 import mirFormCss from "../landing-themes/_shared/form-section-mirror.css?raw";
 import cleFormHtml from "../landing-themes/_shared/form-section-cle.html?raw";
 import cleFormCss from "../landing-themes/_shared/form-section-cle.css?raw";
+import ttsbFormHtml from "../landing-themes/_shared/form-section-tts-beratung.html?raw";
+import ttsbFormCss from "../landing-themes/_shared/form-section-tts-beratung.css?raw";
 
 
 
@@ -50,6 +52,11 @@ import tcleCss from "../landing-themes/theme-cle-beratung/style.css?raw";
 import tcleJs from "../landing-themes/theme-cle-beratung/script.js?raw";
 import tcleMeta from "../landing-themes/theme-cle-beratung/meta.json";
 
+import ttsbHtml from "../landing-themes/theme-tts-beratung/template.html?raw";
+import ttsbCss from "../landing-themes/theme-tts-beratung/style.css?raw";
+import ttsbJs from "../landing-themes/theme-tts-beratung/script.js?raw";
+import ttsbMeta from "../landing-themes/theme-tts-beratung/meta.json";
+
 
 export type ThemeSlot = {
   key: string;
@@ -84,6 +91,7 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-azb-replica") return { html: azbFormHtml, css: azbFormCss };
   if (id === "theme-mirror-site") return { html: mirFormHtml, css: mirFormCss };
   if (id === "theme-cle-beratung") return { html: cleFormHtml, css: cleFormCss };
+  if (id === "theme-tts-beratung") return { html: ttsbFormHtml, css: ttsbFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 }
 
@@ -143,6 +151,7 @@ export const THEMES: ThemeFiles[] = [
   { id: tazbRepMeta.id, name: tazbRepMeta.name, description: tazbRepMeta.description, html: tazbRepHtml, css: tazbRepCss, js: tazbRepJs, slots: pickSlots(tazbRepMeta) },
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
   { id: tcleMeta.id, name: tcleMeta.name, description: tcleMeta.description, html: tcleHtml, css: tcleCss, js: tcleJs, slots: pickSlots(tcleMeta) },
+  { id: ttsbMeta.id, name: ttsbMeta.name, description: ttsbMeta.description, html: ttsbHtml, css: ttsbCss, js: ttsbJs, slots: pickSlots(ttsbMeta) },
 ].map(withSharedForm);
 
 
