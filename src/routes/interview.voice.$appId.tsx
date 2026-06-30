@@ -22,7 +22,14 @@ type SessionConfig = {
   firstMessage: string;
   companyName: string;
   recruiterName: string;
+  recruiterAvatarUrl: string | null;
   applicantFirstName: string;
+};
+
+type EndResult = {
+  recommendation?: "invite" | "reject" | "unsure";
+  application_status?: string;
+  empty?: boolean;
 };
 
 async function postVoice(body: unknown) {
