@@ -65,6 +65,7 @@ import { Route as EmployeeAppointmentsRouteImport } from './routes/_employee/app
 import { Route as AdminTasksIndexRouteImport } from './routes/admin.tasks.index'
 import { Route as AdminEmployeesIndexRouteImport } from './routes/admin.employees.index'
 import { Route as AdminApplicationsIndexRouteImport } from './routes/admin.applications.index'
+import { Route as InterviewVoiceAppIdRouteImport } from './routes/interview.voice.$appId'
 import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sms-poll-cron'
 import { Route as ApiPublicLandingServerHeartbeatRouteImport } from './routes/api/public/landing-server-heartbeat'
 import { Route as ApiPublicLandingServerBootstrapRouteImport } from './routes/api/public/landing-server-bootstrap'
@@ -361,6 +362,11 @@ const AdminApplicationsIndexRoute = AdminApplicationsIndexRouteImport.update({
   path: '/applications/',
   getParentRoute: () => AdminRoute,
 } as any)
+const InterviewVoiceAppIdRoute = InterviewVoiceAppIdRouteImport.update({
+  id: '/interview/voice/$appId',
+  path: '/interview/voice/$appId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSmsPollCronRoute = ApiPublicSmsPollCronRouteImport.update({
   id: '/api/public/sms-poll-cron',
   path: '/api/public/sms-poll-cron',
@@ -519,6 +525,7 @@ export interface FileRoutesByFullPath {
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/applications/': typeof AdminApplicationsIndexRoute
   '/admin/employees/': typeof AdminEmployeesIndexRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
@@ -591,6 +598,7 @@ export interface FileRoutesByTo {
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/applications': typeof AdminApplicationsIndexRoute
   '/admin/employees': typeof AdminEmployeesIndexRoute
   '/admin/tasks': typeof AdminTasksIndexRoute
@@ -666,6 +674,7 @@ export interface FileRoutesById {
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/applications/': typeof AdminApplicationsIndexRoute
   '/admin/employees/': typeof AdminEmployeesIndexRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
@@ -741,6 +750,7 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/interview/voice/$appId'
     | '/admin/applications/'
     | '/admin/employees/'
     | '/admin/tasks/'
@@ -813,6 +823,7 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/interview/voice/$appId'
     | '/admin/applications'
     | '/admin/employees'
     | '/admin/tasks'
@@ -887,6 +898,7 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/interview/voice/$appId'
     | '/admin/applications/'
     | '/admin/employees/'
     | '/admin/tasks/'
@@ -917,6 +929,7 @@ export interface RootRouteChildren {
   ApiPublicLandingServerBootstrapRoute: typeof ApiPublicLandingServerBootstrapRoute
   ApiPublicLandingServerHeartbeatRoute: typeof ApiPublicLandingServerHeartbeatRoute
   ApiPublicSmsPollCronRoute: typeof ApiPublicSmsPollCronRoute
+  InterviewVoiceAppIdRoute: typeof InterviewVoiceAppIdRoute
   ApiPublicLandingServerFilesSplatRoute: typeof ApiPublicLandingServerFilesSplatRoute
 }
 
@@ -1314,6 +1327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminApplicationsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/interview/voice/$appId': {
+      id: '/interview/voice/$appId'
+      path: '/interview/voice/$appId'
+      fullPath: '/interview/voice/$appId'
+      preLoaderRoute: typeof InterviewVoiceAppIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sms-poll-cron': {
       id: '/api/public/sms-poll-cron'
       path: '/api/public/sms-poll-cron'
@@ -1578,6 +1598,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLandingServerBootstrapRoute: ApiPublicLandingServerBootstrapRoute,
   ApiPublicLandingServerHeartbeatRoute: ApiPublicLandingServerHeartbeatRoute,
   ApiPublicSmsPollCronRoute: ApiPublicSmsPollCronRoute,
+  InterviewVoiceAppIdRoute: InterviewVoiceAppIdRoute,
   ApiPublicLandingServerFilesSplatRoute: ApiPublicLandingServerFilesSplatRoute,
 }
 export const routeTree = rootRouteImport

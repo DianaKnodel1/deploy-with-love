@@ -130,7 +130,7 @@ function VoiceInterviewPage() {
       const left = Math.max(0, MAX_SEC - elapsed);
       setRemainingSec(left);
       if (left === 0 && connected) {
-        conversation.endSession().catch(() => {});
+        try { Promise.resolve(conversation.endSession()).catch(() => {}); } catch { /* noop */ }
       }
     };
     tick();
