@@ -10,6 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/image-compression";
 import { useAllTenants, type Tenant } from "@/hooks/use-tenant";
 import { switchToNewPrimaryDomain } from "@/lib/tenant-domains.functions";
+import { setLandingDnsRecord } from "@/lib/cloudflare.functions";
+
+// IP des Portal-Servers (Frontend). DNS-A-Record für portal.<tenant-domain>
+// wird beim Speichern eines Tenants automatisch in Cloudflare angelegt/aktualisiert.
+const PORTAL_SERVER_IP = "190.97.167.124";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +67,7 @@ function TenantForm({ tenant, onSaved }: { tenant?: Tenant; onSaved: () => void 
   const [emailSignature, setEmailSignature] = useState((tenant as any)?.email_signature ?? "");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const setDnsFn = useServerFn(setLandingDnsRecord);
 
   const leaderInitials = (leaderName || "T").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   const smtpConfigured = !!(smtpHost.trim() && smtpUsername.trim() && smtpPassword.trim() && senderEmail.trim());
@@ -147,6 +153,20 @@ function TenantForm({ tenant, onSaved }: { tenant?: Tenant; onSaved: () => void 
       return;
     }
     toast({ title: tenant ? "Domain aktualisiert" : "Domain hinzugefügt" });
+
+    // Automatisch portal.<domain> A-Record in Cloudflare anlegen (best effort).
+    const portalHost = `portal.${payload.domain}`;
+    try {
+      await setDnsFn({ data: { domain: portalHost, ip: PORTAL_SERVER_IP, proxied: false } });
+      toast({ title: "DNS gesetzt", description: `${portalHost} → ${PORTAL_SERVER_IP}` });
+    } catch (err: any) {
+      toast({
+        title: "DNS nicht automatisch gesetzt",
+        description: `${portalHost}: ${err?.message ?? "Cloudflare-Zone fehlt? Erst Zonen syncen."} — manuell anlegen.`,
+        variant: "destructive",
+      });
+    }
+
     onSaved();
   };
 
