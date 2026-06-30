@@ -60,6 +60,12 @@ import ttsbCss from "../landing-themes/theme-tts-beratung/style.css?raw";
 import ttsbJs from "../landing-themes/theme-tts-beratung/script.js?raw";
 import ttsbMeta from "../landing-themes/theme-tts-beratung/meta.json";
 
+import tftHtml from "../landing-themes/theme-for-tel/template.html?raw";
+import tftCss from "../landing-themes/theme-for-tel/style.css?raw";
+import tftJs from "../landing-themes/theme-for-tel/script.js?raw";
+import tftMeta from "../landing-themes/theme-for-tel/meta.json";
+
+
 
 export type ThemeSlot = {
   key: string;
