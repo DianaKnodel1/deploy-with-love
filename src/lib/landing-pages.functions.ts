@@ -60,6 +60,9 @@ const SaveInput = z.object({
   interview_voice_id: z.string().max(80).nullable().optional(),
   interview_system_prompt: z.string().max(8000).nullable().optional(),
   linked_fasttrack_landing_id: z.string().uuid().nullable().optional(),
+  recruiter_name: z.string().max(120).nullable().optional(),
+  recruiter_avatar_url: z.string().max(500).nullable().optional(),
+  recruiter_avatar_data_url: z.string().max(8_000_000).nullable().optional(),
 });
 
 async function requireAdmin(ctx: { supabase: any; userId: string }) {
@@ -159,9 +162,26 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       interview_voice_id: data.interview_voice_id ?? null,
       interview_system_prompt: data.interview_system_prompt ?? null,
       linked_fasttrack_landing_id: data.linked_fasttrack_landing_id ?? null,
+      recruiter_name: data.recruiter_name?.trim() || null,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
+
+    // Recruiter-Avatar: entweder neue Data-URL hochladen, oder bestehende URL übernehmen.
+    if (data.recruiter_avatar_data_url) {
+      const parsed = parseDataUrl(data.recruiter_avatar_data_url);
+      if (parsed) {
+        const path = `${slug}/recruiter.${parsed.ext}`;
+        const { error: upErr } = await supabaseAdmin.storage
+          .from("recruiter-avatars")
+          .upload(path, parsed.bytes, { contentType: parsed.mime, upsert: true });
+        if (upErr) throw new Error(`Recruiter-Avatar Upload: ${upErr.message}`);
+        const { data: pub } = supabaseAdmin.storage.from("recruiter-avatars").getPublicUrl(path);
+        payload.recruiter_avatar_url = pub.publicUrl;
+      }
+    } else if (data.recruiter_avatar_url !== undefined) {
+      payload.recruiter_avatar_url = data.recruiter_avatar_url || null;
+    }
 
     // ── Server-Pool: least-full Auswahl, nur bei Neu-Anlage
     let assignedServer: { id: string; name: string; ip: string } | null = null;

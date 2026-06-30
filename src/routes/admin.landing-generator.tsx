@@ -76,6 +76,9 @@ type Branding = {
   interview_voice_id: string;
   interview_system_prompt: string;
   linked_fasttrack_landing_id: string;
+  recruiter_name: string;
+  recruiter_avatar_url: string;
+  recruiter_avatar_data_url: string;
 };
 
 const EMPTY: Branding = {
@@ -115,6 +118,9 @@ const EMPTY: Branding = {
   interview_voice_id: "XrExE9yKIg1WjnnlVkGX",
   interview_system_prompt: "",
   linked_fasttrack_landing_id: "",
+  recruiter_name: "Sabine Schneider",
+  recruiter_avatar_url: "",
+  recruiter_avatar_data_url: "",
 };
 
 function LandingGeneratorPage() {
@@ -539,6 +545,9 @@ document.addEventListener('submit', function(e){
         interview_voice_id: branding.interview_voice_id || null,
         interview_system_prompt: branding.interview_system_prompt || null,
         linked_fasttrack_landing_id: branding.linked_fasttrack_landing_id || null,
+        recruiter_name: branding.recruiter_name || null,
+        recruiter_avatar_url: branding.recruiter_avatar_url || null,
+        recruiter_avatar_data_url: branding.recruiter_avatar_data_url || null,
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
       } as any });
@@ -580,6 +589,9 @@ document.addEventListener('submit', function(e){
         interview_voice_id: row.interview_voice_id ?? "XrExE9yKIg1WjnnlVkGX",
         interview_system_prompt: row.interview_system_prompt ?? "",
         linked_fasttrack_landing_id: row.linked_fasttrack_landing_id ?? "",
+        recruiter_name: row.recruiter_name ?? "Sabine Schneider",
+        recruiter_avatar_url: row.recruiter_avatar_url ?? "",
+        recruiter_avatar_data_url: "",
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
@@ -973,6 +985,58 @@ document.addEventListener('submit', function(e){
                     </select>
                   </Field>
                 )}
+
+                <div className="grid sm:grid-cols-[120px_1fr] gap-3 items-start pt-2 border-t border-border/50">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Profilbild</Label>
+                    <label className="block cursor-pointer">
+                      <div
+                        className="w-[120px] h-[120px] rounded-full border-2 border-dashed border-border bg-muted/40 overflow-hidden flex items-center justify-center text-xs text-muted-foreground hover:border-primary/50 transition"
+                        style={
+                          (branding.recruiter_avatar_data_url || branding.recruiter_avatar_url)
+                            ? { backgroundImage: `url(${branding.recruiter_avatar_data_url || branding.recruiter_avatar_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+                            : undefined
+                        }
+                      >
+                        {!branding.recruiter_avatar_data_url && !branding.recruiter_avatar_url && <span>+ Upload</span>}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          if (f.size > 5_000_000) { toast({ title: "Bild zu groß (max 5 MB)", variant: "destructive" }); return; }
+                          const reader = new FileReader();
+                          reader.onload = () => setBranding((b) => ({ ...b, recruiter_avatar_data_url: String(reader.result || "") }));
+                          reader.readAsDataURL(f);
+                        }}
+                      />
+                    </label>
+                    {(branding.recruiter_avatar_url || branding.recruiter_avatar_data_url) && (
+                      <button
+                        type="button"
+                        className="text-[10px] text-destructive hover:underline"
+                        onClick={() => setBranding((b) => ({ ...b, recruiter_avatar_url: "", recruiter_avatar_data_url: "" }))}
+                      >
+                        Entfernen
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Field label="Name der Recruiter:in">
+                      <Input
+                        value={branding.recruiter_name}
+                        onChange={(e) => setBranding((b) => ({ ...b, recruiter_name: e.target.value }))}
+                        placeholder="z. B. Sabine Schneider"
+                      />
+                    </Field>
+                    <p className="text-[11px] text-muted-foreground">
+                      Dieser Name + Bild wird Bewerbern im Gespräch angezeigt. Quadratisches Bild empfohlen (min. 256×256, max. 5 MB).
+                    </p>
+                  </div>
+                </div>
 
                 <Field label="Eigener System-Prompt (optional)">
                   <Textarea

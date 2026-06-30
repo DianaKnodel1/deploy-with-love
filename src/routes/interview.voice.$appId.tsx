@@ -22,7 +22,14 @@ type SessionConfig = {
   firstMessage: string;
   companyName: string;
   recruiterName: string;
+  recruiterAvatarUrl: string | null;
   applicantFirstName: string;
+};
+
+type EndResult = {
+  recommendation?: "invite" | "reject" | "unsure";
+  application_status?: string;
+  empty?: boolean;
 };
 
 async function postVoice(body: unknown) {
@@ -71,6 +78,7 @@ function VoiceInterviewPage() {
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ended, setEnded] = useState(false);
+  const [endResult, setEndResult] = useState<EndResult | null>(null);
   const [finalizing, setFinalizing] = useState(false);
   const [transcript, setTranscript] = useState<Msg[]>([]);
   const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null } | null>(null);
@@ -101,7 +109,8 @@ function VoiceInterviewPage() {
       finalizedRef.current = true;
       try {
         setFinalizing(true);
-        await postVoice({ action: "end", applicationId: appId });
+        const r = await postVoice({ action: "end", applicationId: appId });
+        setEndResult(r as EndResult);
       } catch (e: any) {
         setError(e?.message ?? "Auswertung fehlgeschlagen");
       } finally {
@@ -237,8 +246,62 @@ function VoiceInterviewPage() {
     );
   }
 
-  // Ende-Screen
+  // Ende-Screen — drei Varianten je nach KI-Empfehlung
   if (ended) {
+    const rec = endResult?.recommendation;
+    const firstName = config?.applicantFirstName?.trim();
+    const greeting = firstName ? `Hallo ${firstName},` : "Hallo,";
+    const companyName = branding?.firmenname || config?.companyName || "uns";
+    const primaryColor = branding?.primary_color || "#2563eb";
+
+    if (rec === "invite") {
+      const registerUrl = `/register?application=${encodeURIComponent(appId)}`;
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-slate-100 p-4">
+          <div className="max-w-xl w-full bg-white rounded-2xl border border-emerald-200 p-8 shadow-sm">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl font-semibold mb-2">Willkommen im Team!</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              {greeting} wir freuen uns, dass Sie dabei sind. Ihr Profil hat uns überzeugt — lassen Sie uns direkt starten!
+            </p>
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 mb-5">
+              <p className="text-sm font-medium text-slate-800 mb-2">Wie geht es weiter?</p>
+              <ol className="text-sm text-slate-700 space-y-1.5 list-decimal list-inside">
+                <li>Registrieren Sie sich im Mitarbeiter-Portal von {companyName}</li>
+                <li>Führen Sie anschließend Ihr Onboarding durch (Arbeitsvertrag &amp; Personalausweis)</li>
+              </ol>
+            </div>
+            <Button asChild size="lg" className="w-full" style={{ background: primaryColor }}>
+              <a href={registerUrl}>Jetzt registrieren</a>
+            </Button>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Wir wünschen Ihnen einen erfolgreichen Start!
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (rec === "reject") {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+          <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+            <h1 className="text-xl font-semibold mb-3">Vielen Dank für Ihr Gespräch</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {greeting} vielen Dank, dass Sie sich die Zeit für unser Gespräch genommen haben. Nach interner Prüfung haben wir uns entschieden, Ihre Bewerbung an dieser Stelle <strong>nicht weiterzuverfolgen</strong>.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-3">
+              Wir wünschen Ihnen für Ihren weiteren Weg alles Gute.
+            </p>
+            <p className="text-xs text-muted-foreground mt-5">— Personalabteilung {companyName}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // unsure / empty / Fehler
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
         <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 text-center shadow-sm">
@@ -247,7 +310,7 @@ function VoiceInterviewPage() {
           </div>
           <h1 className="text-xl font-semibold mb-2">Vielen Dank!</h1>
           <p className="text-sm text-muted-foreground">
-            Ihr Gespräch wurde aufgezeichnet und wird jetzt ausgewertet. Sie erhalten in Kürze eine E-Mail mit dem Ergebnis.
+            Ihr Gespräch wurde aufgezeichnet und wird jetzt von unserem HR-Team final geprüft. Sie erhalten in Kürze eine E-Mail mit der Rückmeldung.
           </p>
         </div>
       </div>
@@ -255,6 +318,7 @@ function VoiceInterviewPage() {
   }
 
   const recruiterName = config?.recruiterName ?? "Sabine Schneider";
+  const recruiterAvatarUrl = config?.recruiterAvatarUrl ?? null;
   const recruiterInitials = recruiterName
     .split(" ")
     .map((p) => p[0])
@@ -263,17 +327,27 @@ function VoiceInterviewPage() {
     .join("")
     .toUpperCase();
 
+  const Avatar = ({ size }: { size: "sm" | "md" | "lg" }) => {
+    const px = size === "lg" ? "w-20 h-20 text-2xl" : size === "md" ? "w-10 h-10 text-sm" : "w-8 h-8 text-xs";
+    if (recruiterAvatarUrl) {
+      return <img src={recruiterAvatarUrl} alt={recruiterName} className={`${px} rounded-full object-cover shrink-0 border border-slate-200`} />;
+    }
+    return (
+      <div
+        className={`${px} rounded-full flex items-center justify-center text-white font-semibold shrink-0`}
+        style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
+      >
+        {recruiterInitials}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
       <header className="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0"
-              style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
-            >
-              {recruiterInitials}
-            </div>
+            <Avatar size="md" />
             <div>
               <h1 className="text-sm font-semibold leading-tight">{recruiterName}</h1>
               <p className="text-xs text-muted-foreground leading-tight">
@@ -307,12 +381,7 @@ function VoiceInterviewPage() {
         <div className="flex-1 flex flex-col gap-3 min-h-[40vh]">
           {transcript.length === 0 && !connected && !connecting && (
             <div className="flex-1 flex flex-col items-center justify-center text-center text-sm text-muted-foreground py-12">
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-white font-semibold text-2xl mb-4"
-                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
-              >
-                {recruiterInitials}
-              </div>
+              <div className="mb-4"><Avatar size="lg" /></div>
               <p className="font-medium text-foreground mb-1">{recruiterName} freut sich auf Sie</p>
               <p>Sobald Sie auf „Gespräch beginnen" tippen, ruft Sie {recruiterName.split(" ")[0]} direkt im Browser an.</p>
             </div>
@@ -329,14 +398,7 @@ function VoiceInterviewPage() {
             const isRecruiter = m.role === "assistant";
             return (
               <div key={i} className={`flex gap-2 ${isRecruiter ? "justify-start" : "justify-end"}`}>
-                {isRecruiter && (
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
-                  >
-                    {recruiterInitials}
-                  </div>
-                )}
+                {isRecruiter && <Avatar size="sm" />}
                 <div
                   className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     isRecruiter
@@ -353,12 +415,7 @@ function VoiceInterviewPage() {
 
           {connected && isSpeaking && (
             <div className="flex gap-2 justify-start">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
-                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
-              >
-                {recruiterInitials}
-              </div>
+              <Avatar size="sm" />
               <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1">
                 <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                 <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />

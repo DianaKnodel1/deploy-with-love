@@ -1,65 +1,61 @@
-## Ziel
+Drei Themen, ich schlage diese Aufteilung vor — sag bitte, ob ich alles in einem Rutsch baue oder nur Teil 1+2 zuerst.
 
-"Klassisch" aus UI ausblenden. Neuer Bewerbungs-Flow: Vermittlung → Calendly → E-Mail mit Magic-Link → Fasttrack `/bewerbung` → KI-Interview. Direkter Zugang auf Fasttrack-Landings leitet auf das Mitarbeiter-Portal weiter.
+---
 
-## Flow im Überblick
+## 1) Profilbild für die Recruiterin („SS" → echtes Bild)
 
-```text
-Vermittlung-Landing (personalservice-gmbh.de)
-        │ CTA klick
-        ▼
-   Broker-Modal "Wir verbinden Sie mit <Partner>"
-        │ Jetzt Termin buchen
-        ▼
-Calendly (Event-Type der verknüpften Fasttrack-Firma)
-        │ Buchung mit E-Mail + utm_source=<broker_landing_id>
-        ▼
-Calendly-Webhook → Portal
-    • application anlegen (flow_type=fast, source = Broker)
-    • Magic-Link generieren (Token in applications.magic_token)
-    • E-Mail "Ihr Bewerbungsgespräch" an Invitee
-        │ Klick auf Link
-        ▼
-Fasttrack-Landing  https://<fasttrack-domain>/bewerbung?token=...
-    • Token → Application laden → direkt ins KI-Interview
-    • Ohne Token: Redirect auf Mitarbeiter-Portal (Login)
-```
+**Wo gepflegt:** pro Landing Page im Landing-Generator (gleicher Platz wie `recruiter_name`).
 
-## Änderungen
+**Änderungen:**
+- Migration `20260630100000_landing_recruiter_avatar.sql`:
+  `ALTER TABLE landing_pages ADD COLUMN recruiter_avatar_url text;`
+- Supabase Storage Bucket `recruiter-avatars` (public read).
+- `admin.landing-generator.tsx`: Upload-Feld neben „Name der Recruiterin" (Reuse von `compressImage`, gleiches Muster wie team-leader-settings).
+- `application-by-token.ts` + `application-lookup.ts`: `recruiter_avatar_url` mitliefern.
+- `interview.voice.$appId.tsx` und `interview.$appId.tsx`: Avatar im Header anzeigen, Fallback auf Initialen (heute „SS").
 
-### 1. UI: "Klassisch" ausblenden
-- `src/routes/admin.landing-generator.tsx`: `flow_type`-Auswahl filtert `classic` raus. Bestehende classic-Landings bleiben funktional, neue Pages nur noch `fast` / `broker`.
-- `src/routes/admin.applications.index.tsx`: Filter-Dropdown ohne "Klassisch".
-- `src/lib/landing-pages.functions.ts`: kein Schema-Change, nur Default `flow_type='fast'`.
+---
 
-### 2. Calendly-Webhook erweitert
-- `src/routes/api/public/calendly-webhook.ts` (bestehend): bei `invitee.created` zusätzlich:
-  - Application-Row anlegen (oder bestehende per E-Mail mergen)
-  - `magic_token` (uuid) generieren + `magic_token_expires_at` (7 Tage)
-  - via `sendTransactionalEmail` Template `bewerbung-magic-link` schicken mit `https://<fasttrack-domain>/bewerbung?token=<uuid>`
-  - `<fasttrack-domain>` aus verknüpfter Landing (utm_source = broker_landing_id → linked_fast_landing → domain)
+## 2) Post-Interview-Flow (Annahme / Ablehnung)
 
-### 3. DB-Migration
-- `applications.magic_token text unique`, `magic_token_expires_at timestamptz`
-- Index auf `magic_token`
-- GRANT bleibt unverändert (service_role schreibt, RPC liest)
+Aktuell endet das Interview im Voice-Screen ohne klare Weiterleitung. Neu:
 
-### 4. RPC für Token-Lookup
-- `get_application_by_magic_token(_token text)` security definer, liefert `application_id, status, interview_state` wenn Token gültig + nicht abgelaufen.
+**Bei `interview_recommendation = 'invite'`:**
+- Neue Route `src/routes/interview.success.$appId.tsx`:
+  „Willkommen im Team … Jetzt registrieren" → CTA führt auf `/register?app=<token>`.
+- `/register` liest den Token, prefillt E-Mail/Name aus `applications`, verknüpft den neuen `auth.users`-Account via `applications.user_id` und setzt `status = 'eingeladen'`.
+- Danach automatische Weiterleitung in `_employee/onboarding` (Personalausweis + Arbeitsvertrag).
 
-### 5. `/bewerbung` umbauen
-- `src/routes/bewerbung.index.tsx`:
-  - Query-Param `token` lesen
-  - **Mit Token**: RPC aufrufen → bei Treffer Redirect/Embed `/interview/$appId`; sonst Fehler "Link ungültig oder abgelaufen".
-  - **Ohne Token**: Redirect auf `<portal_url>/login` (aus `window.PORTAL_URL`, vom Landing-Renderer injiziert) — kein Bewerbungs-Formular mehr.
+**Bei `interview_recommendation = 'reject'`:**
+- Neue Route `src/routes/interview.rejected.$appId.tsx`:
+  Höfliche Absage, kein CTA. `status = 'abgelehnt'`.
 
-### 6. E-Mail-Template
-- `src/lib/email-templates/bewerbung-magic-link.tsx` mit Branding der Firma (logo_url, primary_color aus Landing-branding) und CTA-Button auf den Link. In `registry.ts` registrieren.
+**Bei `unsure`:** Hinweis „Wir melden uns per E-Mail", `status = 'in_pruefung'`.
 
-### 7. Landing-Server
-- `landing-server/server.js`: Broker-Modal-Text & Calendly-Link bleiben. Nur Fasttrack-CTAs (kein broker, kein bewerbung-Modal mehr nötig auf Fasttrack-Page direkt) zeigen — Direktbewerbung über Landing ist deaktiviert; CTA-Click ohne Token öffnet `/bewerbung` → das redirectet aufs Portal.
+Routing übernimmt `interview-voice.ts` / `interview-chat.ts` beim Abschluss (`end`-Action liefert `redirect_to`).
 
-## Offene Klärung vor Code
-Soll der Magic-Link **direkt** auf `/interview/$appId` führen (ohne `/bewerbung`-Zwischenseite), oder bleibt `/bewerbung?token=` als Landing mit Branding + "Jetzt Gespräch starten"-Button (vermeidet versehentliches Auto-Mic-Recording beim E-Mail-Preview-Aufruf durch Spam-Scanner)?
+---
 
-Empfehlung: **`/bewerbung?token=`** als Zwischenseite mit Button — Mail-Scanner triggern sonst das Interview.
+## 3) Funnel-Statistik pro Landing Page
+
+**Neue Route:** `src/routes/admin.statistiken.funnel.$landingId.tsx` (oder Tab in bestehender `admin.statistiken.tsx`).
+
+**Stufen (aus vorhandenen Spalten ableitbar, keine Schema-Änderung nötig):**
+
+| Stufe | Query |
+|---|---|
+| Bewerbungen eingegangen | `count(applications) WHERE landing_page_id = X` |
+| Termin gebucht | `… AND calendly_event_uri IS NOT NULL` |
+| Termin wahrgenommen | `… AND interview_started_at IS NOT NULL` |
+| Interview angenommen | `… AND interview_recommendation = 'invite'` |
+| Interview abgelehnt | `… AND interview_recommendation = 'reject'` |
+| Interview nicht wahrgenommen | `calendly_event_uri IS NOT NULL AND interview_started_at IS NULL AND scheduled_at < now()` |
+| Registriert | `… AND user_id IS NOT NULL` |
+| Onboarding komplett | `… AND status = 'aktiv'` (KYC + Vertrag signed) |
+| Onboarding offen | invite + registriert, aber `kyc_status != 'verified'` ODER `contract_signed = false` |
+
+Implementation als ein server fn `getLandingFunnel({ landingId, from, to })` (admin-gated, `requireSupabaseAuth` + `has_role('admin')`), rendert horizontal Funnel mit Conversion-%.
+
+---
+
+**Frage:** Soll ich alle drei Teile jetzt umsetzen, oder zuerst nur Teil 1+2 (User-sichtbar) und Statistik separat?
