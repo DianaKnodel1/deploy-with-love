@@ -37,8 +37,9 @@ const navGroups: NavGroup[] = [
   {
     label: "Personen",
     items: [
-      { title: "Bewerbungen", url: "/admin/applications", icon: FileText, badgeKey: "newApplications" },
-      { title: "Mitarbeiter", url: "/admin/employees", icon: Users },
+      { title: "Personen", url: "/admin/personen", icon: Users, badgeKey: "newApplications" },
+      { title: "Bewerbungen (Detail)", url: "/admin/applications", icon: FileText },
+      { title: "Mitarbeiter (Detail)", url: "/admin/employees", icon: Users },
       { title: "KYC", url: "/admin/kyc", icon: ShieldCheck, badgeKey: "pendingKyc" },
       { title: "Verträge", url: "/admin/contracts", icon: FileText },
     ],
