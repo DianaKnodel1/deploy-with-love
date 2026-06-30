@@ -184,19 +184,19 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
   let voiceId: string | null = null;
   let interviewMode: "chat" | "voice" | "both" = "chat";
   let landingSlug: string | null = app.source_slug ?? null;
+  let recruiterAvatarUrl: string | null = null;
 
   if (app.source_slug) {
     const { data: lp } = await supabaseAdmin
       .from("landing_pages")
-      .select("slug, source_slug, interview_system_prompt, recruiter_name, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id")
+      .select("slug, source_slug, interview_system_prompt, recruiter_name, recruiter_avatar_url, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id")
       .eq("source_slug", app.source_slug)
       .maybeSingle();
     let landing: any = lp;
-    // Falls Broker-Landing → ggf. an Fast-Track-Landing für Branding/Voice hängen
     if (landing?.linked_fasttrack_landing_id) {
       const { data: ft } = await supabaseAdmin
         .from("landing_pages")
-        .select("slug, source_slug, interview_system_prompt, recruiter_name, branding, interview_mode, interview_voice_id")
+        .select("slug, source_slug, interview_system_prompt, recruiter_name, recruiter_avatar_url, branding, interview_mode, interview_voice_id")
         .eq("id", landing.linked_fasttrack_landing_id)
         .maybeSingle();
       if (ft) landing = ft;
@@ -208,6 +208,7 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
       if (fn) companyName = fn;
       const rn = landing.recruiter_name?.trim?.();
       if (rn) recruiterName = rn;
+      if (landing.recruiter_avatar_url) recruiterAvatarUrl = landing.recruiter_avatar_url;
       if (landing.interview_voice_id) voiceId = landing.interview_voice_id;
       if (landing.interview_mode === "voice" || landing.interview_mode === "both" || landing.interview_mode === "chat") {
         interviewMode = landing.interview_mode;
@@ -221,7 +222,7 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
   const fullName = (app.full_name || "").trim();
   const brandingFirstName = app.first_name?.trim() || fullName.split(/\s+/)[0] || "";
 
-  return { systemPrompt, companyName, recruiterName, voiceId, interviewMode, landingSlug, brandingFirstName };
+  return { systemPrompt, companyName, recruiterName, recruiterAvatarUrl, voiceId, interviewMode, landingSlug, brandingFirstName };
 }
 
 export async function sendRegistrationInviteAfterAiAccept(app: ApplicationRow, request: Request) {
