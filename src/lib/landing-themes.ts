@@ -12,6 +12,9 @@ import eilFormHtml from "../landing-themes/_shared/form-section-eilers.html?raw"
 import eilFormCss from "../landing-themes/_shared/form-section-eilers.css?raw";
 import mirFormHtml from "../landing-themes/_shared/form-section-mirror.html?raw";
 import mirFormCss from "../landing-themes/_shared/form-section-mirror.css?raw";
+import cleFormHtml from "../landing-themes/_shared/form-section-cle.html?raw";
+import cleFormCss from "../landing-themes/_shared/form-section-cle.css?raw";
+
 
 
 
@@ -41,6 +44,12 @@ import tmirHtml from "../landing-themes/theme-mirror-site/template.html?raw";
 import tmirCss from "../landing-themes/theme-mirror-site/style.css?raw";
 import tmirJs from "../landing-themes/theme-mirror-site/script.js?raw";
 import tmirMeta from "../landing-themes/theme-mirror-site/meta.json";
+
+import tcleHtml from "../landing-themes/theme-cle-beratung/template.html?raw";
+import tcleCss from "../landing-themes/theme-cle-beratung/style.css?raw";
+import tcleJs from "../landing-themes/theme-cle-beratung/script.js?raw";
+import tcleMeta from "../landing-themes/theme-cle-beratung/meta.json";
+
 
 export type ThemeSlot = {
   key: string;
@@ -74,6 +83,7 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-eilers-replica") return { html: eilFormHtml, css: eilFormCss };
   if (id === "theme-azb-replica") return { html: azbFormHtml, css: azbFormCss };
   if (id === "theme-mirror-site") return { html: mirFormHtml, css: mirFormCss };
+  if (id === "theme-cle-beratung") return { html: cleFormHtml, css: cleFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 }
 
