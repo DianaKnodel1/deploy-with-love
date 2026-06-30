@@ -1,117 +1,123 @@
-## Ziel
 
-Eine einzige, ehrliche Funnel-Ansicht „Bewerber → Mitarbeiter" — pro Tag und als Gesamttrichter. Heute zählt `admin.statistiken.tsx` „freigegeben" und „angenommen" doppelt (beides = `status='akzeptiert'`) und kennt weder „Termin wahrgenommen vs. No-Show" noch „Onboarded". Das wird sauber getrennt.
+Ich packe das in **5 Arbeitspakete**. Reihenfolge nach Wirkung: erst das, was du täglich siehst (Personen + E-Mail-Center), dann KI/Themes.
 
-## Funnel-Stufen (in dieser Reihenfolge)
+---
 
-```text
-1. Beworben            applications (is_test=false, flow in broker/fasttrack)
-2. Termin gebucht      booking_status in (scheduled, completed)
-3. Termin wahrgenommen booking_status = completed
-                       ODER interview_completed_at IS NOT NULL
-4. No-Show             booking_status = no_show
-                       ODER (scheduled & Termin > 2h vorbei & kein interview_completed_at)
-5. Interview-Ergebnis  interview_recommendation ∈ {invite, reject, unsure}
-   ├─ angenommen       status = akzeptiert
-   ├─ abgelehnt        status = abgelehnt  (oder recommendation=reject)
-   └─ offen            sonst
-6. Registrierungs-Mail email_send_log: invitation|signup_confirmation, status=sent
-7. Registriert         profiles.created_at, email ∈ Bewerber-Mails
-8. Onboarded           profiles.onboarding_completed_at IS NOT NULL
-                       (Fallback: erster contract.signed_at, falls Spalte fehlt)
+## Paket 1 — Personen-Seite (Bewerbungen + Mitarbeiter zusammenlegen)
+
+**Neu:** `src/routes/admin.personen.tsx` mit Tab-Filter:
+- `Alle` · `📅 Termin offen` · `⏰ Termin gebucht` · `⚠️ Überfällig (No-Show)` · `🎙 Interview läuft` · `✅ Angenommen` · `❌ Abgelehnt` · `👤 Mitarbeiter` · `🚀 Onboarded`
+
+**Status-Spalte → „Phase":** abgeleitet aus `applications` + `bookings` + `profiles.registered_at` + `is_active` + `onboarding_completed_at`. Kein DB-Status mehr direkt anzeigen — Phase ist berechnet.
+
+**Alte Seiten:** `admin.applications.index.tsx` + `admin.employees.index.tsx` werden Redirects auf `/admin/personen?tab=…` (kein Code-Verlust, alle Detail-Routen bleiben).
+
+**Sidebar:** „Bewerbungen" + „Mitarbeiter" → ein Eintrag **„Personen"**.
+
+---
+
+## Paket 2 — E-Mail-Center Redesign
+
+**Problem heute:** 5 Tabs, 4 KPIs, Tabelle mit 6 Spalten pro Template — sieht aus wie ein Monitoring-Dashboard, ist aber für dich (Operator) gedacht.
+
+**Neuer Aufbau** (`admin.email-center.tsx`):
+
+```
+┌─ Heute (Live) ───────────────────────────────────┐
+│  ✅ 47 zugestellt    ⏳ 3 unterwegs    ⚠ 0 Fehler │
+└──────────────────────────────────────────────────┘
+
+┌─ Aktive E-Mails (was wann rausgeht) ─────────────┐
+│ 📅 Calendly-Bestätigung    automatisch nach Buchung
+│ ⏰ No-Show 2 h             Cron, alle 10 min
+│ ⏰ No-Show 24 h            Cron
+│ ⏰ No-Show 72 h            Cron
+│ 🎉 Willkommen im Team      nach KI-Annahme
+│ 🔑 Passwort zurücksetzen   manuell
+│ 📨 Reg-Reminder            Cron
+│ 💬 Chat-Reminder           manuell
+│ ⏱ 30-Min-Reminder          Cron
+│   → Klick öffnet Template-Editor + Vorschau     │
+└──────────────────────────────────────────────────┘
+
+┌─ Letzte Sendungen (Log) ─────────────────────────┐
+│  Empfänger · Template · Status · vor X min       │
+│  Filter: Suche, Status, Template, Zeitraum       │
+└──────────────────────────────────────────────────┘
 ```
 
-Jeder Bewerber wird *einer* Kohorte (= Tag der Bewerbung) zugeordnet und durch alle Stufen verfolgt. So bleibt „von 100 Bewerbern am Montag wurden 7 Mitarbeiter" konsistent, auch wenn die Registrierung 10 Tage später passiert.
+- Tabs raus, alles eine Scroll-Seite.
+- Pro Template direkt sichtbar: **Trigger** + **letzte Sendung** + **„Testmail an mich"**-Button.
+- Tote Templates (`reminder_no_partner`, alte Drafts) werden in `tenants`/Edge-Functions deaktiviert oder gelöscht.
+- Reminders/Recovery/Cron-Health bleiben als **Akkordeon „Erweitert"** unten (für Debug, nicht im Alltag).
 
-## Schema-Ergänzungen (Migration `20260701000000_funnel_tracking.sql`)
+**Recherche-Output (parallel):** Ich erstelle dir `docs/EMAIL_FLOW.md` mit:
+- Welche Edge-Function feuert wann
+- Welcher Cron triggert was
+- Welches Template wird wo verwendet
+- Welche sind tot
 
-Nur was fehlt — vorhandene Spalten bleiben:
+---
 
-```sql
-ALTER TABLE public.applications
-  ADD COLUMN IF NOT EXISTS interview_started_at   timestamptz,
-  ADD COLUMN IF NOT EXISTS interview_completed_at timestamptz,
-  ADD COLUMN IF NOT EXISTS interview_recommendation text
-    CHECK (interview_recommendation IN ('invite','reject','unsure')),
-  ADD COLUMN IF NOT EXISTS interview_score        numeric;
+## Paket 3 — KI-Chat menschlicher
 
--- Indexe für die Aggregation
-CREATE INDEX IF NOT EXISTS idx_apps_created_flow
-  ON public.applications (created_at DESC) WHERE is_test = false;
-CREATE INDEX IF NOT EXISTS idx_apps_email_lower
-  ON public.applications (lower(email));
+In `interview.voice.$appId.tsx` + `interview.$appId.tsx`:
+- **Tippindikator** (3 Punkte) bevor Antwort kommt
+- **Natürliche Pause** 800–1500 ms (random) zwischen Antworten
+- **Erste Nachricht warmer**: „Hi {name}, schön dass du dir Zeit nimmst! 😊 Ich bin Sabine…"
+- **Filler im Prompt**: „mhm", „verstehe", „okay, spannend" als zulässige Wortbausteine
+- **Voice**: ElevenLabs-Stimme auf wärmere Variante (z.B. „Charlotte" statt Default)
+- Keine Aufzähl-/Bullet-Antworten — nur Fließtext, max 2 Sätze pro Turn
+
+---
+
+## Paket 4 — Themes verifizieren (4 neue)
+
+Playwright-Vergleich pro Theme:
+1. Render `http://localhost:8080/preview/theme-{slug}` Screenshot
+2. Fetch Original-URL Screenshot
+3. Side-by-side `/tmp/browser/theme-diff/{slug}.png`
+4. Check: alle Bilder geladen (kein 404), Form rendert, Mobile-Breakpoint hält
+
+Themes: `cle-beratung`, `tts-beratung`, `for-tel`, `job-gleiter`.
+
+Bilder: aktuell teils noch Platzhalter — ich tausche fehlende durch hochgeladene/generierte 1:1-Versionen.
+
+---
+
+## Paket 5 — Sidebar-Cleanup
+
+```
+Übersicht
+Personen          ← (Bewerbungen + Mitarbeiter)
+Aufgaben
+Chat
+Termine
+Bestellungen
+Statistiken
+─────────
+Einstellungen ▾
+  E-Mail-Center
+  Landing Generator
+  Domains
+  Infrastruktur
+  Calendly
+  Partner
+  Vermittlung
+  Team-Leader
+  System
 ```
 
-`interview-engine.server.ts` schreibt diese Felder beim Interview-Abschluss bereits intern — die Migration zieht nur die Persistenz nach. `no_show` wird durch ein zusätzliches `booking_status` zugelassen:
+---
 
-```sql
-ALTER TABLE public.applications DROP CONSTRAINT IF EXISTS applications_booking_status_check;
-ALTER TABLE public.applications
-  ADD CONSTRAINT applications_booking_status_check
-  CHECK (booking_status IN ('none','scheduled','completed','no_show','canceled'));
-```
+## Reihenfolge & Aufwand
 
-## Server-Funktion (Refactor `src/lib/landing-cohorts.functions.ts`)
+| # | Paket | Aufwand | Sichtbarkeit |
+|---|-------|---------|--------------|
+| 1 | Personen-Seite + Phase-Spalte | ~45 min | sehr hoch |
+| 2 | E-Mail-Center Redesign + Doku | ~60 min | hoch |
+| 3 | KI-Chat menschlicher | ~20 min | mittel |
+| 5 | Sidebar Cleanup | ~10 min | hoch |
+| 4 | Theme-Verify + Bildfix | ~30 min | niedrig |
 
-`CohortRow` wird ersetzt durch:
-
-```ts
-type FunnelRow = {
-  date: string;
-  beworben: number;
-  termin_gebucht: number;
-  termin_wahrgenommen: number;
-  no_show: number;
-  angenommen: number;
-  abgelehnt: number;
-  reg_mail: number;
-  registriert: number;
-  onboarded: number;
-  // Stufen-Conversion (jeweils zur vorherigen Stufe)
-  conv_termin: number;
-  conv_wahrgenommen: number;
-  conv_angenommen: number;
-  conv_registriert: number;
-  conv_onboarded: number;
-};
-```
-
-Aggregation pro Bewerbungs-Kohorte (nicht pro Ereignis-Tag):
-- Bewerber-Set einmal laden, per `email` die Profile / Mails / Onboarding-Events zuordnen.
-- Tagesschlüssel = `dayKey(application.created_at)` in `Europe/Berlin`.
-- Totals: `gesamt_conversion = onboarded / beworben`, plus jede Stufen-Conversion.
-
-Filter wie bisher: `tenant_id`, `days` (7/30/90/180), Test-Bewerbungen raus.
-
-## UI (`src/routes/admin.statistiken.tsx`)
-
-Zwei Blöcke statt einer Tabelle:
-
-1. **Gesamt-Trichter** (oben, sticky) — horizontale Balken pro Stufe mit absoluten Zahlen + %-Drop zur Vorstufe. Drop-Stufen rot, Conversion grün.
-2. **Tageskohorten-Tabelle** — eine Zeile pro Tag, Spalten in Funnel-Reihenfolge (Beworben → Termin → Wahrgenommen / No-Show → Angenommen / Abgelehnt → Reg-Mail → Registriert → Onboarded). Conversion-Badges zwischen den Spalten wie heute, aber konsistent „% zur Vorstufe".
-
-KPI-Leiste oben:
-- Beworben gesamt
-- Mitarbeiter gesamt (= onboarded)
-- End-to-End Conversion
-- Ø Bewerbungen/Tag
-- Ø Mitarbeiter/Tag
-- Größter Drop (Stufe + %)
-
-Tenant-Auswahl und Zeitraum-Toggle bleiben unverändert.
-
-## Was bewusst nicht passiert
-
-- Keine Änderungen an Bewerbungs- oder Interview-Flow — nur Lese-/Aggregations-Logik und ein paar nullable Spalten.
-- Kein separater Mitarbeiter-Screen — Bewerber und Mitarbeiter sind in *einem* Funnel (Stufen 1 und 8 derselben Person).
-- Kein Re-Compute alter Bewerbungen: Neue Spalten bleiben NULL für Altdaten, der Funnel zeigt sie bis zur letzten bekannten Stufe (z.B. „angenommen", aber „onboarded=0", weil die Spalte fehlte).
-
-## Reihenfolge der Umsetzung
-
-1. Migration `20260701000000_funnel_tracking.sql` schreiben.
-2. `interview-engine.server.ts` so erweitern, dass `interview_*`-Felder bei Session-Ende persistiert werden.
-3. `landing-cohorts.functions.ts` neu schreiben (Funnel-Aggregation pro Kohorte).
-4. `admin.statistiken.tsx` Tabelle + neuen Trichter-Block ergänzen.
-5. Deploy (Backend-Migration + Frontend-Build).
-
-Sag Bescheid, ob ich so loslegen soll oder etwas anpassen.
+**Mein Vorschlag:** 1 → 5 → 2 → 3 → 4. Soll ich genauso loslegen, oder andere Reihenfolge?

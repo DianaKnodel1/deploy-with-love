@@ -70,29 +70,23 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Vermittlung",
-    items: [
-      { title: "Übersicht", url: "/admin/vermittlung", icon: Handshake, end: true },
-      { title: "Fast-Track-Firmen", url: "/admin/partner-companies", icon: Handshake },
-      { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
-    ],
-  },
-  {
     label: "Auswertung",
     items: [
       { title: "Statistiken", url: "/admin/statistiken", icon: BarChart3 },
     ],
   },
   {
-    label: "System",
+    label: "Einstellungen",
     items: [
+      { title: "Vermittlung", url: "/admin/vermittlung", icon: Handshake, end: true },
+      { title: "Fast-Track-Firmen", url: "/admin/partner-companies", icon: Handshake },
+      { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
       { title: "Landing-Generator", url: "/admin/landing-generator", icon: Globe },
       { title: "Infrastruktur", url: "/admin/infrastructure", icon: Server },
       { title: "Domains", url: "/admin/domains", icon: Globe },
-      { title: "Einstellungen", url: "/admin/settings", icon: Settings },
+      { title: "System", url: "/admin/settings", icon: Settings },
     ],
   },
-
 ];
 
 function AdminSidebar() {
