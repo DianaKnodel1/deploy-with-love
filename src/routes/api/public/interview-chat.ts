@@ -22,8 +22,8 @@ const Input = z.object({
   text: z.string().max(4000).optional(),
 });
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const GATEWAY_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 const DEFAULT_SYSTEM_PROMPT = `Du bist eine freundliche, empathische und professionelle KI-Recruiterin für eine Versicherungs- und Finanzvermittlungsgesellschaft in Deutschland. Du führst ein schriftliches Erstgespräch mit einer Bewerberin oder einem Bewerber.
 
