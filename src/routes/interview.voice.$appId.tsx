@@ -6,7 +6,7 @@
 // - beendet das Gespräch (Server fasst zusammen + setzt Status)
 
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
-import { useConversation } from "@elevenlabs/react";
+import { useConversation, ConversationProvider } from "@elevenlabs/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
