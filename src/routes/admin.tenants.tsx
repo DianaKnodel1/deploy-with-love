@@ -153,6 +153,20 @@ function TenantForm({ tenant, onSaved }: { tenant?: Tenant; onSaved: () => void 
       return;
     }
     toast({ title: tenant ? "Domain aktualisiert" : "Domain hinzugefügt" });
+
+    // Automatisch portal.<domain> A-Record in Cloudflare anlegen (best effort).
+    const portalHost = `portal.${payload.domain}`;
+    try {
+      await setDnsFn({ data: { domain: portalHost, ip: PORTAL_SERVER_IP, proxied: false } });
+      toast({ title: "DNS gesetzt", description: `${portalHost} → ${PORTAL_SERVER_IP}` });
+    } catch (err: any) {
+      toast({
+        title: "DNS nicht automatisch gesetzt",
+        description: `${portalHost}: ${err?.message ?? "Cloudflare-Zone fehlt? Erst Zonen syncen."} — manuell anlegen.`,
+        variant: "destructive",
+      });
+    }
+
     onSaved();
   };
 
