@@ -610,12 +610,9 @@ function AdminApplicationsPage() {
             <strong>{selected.size}</strong> ausgewählt
           </p>
           <div className="flex gap-2">
-            <Button size="sm" className="h-8 text-xs gap-1 bg-accent text-accent-foreground hover:bg-accent/90" disabled={bulkLoading} onClick={() => bulkUpdate("akzeptiert")}>
-              <CheckCircle2 className="h-3.5 w-3.5" /> Annehmen
-            </Button>
-            <Button size="sm" variant="outline" className="h-8 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground" disabled={bulkLoading} onClick={() => bulkUpdate("abgelehnt")}>
-              <XCircle className="h-3.5 w-3.5" /> Ablehnen
-            </Button>
+            <span className="text-xs text-muted-foreground self-center mr-2">
+              Status wird automatisch durch das Bewerbungsgespräch gesetzt.
+            </span>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="ghost" className="h-8 text-xs gap-1 text-destructive hover:bg-destructive/10" disabled={bulkLoading}>
