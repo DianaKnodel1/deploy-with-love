@@ -31,7 +31,7 @@ type LookupState =
   | { kind: "loading" }
   | { kind: "email-form" }
   | { kind: "invalid" }
-  | { kind: "ready"; appId: string; fullName?: string; landingSlug?: string | null };
+  | { kind: "ready"; appId: string; fullName?: string; landingSlug?: string | null; interviewMode: "chat" | "voice" | "both" };
 
 function BewerbungLandingPage() {
   const [state, setState] = useState<LookupState>({ kind: "loading" });
@@ -59,22 +59,36 @@ function BewerbungLandingPage() {
         if (!res.ok) return setState({ kind: "invalid" });
         const data = await res.json();
         if (!data?.ok || !data?.application_id) return setState({ kind: "invalid" });
-        setState({ kind: "ready", appId: data.application_id, fullName: data.full_name, landingSlug: data.landing_slug ?? null });
+        const mode = (data.interview_mode === "voice" || data.interview_mode === "both") ? data.interview_mode : "chat";
+        setState({
+          kind: "ready",
+          appId: data.application_id,
+          fullName: data.full_name,
+          landingSlug: data.landing_slug ?? null,
+          interviewMode: mode,
+        });
       } catch {
         setState({ kind: "invalid" });
       }
     })();
   }, []);
 
-  const startInterview = () => {
+  const goToInterview = (mode: "chat" | "voice") => {
     if (state.kind !== "ready") return;
     const portal = ((typeof window !== "undefined" && window.PORTAL_URL) || "").trim();
     const base = portal ? portal.replace(/\/+$/, "") : "";
     const qs = new URLSearchParams();
     if (state.landingSlug) qs.set("landing", state.landingSlug);
-    if (base) qs.set("portal", base);
+    if (mode === "chat" && base) qs.set("portal", base);
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
-    window.location.href = `${base}/interview/${state.appId}${suffix}`;
+    const path = mode === "voice" ? `/interview/voice/${state.appId}` : `/interview/${state.appId}`;
+    window.location.href = `${base}${path}${suffix}`;
+  };
+
+  const startInterview = () => {
+    if (state.kind !== "ready") return;
+    // bei "both" zeigt das UI zwei Buttons; Auto-Start nutzt voice als Default
+    goToInterview(state.interviewMode === "chat" ? "chat" : "voice");
   };
 
   const submitEmail = async (e: React.FormEvent) => {
@@ -169,12 +183,30 @@ function BewerbungLandingPage() {
               Ihr Termin ist bestätigt. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch
               — es dauert nur wenige Minuten.
             </p>
-            <Button
-              onClick={startInterview}
-              className="w-full h-12 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-            >
-              Bewerbungsgespräch starten <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            {state.interviewMode === "both" ? (
+              <div className="space-y-2">
+                <Button
+                  onClick={() => goToInterview("voice")}
+                  className="w-full h-12 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                >
+                  Telefongespräch starten <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button
+                  onClick={() => goToInterview("chat")}
+                  variant="outline"
+                  className="w-full h-12 text-base rounded-xl"
+                >
+                  Lieber schriftlich (Chat)
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={startInterview}
+                className="w-full h-12 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              >
+                {state.interviewMode === "voice" ? "Telefongespräch starten" : "Bewerbungsgespräch starten"} <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
           </>
         )}
       </div>

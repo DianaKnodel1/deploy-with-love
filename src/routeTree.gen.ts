@@ -65,9 +65,11 @@ import { Route as EmployeeAppointmentsRouteImport } from './routes/_employee/app
 import { Route as AdminTasksIndexRouteImport } from './routes/admin.tasks.index'
 import { Route as AdminEmployeesIndexRouteImport } from './routes/admin.employees.index'
 import { Route as AdminApplicationsIndexRouteImport } from './routes/admin.applications.index'
+import { Route as InterviewVoiceAppIdRouteImport } from './routes/interview.voice.$appId'
 import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sms-poll-cron'
 import { Route as ApiPublicLandingServerHeartbeatRouteImport } from './routes/api/public/landing-server-heartbeat'
 import { Route as ApiPublicLandingServerBootstrapRouteImport } from './routes/api/public/landing-server-bootstrap'
+import { Route as ApiPublicInterviewVoiceRouteImport } from './routes/api/public/interview-voice'
 import { Route as ApiPublicInterviewChatRouteImport } from './routes/api/public/interview-chat'
 import { Route as ApiPublicDomainHealthCronRouteImport } from './routes/api/public/domain-health-cron'
 import { Route as ApiPublicCalendlyWebhookRouteImport } from './routes/api/public/calendly-webhook'
@@ -360,6 +362,11 @@ const AdminApplicationsIndexRoute = AdminApplicationsIndexRouteImport.update({
   path: '/applications/',
   getParentRoute: () => AdminRoute,
 } as any)
+const InterviewVoiceAppIdRoute = InterviewVoiceAppIdRouteImport.update({
+  id: '/interview/voice/$appId',
+  path: '/interview/voice/$appId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSmsPollCronRoute = ApiPublicSmsPollCronRouteImport.update({
   id: '/api/public/sms-poll-cron',
   path: '/api/public/sms-poll-cron',
@@ -377,6 +384,11 @@ const ApiPublicLandingServerBootstrapRoute =
     path: '/api/public/landing-server-bootstrap',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicInterviewVoiceRoute = ApiPublicInterviewVoiceRouteImport.update({
+  id: '/api/public/interview-voice',
+  path: '/api/public/interview-voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicInterviewChatRoute = ApiPublicInterviewChatRouteImport.update({
   id: '/api/public/interview-chat',
   path: '/api/public/interview-chat',
@@ -509,9 +521,11 @@ export interface FileRoutesByFullPath {
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/interview-chat': typeof ApiPublicInterviewChatRoute
+  '/api/public/interview-voice': typeof ApiPublicInterviewVoiceRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/applications/': typeof AdminApplicationsIndexRoute
   '/admin/employees/': typeof AdminEmployeesIndexRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
@@ -580,9 +594,11 @@ export interface FileRoutesByTo {
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/interview-chat': typeof ApiPublicInterviewChatRoute
+  '/api/public/interview-voice': typeof ApiPublicInterviewVoiceRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/applications': typeof AdminApplicationsIndexRoute
   '/admin/employees': typeof AdminEmployeesIndexRoute
   '/admin/tasks': typeof AdminTasksIndexRoute
@@ -654,9 +670,11 @@ export interface FileRoutesById {
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/interview-chat': typeof ApiPublicInterviewChatRoute
+  '/api/public/interview-voice': typeof ApiPublicInterviewVoiceRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/applications/': typeof AdminApplicationsIndexRoute
   '/admin/employees/': typeof AdminEmployeesIndexRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
@@ -728,9 +746,11 @@ export interface FileRouteTypes {
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/interview-chat'
+    | '/api/public/interview-voice'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/interview/voice/$appId'
     | '/admin/applications/'
     | '/admin/employees/'
     | '/admin/tasks/'
@@ -799,9 +819,11 @@ export interface FileRouteTypes {
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/interview-chat'
+    | '/api/public/interview-voice'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/interview/voice/$appId'
     | '/admin/applications'
     | '/admin/employees'
     | '/admin/tasks'
@@ -872,9 +894,11 @@ export interface FileRouteTypes {
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/interview-chat'
+    | '/api/public/interview-voice'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/interview/voice/$appId'
     | '/admin/applications/'
     | '/admin/employees/'
     | '/admin/tasks/'
@@ -901,9 +925,11 @@ export interface RootRouteChildren {
   ApiPublicCalendlyWebhookRoute: typeof ApiPublicCalendlyWebhookRoute
   ApiPublicDomainHealthCronRoute: typeof ApiPublicDomainHealthCronRoute
   ApiPublicInterviewChatRoute: typeof ApiPublicInterviewChatRoute
+  ApiPublicInterviewVoiceRoute: typeof ApiPublicInterviewVoiceRoute
   ApiPublicLandingServerBootstrapRoute: typeof ApiPublicLandingServerBootstrapRoute
   ApiPublicLandingServerHeartbeatRoute: typeof ApiPublicLandingServerHeartbeatRoute
   ApiPublicSmsPollCronRoute: typeof ApiPublicSmsPollCronRoute
+  InterviewVoiceAppIdRoute: typeof InterviewVoiceAppIdRoute
   ApiPublicLandingServerFilesSplatRoute: typeof ApiPublicLandingServerFilesSplatRoute
 }
 
@@ -1301,6 +1327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminApplicationsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/interview/voice/$appId': {
+      id: '/interview/voice/$appId'
+      path: '/interview/voice/$appId'
+      fullPath: '/interview/voice/$appId'
+      preLoaderRoute: typeof InterviewVoiceAppIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sms-poll-cron': {
       id: '/api/public/sms-poll-cron'
       path: '/api/public/sms-poll-cron'
@@ -1320,6 +1353,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/landing-server-bootstrap'
       fullPath: '/api/public/landing-server-bootstrap'
       preLoaderRoute: typeof ApiPublicLandingServerBootstrapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/interview-voice': {
+      id: '/api/public/interview-voice'
+      path: '/api/public/interview-voice'
+      fullPath: '/api/public/interview-voice'
+      preLoaderRoute: typeof ApiPublicInterviewVoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/interview-chat': {
@@ -1554,9 +1594,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCalendlyWebhookRoute: ApiPublicCalendlyWebhookRoute,
   ApiPublicDomainHealthCronRoute: ApiPublicDomainHealthCronRoute,
   ApiPublicInterviewChatRoute: ApiPublicInterviewChatRoute,
+  ApiPublicInterviewVoiceRoute: ApiPublicInterviewVoiceRoute,
   ApiPublicLandingServerBootstrapRoute: ApiPublicLandingServerBootstrapRoute,
   ApiPublicLandingServerHeartbeatRoute: ApiPublicLandingServerHeartbeatRoute,
   ApiPublicSmsPollCronRoute: ApiPublicSmsPollCronRoute,
+  InterviewVoiceAppIdRoute: InterviewVoiceAppIdRoute,
   ApiPublicLandingServerFilesSplatRoute: ApiPublicLandingServerFilesSplatRoute,
 }
 export const routeTree = rootRouteImport
