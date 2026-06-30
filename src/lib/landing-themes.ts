@@ -142,6 +142,7 @@ export const THEMES: ThemeFiles[] = [
   { id: teilMeta.id, name: teilMeta.name, description: teilMeta.description, html: teilHtml, css: teilCss, js: teilJs, slots: pickSlots(teilMeta) },
   { id: tazbRepMeta.id, name: tazbRepMeta.name, description: tazbRepMeta.description, html: tazbRepHtml, css: tazbRepCss, js: tazbRepJs, slots: pickSlots(tazbRepMeta) },
   { id: tmirMeta.id, name: tmirMeta.name, description: tmirMeta.description, html: tmirHtml, css: tmirCss, js: tmirJs, slots: pickSlots(tmirMeta) },
+  { id: tcleMeta.id, name: tcleMeta.name, description: tcleMeta.description, html: tcleHtml, css: tcleCss, js: tcleJs, slots: pickSlots(tcleMeta) },
 ].map(withSharedForm);
 
 
