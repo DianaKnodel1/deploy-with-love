@@ -119,13 +119,7 @@ function InterviewPage() {
     // optimistic
     setMessages((prev) => [...prev, { role: "user", text, ts: new Date().toISOString() }]);
     try {
-      const res = await fetch("/api/public/interview-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId: appId, action: "message", text }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Fehler");
+      const data = await postInterview({ applicationId: appId, action: "message", text });
       setMessages(data.history ?? []);
       if (data.ended) setEnded(true);
     } catch (e: any) {
