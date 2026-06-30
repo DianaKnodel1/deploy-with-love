@@ -74,6 +74,7 @@ export type InterviewContext = {
   systemPrompt: string;
   companyName: string;
   recruiterName: string;
+  recruiterAvatarUrl: string | null;
   voiceId: string | null;
   interviewMode: "chat" | "voice" | "both";
   landingSlug: string | null;
