@@ -18,6 +18,9 @@ import ttsbFormHtml from "../landing-themes/_shared/form-section-tts-beratung.ht
 import ttsbFormCss from "../landing-themes/_shared/form-section-tts-beratung.css?raw";
 import ftFormHtml from "../landing-themes/_shared/form-section-for-tel.html?raw";
 import ftFormCss from "../landing-themes/_shared/form-section-for-tel.css?raw";
+import jgFormHtml from "../landing-themes/_shared/form-section-job-gleiter.html?raw";
+import jgFormCss from "../landing-themes/_shared/form-section-job-gleiter.css?raw";
+
 
 
 
@@ -65,6 +68,12 @@ import tftCss from "../landing-themes/theme-for-tel/style.css?raw";
 import tftJs from "../landing-themes/theme-for-tel/script.js?raw";
 import tftMeta from "../landing-themes/theme-for-tel/meta.json";
 
+import tjgHtml from "../landing-themes/theme-job-gleiter/template.html?raw";
+import tjgCss from "../landing-themes/theme-job-gleiter/style.css?raw";
+import tjgJs from "../landing-themes/theme-job-gleiter/script.js?raw";
+import tjgMeta from "../landing-themes/theme-job-gleiter/meta.json";
+
+
 
 
 export type ThemeSlot = {
@@ -102,6 +111,7 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-cle-beratung") return { html: cleFormHtml, css: cleFormCss };
   if (id === "theme-tts-beratung") return { html: ttsbFormHtml, css: ttsbFormCss };
   if (id === "theme-for-tel") return { html: ftFormHtml, css: ftFormCss };
+  if (id === "theme-job-gleiter") return { html: jgFormHtml, css: jgFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 
 }
@@ -164,6 +174,7 @@ export const THEMES: ThemeFiles[] = [
   { id: tcleMeta.id, name: tcleMeta.name, description: tcleMeta.description, html: tcleHtml, css: tcleCss, js: tcleJs, slots: pickSlots(tcleMeta) },
   { id: ttsbMeta.id, name: ttsbMeta.name, description: ttsbMeta.description, html: ttsbHtml, css: ttsbCss, js: ttsbJs, slots: pickSlots(ttsbMeta) },
   { id: tftMeta.id, name: tftMeta.name, description: tftMeta.description, html: tftHtml, css: tftCss, js: tftJs, slots: pickSlots(tftMeta) },
+  { id: tjgMeta.id, name: tjgMeta.name, description: tjgMeta.description, html: tjgHtml, css: tjgCss, js: tjgJs, slots: pickSlots(tjgMeta) },
 ].map(withSharedForm);
 
 
