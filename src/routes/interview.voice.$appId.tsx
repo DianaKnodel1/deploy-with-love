@@ -381,12 +381,7 @@ function VoiceInterviewPage() {
         <div className="flex-1 flex flex-col gap-3 min-h-[40vh]">
           {transcript.length === 0 && !connected && !connecting && (
             <div className="flex-1 flex flex-col items-center justify-center text-center text-sm text-muted-foreground py-12">
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-white font-semibold text-2xl mb-4"
-                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
-              >
-                {recruiterInitials}
-              </div>
+              <div className="mb-4"><Avatar size="lg" /></div>
               <p className="font-medium text-foreground mb-1">{recruiterName} freut sich auf Sie</p>
               <p>Sobald Sie auf „Gespräch beginnen" tippen, ruft Sie {recruiterName.split(" ")[0]} direkt im Browser an.</p>
             </div>
