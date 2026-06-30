@@ -398,14 +398,7 @@ function VoiceInterviewPage() {
             const isRecruiter = m.role === "assistant";
             return (
               <div key={i} className={`flex gap-2 ${isRecruiter ? "justify-start" : "justify-end"}`}>
-                {isRecruiter && (
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
-                  >
-                    {recruiterInitials}
-                  </div>
-                )}
+                {isRecruiter && <Avatar size="sm" />}
                 <div
                   className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     isRecruiter
