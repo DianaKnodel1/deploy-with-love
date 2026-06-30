@@ -10,6 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/image-compression";
 import { useAllTenants, type Tenant } from "@/hooks/use-tenant";
 import { switchToNewPrimaryDomain } from "@/lib/tenant-domains.functions";
+import { setLandingDnsRecord } from "@/lib/cloudflare.functions";
+
+// IP des Portal-Servers (Frontend). DNS-A-Record für portal.<tenant-domain>
+// wird beim Speichern eines Tenants automatisch in Cloudflare angelegt/aktualisiert.
+const PORTAL_SERVER_IP = "190.97.167.124";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
