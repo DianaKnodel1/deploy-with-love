@@ -1,6 +1,6 @@
 // Magic-Link-Landing für den neuen Vermittlung→Fasttrack-Flow:
 // - Mit ?token=<uuid> → Lookup über /api/public/application-by-token → Start
-//   des KI-Bewerbungsgesprächs (/interview/:appId).
+//   des Bewerbungsgesprächs (/interview/:appId).
 // - Ohne Token → Redirect aufs Mitarbeiter-Portal (Direktbewerbung über die
 //   Landing ist deaktiviert; Bewerbung läuft ausschließlich über Vermittlung
 //   + Calendly-Buchung + E-Mail mit Magic-Link).
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/bewerbung/")({
   head: () => ({
     meta: [
       { title: "Ihr Bewerbungsgespräch" },
-      { name: "description", content: "Starten Sie hier Ihr KI-Bewerbungsgespräch." },
+      { name: "description", content: "Starten Sie hier Ihr Bewerbungsgespräch." },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -121,7 +121,7 @@ function BewerbungLandingPage() {
             <h1 className="text-2xl font-bold mb-2">Bewerbung fortsetzen</h1>
             <p className="text-sm text-muted-foreground mb-6">
               Bitte geben Sie die E-Mail-Adresse ein, mit der Sie sich beworben haben.
-              Wir leiten Sie dann zu Ihrer Terminbuchung oder zum nächsten Schritt weiter.
+              Wir prüfen Ihre Bewerbung und öffnen anschließend den nächsten Schritt.
             </p>
             <form onSubmit={submitEmail} className="space-y-3 text-left">
               <input
@@ -166,7 +166,7 @@ function BewerbungLandingPage() {
             </div>
             <h1 className="text-2xl font-bold mb-1">Willkommen{state.fullName ? `, ${state.fullName.split(" ")[0]}` : ""}!</h1>
             <p className="text-sm text-muted-foreground mb-6">
-              Ihr Termin ist bestätigt. Bitte starten Sie jetzt Ihr kurzes KI-Bewerbungsgespräch
+              Ihr Termin ist bestätigt. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch
               — es dauert nur wenige Minuten.
             </p>
             <Button
