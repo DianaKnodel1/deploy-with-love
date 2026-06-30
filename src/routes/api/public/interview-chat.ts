@@ -224,6 +224,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
+        try {
         let payload: unknown;
         try {
           payload = await request.json();
