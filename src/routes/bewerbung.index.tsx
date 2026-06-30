@@ -183,12 +183,30 @@ function BewerbungLandingPage() {
               Ihr Termin ist bestätigt. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch
               — es dauert nur wenige Minuten.
             </p>
-            <Button
-              onClick={startInterview}
-              className="w-full h-12 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-            >
-              Bewerbungsgespräch starten <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            {state.interviewMode === "both" ? (
+              <div className="space-y-2">
+                <Button
+                  onClick={() => goToInterview("voice")}
+                  className="w-full h-12 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                >
+                  Telefongespräch starten <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button
+                  onClick={() => goToInterview("chat")}
+                  variant="outline"
+                  className="w-full h-12 text-base rounded-xl"
+                >
+                  Lieber schriftlich (Chat)
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={startInterview}
+                className="w-full h-12 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              >
+                {state.interviewMode === "voice" ? "Telefongespräch starten" : "Bewerbungsgespräch starten"} <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
           </>
         )}
       </div>
