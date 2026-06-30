@@ -76,6 +76,9 @@ type Branding = {
   interview_voice_id: string;
   interview_system_prompt: string;
   linked_fasttrack_landing_id: string;
+  recruiter_name: string;
+  recruiter_avatar_url: string;
+  recruiter_avatar_data_url: string;
 };
 
 const EMPTY: Branding = {
