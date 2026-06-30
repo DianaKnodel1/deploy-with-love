@@ -83,25 +83,35 @@ function json(body: unknown, status = 200) {
   });
 }
 
+async function loadAiCreds(): Promise<{ apiKey: string; model: string }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("system_settings")
+    .select("gemini_api_key, gemini_model")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) throw new Error(`system_settings: ${error.message}`);
+  const apiKey = (data as any)?.gemini_api_key?.trim();
+  if (!apiKey) throw new Error("Gemini API Key fehlt in den AI-Einstellungen (Admin → AI Settings).");
+  const model = (data as any)?.gemini_model?.trim() || DEFAULT_MODEL;
+  return { apiKey, model };
+}
+
 async function callGateway(messages: Array<{ role: string; content: string }>, opts?: { jsonMode?: boolean }) {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("LOVABLE_API_KEY fehlt");
-  const body: any = {
-    model: MODEL,
-    messages,
-  };
+  const { apiKey, model } = await loadAiCreds();
+  const body: any = { model, messages };
   if (opts?.jsonMode) body.response_format = { type: "json_object" };
   const res = await fetch(GATEWAY_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
     const errTxt = await res.text();
-    throw new Error(`AI Gateway ${res.status}: ${errTxt}`);
+    throw new Error(`Gemini ${res.status}: ${errTxt.slice(0, 400)}`);
   }
   const data = (await res.json()) as any;
   const content = data?.choices?.[0]?.message?.content;
