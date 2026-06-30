@@ -118,6 +118,9 @@ const EMPTY: Branding = {
   interview_voice_id: "XrExE9yKIg1WjnnlVkGX",
   interview_system_prompt: "",
   linked_fasttrack_landing_id: "",
+  recruiter_name: "Sabine Schneider",
+  recruiter_avatar_url: "",
+  recruiter_avatar_data_url: "",
 };
 
 function LandingGeneratorPage() {
