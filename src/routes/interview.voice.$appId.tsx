@@ -51,8 +51,16 @@ export const Route = createFileRoute("/interview/voice/$appId")({
   validateSearch: (s: Record<string, unknown>) => ({
     landing: typeof s.landing === "string" ? s.landing : "",
   }),
-  component: VoiceInterviewPage,
+  component: VoiceInterviewPageWrapper,
 });
+
+function VoiceInterviewPageWrapper() {
+  return (
+    <ConversationProvider>
+      <VoiceInterviewPage />
+    </ConversationProvider>
+  );
+}
 
 function VoiceInterviewPage() {
   const { appId } = useParams({ from: "/interview/voice/$appId" });
