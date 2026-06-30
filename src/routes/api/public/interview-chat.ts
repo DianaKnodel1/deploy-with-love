@@ -128,6 +128,17 @@ async function callGateway(messages: Array<{ role: string; content: string }>, o
         role: m.role === "assistant" ? "model" : "user",
         parts: [{ text: m.content }],
       }));
+
+    // Native Gemini akzeptiert keinen Request, der nur aus system_instruction besteht.
+    // Beim Interview-Start (action=init) haben wir aber bewusst noch keine Bewerber-Nachricht.
+    // Deshalb bekommt Gemini eine neutrale Start-Anweisung als ersten `contents`-Eintrag.
+    if (contents.length === 0) {
+      contents.push({
+        role: "user",
+        parts: [{ text: "Starten Sie jetzt das Bewerbungsgespräch mit einer kurzen Begrüßung und stellen Sie die erste passende Frage." }],
+      });
+    }
+
     const nativeUrl = `https://apinet.cloud/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     const body: any = { contents };
     if (systemMsgs) body.system_instruction = { parts: [{ text: systemMsgs }] };
