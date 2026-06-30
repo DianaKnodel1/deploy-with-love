@@ -115,6 +115,43 @@ async function loadAiCreds(): Promise<{ apiKey: string; model: string; url: stri
 
 async function callGateway(messages: Array<{ role: string; content: string }>, opts?: { jsonMode?: boolean }) {
   const { apiKey, model, url, provider } = await loadAiCreds();
+
+  // APInet routet gemini-* Modelle über Googles NATIVE Gemini-API (erwartet `contents`),
+  // nicht über den OpenAI-kompatiblen `messages`-Endpoint. Daher umschalten.
+  const isApinetNativeGemini = provider === "apinet" && /^gemini-/i.test(model);
+
+  if (isApinetNativeGemini) {
+    const systemMsgs = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
+    const contents = messages
+      .filter((m) => m.role !== "system")
+      .map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      }));
+    const nativeUrl = `https://apinet.cloud/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    const body: any = { contents };
+    if (systemMsgs) body.system_instruction = { parts: [{ text: systemMsgs }] };
+    if (opts?.jsonMode) body.generationConfig = { responseMimeType: "application/json" };
+    const res = await fetch(nativeUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const errTxt = await res.text();
+      throw new Error(`apinet-gemini ${res.status}: ${errTxt.slice(0, 400)}`);
+    }
+    const data = (await res.json()) as any;
+    const parts = data?.candidates?.[0]?.content?.parts;
+    const text = Array.isArray(parts) ? parts.map((p: any) => p?.text ?? "").join("") : "";
+    if (!text) throw new Error("Keine AI-Antwort erhalten (apinet-gemini)");
+    return text;
+  }
+
   const body: any = { model, messages };
   if (opts?.jsonMode) body.response_format = { type: "json_object" };
   const res = await fetch(url, {
@@ -134,6 +171,7 @@ async function callGateway(messages: Array<{ role: string; content: string }>, o
   if (typeof content !== "string") throw new Error("Keine AI-Antwort erhalten");
   return content;
 }
+
 
 async function runSummary(messages: Msg[]): Promise<{ summary: string; score: number; recommendation: "invite" | "reject" | "unsure" }> {
   const transcript = messages
