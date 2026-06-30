@@ -71,7 +71,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) void syncFromProfile(session.user.id);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Nur bei echten Identitätswechseln neu laden – sonst feuert das bei jedem
+      // TOKEN_REFRESHED (~stündlich + Tab-Focus) und INITIAL_SESSION (jeder Mount).
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       if (session?.user) void syncFromProfile(session.user.id);
     });
     return () => { cancelled = true; subscription.unsubscribe(); };
