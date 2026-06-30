@@ -10,6 +10,27 @@ import { Loader2, Send, CheckCircle2 } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; text: string; ts: string };
 
+async function postInterview(body: unknown) {
+  const res = await fetch("/api/public/interview-chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const raw = await res.text();
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("application/json")) {
+    throw new Error(
+      res.ok
+        ? `Unerwartete Antwort vom Server (kein JSON, Status ${res.status}). Bitte Frontend neu deployen.`
+        : `Serverfehler ${res.status}. Bitte erneut versuchen oder Support kontaktieren.`,
+    );
+  }
+  let data: any = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Antwort konnte nicht gelesen werden."); }
+  if (!res.ok) throw new Error(data?.error ?? `Fehler ${res.status}`);
+  return data;
+}
+
 export const Route = createFileRoute("/interview/$appId")({
   validateSearch: (s: Record<string, unknown>) => ({
     landing: typeof s.landing === "string" ? s.landing : "",
@@ -55,13 +76,7 @@ function InterviewPage() {
     let cancelled = false;
     async function init() {
       try {
-        const res = await fetch("/api/public/interview-chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ applicationId: appId, action: "init" }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error ?? "Start fehlgeschlagen");
+        const data = await postInterview({ applicationId: appId, action: "init" });
         if (cancelled) return;
         setMessages(data.history ?? []);
         if (data.ended) setEnded(true);
@@ -104,13 +119,7 @@ function InterviewPage() {
     // optimistic
     setMessages((prev) => [...prev, { role: "user", text, ts: new Date().toISOString() }]);
     try {
-      const res = await fetch("/api/public/interview-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId: appId, action: "message", text }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Fehler");
+      const data = await postInterview({ applicationId: appId, action: "message", text });
       setMessages(data.history ?? []);
       if (data.ended) setEnded(true);
     } catch (e: any) {
@@ -125,13 +134,7 @@ function InterviewPage() {
     if (!window.confirm("Möchten Sie das Gespräch wirklich beenden?")) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/public/interview-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId: appId, action: "end" }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Fehler");
+      await postInterview({ applicationId: appId, action: "end" });
       setEnded(true);
     } catch (e: any) {
       setError(e?.message ?? "Unbekannter Fehler");
