@@ -38,7 +38,6 @@ export const Route = createFileRoute("/api/public/application-by-token")({
           .from("applications")
           .select("id, tenant_id, status, full_name, email, source_slug, source_landing_id, target_landing_id")
           .eq("magic_token", parsed.data.token)
-          .or(`magic_token_expires_at.is.null,magic_token_expires_at.gt.${new Date().toISOString()}`)
           .limit(1)
           .maybeSingle();
         if (error) {
