@@ -67,6 +67,7 @@ function TenantForm({ tenant, onSaved }: { tenant?: Tenant; onSaved: () => void 
   const [emailSignature, setEmailSignature] = useState((tenant as any)?.email_signature ?? "");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const setDnsFn = useServerFn(setLandingDnsRecord);
 
   const leaderInitials = (leaderName || "T").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   const smtpConfigured = !!(smtpHost.trim() && smtpUsername.trim() && smtpPassword.trim() && senderEmail.trim());
