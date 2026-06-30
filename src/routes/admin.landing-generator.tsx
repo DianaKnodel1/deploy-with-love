@@ -545,6 +545,9 @@ document.addEventListener('submit', function(e){
         interview_voice_id: branding.interview_voice_id || null,
         interview_system_prompt: branding.interview_system_prompt || null,
         linked_fasttrack_landing_id: branding.linked_fasttrack_landing_id || null,
+        recruiter_name: branding.recruiter_name || null,
+        recruiter_avatar_url: branding.recruiter_avatar_url || null,
+        recruiter_avatar_data_url: branding.recruiter_avatar_data_url || null,
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
       } as any });
