@@ -151,8 +151,35 @@ function VoiceInterviewPage() {
     setError(null);
     setLoadingConfig(true);
     try {
-      // Mikrofon-Erlaubnis anfordern
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Proaktiv Permission prüfen (Chrome/Edge/Firefox)
+      try {
+        if (navigator.permissions) {
+          const status = await (navigator.permissions as any).query({ name: "microphone" });
+          if (status.state === "denied") {
+            throw new Error("Mikrofon-Zugriff ist in Ihrem Browser blockiert. Bitte klicken Sie auf das Schloss-Symbol in der Adressleiste, erlauben Sie den Mikrofon-Zugriff und laden Sie die Seite anschließend neu.");
+          }
+        }
+      } catch (permErr: any) {
+        if (typeof permErr?.message === "string" && permErr.message.startsWith("Mikrofon-Zugriff")) throw permErr;
+        // Safari unterstützt permissions.query nicht – einfach fortfahren
+      }
+
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (mediaErr: any) {
+        const name = mediaErr?.name;
+        if (name === "NotAllowedError" || name === "SecurityError") {
+          throw new Error("Sie haben den Mikrofon-Zugriff abgelehnt. Bitte klicken Sie auf das Schloss-Symbol in der Adressleiste, erlauben Sie den Zugriff und versuchen Sie es erneut.");
+        }
+        if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+          throw new Error("Es wurde kein Mikrofon gefunden. Bitte schließen Sie ein Mikrofon oder Headset an und versuchen Sie es erneut.");
+        }
+        if (name === "NotReadableError" || name === "TrackStartError") {
+          throw new Error("Ihr Mikrofon wird gerade von einer anderen Anwendung verwendet (z. B. Zoom, Teams, Discord). Bitte schließen Sie diese und versuchen Sie es erneut.");
+        }
+        throw new Error("Das Mikrofon konnte nicht aktiviert werden. Bitte prüfen Sie Ihre Browser-Einstellungen und versuchen Sie es erneut.");
+      }
+
       const cfg = (await postVoice({ action: "token", applicationId: appId })) as SessionConfig & { ok: boolean };
       setConfig(cfg);
       const overrides: any = {
@@ -169,11 +196,12 @@ function VoiceInterviewPage() {
         overrides,
       } as any);
     } catch (e: any) {
-      setError(e?.message ?? "Verbindung konnte nicht hergestellt werden");
+      setError(e?.message ?? "Die Verbindung konnte nicht hergestellt werden. Bitte versuchen Sie es erneut.");
     } finally {
       setLoadingConfig(false);
     }
   }, [appId, conversation]);
+
 
   const stopSession = useCallback(async () => {
     if (!connected && !connecting) return;
