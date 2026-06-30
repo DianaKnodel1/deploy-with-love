@@ -436,9 +436,9 @@ async function runInvites(ctx: SendCtx) {
   const cutoff = new Date(Date.now() - MIN_DAYS_BETWEEN * 86400_000).toISOString();
   const { data: apps, error } = await ctx.admin
     .from("applications")
-    .select("id,email,full_name,first_name,last_name,tenant_id,status,created_at,updated_at")
+    .select("id,email,full_name,first_name,last_name,tenant_id,status,created_at")
     .eq("status", "akzeptiert")
-    .lte("updated_at", cutoff);
+    .lte("created_at", cutoff);
   if (error) { console.error("invite query", error); return; }
 
   // Bestehende Auth-Accounts (Mail-Set) laden
