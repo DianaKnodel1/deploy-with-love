@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +47,7 @@ export const Route = createFileRoute("/api/public/applications")({
           return json({ error: "Validation failed", details: parsed.error.flatten() }, 400);
         }
         const d = parsed.data;
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const isFast = d.flow_type === "fast";
         const displayName = d.is_test ? `[TEST] ${d.full_name}` : d.full_name;
 
