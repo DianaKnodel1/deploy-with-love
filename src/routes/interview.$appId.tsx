@@ -10,6 +10,27 @@ import { Loader2, Send, CheckCircle2 } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; text: string; ts: string };
 
+async function postInterview(body: unknown) {
+  const res = await fetch("/api/public/interview-chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const raw = await res.text();
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("application/json")) {
+    throw new Error(
+      res.ok
+        ? `Unerwartete Antwort vom Server (kein JSON, Status ${res.status}). Bitte Frontend neu deployen.`
+        : `Serverfehler ${res.status}. Bitte erneut versuchen oder Support kontaktieren.`,
+    );
+  }
+  let data: any = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Antwort konnte nicht gelesen werden."); }
+  if (!res.ok) throw new Error(data?.error ?? `Fehler ${res.status}`);
+  return data;
+}
+
 export const Route = createFileRoute("/interview/$appId")({
   validateSearch: (s: Record<string, unknown>) => ({
     landing: typeof s.landing === "string" ? s.landing : "",
