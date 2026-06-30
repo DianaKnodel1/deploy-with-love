@@ -151,8 +151,35 @@ function VoiceInterviewPage() {
     setError(null);
     setLoadingConfig(true);
     try {
-      // Mikrofon-Erlaubnis anfordern
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Proaktiv Permission prüfen (Chrome/Edge/Firefox)
+      try {
+        if (navigator.permissions) {
+          const status = await (navigator.permissions as any).query({ name: "microphone" });
+          if (status.state === "denied") {
+            throw new Error("Mikrofon-Zugriff ist in Ihrem Browser blockiert. Bitte klicken Sie auf das Schloss-Symbol in der Adressleiste, erlauben Sie den Mikrofon-Zugriff und laden Sie die Seite anschließend neu.");
+          }
+        }
+      } catch (permErr: any) {
+        if (typeof permErr?.message === "string" && permErr.message.startsWith("Mikrofon-Zugriff")) throw permErr;
+        // Safari unterstützt permissions.query nicht – einfach fortfahren
+      }
+
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (mediaErr: any) {
+        const name = mediaErr?.name;
+        if (name === "NotAllowedError" || name === "SecurityError") {
+          throw new Error("Sie haben den Mikrofon-Zugriff abgelehnt. Bitte klicken Sie auf das Schloss-Symbol in der Adressleiste, erlauben Sie den Zugriff und versuchen Sie es erneut.");
+        }
+        if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+          throw new Error("Es wurde kein Mikrofon gefunden. Bitte schließen Sie ein Mikrofon oder Headset an und versuchen Sie es erneut.");
+        }
+        if (name === "NotReadableError" || name === "TrackStartError") {
+          throw new Error("Ihr Mikrofon wird gerade von einer anderen Anwendung verwendet (z. B. Zoom, Teams, Discord). Bitte schließen Sie diese und versuchen Sie es erneut.");
+        }
+        throw new Error("Das Mikrofon konnte nicht aktiviert werden. Bitte prüfen Sie Ihre Browser-Einstellungen und versuchen Sie es erneut.");
+      }
+
       const cfg = (await postVoice({ action: "token", applicationId: appId })) as SessionConfig & { ok: boolean };
       setConfig(cfg);
       const overrides: any = {
@@ -169,11 +196,12 @@ function VoiceInterviewPage() {
         overrides,
       } as any);
     } catch (e: any) {
-      setError(e?.message ?? "Verbindung konnte nicht hergestellt werden");
+      setError(e?.message ?? "Die Verbindung konnte nicht hergestellt werden. Bitte versuchen Sie es erneut.");
     } finally {
       setLoadingConfig(false);
     }
   }, [appId, conversation]);
+
 
   const stopSession = useCallback(async () => {
     if (!connected && !connecting) return;
@@ -226,15 +254,37 @@ function VoiceInterviewPage() {
     );
   }
 
+  const recruiterName = config?.recruiterName ?? "Sabine Schneider";
+  const recruiterInitials = recruiterName
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
+      <header className="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-8 object-contain" />}
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0"
+              style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
+            >
+              {recruiterInitials}
+            </div>
             <div>
-              <h1 className="text-sm font-semibold">Bewerbungsgespräch mit {company}</h1>
-              <p className="text-xs text-muted-foreground">Telefongespräch · max. 10 Minuten</p>
+              <h1 className="text-sm font-semibold leading-tight">{recruiterName}</h1>
+              <p className="text-xs text-muted-foreground leading-tight">
+                Personalabteilung · {company}
+                {connected && (
+                  <span className="inline-flex items-center gap-1 ml-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-emerald-600">{isSpeaking ? "spricht …" : "hört zu …"}</span>
+                  </span>
+                )}
+              </p>
             </div>
           </div>
           {connected && (
@@ -245,7 +295,7 @@ function VoiceInterviewPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 flex flex-col items-center justify-center gap-6">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col gap-4">
         {error && (
           <div className="w-full p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive flex gap-2 items-start">
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -253,73 +303,105 @@ function VoiceInterviewPage() {
           </div>
         )}
 
-        {/* Visualisierung */}
-        <div className="relative flex items-center justify-center">
-          <div
-            className={`w-40 h-40 rounded-full flex items-center justify-center transition-all ${
-              connected ? "shadow-lg" : "shadow"
-            } ${isSpeaking ? "scale-110" : "scale-100"}`}
-            style={{
-              background: connected
-                ? `radial-gradient(circle at 30% 30%, ${primary}, ${primary}cc)`
-                : "linear-gradient(135deg,#e2e8f0,#cbd5e1)",
-            }}
-          >
-            {connecting ? (
-              <Loader2 className="w-12 h-12 text-white animate-spin" />
-            ) : connected ? (
-              isSpeaking ? <Mic className="w-14 h-14 text-white" /> : <MicOff className="w-14 h-14 text-white/80" />
-            ) : (
-              <Mic className="w-14 h-14 text-slate-600" />
+        {/* Chat-Verlauf */}
+        <div className="flex-1 flex flex-col gap-3 min-h-[40vh]">
+          {transcript.length === 0 && !connected && !connecting && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-sm text-muted-foreground py-12">
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center text-white font-semibold text-2xl mb-4"
+                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
+              >
+                {recruiterInitials}
+              </div>
+              <p className="font-medium text-foreground mb-1">{recruiterName} freut sich auf Sie</p>
+              <p>Sobald Sie auf „Gespräch beginnen" tippen, ruft Sie {recruiterName.split(" ")[0]} direkt im Browser an.</p>
+            </div>
+          )}
+
+          {connecting && transcript.length === 0 && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {recruiterName.split(" ")[0]} ruft an …
+            </div>
+          )}
+
+          {transcript.map((m, i) => {
+            const isRecruiter = m.role === "assistant";
+            return (
+              <div key={i} className={`flex gap-2 ${isRecruiter ? "justify-start" : "justify-end"}`}>
+                {isRecruiter && (
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
+                  >
+                    {recruiterInitials}
+                  </div>
+                )}
+                <div
+                  className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                    isRecruiter
+                      ? "bg-white border border-slate-200 rounded-tl-sm text-slate-800"
+                      : "text-white rounded-tr-sm"
+                  }`}
+                  style={!isRecruiter ? { background: primary } : undefined}
+                >
+                  {m.text}
+                </div>
+              </div>
+            );
+          })}
+
+          {connected && isSpeaking && (
+            <div className="flex gap-2 justify-start">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
+                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}cc)` }}
+              >
+                {recruiterInitials}
+              </div>
+              <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1">
+                <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sprach-Indikator unten + Steuerung */}
+        <div className="sticky bottom-0 bg-gradient-to-t from-slate-100 via-slate-100/95 to-transparent pt-6 pb-4 -mx-4 px-4">
+          <div className="flex flex-col items-center gap-3">
+            {connected && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {isSpeaking ? (
+                  <><Mic className="w-3.5 h-3.5" /> {recruiterName.split(" ")[0]} spricht</>
+                ) : (
+                  <><MicOff className="w-3.5 h-3.5" /> Sie sind dran – bitte sprechen Sie</>
+                )}
+              </div>
+            )}
+
+            {!connected && !connecting && !finalizing && (
+              <Button size="lg" className="px-10 h-12 w-full max-w-xs" style={{ background: primary }} onClick={startSession} disabled={loadingConfig}>
+                {loadingConfig ? <Loader2 className="w-4 h-4 animate-spin" /> : "Gespräch beginnen"}
+              </Button>
+            )}
+
+            {(connected || connecting) && (
+              <Button size="lg" variant="destructive" className="px-8 h-12 w-full max-w-xs" onClick={stopSession} disabled={finalizing}>
+                <PhoneOff className="w-4 h-4 mr-2" /> Gespräch beenden
+              </Button>
+            )}
+
+            {finalizing && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" /> Gespräch wird ausgewertet …
+              </div>
             )}
           </div>
-          {connected && isSpeaking && (
-            <span className="absolute inset-0 rounded-full animate-ping" style={{ background: `${primary}33` }} />
-          )}
         </div>
-
-        <div className="text-center">
-          <p className="text-sm font-medium">
-            {connecting
-              ? "Verbindung wird aufgebaut …"
-              : connected
-                ? isSpeaking
-                  ? `${config?.recruiterName ?? "Recruiter"} spricht …`
-                  : "Sie sind dran. Bitte sprechen Sie."
-                : finalizing
-                  ? "Auswertung läuft …"
-                  : "Bereit zum Start"}
-          </p>
-          {connected && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Tipp: sprechen Sie ruhig und in vollständigen Sätzen.
-            </p>
-          )}
-        </div>
-
-        {!connected && !connecting && !finalizing && (
-          <Button size="lg" className="px-10 h-12" style={{ background: primary }} onClick={startSession} disabled={loadingConfig}>
-            {loadingConfig ? <Loader2 className="w-4 h-4 animate-spin" /> : "Gespräch beginnen"}
-          </Button>
-        )}
-
-        {(connected || connecting) && (
-          <Button size="lg" variant="destructive" className="px-8 h-12" onClick={stopSession} disabled={finalizing}>
-            <PhoneOff className="w-4 h-4 mr-2" /> Gespräch beenden
-          </Button>
-        )}
-
-        {/* Transkript-Vorschau (für Bewerber sichtbar) */}
-        {transcript.length > 0 && (
-          <div className="w-full max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-xl p-4 space-y-2 text-sm">
-            {transcript.slice(-6).map((m, i) => (
-              <div key={i} className={m.role === "assistant" ? "text-slate-800" : "text-slate-500"}>
-                <strong>{m.role === "assistant" ? config?.recruiterName ?? "Recruiter" : "Sie"}:</strong> {m.text}
-              </div>
-            ))}
-          </div>
-        )}
       </main>
     </div>
   );
 }
+
