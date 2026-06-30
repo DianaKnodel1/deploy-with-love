@@ -134,13 +134,7 @@ function InterviewPage() {
     if (!window.confirm("Möchten Sie das Gespräch wirklich beenden?")) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/public/interview-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId: appId, action: "end" }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Fehler");
+      await postInterview({ applicationId: appId, action: "end" });
       setEnded(true);
     } catch (e: any) {
       setError(e?.message ?? "Unbekannter Fehler");
