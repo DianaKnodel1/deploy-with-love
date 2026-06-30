@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>{{seo_title}}</title>
+<meta name="description" content="{{seo_description}}" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+<header class="jg-nav">
+  <div class="jg-nav-wrap">
+    <a href="#" class="jg-logo">{{logo_text}}</a>
+    <nav class="jg-nav-links">
+      <a href="#home">{{nav_home}}</a>
+      <a href="#how">{{nav_jobs}}</a>
+      <a href="#about">{{nav_about}}</a>
+      <a href="#salary">{{nav_salary}}</a>
+    </nav>
+    <a href="#bewerbung-form" class="jg-cta-pill">{{cta_label}}</a>
+  </div>
+</header>
+
+<section id="home" class="jg-hero">
+  <div class="jg-hero-wrap">
+    <div class="jg-hero-text">
+      <h1>{{hero_title}}</h1>
+      <p class="jg-hero-sub">{{hero_sub}}</p>
+      <div class="jg-hero-ctas">
+        <a href="#about" class="jg-btn-soft">{{hero_secondary}}</a>
+        <a href="#bewerbung-form" class="jg-btn-primary">{{cta_label}}</a>
+      </div>
+      <ul class="jg-hero-bullets">
+        <li>{{hero_bullet1}}</li>
+        <li>{{hero_bullet2}}</li>
+        <li>{{hero_bullet3}}</li>
+        <li>{{hero_bullet4}}</li>
+      </ul>
+    </div>
+    <div class="jg-hero-media">
+      <div class="jg-hero-blob"></div>
+      <img src="{{hero_image}}" alt="Remote Team" />
+    </div>
+  </div>
+</section>
+
+<section id="about" class="jg-about">
+  <div class="jg-section-wrap">
+    <span class="jg-eyebrow">{{about_eyebrow}}</span>
+    <h2 class="jg-section-title">{{about_title}}</h2>
+    <p class="jg-section-text">{{about_text}}</p>
+    <div class="jg-stats">
+      <div class="jg-stat"><div class="jg-stat-val">{{stat1_value}}</div><p>{{stat1_text}}</p></div>
+      <div class="jg-stat"><div class="jg-stat-val">{{stat2_value}}</div><p>{{stat2_text}}</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how" class="jg-how">
+  <div class="jg-section-wrap">
+    <span class="jg-eyebrow">{{how_eyebrow}}</span>
+    <h2 class="jg-section-title">{{how_title}}</h2>
+    <div class="jg-steps">
+      <div class="jg-step"><div class="jg-step-num">01</div><h3>{{step1_title}}</h3><p>{{step1_text}}</p></div>
+      <div class="jg-step"><div class="jg-step-num">02</div><h3>{{step2_title}}</h3><p>{{step2_text}}</p></div>
+      <div class="jg-step"><div class="jg-step-num">03</div><h3>{{step3_title}}</h3><p>{{step3_text}}</p></div>
+      <div class="jg-step"><div class="jg-step-num">04</div><h3>{{step4_title}}</h3><p>{{step4_text}}</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="salary" class="jg-salary">
+  <div class="jg-section-wrap">
+    <span class="jg-eyebrow">{{salary_eyebrow}}</span>
+    <h2 class="jg-section-title">{{salary_title}}</h2>
+    <div class="jg-tiers">
+      <div class="jg-tier">
+        <div class="jg-tier-price">{{tier1_price}}</div>
+        <div class="jg-tier-name">{{tier1_name}}</div>
+        <ul><li>{{tier1_b1}}</li><li>{{tier1_b2}}</li><li>{{tier1_b3}}</li></ul>
+        <a href="#bewerbung-form" class="jg-btn-primary">{{cta_label}}</a>
+      </div>
+      <div class="jg-tier jg-tier-featured">
+        <div class="jg-tier-badge">Beliebt</div>
+        <div class="jg-tier-price">{{tier2_price}}</div>
+        <div class="jg-tier-name">{{tier2_name}}</div>
+        <ul><li>{{tier2_b1}}</li><li>{{tier2_b2}}</li><li>{{tier2_b3}}</li></ul>
+        <a href="#bewerbung-form" class="jg-btn-primary">{{cta_label}}</a>
+      </div>
+      <div class="jg-tier">
+        <div class="jg-tier-price">{{tier3_price}}</div>
+        <div class="jg-tier-name">{{tier3_name}}</div>
+        <ul><li>{{tier3_b1}}</li><li>{{tier3_b2}}</li><li>{{tier3_b3}}</li></ul>
+        <a href="#bewerbung-form" class="jg-btn-primary">{{cta_label}}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="jg-foot">
+  <div class="jg-foot-wrap">
+    <div class="jg-foot-brand">{{firmenname}}</div>
+    <div class="jg-foot-meta">
+      <span>{{contact_email}}</span>
+      <span>{{contact_phone}}</span>
+    </div>
+    <div class="jg-foot-links">
+      <a href="{{impressum_url}}">Impressum</a>
+      <a href="{{datenschutz_url}}">Datenschutz</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
