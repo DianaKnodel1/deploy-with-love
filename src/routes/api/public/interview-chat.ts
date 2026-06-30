@@ -224,6 +224,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
+        try {
         let payload: unknown;
         try {
           payload = await request.json();
@@ -350,6 +351,10 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           : undefined;
 
         return json({ ok: true, reply, ended, history, application_status: ended ? updates.status : undefined, interview_started_at: updates.interview_started_at ?? app.interview_started_at ?? null, invite_mail: inviteMail });
+        } catch (e: any) {
+          console.error("[interview-chat] fatal:", e?.stack || e);
+          return json({ error: e?.message ? `Serverfehler: ${e.message}` : "Unbekannter Serverfehler" }, 500);
+        }
       },
     },
   },
