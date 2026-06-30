@@ -82,12 +82,6 @@ function InterviewPage() {
         if (data.ended) setEnded(true);
         setStartedAt(data.interview_started_at ? new Date(data.interview_started_at).getTime() : Date.now());
         setInitializing(false);
-        if (!res.ok) throw new Error(data?.error ?? "Start fehlgeschlagen");
-        if (cancelled) return;
-        setMessages(data.history ?? []);
-        if (data.ended) setEnded(true);
-        setStartedAt(data.interview_started_at ? new Date(data.interview_started_at).getTime() : Date.now());
-        setInitializing(false);
       } catch (e: any) {
         if (cancelled) return;
         setError(e?.message ?? "Unbekannter Fehler");
