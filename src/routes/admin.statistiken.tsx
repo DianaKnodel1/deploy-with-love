@@ -1,17 +1,17 @@
-// Statistiken — Kohorten-Vergleich im Stil des Kollegen.
+// Statistiken — Funnel „Bewerber → Mitarbeiter".
 //
-// Eine Zeile pro Tag mit: Bewerbungen, Freigegeben, Interview-Mails,
-// Interview gebucht, Angenommen, Reg-Mails, Mitarbeiter. Konversionen als
-// farbige Badges. Zeitraum-Toggle 7 / 30 / 90 Tage.
+// Oben: Gesamt-Trichter (alle Stufen mit absoluten Zahlen + Conversion).
+// Unten: Tageskohorten-Tabelle in Funnel-Reihenfolge.
+// Zeitraum 7 / 30 / 90 / 180 Tage, optional auf ein Unternehmen einschränken.
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getCohortStats, type CohortRow, type CohortTotals } from "@/lib/landing-cohorts.functions";
+import { getCohortStats, type FunnelRow, type FunnelTotals } from "@/lib/landing-cohorts.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, TrendingUp } from "lucide-react";
+import { Loader2, RefreshCw, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/statistiken")({
@@ -25,13 +25,15 @@ const PRESETS = [
   { d: 180, label: "Letzte 180 Tage" },
 ];
 
+type Totals = FunnelTotals & { freigegeben: number; mitarbeiter: number; avg_conversion: number };
+
 function StatistikenPage() {
   const fn = useServerFn(getCohortStats);
   const [days, setDays] = useState(7);
-  const [tenantId, setTenantId] = useState<string>(""); // "" = alle
+  const [tenantId, setTenantId] = useState<string>("");
   const [tenants, setTenants] = useState<Array<{ id: string; name: string }>>([]);
-  const [rows, setRows] = useState<CohortRow[]>([]);
-  const [totals, setTotals] = useState<CohortTotals | null>(null);
+  const [rows, setRows] = useState<FunnelRow[]>([]);
+  const [totals, setTotals] = useState<Totals | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -60,14 +62,14 @@ function StatistikenPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1800px]">
+    <div className="p-6 space-y-6 max-w-[1900px]">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-primary" /> Statistiken — Kohorten-Vergleich
+            <TrendingUp className="h-6 w-6 text-primary" /> Funnel — Bewerber zu Mitarbeiter
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Tageweise Aufschlüsselung: Bewerbung → Freigabe → Interview → Annahme → Mitarbeiter. Test-Bewerbungen sind ausgeschlossen.
+            Jede Bewerbung wird ihrer Kohorte (Tag der Bewerbung) zugeordnet und durch alle Stufen verfolgt — auch wenn Registrierung und Onboarding später passieren. Test-Bewerbungen sind ausgeschlossen.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -96,21 +98,30 @@ function StatistikenPage() {
       {/* KPI-Leiste */}
       {totals && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Kpi label="Bewerbungen gesamt" value={totals.bewerbungen} tone="default" />
-          <Kpi label="Freigegeben gesamt" value={totals.freigegeben} tone="primary" />
-          <Kpi label="Mitarbeiter gesamt" value={totals.mitarbeiter} tone="success" />
-          <Kpi label="Gesamt-Conversion (Bew. → Mitarbeiter)" value={`${totals.gesamt_conversion}%`} tone="success" />
-          <Kpi label="Freigabe-Quote (Bew. → freigegeben)" value={`${totals.avg_conversion}%`} tone="primary" />
+          <Kpi label="Beworben gesamt" value={totals.beworben} tone="default" />
+          <Kpi label="Mitarbeiter (onboarded)" value={totals.onboarded} tone="success" />
+          <Kpi label="End-to-End Conversion" value={`${totals.gesamt_conversion}%`} tone="success" />
           <Kpi label="Ø Bewerbungen/Tag" value={totals.avg_per_day} tone="default" />
+          <Kpi label="Ø Mitarbeiter/Tag" value={totals.avg_employees_per_day} tone="primary" />
+          <Kpi
+            label="Größter Drop"
+            value={totals.biggest_drop_stage ? `−${totals.biggest_drop_pct}%` : "—"}
+            sub={totals.biggest_drop_stage ?? undefined}
+            tone="warn"
+            icon={<TrendingDown className="h-4 w-4" />}
+          />
         </div>
       )}
 
-      {/* Kohorten-Tabelle */}
+      {/* Gesamt-Trichter */}
+      {totals && <FunnelChart totals={totals} />}
+
+      {/* Tageskohorten */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Kohorten-Vergleich</CardTitle>
+          <CardTitle className="text-base">Tageskohorten</CardTitle>
           <CardDescription>
-            Jede Zeile = ein Tag. Prozent-Badges zeigen Konversionsrate zum vorherigen Schritt.
+            Jede Zeile = ein Tag (zugewiesen nach dem Datum der Bewerbung). Prozent-Badges zeigen Konversion zur vorherigen Stufe.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -129,13 +140,15 @@ function StatistikenPage() {
                 <thead className="text-[11px] uppercase tracking-wider text-muted-foreground border-b">
                   <tr>
                     <th className="text-left py-2 px-3 font-medium">Datum</th>
-                    <th className="text-right py-2 px-3 font-medium">Bewerbungen</th>
+                    <th className="text-right py-2 px-3 font-medium">Beworben</th>
                     <th className="text-right py-2 px-3 font-medium">Termin gebucht</th>
-                    <th className="text-right py-2 px-3 font-medium">Interview-Mails</th>
-                    <th className="text-right py-2 px-3 font-medium">Termin wahrgenommen</th>
+                    <th className="text-right py-2 px-3 font-medium">Wahrgenommen</th>
+                    <th className="text-right py-2 px-3 font-medium">No-Show</th>
                     <th className="text-right py-2 px-3 font-medium">Angenommen</th>
-                    <th className="text-right py-2 px-3 font-medium">Reg-Mails</th>
+                    <th className="text-right py-2 px-3 font-medium">Abgelehnt</th>
+                    <th className="text-right py-2 px-3 font-medium">Reg-Mail</th>
                     <th className="text-right py-2 px-3 font-medium">Registriert</th>
+                    <th className="text-right py-2 px-3 font-medium">Onboarded</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -147,29 +160,35 @@ function StatistikenPage() {
                           <div className="font-semibold">{d.dm}</div>
                           <div className="text-[11px] text-muted-foreground">({d.wd})</div>
                         </td>
-                        <td className="text-right py-3 px-3 font-semibold tabular-nums">{r.bewerbungen}</td>
+                        <td className="text-right py-3 px-3 font-semibold tabular-nums">{r.beworben}</td>
                         <td className="text-right py-3 px-3 tabular-nums">
-                          <span className="text-primary font-semibold">{r.freigegeben}</span>
-                          {r.bewerbungen > 0 && <ConvBadge value={r.conv_freigegeben} className="ml-2" />}
+                          <span className="font-semibold">{r.termin_gebucht}</span>
+                          {r.beworben > 0 && <ConvBadge value={r.conv_termin} className="ml-2" />}
                         </td>
                         <td className="text-right py-3 px-3 tabular-nums">
-                          <span className="text-amber-600 dark:text-amber-400 font-semibold">{r.interview_mails}</span>
-                          {r.freigegeben > 0 && <ConvBadge value={pct(r.interview_mails, r.freigegeben)} className="ml-2" />}
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{r.termin_wahrgenommen}</span>
+                          {r.termin_gebucht > 0 && <ConvBadge value={r.conv_wahrgenommen} className="ml-2" />}
                         </td>
                         <td className="text-right py-3 px-3 tabular-nums">
-                          <span className="font-semibold">{r.interview_gebucht}</span>
-                          {r.interview_mails > 0 && <ConvBadge value={r.conv_interview_gebucht} className="ml-2" />}
+                          <span className={cn("font-semibold", r.no_show > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground")}>{r.no_show}</span>
                         </td>
                         <td className="text-right py-3 px-3 tabular-nums">
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{r.angenommen}</span>
-                          {r.interview_gebucht > 0 && <ConvBadge value={r.conv_angenommen} className="ml-2" />}
+                          <span className="text-emerald-700 dark:text-emerald-300 font-semibold">{r.angenommen}</span>
+                          {r.termin_wahrgenommen > 0 && <ConvBadge value={r.conv_angenommen} className="ml-2" />}
                         </td>
                         <td className="text-right py-3 px-3 tabular-nums">
-                          <span className="text-sky-600 dark:text-sky-400 font-semibold">{r.reg_mails}</span>
+                          <span className={cn("font-semibold", r.abgelehnt > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground")}>{r.abgelehnt}</span>
                         </td>
                         <td className="text-right py-3 px-3 tabular-nums">
-                          <span className="text-emerald-700 dark:text-emerald-300 font-bold">{r.mitarbeiter}</span>
-                          {r.reg_mails > 0 && <ConvBadge value={r.conv_mitarbeiter} className="ml-2" />}
+                          <span className="text-sky-600 dark:text-sky-400 font-semibold">{r.reg_mail}</span>
+                        </td>
+                        <td className="text-right py-3 px-3 tabular-nums">
+                          <span className="font-semibold">{r.registriert}</span>
+                          {r.angenommen > 0 && <ConvBadge value={r.conv_registriert} className="ml-2" />}
+                        </td>
+                        <td className="text-right py-3 px-3 tabular-nums">
+                          <span className="text-emerald-700 dark:text-emerald-300 font-bold">{r.onboarded}</span>
+                          {r.registriert > 0 && <ConvBadge value={r.conv_onboarded} className="ml-2" />}
                         </td>
                       </tr>
                     );
@@ -186,28 +205,98 @@ function StatistikenPage() {
           <CardTitle className="text-sm">Was zeigen die Spalten?</CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground space-y-1.5">
-          <p><strong className="text-foreground">Bewerbungen:</strong> Anzahl neuer Bewerbungen am Tag (ohne Test).</p>
-          <p><strong className="text-foreground">Termin gebucht:</strong> Calendly-Termin aus der Bewerbung gebucht (Status „akzeptiert" entspricht Freigabe).</p>
-          <p><strong className="text-foreground">Interview-Mails:</strong> Vermittlungs-Bewerbungen mit Calendly-Einladung (Broker-Flow, booking_status ≠ none).</p>
-          <p><strong className="text-foreground">Termin wahrgenommen:</strong> Tatsächlich wahrgenommener Calendly-Termin (booking_status = scheduled/completed).</p>
-          <p><strong className="text-foreground">Angenommen:</strong> Finale Annahme nach Interview / direkte Annahme bei Fast-Track.</p>
-          <p><strong className="text-foreground">Reg-Mails:</strong> An diesem Tag versendete Registrierungs-/Einladungsmails.</p>
-          <p><strong className="text-foreground">Registriert:</strong> Tatsächlich neu registrierte Profile, deren E-Mail eine Bewerbung im Zeitraum hat.</p>
+          <p><strong className="text-foreground">Beworben:</strong> Neue Bewerbungen am Tag (ohne Test, nur Vermittlung/Fast-Track).</p>
+          <p><strong className="text-foreground">Termin gebucht:</strong> Calendly-Termin wurde gesetzt (booking_status = scheduled oder completed).</p>
+          <p><strong className="text-foreground">Wahrgenommen:</strong> Termin tatsächlich gehalten — booking_status = completed oder Interview wurde abgeschlossen.</p>
+          <p><strong className="text-foreground">No-Show:</strong> Termin gebucht, aber nicht erschienen (booking_status = no_show).</p>
+          <p><strong className="text-foreground">Angenommen / Abgelehnt:</strong> Finale Bewertung nach Interview (status oder Interview-Empfehlung).</p>
+          <p><strong className="text-foreground">Reg-Mail:</strong> Registrierungs-/Einladungs-Mail an die Bewerber-Adresse versendet.</p>
+          <p><strong className="text-foreground">Registriert:</strong> Bewerber hat ein Profil angelegt.</p>
+          <p><strong className="text-foreground">Onboarded:</strong> Onboarding-Status = abgeschlossen — ab hier ist die Person Mitarbeiter:in.</p>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function pct(n: number, d: number) { return d ? Math.round((n / d) * 1000) / 10 : 0; }
+function FunnelChart({ totals }: { totals: Totals }) {
+  const stages = [
+    { key: "beworben",            label: "Beworben",             value: totals.beworben,            color: "bg-slate-500" },
+    { key: "termin_gebucht",      label: "Termin gebucht",       value: totals.termin_gebucht,      color: "bg-blue-500" },
+    { key: "termin_wahrgenommen", label: "Termin wahrgenommen",  value: totals.termin_wahrgenommen, color: "bg-cyan-500" },
+    { key: "angenommen",          label: "Angenommen",           value: totals.angenommen,          color: "bg-emerald-500" },
+    { key: "registriert",         label: "Registriert",          value: totals.registriert,         color: "bg-teal-500" },
+    { key: "onboarded",           label: "Mitarbeiter (onboarded)", value: totals.onboarded,        color: "bg-emerald-700" },
+  ];
+  const max = Math.max(1, ...stages.map(s => s.value));
 
-function Kpi({ label, value, tone }: { label: string; value: number | string; tone: "default" | "primary" | "success" }) {
-  const toneClass = tone === "primary" ? "text-primary" : tone === "success" ? "text-emerald-500" : "text-foreground";
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Gesamt-Trichter</CardTitle>
+        <CardDescription>
+          Absolute Zahlen pro Stufe im gewählten Zeitraum. Prozente = Conversion zur jeweils vorherigen Stufe.
+          {totals.no_show > 0 && <> · <span className="text-rose-600 dark:text-rose-400 font-medium">{totals.no_show} No-Shows</span></>}
+          {totals.abgelehnt > 0 && <> · <span className="text-rose-600 dark:text-rose-400 font-medium">{totals.abgelehnt} abgelehnt</span></>}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {stages.map((s, i) => {
+          const prev = i > 0 ? stages[i - 1].value : null;
+          const conv = prev && prev > 0 ? Math.round((s.value / prev) * 1000) / 10 : null;
+          const widthPct = Math.max(4, Math.round((s.value / max) * 100));
+          return (
+            <div key={s.key} className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground tabular-nums w-5 text-right">{i + 1}.</span>
+                  <span className="font-medium">{s.label}</span>
+                  {conv !== null && (
+                    <span className={cn(
+                      "text-[10px] font-semibold px-1.5 py-0.5 rounded tabular-nums",
+                      conv >= 50 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                        : conv >= 20 ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                        : "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+                    )}>
+                      {conv}% von Stufe {i}
+                    </span>
+                  )}
+                </div>
+                <span className="font-bold tabular-nums">{s.value}</span>
+              </div>
+              <div className="h-7 bg-muted/40 rounded overflow-hidden">
+                <div className={cn("h-full transition-all", s.color)} style={{ width: `${widthPct}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Kpi({
+  label, value, tone, sub, icon,
+}: {
+  label: string;
+  value: number | string;
+  tone: "default" | "primary" | "success" | "warn";
+  sub?: string;
+  icon?: React.ReactNode;
+}) {
+  const toneClass =
+    tone === "primary" ? "text-primary"
+    : tone === "success" ? "text-emerald-500"
+    : tone === "warn" ? "text-rose-500"
+    : "text-foreground";
   return (
     <Card>
       <CardContent className="pt-4 pb-3">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1">
+          {icon} {label}
+        </p>
         <p className={cn("text-2xl font-bold mt-1 tabular-nums", toneClass)}>{value}</p>
+        {sub && <p className="text-[11px] text-muted-foreground mt-0.5 truncate" title={sub}>{sub}</p>}
       </CardContent>
     </Card>
   );
