@@ -38,8 +38,6 @@ const navGroups: NavGroup[] = [
     label: "Personen",
     items: [
       { title: "Personen", url: "/admin/personen", icon: Users, badgeKey: "newApplications" },
-      { title: "Bewerbungen (Detail)", url: "/admin/applications", icon: FileText },
-      { title: "Mitarbeiter (Detail)", url: "/admin/employees", icon: Users },
       { title: "KYC", url: "/admin/kyc", icon: ShieldCheck, badgeKey: "pendingKyc" },
       { title: "Verträge", url: "/admin/contracts", icon: FileText },
     ],
@@ -61,31 +59,19 @@ const navGroups: NavGroup[] = [
       { title: "SMS", url: "/admin/sms", icon: Phone },
       { title: "Post", url: "/admin/post", icon: Mailbox },
       { title: "E-Mail-Center", url: "/admin/email-center", icon: Mail },
-
     ],
   },
   {
-    label: "Finanzen",
+    label: "Finanzen & Auswertung",
     items: [
       { title: "Transaktionen", url: "/admin/transactions", icon: Wallet },
-    ],
-  },
-  {
-    label: "Auswertung",
-    items: [
       { title: "Statistiken", url: "/admin/statistiken", icon: BarChart3 },
     ],
   },
   {
     label: "Einstellungen",
     items: [
-      { title: "Vermittlung", url: "/admin/vermittlung", icon: Handshake, end: true },
-      { title: "Fast-Track-Firmen", url: "/admin/partner-companies", icon: Handshake },
-      { title: "Calendly", url: "/admin/calendly", icon: CalendarClock },
-      { title: "Landing-Generator", url: "/admin/landing-generator", icon: Globe },
-      { title: "Infrastruktur", url: "/admin/infrastructure", icon: Server },
-      { title: "Domains", url: "/admin/domains", icon: Globe },
-      { title: "System", url: "/admin/settings", icon: Settings },
+      { title: "Einstellungen", url: "/admin/settings", icon: Settings, end: true },
     ],
   },
 ];
