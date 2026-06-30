@@ -31,7 +31,7 @@ type LookupState =
   | { kind: "loading" }
   | { kind: "email-form" }
   | { kind: "invalid" }
-  | { kind: "ready"; appId: string; fullName?: string };
+  | { kind: "ready"; appId: string; fullName?: string; landingSlug?: string | null };
 
 function BewerbungLandingPage() {
   const [state, setState] = useState<LookupState>({ kind: "loading" });
@@ -59,7 +59,7 @@ function BewerbungLandingPage() {
         if (!res.ok) return setState({ kind: "invalid" });
         const data = await res.json();
         if (!data?.ok || !data?.application_id) return setState({ kind: "invalid" });
-        setState({ kind: "ready", appId: data.application_id, fullName: data.full_name });
+        setState({ kind: "ready", appId: data.application_id, fullName: data.full_name, landingSlug: data.landing_slug ?? null });
       } catch {
         setState({ kind: "invalid" });
       }
@@ -70,7 +70,11 @@ function BewerbungLandingPage() {
     if (state.kind !== "ready") return;
     const portal = ((typeof window !== "undefined" && window.PORTAL_URL) || "").trim();
     const base = portal ? portal.replace(/\/+$/, "") : "";
-    window.location.href = `${base}/interview/${state.appId}`;
+    const qs = new URLSearchParams();
+    if (state.landingSlug) qs.set("landing", state.landingSlug);
+    if (base) qs.set("portal", base);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    window.location.href = `${base}/interview/${state.appId}${suffix}`;
   };
 
   const submitEmail = async (e: React.FormEvent) => {
