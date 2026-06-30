@@ -1,61 +1,117 @@
-Drei Themen, ich schlage diese Aufteilung vor — sag bitte, ob ich alles in einem Rutsch baue oder nur Teil 1+2 zuerst.
+## Ziel
 
----
+Eine einzige, ehrliche Funnel-Ansicht „Bewerber → Mitarbeiter" — pro Tag und als Gesamttrichter. Heute zählt `admin.statistiken.tsx` „freigegeben" und „angenommen" doppelt (beides = `status='akzeptiert'`) und kennt weder „Termin wahrgenommen vs. No-Show" noch „Onboarded". Das wird sauber getrennt.
 
-## 1) Profilbild für die Recruiterin („SS" → echtes Bild)
+## Funnel-Stufen (in dieser Reihenfolge)
 
-**Wo gepflegt:** pro Landing Page im Landing-Generator (gleicher Platz wie `recruiter_name`).
+```text
+1. Beworben            applications (is_test=false, flow in broker/fasttrack)
+2. Termin gebucht      booking_status in (scheduled, completed)
+3. Termin wahrgenommen booking_status = completed
+                       ODER interview_completed_at IS NOT NULL
+4. No-Show             booking_status = no_show
+                       ODER (scheduled & Termin > 2h vorbei & kein interview_completed_at)
+5. Interview-Ergebnis  interview_recommendation ∈ {invite, reject, unsure}
+   ├─ angenommen       status = akzeptiert
+   ├─ abgelehnt        status = abgelehnt  (oder recommendation=reject)
+   └─ offen            sonst
+6. Registrierungs-Mail email_send_log: invitation|signup_confirmation, status=sent
+7. Registriert         profiles.created_at, email ∈ Bewerber-Mails
+8. Onboarded           profiles.onboarding_completed_at IS NOT NULL
+                       (Fallback: erster contract.signed_at, falls Spalte fehlt)
+```
 
-**Änderungen:**
-- Migration `20260630100000_landing_recruiter_avatar.sql`:
-  `ALTER TABLE landing_pages ADD COLUMN recruiter_avatar_url text;`
-- Supabase Storage Bucket `recruiter-avatars` (public read).
-- `admin.landing-generator.tsx`: Upload-Feld neben „Name der Recruiterin" (Reuse von `compressImage`, gleiches Muster wie team-leader-settings).
-- `application-by-token.ts` + `application-lookup.ts`: `recruiter_avatar_url` mitliefern.
-- `interview.voice.$appId.tsx` und `interview.$appId.tsx`: Avatar im Header anzeigen, Fallback auf Initialen (heute „SS").
+Jeder Bewerber wird *einer* Kohorte (= Tag der Bewerbung) zugeordnet und durch alle Stufen verfolgt. So bleibt „von 100 Bewerbern am Montag wurden 7 Mitarbeiter" konsistent, auch wenn die Registrierung 10 Tage später passiert.
 
----
+## Schema-Ergänzungen (Migration `20260701000000_funnel_tracking.sql`)
 
-## 2) Post-Interview-Flow (Annahme / Ablehnung)
+Nur was fehlt — vorhandene Spalten bleiben:
 
-Aktuell endet das Interview im Voice-Screen ohne klare Weiterleitung. Neu:
+```sql
+ALTER TABLE public.applications
+  ADD COLUMN IF NOT EXISTS interview_started_at   timestamptz,
+  ADD COLUMN IF NOT EXISTS interview_completed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS interview_recommendation text
+    CHECK (interview_recommendation IN ('invite','reject','unsure')),
+  ADD COLUMN IF NOT EXISTS interview_score        numeric;
 
-**Bei `interview_recommendation = 'invite'`:**
-- Neue Route `src/routes/interview.success.$appId.tsx`:
-  „Willkommen im Team … Jetzt registrieren" → CTA führt auf `/register?app=<token>`.
-- `/register` liest den Token, prefillt E-Mail/Name aus `applications`, verknüpft den neuen `auth.users`-Account via `applications.user_id` und setzt `status = 'eingeladen'`.
-- Danach automatische Weiterleitung in `_employee/onboarding` (Personalausweis + Arbeitsvertrag).
+-- Indexe für die Aggregation
+CREATE INDEX IF NOT EXISTS idx_apps_created_flow
+  ON public.applications (created_at DESC) WHERE is_test = false;
+CREATE INDEX IF NOT EXISTS idx_apps_email_lower
+  ON public.applications (lower(email));
+```
 
-**Bei `interview_recommendation = 'reject'`:**
-- Neue Route `src/routes/interview.rejected.$appId.tsx`:
-  Höfliche Absage, kein CTA. `status = 'abgelehnt'`.
+`interview-engine.server.ts` schreibt diese Felder beim Interview-Abschluss bereits intern — die Migration zieht nur die Persistenz nach. `no_show` wird durch ein zusätzliches `booking_status` zugelassen:
 
-**Bei `unsure`:** Hinweis „Wir melden uns per E-Mail", `status = 'in_pruefung'`.
+```sql
+ALTER TABLE public.applications DROP CONSTRAINT IF EXISTS applications_booking_status_check;
+ALTER TABLE public.applications
+  ADD CONSTRAINT applications_booking_status_check
+  CHECK (booking_status IN ('none','scheduled','completed','no_show','canceled'));
+```
 
-Routing übernimmt `interview-voice.ts` / `interview-chat.ts` beim Abschluss (`end`-Action liefert `redirect_to`).
+## Server-Funktion (Refactor `src/lib/landing-cohorts.functions.ts`)
 
----
+`CohortRow` wird ersetzt durch:
 
-## 3) Funnel-Statistik pro Landing Page
+```ts
+type FunnelRow = {
+  date: string;
+  beworben: number;
+  termin_gebucht: number;
+  termin_wahrgenommen: number;
+  no_show: number;
+  angenommen: number;
+  abgelehnt: number;
+  reg_mail: number;
+  registriert: number;
+  onboarded: number;
+  // Stufen-Conversion (jeweils zur vorherigen Stufe)
+  conv_termin: number;
+  conv_wahrgenommen: number;
+  conv_angenommen: number;
+  conv_registriert: number;
+  conv_onboarded: number;
+};
+```
 
-**Neue Route:** `src/routes/admin.statistiken.funnel.$landingId.tsx` (oder Tab in bestehender `admin.statistiken.tsx`).
+Aggregation pro Bewerbungs-Kohorte (nicht pro Ereignis-Tag):
+- Bewerber-Set einmal laden, per `email` die Profile / Mails / Onboarding-Events zuordnen.
+- Tagesschlüssel = `dayKey(application.created_at)` in `Europe/Berlin`.
+- Totals: `gesamt_conversion = onboarded / beworben`, plus jede Stufen-Conversion.
 
-**Stufen (aus vorhandenen Spalten ableitbar, keine Schema-Änderung nötig):**
+Filter wie bisher: `tenant_id`, `days` (7/30/90/180), Test-Bewerbungen raus.
 
-| Stufe | Query |
-|---|---|
-| Bewerbungen eingegangen | `count(applications) WHERE landing_page_id = X` |
-| Termin gebucht | `… AND calendly_event_uri IS NOT NULL` |
-| Termin wahrgenommen | `… AND interview_started_at IS NOT NULL` |
-| Interview angenommen | `… AND interview_recommendation = 'invite'` |
-| Interview abgelehnt | `… AND interview_recommendation = 'reject'` |
-| Interview nicht wahrgenommen | `calendly_event_uri IS NOT NULL AND interview_started_at IS NULL AND scheduled_at < now()` |
-| Registriert | `… AND user_id IS NOT NULL` |
-| Onboarding komplett | `… AND status = 'aktiv'` (KYC + Vertrag signed) |
-| Onboarding offen | invite + registriert, aber `kyc_status != 'verified'` ODER `contract_signed = false` |
+## UI (`src/routes/admin.statistiken.tsx`)
 
-Implementation als ein server fn `getLandingFunnel({ landingId, from, to })` (admin-gated, `requireSupabaseAuth` + `has_role('admin')`), rendert horizontal Funnel mit Conversion-%.
+Zwei Blöcke statt einer Tabelle:
 
----
+1. **Gesamt-Trichter** (oben, sticky) — horizontale Balken pro Stufe mit absoluten Zahlen + %-Drop zur Vorstufe. Drop-Stufen rot, Conversion grün.
+2. **Tageskohorten-Tabelle** — eine Zeile pro Tag, Spalten in Funnel-Reihenfolge (Beworben → Termin → Wahrgenommen / No-Show → Angenommen / Abgelehnt → Reg-Mail → Registriert → Onboarded). Conversion-Badges zwischen den Spalten wie heute, aber konsistent „% zur Vorstufe".
 
-**Frage:** Soll ich alle drei Teile jetzt umsetzen, oder zuerst nur Teil 1+2 (User-sichtbar) und Statistik separat?
+KPI-Leiste oben:
+- Beworben gesamt
+- Mitarbeiter gesamt (= onboarded)
+- End-to-End Conversion
+- Ø Bewerbungen/Tag
+- Ø Mitarbeiter/Tag
+- Größter Drop (Stufe + %)
+
+Tenant-Auswahl und Zeitraum-Toggle bleiben unverändert.
+
+## Was bewusst nicht passiert
+
+- Keine Änderungen an Bewerbungs- oder Interview-Flow — nur Lese-/Aggregations-Logik und ein paar nullable Spalten.
+- Kein separater Mitarbeiter-Screen — Bewerber und Mitarbeiter sind in *einem* Funnel (Stufen 1 und 8 derselben Person).
+- Kein Re-Compute alter Bewerbungen: Neue Spalten bleiben NULL für Altdaten, der Funnel zeigt sie bis zur letzten bekannten Stufe (z.B. „angenommen", aber „onboarded=0", weil die Spalte fehlte).
+
+## Reihenfolge der Umsetzung
+
+1. Migration `20260701000000_funnel_tracking.sql` schreiben.
+2. `interview-engine.server.ts` so erweitern, dass `interview_*`-Felder bei Session-Ende persistiert werden.
+3. `landing-cohorts.functions.ts` neu schreiben (Funnel-Aggregation pro Kohorte).
+4. `admin.statistiken.tsx` Tabelle + neuen Trichter-Block ergänzen.
+5. Deploy (Backend-Migration + Frontend-Build).
+
+Sag Bescheid, ob ich so loslegen soll oder etwas anpassen.
