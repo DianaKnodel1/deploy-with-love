@@ -55,6 +55,26 @@ function TasksPage() {
     checkAccessAndLoad();
   }, [user, authLoading]);
 
+  // Realtime: neue/aktualisierte Aufträge sofort übernehmen (statt 10-40 min Verzögerung)
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`emp-assignments-${user.id}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "task_assignments", filter: `user_id=eq.${user.id}` },
+        () => { void loadAssignments(); }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "bookings", filter: `user_id=eq.${user.id}` },
+        () => { void loadAssignments(); }
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
   const checkAccessAndLoad = async () => {
     try {
       const { data, error: profileErr } = await supabase

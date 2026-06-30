@@ -82,49 +82,76 @@ function DashboardPage() {
     hasScheduledTask: !!scheduledTask,
   });
 
+  const loadDashboard = async () => {
+    if (!user) return;
+    try {
+      const [profileRes, kycRes, bookingsRes, txRes, assignRes, completedRes] = await Promise.all([
+        supabase.from("profiles").select("full_name, status, contract_signed_at, onboarding_status, team_leader_id, created_at, address, birth_date, street, zip_code, city, employment_type").eq("user_id", user.id).maybeSingle(),
+        supabase.from("kyc_verifications").select("status").eq("user_id", user.id).maybeSingle(),
+        supabase.from("bookings").select("id, booking_date, booking_time, status").eq("user_id", user.id).neq("status", "storniert").not("booking_date", "is", null).order("booking_date", { ascending: true }),
+        supabase.from("user_transactions").select("id, amount, status, created_at, assignment_id").eq("user_id", user.id).order("created_at", { ascending: false }),
+        supabase.from("task_assignments").select("id").eq("user_id", user.id).in("status", ["zugewiesen", "in_bearbeitung"]),
+        supabase.from("task_assignments").select("id").eq("user_id", user.id).in("status", ["genehmigt", "abgeschlossen"]),
+      ]);
+      if (profileRes.error) throw profileRes.error;
+      setProfile(profileRes.data as Profile | null);
+      setKyc(kycRes.data as { status: KycStatus } | null);
+
+      const now = new Date();
+      const future = (bookingsRes.data ?? []).filter((b: any) =>
+        b.booking_date && new Date(`${b.booking_date}T${b.booking_time || "00:00"}`) >= now
+      ) as Array<{ id: string; booking_date: string; booking_time: string; status: string }>;
+      setFutureBookings(future);
+      if (future.length > 0) {
+        setNextBookingDate(future[0].booking_date);
+        setNextBookingTime(future[0].booking_time);
+      } else {
+        setNextBookingDate(null);
+        setNextBookingTime(null);
+      }
+      if (future.length > 0 && !assignRes.data?.length) {
+        setScheduledTask({ releaseAt: `${future[0].booking_date}T${future[0].booking_time || "00:00"}` });
+      } else {
+        setScheduledTask(null);
+      }
+
+      const txData = (txRes.data ?? []) as Transaction[];
+      setBalance(txData.filter((t) => t.status === "gutgeschrieben" || t.status === "ausgezahlt").reduce((s, t) => s + Number(t.amount), 0));
+      setPendingBalance(txData.filter((t) => t.status === "ausstehend" || t.status === "genehmigt").reduce((s, t) => s + Number(t.amount), 0));
+      setRecentTx(txData.slice(0, 5));
+      setTaskCount(assignRes.data?.length ?? 0);
+      setCompletedTasks(completedRes.data?.length ?? 0);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (authLoading || !user) return;
-    const load = async () => {
-      try {
-        const [profileRes, kycRes, bookingsRes, txRes, assignRes, completedRes] = await Promise.all([
-          supabase.from("profiles").select("full_name, status, contract_signed_at, onboarding_status, team_leader_id, created_at, address, birth_date, street, zip_code, city, employment_type").eq("user_id", user.id).maybeSingle(),
-          supabase.from("kyc_verifications").select("status").eq("user_id", user.id).maybeSingle(),
-          supabase.from("bookings").select("id, booking_date, booking_time, status").eq("user_id", user.id).neq("status", "storniert").not("booking_date", "is", null).order("booking_date", { ascending: true }),
-          supabase.from("user_transactions").select("id, amount, status, created_at, assignment_id").eq("user_id", user.id).order("created_at", { ascending: false }),
-          supabase.from("task_assignments").select("id").eq("user_id", user.id).in("status", ["zugewiesen", "in_bearbeitung"]),
-          supabase.from("task_assignments").select("id").eq("user_id", user.id).in("status", ["genehmigt", "abgeschlossen"]),
-        ]);
-        if (profileRes.error) throw profileRes.error;
-        setProfile(profileRes.data as Profile | null);
-        setKyc(kycRes.data as { status: KycStatus } | null);
-
-        const now = new Date();
-        const future = (bookingsRes.data ?? []).filter((b: any) =>
-          b.booking_date && new Date(`${b.booking_date}T${b.booking_time || "00:00"}`) >= now
-        ) as Array<{ id: string; booking_date: string; booking_time: string; status: string }>;
-        setFutureBookings(future);
-        if (future.length > 0) {
-          setNextBookingDate(future[0].booking_date);
-          setNextBookingTime(future[0].booking_time);
-        }
-        if (future.length > 0 && !assignRes.data?.length) {
-          setScheduledTask({ releaseAt: `${future[0].booking_date}T${future[0].booking_time || "00:00"}` });
-        }
-
-        const txData = (txRes.data ?? []) as Transaction[];
-        setBalance(txData.filter((t) => t.status === "gutgeschrieben" || t.status === "ausgezahlt").reduce((s, t) => s + Number(t.amount), 0));
-        setPendingBalance(txData.filter((t) => t.status === "ausstehend" || t.status === "genehmigt").reduce((s, t) => s + Number(t.amount), 0));
-        setRecentTx(txData.slice(0, 5));
-        setTaskCount(assignRes.data?.length ?? 0);
-        setCompletedTasks(completedRes.data?.length ?? 0);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    void loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
+
+  // Realtime: Aufträge/Bookings sofort spiegeln (kein 10-40 min Lag mehr)
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`emp-dash-${user.id}`)
+      .on("postgres_changes" as any,
+        { event: "*", schema: "public", table: "task_assignments", filter: `user_id=eq.${user.id}` },
+        () => { void loadDashboard(); })
+      .on("postgres_changes" as any,
+        { event: "*", schema: "public", table: "bookings", filter: `user_id=eq.${user.id}` },
+        () => { void loadDashboard(); })
+      .on("postgres_changes" as any,
+        { event: "*", schema: "public", table: "user_transactions", filter: `user_id=eq.${user.id}` },
+        () => { void loadDashboard(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const handleCancelBooking = async (id: string) => {
     const { error: cancelErr } = await supabase.from("bookings").update({ status: "storniert" as any }).eq("id", id);
