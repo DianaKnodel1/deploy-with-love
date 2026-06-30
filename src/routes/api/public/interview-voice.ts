@@ -115,6 +115,7 @@ export const Route = createFileRoute("/api/public/interview-voice")({
               firstMessage,
               companyName: ctx.companyName,
               recruiterName: ctx.recruiterName,
+              recruiterAvatarUrl: ctx.recruiterAvatarUrl,
               applicantFirstName: firstName,
             });
           }
