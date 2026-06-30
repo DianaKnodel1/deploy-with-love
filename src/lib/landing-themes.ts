@@ -16,6 +16,9 @@ import cleFormHtml from "../landing-themes/_shared/form-section-cle.html?raw";
 import cleFormCss from "../landing-themes/_shared/form-section-cle.css?raw";
 import ttsbFormHtml from "../landing-themes/_shared/form-section-tts-beratung.html?raw";
 import ttsbFormCss from "../landing-themes/_shared/form-section-tts-beratung.css?raw";
+import ftFormHtml from "../landing-themes/_shared/form-section-for-tel.html?raw";
+import ftFormCss from "../landing-themes/_shared/form-section-for-tel.css?raw";
+
 
 
 
