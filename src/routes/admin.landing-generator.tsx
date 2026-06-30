@@ -1038,14 +1038,28 @@ document.addEventListener('submit', function(e){
                   </div>
                 </div>
 
-                <Field label="Eigener System-Prompt (optional)">
-                  <Textarea
-                    rows={4}
-                    placeholder="Leer = Standard-Interview-Prompt für Versicherungs-/Finanzvermittlung. Hier kannst du den Fragenkatalog & Ton überschreiben."
-                    value={branding.interview_system_prompt}
-                    onChange={set("interview_system_prompt")}
-                  />
-                </Field>
+                <details className="rounded-md border border-dashed border-muted-foreground/30 bg-muted/30 p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                    Erweitert: Eigener System-Prompt (optional)
+                  </summary>
+                  <div className="mt-3 space-y-2">
+                    <p className="text-[11px] text-muted-foreground">
+                      ⚠️ <strong>Sobald hier Text steht, wird der globale Default aus <a href="/admin/ai-settings" className="underline">AI-Settings</a> für diese Landing komplett ignoriert.</strong> Leer lassen = globaler Default greift.
+                    </p>
+                    <Textarea
+                      rows={6}
+                      placeholder="Leer = globaler Default aus AI-Settings (empfohlen). Nur ausfüllen, wenn diese Landing einen abweichenden Fragenkatalog/Ton braucht."
+                      value={branding.interview_system_prompt}
+                      onChange={set("interview_system_prompt")}
+                    />
+                    {branding.interview_system_prompt?.trim() && (
+                      <p className="text-[11px] text-amber-600 dark:text-amber-500">
+                        Aktiv: Diese Landing nutzt den eigenen Prompt, nicht den AI-Settings-Default.
+                      </p>
+                    )}
+                  </div>
+                </details>
+
               </div>
               )}
 
