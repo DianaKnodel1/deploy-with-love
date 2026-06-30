@@ -48,7 +48,8 @@ export const Route = createFileRoute("/api/public/application-by-token")({
         if (!row) return json({ ok: false, error: "not_found" }, 404);
 
         let landingSlug: string | null = null;
-        const landingSelect = "id, slug, source_slug, linked_fasttrack_landing_id";
+        let interviewMode: "chat" | "voice" | "both" = "chat";
+        const landingSelect = "id, slug, source_slug, linked_fasttrack_landing_id, interview_mode";
         const loadLandingById = async (id?: string | null) => {
           if (!id) return null;
           const { data } = await supabaseAdmin.from("landing_pages").select(landingSelect).eq("id", id).maybeSingle();
@@ -70,6 +71,8 @@ export const Route = createFileRoute("/api/public/application-by-token")({
           ? ((await loadLandingById(primaryLanding.linked_fasttrack_landing_id)) || primaryLanding)
           : primaryLanding;
         landingSlug = finalLanding?.slug || finalLanding?.source_slug || row.source_slug || null;
+        const rawMode = String(finalLanding?.interview_mode || "").toLowerCase();
+        if (rawMode === "voice" || rawMode === "both" || rawMode === "chat") interviewMode = rawMode;
 
         return json({
           ok: true,
@@ -78,6 +81,7 @@ export const Route = createFileRoute("/api/public/application-by-token")({
           status: row.status,
           full_name: row.full_name,
           landing_slug: landingSlug,
+          interview_mode: interviewMode,
         });
       },
     },
