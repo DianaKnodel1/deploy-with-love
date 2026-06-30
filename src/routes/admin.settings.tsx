@@ -99,6 +99,69 @@ function AdminSettingsPage() {
             <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
           </Card>
         </Link>
+        <Link to="/admin/vermittlung" className="group">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><Handshake className="h-4 w-4" /> Vermittlung</CardTitle>
+              <CardDescription className="text-xs">Broker-Flow, Übergabe an Fast-Track</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/partner-companies" className="group">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><Handshake className="h-4 w-4" /> Fast-Track-Firmen</CardTitle>
+              <CardDescription className="text-xs">Partner-Unternehmen verwalten</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/calendly" className="group">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><CalendarClock className="h-4 w-4" /> Calendly</CardTitle>
+              <CardDescription className="text-xs">Webhooks, Event-Types, Signing-Keys</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/infrastructure" className="group">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><Server className="h-4 w-4" /> Infrastruktur</CardTitle>
+              <CardDescription className="text-xs">Landing-Server, Heartbeat, Deploys</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/domains" className="group">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><Globe className="h-4 w-4" /> Domains (Cloudflare)</CardTitle>
+              <CardDescription className="text-xs">DNS, SSL, Health-Checks</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/applications" className="group">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> Bewerbungen (Liste)</CardTitle>
+              <CardDescription className="text-xs">Alte Roh-Liste — neuer Flow: Personen</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
+          </Card>
+        </Link>
+        <Link to="/admin/employees" className="group">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><UsersIcon className="h-4 w-4" /> Mitarbeiter (Liste)</CardTitle>
+              <CardDescription className="text-xs">Alte Roh-Liste — neuer Flow: Personen</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
+          </Card>
+        </Link>
         <Link to="/admin/activity" className="group">
           <Card className="hover:border-primary/40 transition-colors h-full">
             <CardHeader className="pb-2">
@@ -108,7 +171,7 @@ function AdminSettingsPage() {
             <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
           </Card>
         </Link>
-      </div>
+        <div className="max-w-2xl mx-auto px-2 pt-2 max-w-none"></div>
 
       <StandardTasksCard />
 
