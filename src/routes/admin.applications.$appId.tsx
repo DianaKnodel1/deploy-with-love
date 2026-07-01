@@ -238,14 +238,8 @@ function AdminApplicationDetailPage() {
       )}
 
       {app.status !== "akzeptiert" && app.status !== "abgelehnt" && (
-        <div className="flex gap-2">
-          <Button variant="destructive" size="sm" onClick={rejectApplication}>
-            <XCircle className="h-3.5 w-3.5 mr-1" /> Ablehnen
-          </Button>
-          <Button size="sm" onClick={acceptApplication} disabled={accepting}>
-            {accepting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-            {accepting ? "Wird akzeptiert…" : "Akzeptieren & Einladen"}
-          </Button>
+        <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground">
+          Status wird automatisch durch das Bewerbungsgespräch gesetzt – keine manuelle Aktion nötig.
         </div>
       )}
 
