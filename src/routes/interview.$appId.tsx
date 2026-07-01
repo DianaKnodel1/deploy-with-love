@@ -127,6 +127,7 @@ function InterviewPage() {
       const data = await postInterview({ applicationId: appId, action: "message", text });
       setMessages(data.history ?? []);
       if (data.ended) setEnded(true);
+      if (data.application_status) setAppStatus(data.application_status);
     } catch (e: any) {
       setError(e?.message ?? "Unbekannter Fehler");
     } finally {
