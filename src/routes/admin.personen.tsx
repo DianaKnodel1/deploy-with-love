@@ -140,7 +140,7 @@ function AdminPersonenPage() {
           phase,
           lastActivity: prof.created_at || a.created_at,
           source: a.source_slug || null,
-          detailUrl: `/admin/employees/${prof.user_id}`,
+          detailUrl: `/admin/personen/${prof.user_id}`,
         });
         continue;
       }

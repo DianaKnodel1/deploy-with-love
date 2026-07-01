@@ -77,6 +77,7 @@ import { Route as ApiPublicCalendlyWebhookRouteImport } from './routes/api/publi
 import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
 import { Route as ApiPublicApplicationLookupRouteImport } from './routes/api/public/application-lookup'
 import { Route as ApiPublicApplicationByTokenRouteImport } from './routes/api/public/application-by-token'
+import { Route as AdminPersonenIdRouteImport } from './routes/admin.personen.$id'
 import { Route as AdminEmployeesUserIdRouteImport } from './routes/admin.employees.$userId'
 import { Route as AdminAssignmentsAssignmentIdRouteImport } from './routes/admin.assignments.$assignmentId'
 import { Route as AdminApplicationsAppIdRouteImport } from './routes/admin.applications.$appId'
@@ -429,6 +430,11 @@ const ApiPublicApplicationByTokenRoute =
     path: '/api/public/application-by-token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminPersonenIdRoute = AdminPersonenIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminPersonenRoute,
+} as any)
 const AdminEmployeesUserIdRoute = AdminEmployeesUserIdRouteImport.update({
   id: '/employees/$userId',
   path: '/employees/$userId',
@@ -499,7 +505,7 @@ export interface FileRoutesByFullPath {
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
   '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
-  '/admin/personen': typeof AdminPersonenRoute
+  '/admin/personen': typeof AdminPersonenRouteWithChildren
   '/admin/post': typeof AdminPostRoute
   '/admin/recovery': typeof AdminRecoveryRoute
   '/admin/reminders': typeof AdminRemindersRoute
@@ -522,6 +528,7 @@ export interface FileRoutesByFullPath {
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/admin/personen/$id': typeof AdminPersonenIdRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
@@ -573,7 +580,7 @@ export interface FileRoutesByTo {
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
   '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
-  '/admin/personen': typeof AdminPersonenRoute
+  '/admin/personen': typeof AdminPersonenRouteWithChildren
   '/admin/post': typeof AdminPostRoute
   '/admin/recovery': typeof AdminRecoveryRoute
   '/admin/reminders': typeof AdminRemindersRoute
@@ -596,6 +603,7 @@ export interface FileRoutesByTo {
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/admin/personen/$id': typeof AdminPersonenIdRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
@@ -650,7 +658,7 @@ export interface FileRoutesById {
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
   '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
-  '/admin/personen': typeof AdminPersonenRoute
+  '/admin/personen': typeof AdminPersonenRouteWithChildren
   '/admin/post': typeof AdminPostRoute
   '/admin/recovery': typeof AdminRecoveryRoute
   '/admin/reminders': typeof AdminRemindersRoute
@@ -673,6 +681,7 @@ export interface FileRoutesById {
   '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
+  '/admin/personen/$id': typeof AdminPersonenIdRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
@@ -750,6 +759,7 @@ export interface FileRouteTypes {
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/admin/personen/$id'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
@@ -824,6 +834,7 @@ export interface FileRouteTypes {
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/admin/personen/$id'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
@@ -900,6 +911,7 @@ export interface FileRouteTypes {
     | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
     | '/admin/employees/$userId'
+    | '/admin/personen/$id'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
@@ -1423,6 +1435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicApplicationByTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/personen/$id': {
+      id: '/admin/personen/$id'
+      path: '/$id'
+      fullPath: '/admin/personen/$id'
+      preLoaderRoute: typeof AdminPersonenIdRouteImport
+      parentRoute: typeof AdminPersonenRoute
+    }
     '/admin/employees/$userId': {
       id: '/admin/employees/$userId'
       path: '/employees/$userId'
@@ -1516,6 +1535,18 @@ const EmployeeRouteWithChildren = EmployeeRoute._addFileChildren(
   EmployeeRouteChildren,
 )
 
+interface AdminPersonenRouteChildren {
+  AdminPersonenIdRoute: typeof AdminPersonenIdRoute
+}
+
+const AdminPersonenRouteChildren: AdminPersonenRouteChildren = {
+  AdminPersonenIdRoute: AdminPersonenIdRoute,
+}
+
+const AdminPersonenRouteWithChildren = AdminPersonenRoute._addFileChildren(
+  AdminPersonenRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminActivityRoute: typeof AdminActivityRoute
   AdminAiSettingsRoute: typeof AdminAiSettingsRoute
@@ -1531,7 +1562,7 @@ interface AdminRouteChildren {
   AdminKycRoute: typeof AdminKycRoute
   AdminLandingGeneratorRoute: typeof AdminLandingGeneratorRoute
   AdminPartnerCompaniesRoute: typeof AdminPartnerCompaniesRoute
-  AdminPersonenRoute: typeof AdminPersonenRoute
+  AdminPersonenRoute: typeof AdminPersonenRouteWithChildren
   AdminPostRoute: typeof AdminPostRoute
   AdminRecoveryRoute: typeof AdminRecoveryRoute
   AdminRemindersRoute: typeof AdminRemindersRoute
@@ -1570,7 +1601,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminKycRoute: AdminKycRoute,
   AdminLandingGeneratorRoute: AdminLandingGeneratorRoute,
   AdminPartnerCompaniesRoute: AdminPartnerCompaniesRoute,
-  AdminPersonenRoute: AdminPersonenRoute,
+  AdminPersonenRoute: AdminPersonenRouteWithChildren,
   AdminPostRoute: AdminPostRoute,
   AdminRecoveryRoute: AdminRecoveryRoute,
   AdminRemindersRoute: AdminRemindersRoute,
