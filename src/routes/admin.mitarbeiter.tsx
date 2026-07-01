@@ -43,13 +43,43 @@ function AdminMitarbeiterPage() {
         id: p.user_id,
         name: p.full_name || p.email || "—",
         email: p.email || "—",
+        phone: p.phone || "—",
         status: p.status as EmployeeStatus,
         onboarding: p.onboarding_status as keyof typeof ONBOARDING_STATUS_CONFIG,
         createdAt: p.created_at,
         contractSigned: !!p.contract_signed_at,
+        emailConfirmed: !!(p.user_id && emailConfirmedUserIds.has(p.user_id)),
+        idUploaded: !!(p.id_front_url || p.id_back_url || p.onboarding_status === "abgeschlossen"),
       }))
       .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-  }, [profiles, adminUserIds]);
+  }, [profiles, adminUserIds, emailConfirmedUserIds]);
+
+  function stagesFor(r: typeof rows[number]): Stage[] {
+    const s = (state: Stage["state"], label: string, key: string): Stage => ({ key, label, state });
+    const registered: Stage["state"] = "done";
+    const email: Stage["state"] =
+      r.status === "abgelehnt" ? "failed" :
+      r.emailConfirmed ? "done" : "current";
+    const perso: Stage["state"] =
+      r.status === "abgelehnt" ? "failed" :
+      r.idUploaded ? "done" :
+      r.emailConfirmed ? "current" : "todo";
+    const vertrag: Stage["state"] =
+      r.status === "abgelehnt" ? "failed" :
+      r.contractSigned ? "done" :
+      r.idUploaded ? "current" : "todo";
+    const aktiv: Stage["state"] =
+      r.status === "angenommen" ? "done" :
+      r.status === "abgelehnt" ? "failed" :
+      (r.contractSigned && r.idUploaded) ? "current" : "todo";
+    return [
+      s(registered, "Registriert", "reg"),
+      s(email, "E-Mail", "mail"),
+      s(perso, "Perso", "id"),
+      s(vertrag, "Vertrag", "contract"),
+      s(aktiv, "Freigegeben", "active"),
+    ];
+  }
 
   const counts = useMemo(() => ({
     alle: rows.length,
