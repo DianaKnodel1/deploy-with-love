@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Users, Search, ExternalLink, Check, X, Trash2 } from "lucide-react";
 import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders";
 import { STATUS_CONFIG, ONBOARDING_STATUS_CONFIG, type EmployeeStatus } from "@/lib/status";
+import { StageTimeline, type Stage } from "@/components/StageTimeline";
 import { toast } from "sonner";
 import { purgeInactivePeople } from "@/lib/admin-delete.functions";
 import {
