@@ -303,10 +303,11 @@ function AdminBewerbungenPage() {
               <thead className="bg-muted/30 border-b">
                 <tr>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Phase</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Quelle</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Erstellt</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vermittlung</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Eingegangen</th>
                   <th className="px-4 py-2.5"></th>
                 </tr>
               </thead>
@@ -316,13 +317,14 @@ function AdminBewerbungenPage() {
                   return (
                     <tr key={r.id} className="hover:bg-muted/20">
                       <td className="px-4 py-2.5 font-medium">{r.name}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{r.phone}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{r.email}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.source ?? "—"}</td>
                       <td className="px-4 py-2.5">
-                        <Badge className={`${PHASE_COLOR[r.phase]} border-0`}>
+                        <Badge className={PHASE_COLOR[r.phase]}>
                           <span className="mr-1">{meta?.emoji}</span>{meta?.label}
                         </Badge>
                       </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.source ?? "—"}</td>
                       <td className="px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
                       </td>
