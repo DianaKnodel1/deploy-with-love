@@ -107,7 +107,10 @@ function InterviewPage() {
       setRemainingSec(left);
       if (left === 0 && !ended) {
         setEnded(true);
-        try { await postInterview({ applicationId: appId, action: "end" }); } catch { /* ignore */ }
+        try {
+          const data = await postInterview({ applicationId: appId, action: "end" });
+          if (data?.application_status) setAppStatus(data.application_status);
+        } catch { /* ignore */ }
       }
     };
     tick();
@@ -192,7 +195,8 @@ function InterviewPage() {
     if (!window.confirm("Möchten Sie das Gespräch wirklich beenden?")) return;
     setLoading(true);
     try {
-      await postInterview({ applicationId: appId, action: "end" });
+      const data = await postInterview({ applicationId: appId, action: "end" });
+      if (data?.application_status) setAppStatus(data.application_status);
       setEnded(true);
     } catch (e: any) {
       setError(e?.message ?? "Unbekannter Fehler");
