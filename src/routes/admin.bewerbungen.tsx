@@ -185,16 +185,31 @@ function AdminBewerbungenPage() {
     }).sort((a, b) => (b.lastActivity || "").localeCompare(a.lastActivity || ""));
   }, [applications, bookingByApp, landingById, profileByKey, emailConfirmedUserIds]);
 
+  // Gruppierte Tabs — statt 12 Chips nur 6 sinnvolle Buckets
+  const GROUPS: { key: string; label: string; emoji: string; phases: Phase[] }[] = [
+    { key: "alle",        label: "Alle",         emoji: "👥", phases: [] },
+    { key: "offen",       label: "Offen",        emoji: "📅", phases: ["termin_offen", "termin_gebucht"] },
+    { key: "interview",   label: "Interview",    emoji: "🎙", phases: ["interview_laeuft", "wird_geprueft", "no_show"] },
+    { key: "angenommen",  label: "Angenommen",   emoji: "✅", phases: ["angenommen"] },
+    { key: "abgelehnt",   label: "Abgelehnt",    emoji: "❌", phases: ["abgelehnt"] },
+    { key: "mitarbeiter", label: "Im Portal",    emoji: "🚀", phases: ["registriert", "email_bestaetigt", "onboarding_komplett", "mitarbeiter_aktiv"] },
+  ];
+  const groupOf = (p: Phase): string => GROUPS.find(g => g.phases.includes(p))?.key ?? "alle";
+
   const counts = useMemo(() => {
     const c: Record<string, number> = { alle: rows.length };
-    for (const r of rows) c[r.phase] = (c[r.phase] || 0) + 1;
+    for (const g of GROUPS) if (g.key !== "alle") c[g.key] = 0;
+    for (const r of rows) {
+      const g = groupOf(r.phase);
+      c[g] = (c[g] || 0) + 1;
+    }
     return c;
   }, [rows]);
 
   const filtered = useMemo(() => {
     const ql = q.trim().toLowerCase();
     return rows.filter(r => {
-      if (tab !== "alle" && r.phase !== tab) return false;
+      if (tab !== "alle" && groupOf(r.phase) !== tab) return false;
       if (!ql) return true;
       return (
         r.name?.toLowerCase().includes(ql) ||
