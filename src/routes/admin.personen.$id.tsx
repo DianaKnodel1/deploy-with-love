@@ -281,18 +281,8 @@ function PersonDetailPage() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/admin/personen")} className="gap-1.5">
           <ArrowLeft className="h-3.5 w-3.5" /> Zurück zu Personen
         </Button>
-        <div className="flex gap-2">
-          {app && (
-            <Button variant="outline" size="sm" onClick={() => navigate(`/admin/applications/${app.id}`)} className="gap-1.5 text-xs">
-              Bewerbungs-Detail <ExternalLink className="h-3 w-3" />
-            </Button>
-          )}
-          {prof && (
-            <Button variant="outline" size="sm" onClick={() => navigate(`/admin/employees/${prof.user_id}`)} className="gap-1.5 text-xs">
-              Mitarbeiter-Detail <ExternalLink className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
+        <div />
+
       </div>
 
       {/* Header */}
