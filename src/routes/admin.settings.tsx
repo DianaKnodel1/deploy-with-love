@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { translateAuthError } from "@/lib/auth-errors";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Lock, Save, Palette, Bot, ArrowRight, Globe, Users as UsersIcon, Mail, History, Handshake, CalendarClock, Server, FileText } from "lucide-react";
+import { Lock, Save, Palette, Bot, ArrowRight, Globe, Users as UsersIcon, Mail, History, Handshake, CalendarClock, Server, FileText, AlertTriangle } from "lucide-react";
 import { BookingLimitsCard } from "@/components/admin/BookingLimitsCard";
 import { StandardTasksCard } from "@/components/admin/StandardTasksCard";
 import { Link } from "@tanstack/react-router";
