@@ -243,7 +243,7 @@ function AdminUploadsPage() {
                           Auftrag öffnen
                         </Button>
                       ) : (
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/admin/employees/${row.user_id}`)}>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate(`/admin/personen/${row.user_id}`)}>
                           Mitarbeiter öffnen
                         </Button>
                       )}
