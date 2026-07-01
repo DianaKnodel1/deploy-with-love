@@ -107,7 +107,10 @@ function InterviewPage() {
       setRemainingSec(left);
       if (left === 0 && !ended) {
         setEnded(true);
-        try { await postInterview({ applicationId: appId, action: "end" }); } catch { /* ignore */ }
+        try {
+          const data = await postInterview({ applicationId: appId, action: "end" });
+          if (data?.application_status) setAppStatus(data.application_status);
+        } catch { /* ignore */ }
       }
     };
     tick();
