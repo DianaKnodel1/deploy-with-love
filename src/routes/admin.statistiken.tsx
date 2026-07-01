@@ -122,6 +122,9 @@ function StatistikenPage() {
       {/* Gesamt-Trichter */}
       {totals && <FunnelChart totals={totals} />}
 
+      {/* Per-Vermittlung Funnel */}
+      {bySource.length > 0 && <SourceBreakdown sources={bySource} />}
+
       {/* Tageskohorten */}
       <Card>
         <CardHeader className="pb-3">
