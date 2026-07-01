@@ -26,43 +26,64 @@ import {
  */
 
 type Phase =
-  | "termin_offen" | "termin_gebucht" | "ueberfaellig"
+  | "termin_offen" | "termin_gebucht" | "no_show"
   | "interview_laeuft" | "wird_geprueft"
-  | "angenommen" | "abgelehnt" | "registriert";
+  | "angenommen" | "abgelehnt"
+  | "registriert" | "email_bestaetigt" | "onboarding_komplett" | "mitarbeiter_aktiv";
 
 const PHASES: { key: Phase | "alle"; label: string; emoji: string }[] = [
   { key: "alle", label: "Alle", emoji: "👥" },
-  { key: "termin_offen", label: "Termin offen", emoji: "📅" },
+  { key: "termin_offen", label: "Kein Termin", emoji: "📅" },
   { key: "termin_gebucht", label: "Termin gebucht", emoji: "⏰" },
-  { key: "ueberfaellig", label: "Überfällig", emoji: "⚠️" },
+  { key: "no_show", label: "Nicht erschienen", emoji: "⚠️" },
   { key: "interview_laeuft", label: "Interview läuft", emoji: "🎙" },
   { key: "wird_geprueft", label: "Wird geprüft", emoji: "🟡" },
-  { key: "angenommen", label: "Angenommen", emoji: "✅" },
-  { key: "registriert", label: "Registriert", emoji: "🧾" },
+  { key: "angenommen", label: "Zusage erteilt", emoji: "✅" },
   { key: "abgelehnt", label: "Abgelehnt", emoji: "❌" },
+  { key: "registriert", label: "Registriert", emoji: "🧾" },
+  { key: "email_bestaetigt", label: "E-Mail bestätigt", emoji: "✉️" },
+  { key: "onboarding_komplett", label: "Onboarding fertig", emoji: "📄" },
+  { key: "mitarbeiter_aktiv", label: "Mitarbeiter aktiv", emoji: "🚀" },
 ];
 
 const PHASE_COLOR: Record<Phase, string> = {
   termin_offen: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
   termin_gebucht: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-  ueberfaellig: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+  no_show: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
   interview_laeuft: "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
   wird_geprueft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300",
   angenommen: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-  registriert: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300",
   abgelehnt: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  registriert: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300",
+  email_bestaetigt: "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+  onboarding_komplett: "bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300",
+  mitarbeiter_aktiv: "bg-emerald-500 text-white dark:bg-emerald-600 border-0",
 };
 
-function computePhase(a: any, scheduledAt: Date | null, hasProfile: boolean): Phase {
+type ProfileInfo = {
+  onboarding: string | null;
+  status: string | null;
+  emailConfirmed: boolean;
+  contractSigned: boolean;
+} | null;
+
+function computePhase(a: any, scheduledAt: Date | null, prof: ProfileInfo): Phase {
   const now = Date.now();
   const rec = a.interview_recommendation as string | null;
-  if (hasProfile) return "registriert";
+  // Profile existiert → tiefer im Funnel
+  if (prof) {
+    if (prof.status === "angenommen") return "mitarbeiter_aktiv";
+    if (prof.onboarding === "abgeschlossen" || prof.contractSigned) return "onboarding_komplett";
+    if (prof.emailConfirmed) return "email_bestaetigt";
+    return "registriert";
+  }
+  if (a.booking_status === "no_show") return "no_show";
   if (rec === "invite" || a.status === "akzeptiert") return "angenommen";
   if (rec === "reject" || a.status === "abgelehnt") return "abgelehnt";
   if (a.interview_completed_at) return "wird_geprueft";
   if (a.interview_started_at) return "interview_laeuft";
   if (scheduledAt) {
-    if (scheduledAt.getTime() < now - 30 * 60_000) return "ueberfaellig";
+    if (scheduledAt.getTime() < now - 30 * 60_000 && !a.interview_completed_at) return "no_show";
     return "termin_gebucht";
   }
   return "termin_offen";
