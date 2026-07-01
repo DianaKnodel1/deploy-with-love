@@ -456,8 +456,13 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         return json({ ok: true, reply, ended, history, application_status: ended ? updates.status : undefined, interview_started_at: updates.interview_started_at ?? app.interview_started_at ?? null, invite_mail: inviteMail });
         } catch (e: any) {
           console.error("[interview-chat] fatal:", e?.stack || e);
-          return json({ error: e?.message ? `Serverfehler: ${e.message}` : "Unbekannter Serverfehler" }, 500);
+          const msg = String(e?.message ?? "");
+          const friendly = /upstream_unavailable|empty_ai_response|apinet|gemini|openai|502|503|504|429/i.test(msg)
+            ? "Einen Moment bitte — die Verbindung ist gerade kurz überlastet. Versuchen Sie es in ein paar Sekunden noch einmal."
+            : "Es ist ein technisches Problem aufgetreten. Bitte laden Sie die Seite neu.";
+          return json({ error: friendly, retryable: true }, 503);
         }
+
       },
     },
   },
