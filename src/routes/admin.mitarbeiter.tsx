@@ -145,7 +145,7 @@ function AdminMitarbeiterPage() {
           <PurgeButton />
           <div className="relative w-72">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Name oder E-Mail…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+            <Input placeholder="Name, E-Mail, Telefon…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
           </div>
         </div>
 
