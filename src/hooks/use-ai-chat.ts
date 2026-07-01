@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
+// Non-streaming: eigener TanStack-Route-Endpoint statt Supabase-Edge-Function.
+// Vermeidet Cloudflare-524-Timeouts und läuft direkt auf dem Portal-Server.
+const CHAT_URL = "/api/public/ai-chat";
 
 export interface AiMessage {
   role: "user" | "assistant";
@@ -20,87 +21,34 @@ export function useAiChat() {
     setMessages(updated);
     setIsStreaming(true);
 
-    let assistantSoFar = "";
-
-    const upsert = (chunk: string) => {
-      assistantSoFar += chunk;
-
-      // Check for escalation marker
-      if (assistantSoFar.includes("[ESCALATE]")) {
-        setEscalated(true);
-        assistantSoFar = assistantSoFar.replace("[ESCALATE]", "").trim();
-      }
-
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant") {
-          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
-        }
-        return [...prev, { role: "assistant", content: assistantSoFar }];
-      });
-    };
-
     try {
       const controller = new AbortController();
       abortRef.current = controller;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
       const resp = await fetch(CHAT_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: updated }),
         signal: controller.signal,
       });
 
-      if (!resp.ok || !resp.body) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.error || "Verbindungsfehler");
+      const data = await resp.json().catch(() => ({} as any));
+      if (!resp.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
+
+      let content: string = data.content ?? "";
+      if (content.includes("[ESCALATE]")) {
+        setEscalated(true);
+        content = content.replace("[ESCALATE]", "").trim();
       }
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) upsert(content);
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
-        }
-      }
+      setMessages((prev) => [...prev, { role: "assistant", content }]);
     } catch (e: any) {
       if (e.name !== "AbortError") {
-        const errorMsg = e.message?.includes("429")
-          ? "⏳ Zu viele Anfragen. Bitte warte kurz und versuche es erneut."
-          : e.message?.includes("402")
-          ? "💳 AI-Kontingent aufgebraucht. Bitte kontaktiere deinen Ansprechpartner."
-          : "⚠️ Der KI-Assistent ist gerade nicht verfügbar. Dein Teamleiter hilft dir gerne weiter.";
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: errorMsg },
-        ]);
+        const msg = /429/.test(e.message)
+          ? "⏳ Zu viele Anfragen. Bitte kurz warten."
+          : /402/.test(e.message)
+          ? "💳 AI-Kontingent aufgebraucht. Bitte Admin kontaktieren."
+          : "⚠️ Der KI-Assistent ist gerade nicht erreichbar. Dein Teamleiter hilft dir gerne weiter.";
+        setMessages((prev) => [...prev, { role: "assistant", content: msg }]);
       }
     } finally {
       setIsStreaming(false);
