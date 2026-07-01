@@ -200,11 +200,10 @@ function StartView({ onOpen }: { onOpen: (v: "logs" | "reminders" | "recovery" |
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* KPIs — nur Sent + Pending. "Fehler" wandert in die Problem-Liste unten. */}
+      <div className="grid grid-cols-2 gap-3">
         <Kpi tone="success" icon={CheckCircle2} label="Heute gesendet" value={totals.sent} />
         <Kpi tone={totals.pending > 20 ? "warning" : "neutral"} icon={Clock} label="In Warteschlange" value={totals.pending} />
-        <Kpi tone={totals.failed > 0 ? "danger" : "neutral"} icon={XCircle} label="Fehler heute" value={totals.failed} />
       </div>
 
       {totals.pending > 20 && (
@@ -236,10 +235,15 @@ function StartView({ onOpen }: { onOpen: (v: "logs" | "reminders" | "recovery" |
         </div>
       </section>
 
-      {/* Letzte Fehler */}
+      {/* Probleme — einzige Fehleranzeige (KPI + Liste zusammengeführt) */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold">Letzte Probleme (24 h)</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold">Probleme (24 h)</h2>
+            <Badge variant={totals.failed > 0 ? "destructive" : "secondary"} className="tabular-nums">
+              {totals.failed}
+            </Badge>
+          </div>
           {recentFailures.length > 0 && (
             <Button variant="ghost" size="sm" onClick={() => onOpen("logs")} className="gap-1 text-xs">
               Alles im Protokoll <ChevronRight className="h-3 w-3" />
@@ -270,52 +274,6 @@ function StartView({ onOpen }: { onOpen: (v: "logs" | "reminders" | "recovery" |
                   </li>
                 ))}
               </ul>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Komplette Template-Übersicht (alle gesendeten Mails, nicht nur Flow) */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-base font-semibold">Alle Templates (24 h)</h2>
-            <p className="text-xs text-muted-foreground">Jede tatsächlich verschickte Mail-Art mit Zahlen — auch interne/system.</p>
-          </div>
-        </div>
-        <Card>
-          <CardContent className="p-0">
-            {Object.keys(statsByTemplate).length === 0 ? (
-              <div className="px-4 py-6 text-center text-xs text-muted-foreground">
-                {loading ? "Lade…" : "In den letzten 24 h wurde nichts verschickt."}
-              </div>
-            ) : (
-              <table className="w-full text-xs">
-                <thead className="bg-muted/30 text-muted-foreground">
-                  <tr>
-                    <th className="text-left px-4 py-2 font-medium">Template</th>
-                    <th className="text-right px-3 py-2 font-medium">Gesendet</th>
-                    <th className="text-right px-3 py-2 font-medium">Pending</th>
-                    <th className="text-right px-3 py-2 font-medium">Fehler</th>
-                    <th className="text-right px-4 py-2 font-medium">Zuletzt</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {Object.entries(statsByTemplate)
-                    .sort(([, a], [, b]) => (b.sent24 + b.failed24) - (a.sent24 + a.failed24))
-                    .map(([tpl, s]) => (
-                      <tr key={tpl} className="hover:bg-muted/20">
-                        <td className="px-4 py-2 font-mono text-[11px]">{tpl}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-emerald-700 dark:text-emerald-300">{s.sent24}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{s.pending || "—"}</td>
-                        <td className={`px-3 py-2 text-right tabular-nums ${s.failed24 > 0 ? "text-rose-700 dark:text-rose-300 font-semibold" : "text-muted-foreground"}`}>{s.failed24 || "—"}</td>
-                        <td className="px-4 py-2 text-right text-muted-foreground">
-                          {s.lastSent ? new Date(s.lastSent).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
             )}
           </CardContent>
         </Card>
