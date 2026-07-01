@@ -53,7 +53,7 @@ function InterviewPage() {
   const [consent, setConsent] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [remainingSec, setRemainingSec] = useState<number>(900);
-  const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null; recruiter_name?: string } | null>(null);
+  const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null; recruiter_name?: string; recruiter_avatar_url?: string | null } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const spokenIdxRef = useRef<number>(-1);
@@ -232,28 +232,44 @@ function InterviewPage() {
     );
   }
 
+  const recruiterName = branding?.recruiter_name || "Sabine Schneider";
+  const avatarUrl = branding?.recruiter_avatar_url || null;
+  const initials = recruiterName.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
+  const status = loading ? "tippt…" : speaking ? "spricht…" : ended ? "Gespräch beendet" : "hört zu";
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
-      <header className="border-b border-border bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-8 object-contain" />}
-            <div>
-              <h1 className="text-sm font-semibold text-foreground">Bewerbungsgespräch mit {company}</h1>
-              <p className="text-xs text-muted-foreground">Bewerbungsgespräch · max. 15 Minuten</p>
-            </div>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-black">
+      {/* Call-Header — WhatsApp/Skype Stil */}
+      <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-border sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="relative shrink-0">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={recruiterName} className="h-11 w-11 rounded-full object-cover" />
+            ) : (
+              <div className="h-11 w-11 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ background: primary }}>
+                {initials}
+              </div>
+            )}
+            {!ended && (
+              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[15px] font-semibold text-foreground truncate">{recruiterName}</h1>
+            <p className={`text-xs truncate ${speaking ? "" : "text-muted-foreground"}`} style={speaking ? { color: primary } : undefined}>
+              {status} · {company}
+            </p>
           </div>
           {startedAt && !ended && (
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleMute}
                 title={muted ? "Ton einschalten" : "Ton ausschalten"}
-                className={`p-2 rounded-lg hover:bg-muted transition ${speaking ? "text-primary animate-pulse" : "text-muted-foreground"}`}
-                style={speaking ? { color: primary } : undefined}
+                className="p-2 rounded-full hover:bg-muted transition text-muted-foreground"
               >
                 {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
               </button>
-              <div className={`text-sm font-mono tabular-nums ${remainingSec < 60 ? "text-destructive" : "text-muted-foreground"}`}>
+              <div className={`text-xs font-mono tabular-nums px-2 py-1 rounded-full ${remainingSec < 60 ? "bg-destructive/10 text-destructive" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"}`}>
                 {mm}:{ss}
               </div>
             </div>
@@ -261,37 +277,82 @@ function InterviewPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 flex flex-col">
+      {/* Speaking-Zone: Großer Avatar mit Puls, wenn KI spricht */}
+      {!ended && (
+        <div className="max-w-2xl w-full mx-auto px-4 pt-6 pb-2 flex flex-col items-center">
+          <div className="relative">
+            {speaking && (
+              <>
+                <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ background: primary }} />
+                <span className="absolute -inset-3 rounded-full animate-pulse opacity-20" style={{ background: primary }} />
+              </>
+            )}
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={recruiterName} className="relative h-24 w-24 rounded-full object-cover ring-4 ring-white dark:ring-slate-900 shadow-lg" />
+            ) : (
+              <div className="relative h-24 w-24 rounded-full flex items-center justify-center text-white text-2xl font-semibold ring-4 ring-white dark:ring-slate-900 shadow-lg" style={{ background: primary }}>
+                {initials}
+              </div>
+            )}
+          </div>
+          {/* Wellenanimation */}
+          <div className={`mt-3 flex items-end gap-1 h-6 ${speaking ? "opacity-100" : "opacity-30"}`}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span
+                key={i}
+                className="w-1 rounded-full"
+                style={{
+                  background: primary,
+                  height: speaking ? `${8 + ((i * 7) % 16)}px` : "4px",
+                  animation: speaking ? `waveBar 0.9s ease-in-out ${i * 0.12}s infinite` : "none",
+                }}
+              />
+            ))}
+          </div>
+          <style>{`@keyframes waveBar { 0%,100% { transform: scaleY(0.4);} 50% { transform: scaleY(1.8);} }`}</style>
+        </div>
+      )}
+
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 pb-4 flex flex-col">
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+          <div className="my-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 mb-4 min-h-[300px]">
+        {/* Chat-Verlauf im WhatsApp-Stil */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-1.5 py-3 min-h-[200px]">
           {initializing && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin" style={{ color: primary }} />
             </div>
           )}
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : "bg-white dark:bg-slate-800 border border-border rounded-bl-sm"
-                }`}
-                style={m.role === "user" ? { background: primary } : undefined}
-              >
-                {m.text}
+          {messages.map((m, i) => {
+            const prev = messages[i - 1];
+            const grouped = prev && prev.role === m.role;
+            return (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} ${grouped ? "mt-0.5" : "mt-2"}`}>
+                <div
+                  className={`max-w-[78%] px-3.5 py-2 text-[14.5px] leading-snug whitespace-pre-wrap shadow-sm ${
+                    m.role === "user"
+                      ? "text-white rounded-2xl rounded-br-md"
+                      : "bg-white dark:bg-slate-800 text-foreground rounded-2xl rounded-bl-md border border-border/50"
+                  }`}
+                  style={m.role === "user" ? { background: "#10b981" } : undefined}
+                >
+                  {m.text}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {loading && !ended && (
-            <div className="flex justify-start">
-              <div className="bg-white dark:bg-slate-800 border border-border rounded-2xl rounded-bl-sm px-4 py-2.5">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <div className="flex justify-start mt-2">
+              <div className="bg-white dark:bg-slate-800 border border-border/50 rounded-2xl rounded-bl-md px-3.5 py-2.5 shadow-sm">
+                <div className="flex gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+                </div>
               </div>
             </div>
           )}
@@ -302,11 +363,11 @@ function InterviewPage() {
             <WelcomeAccepted
               company={company}
               primary={primary}
-              recruiter={branding?.recruiter_name || "Sabine Schneider"}
+              recruiter={recruiterName}
               portal={portal}
             />
           ) : (
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-border p-6 text-center space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-border p-6 text-center space-y-3">
               <CheckCircle2 className="h-10 w-10 mx-auto" style={{ color: primary }} />
               <h2 className="text-lg font-semibold">Vielen Dank für das Gespräch!</h2>
               <p className="text-sm text-muted-foreground">
@@ -315,29 +376,39 @@ function InterviewPage() {
             </div>
           )
         ) : (
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-                placeholder="Ihre Antwort…"
-                disabled={loading || initializing}
-                className="flex-1 px-4 py-3 rounded-xl border border-border bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-              />
-              <Button onClick={send} disabled={loading || initializing || !input.trim()} size="lg" style={{ background: primary }}>
+          <div className="sticky bottom-0 bg-transparent pt-2">
+            <div className="flex items-end gap-2">
+              <div className="flex-1 bg-white dark:bg-slate-900 rounded-full border border-border shadow-sm flex items-center px-4 py-2">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                  placeholder="Nachricht schreiben…"
+                  disabled={loading || initializing}
+                  className="flex-1 bg-transparent text-[15px] focus:outline-none placeholder:text-muted-foreground"
+                />
+              </div>
+              <button
+                onClick={send}
+                disabled={loading || initializing || !input.trim()}
+                className="h-11 w-11 rounded-full flex items-center justify-center text-white shadow-sm transition disabled:opacity-40"
+                style={{ background: primary }}
+                aria-label="Senden"
+              >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
+              </button>
             </div>
             {messages.length > 2 && (
-              <button
-                onClick={endInterview}
-                disabled={loading}
-                className="text-xs text-muted-foreground hover:text-foreground underline disabled:opacity-50"
-              >
-                Gespräch beenden
-              </button>
+              <div className="text-center mt-2">
+                <button
+                  onClick={endInterview}
+                  disabled={loading}
+                  className="text-xs text-muted-foreground hover:text-destructive underline disabled:opacity-50"
+                >
+                  Gespräch beenden
+                </button>
+              </div>
             )}
           </div>
         )}
