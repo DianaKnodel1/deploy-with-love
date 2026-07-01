@@ -86,6 +86,10 @@ function VoiceInterviewPage() {
   const [remainingSec, setRemainingSec] = useState(600);
   const MAX_SEC = 600;
   const finalizedRef = useRef(false);
+  const startedAtRef = useRef<number | null>(null);
+  const transcriptCountRef = useRef(0);
+  useEffect(() => { startedAtRef.current = startedAt; }, [startedAt]);
+  useEffect(() => { transcriptCountRef.current = transcript.length; }, [transcript.length]);
 
   // Branding-Vorschau (Logo/Farben) für hübsche Header-Karte
   useEffect(() => {
