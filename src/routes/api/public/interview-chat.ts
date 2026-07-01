@@ -160,25 +160,36 @@ async function callGateway(messages: Array<{ role: string; content: string }>, o
     const body: any = { contents };
     if (systemMsgs) body.system_instruction = { parts: [{ text: systemMsgs }] };
     if (opts?.jsonMode) body.generationConfig = { responseMimeType: "application/json" };
-    const res = await fetch(nativeUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-    });
+
+    // Retry bei transienten 5xx / 429 vom Upstream (apinet → openai/gemini).
+    let res!: Response;
+    let lastErr = "";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      res = await fetch(nativeUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) break;
+      if (res.status < 500 && res.status !== 429) break;
+      lastErr = (await res.text()).slice(0, 200);
+      console.warn(`[interview-chat] apinet-gemini ${res.status} attempt ${attempt + 1}: ${lastErr}`);
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    }
     if (!res.ok) {
-      const errTxt = await res.text();
-      throw new Error(`apinet-gemini ${res.status}: ${errTxt.slice(0, 400)}`);
+      throw new Error(`upstream_unavailable:${res.status}`);
     }
     const data = (await res.json()) as any;
     const parts = data?.candidates?.[0]?.content?.parts;
     const text = Array.isArray(parts) ? parts.map((p: any) => p?.text ?? "").join("") : "";
-    if (!text) throw new Error("Keine AI-Antwort erhalten (apinet-gemini)");
+    if (!text) throw new Error("empty_ai_response");
     return text;
   }
+
 
   const body: any = { model, messages };
   if (opts?.jsonMode) body.response_format = { type: "json_object" };
