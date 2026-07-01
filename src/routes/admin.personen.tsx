@@ -140,7 +140,7 @@ function AdminPersonenPage() {
           phase,
           lastActivity: prof.created_at || a.created_at,
           source: a.source_slug || null,
-          detailUrl: `/admin/employees/${prof.user_id}`,
+          detailUrl: `/admin/personen/${prof.user_id}`,
         });
         continue;
       }
@@ -154,7 +154,7 @@ function AdminPersonenPage() {
         phase,
         lastActivity: a.created_at,
         source: a.source_slug || null,
-        detailUrl: `/admin/applications/${a.id}`,
+        detailUrl: `/admin/personen/${a.id}`,
       });
     }
 
@@ -173,7 +173,7 @@ function AdminPersonenPage() {
         phase,
         lastActivity: p.created_at,
         source: null,
-        detailUrl: `/admin/employees/${p.user_id}`,
+        detailUrl: `/admin/personen/${p.user_id}`,
       });
     }
 
