@@ -114,7 +114,7 @@ export function AdminCommandPalette() {
             <CommandSeparator />
             <CommandGroup heading="Bewerbungen">
               {matchedApplications.map((a: any) => (
-                <CommandItem key={a.id} onSelect={() => go(`/admin/applications/${a.id}`)}>
+                <CommandItem key={a.id} onSelect={() => go(`/admin/personen/${a.id}`)}>
                   <FileText className="h-4 w-4 mr-2" />
                   <span>{a.full_name}</span>
                   <span className="ml-2 text-xs text-muted-foreground">{a.email}</span>
