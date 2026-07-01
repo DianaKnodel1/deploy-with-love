@@ -120,6 +120,54 @@ function InterviewPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
+  // TTS: letzte Assistant-Nachricht vorlesen
+  useEffect(() => {
+    if (muted || ended || initializing) return;
+    let lastIdx = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") { lastIdx = i; break; }
+    }
+    if (lastIdx < 0 || lastIdx <= spokenIdxRef.current) return;
+    // Bei Init nicht die gesamte Historie vorlesen
+    if (spokenIdxRef.current === -1 && lastIdx < messages.length - 1) {
+      spokenIdxRef.current = lastIdx;
+      return;
+    }
+    const text = messages[lastIdx].text;
+    spokenIdxRef.current = lastIdx;
+    let cancelled = false;
+    (async () => {
+      try {
+        setSpeaking(true);
+        const res = await fetch("/api/public/tts-test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (!res.ok || cancelled) return;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        if (audioRef.current) { audioRef.current.pause(); }
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => { setSpeaking(false); URL.revokeObjectURL(url); };
+        audio.onerror = () => { setSpeaking(false); URL.revokeObjectURL(url); };
+        await audio.play().catch(() => { setSpeaking(false); });
+      } catch {
+        setSpeaking(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [messages, muted, ended, initializing]);
+
+  function toggleMute() {
+    setMuted((m) => {
+      const next = !m;
+      if (next && audioRef.current) { audioRef.current.pause(); setSpeaking(false); }
+      return next;
+    });
+  }
+
   async function send() {
     const text = input.trim();
     if (!text || loading || ended) return;
