@@ -365,7 +365,7 @@ function AdminBewerbungenPage() {
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vermittlung</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Fortschritt</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Eingegangen</th>
                   <th className="px-4 py-2.5"></th>
                 </tr>
@@ -375,14 +375,19 @@ function AdminBewerbungenPage() {
                   const meta = PHASES.find(x => x.key === r.phase);
                   return (
                     <tr key={r.id} className="hover:bg-muted/20">
-                      <td className="px-4 py-2.5 font-medium">{r.name}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{r.phone}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{r.email}</td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.source ?? "—"}</td>
-                      <td className="px-4 py-2.5">
-                        <Badge className={PHASE_COLOR[r.phase]}>
-                          <span className="mr-1">{meta?.emoji}</span>{meta?.label}
-                        </Badge>
+                      <td className="px-4 py-3 font-medium">
+                        <div>{r.name}</div>
+                        <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                          <span className={`inline-block px-1.5 py-0.5 rounded ${PHASE_COLOR[r.phase]}`}>
+                            {meta?.emoji} {meta?.label}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{r.source ?? "—"}</td>
+                      <td className="px-4 py-3">
+                        <StageTimeline stages={phaseToStages(r.phase)} />
                       </td>
                       <td className="px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
