@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/EmptyState";
 import { Users, Search, ExternalLink, Trash2 } from "lucide-react";
 import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders";
+import { StageTimeline, type Stage } from "@/components/StageTimeline";
 import { deleteOrphanApplications } from "@/lib/admin-delete.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
