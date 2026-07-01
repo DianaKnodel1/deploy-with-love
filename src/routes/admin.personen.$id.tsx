@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/EmptyState";
 import {
   ArrowLeft, User, CalendarDays, Mic, Mail, UserCheck, FileText,
-  ClipboardList, CheckCircle2, XCircle, Clock, ExternalLink, HelpCircle,
+  ClipboardList, CheckCircle2, XCircle, Clock, HelpCircle, MapPin,
+  Phone, CreditCard, ShieldCheck, BriefcaseBusiness,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/SkeletonLoaders";
 
@@ -37,10 +38,30 @@ function fmt(d?: string | Date | null) {
   } catch { return ""; }
 }
 
+function fmtDate(d?: string | Date | null) {
+  if (!d) return "—";
+  try {
+    return new Date(d).toLocaleDateString("de-DE", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+    });
+  } catch { return "—"; }
+}
+
+function value(v: unknown) {
+  const s = v == null ? "" : String(v).trim();
+  return s || "—";
+}
+
+function splitName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return { first: parts[0] || "—", last: "—" };
+  return { first: parts.slice(0, -1).join(" "), last: parts[parts.length - 1] };
+}
+
 function PersonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { applications, profiles, allBookings, assignments, loading } = useAdminData();
+  const { applications, profiles, kycList, allBookings, assignments, loading } = useAdminData();
 
   const resolved = useMemo(() => {
     const app = (applications as any[]).find((a) => a.id === id);
@@ -76,6 +97,11 @@ function PersonDetailPage() {
     return (assignments as any[]).filter((a) => a.user_id === resolved.prof.user_id);
   }, [resolved.prof, assignments]);
 
+  const kyc = useMemo(() => {
+    if (!resolved.prof?.user_id) return null;
+    return (kycList as any[]).find((k) => k.user_id === resolved.prof.user_id) ?? null;
+  }, [resolved.prof, kycList]);
+
   if (loading) {
     return <div className="p-6"><TableSkeleton /></div>;
   }
@@ -83,7 +109,7 @@ function PersonDetailPage() {
   if (!resolved.app && !resolved.prof) {
     return (
       <div className="p-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/admin/personen")} className="mb-4 gap-1.5">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/admin/bewerbungen")} className="mb-4 gap-1.5">
           <ArrowLeft className="h-3.5 w-3.5" /> Zurück
         </Button>
         <EmptyState icon={User} title="Person nicht gefunden" description="Diese ID konnte weder Bewerbung noch Mitarbeiter zugeordnet werden." />
@@ -100,6 +126,11 @@ function PersonDetailPage() {
     app?.email ||
     "—";
   const email = prof?.email || app?.email || "—";
+  const phone = prof?.phone || app?.phone || "—";
+  const split = splitName(name === "—" ? "" : name);
+  const firstName = app?.first_name || prof?.first_name || split.first;
+  const lastName = app?.last_name || prof?.last_name || split.last;
+  const backTo = prof ? "/admin/mitarbeiter" : "/admin/bewerbungen";
 
   const scheduledAt =
     (booking?.booking_date && booking?.booking_time
@@ -276,10 +307,10 @@ function PersonDetailPage() {
   });
 
   return (
-    <div className="p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/admin/personen")} className="gap-1.5">
-          <ArrowLeft className="h-3.5 w-3.5" /> Zurück zu Personen
+        <Button variant="ghost" size="sm" onClick={() => navigate(backTo)} className="gap-1.5">
+          <ArrowLeft className="h-3.5 w-3.5" /> Zurück zu {prof ? "Mitarbeiter" : "Bewerbungen"}
         </Button>
         <div />
 
@@ -294,6 +325,7 @@ function PersonDetailPage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-heading font-bold truncate">{name}</h1>
             <p className="text-sm text-muted-foreground truncate">{email}</p>
+            <p className="text-xs text-muted-foreground truncate">{phone}</p>
           </div>
           <div className="flex flex-col gap-1 items-end">
             {prof && <Badge className="bg-indigo-100 text-indigo-700 border-0 text-[10px]">👤 Mitarbeiter</Badge>}
@@ -301,6 +333,75 @@ function PersonDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <InfoSection
+          icon={User}
+          title="Persönliche Daten"
+          items={[
+            ["Vorname", firstName],
+            ["Nachname", lastName],
+            ["E-Mail", email],
+            ["Telefonnummer", phone],
+            ["Staatsangehörigkeit", prof?.nationality || app?.nationality],
+            ["Geburtsort", prof?.birth_place || app?.birth_place],
+            ["Geburtsdatum", fmtDate(prof?.birth_date || app?.birth_date)],
+          ]}
+        />
+        <InfoSection
+          icon={MapPin}
+          title="Anschrift"
+          items={[
+            ["Anschrift", prof?.address || app?.address],
+            ["Straße", prof?.street],
+            ["Postleitzahl", prof?.zip_code || app?.postal_code],
+            ["Ort", prof?.city || app?.city],
+            ["Wohnhaft seit", fmtDate(prof?.living_since)],
+            ["Voradresse", prof?.previous_address],
+          ]}
+        />
+        <InfoSection
+          icon={CreditCard}
+          title="Lohn & Versicherung"
+          items={[
+            ["SV-Nummer", prof?.social_security_number],
+            ["Steuer-ID", prof?.tax_number],
+            ["IBAN", prof?.iban],
+            ["Krankenversicherung", prof?.health_insurance],
+            ["Familienstand", prof?.family_status],
+          ]}
+        />
+        <InfoSection
+          icon={BriefcaseBusiness}
+          title="Beschäftigung"
+          items={[
+            ["Status", prof?.status || app?.status],
+            ["Onboarding", prof?.onboarding_status],
+            ["Beschäftigungsart", prof?.employment_type],
+            ["Startdatum", fmtDate(prof?.employment_start_date)],
+            ["Registriert", fmt(prof?.created_at)],
+          ]}
+        />
+        <InfoSection
+          icon={ShieldCheck}
+          title="Ausweis / Prüfung"
+          items={[
+            ["KYC-Status", kyc?.status],
+            ["Ausweis Vorderseite", kyc?.id_front_url ? <FileLink href={kyc.id_front_url} label="Öffnen" /> : "—"],
+            ["Ausweis Rückseite", kyc?.id_back_url ? <FileLink href={kyc.id_back_url} label="Öffnen" /> : "—"],
+            ["Selfie", kyc?.selfie_url ? <FileLink href={kyc.selfie_url} label="Öffnen" /> : "—"],
+          ]}
+        />
+        <InfoSection
+          icon={FileText}
+          title="Vertrag"
+          items={[
+            ["Unterschrieben", prof?.contract_signed_at ? fmt(prof.contract_signed_at) : "—"],
+            ["Signatur", prof?.signature_url ? <FileLink href={prof.signature_url} label="Öffnen" /> : "—"],
+            ["Admin-Notizen", prof?.admin_notes],
+          ]}
+        />
+      </div>
 
       {/* Timeline */}
       <div className="relative">
@@ -312,6 +413,37 @@ function PersonDetailPage() {
         </ol>
       </div>
     </div>
+  );
+}
+
+function InfoSection({ icon: Icon, title, items }: { icon: any; title: string; items: Array<[string, React.ReactNode]> }) {
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-full bg-primary/10 grid place-items-center">
+            <Icon className="h-4 w-4 text-primary" />
+          </div>
+          <h2 className="font-semibold text-sm">{title}</h2>
+        </div>
+        <dl className="space-y-2">
+          {items.map(([label, raw]) => (
+            <div key={label} className="grid grid-cols-[120px_1fr] gap-3 text-xs">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="font-medium text-foreground break-words">{typeof raw === "string" ? value(raw) : raw}</dd>
+            </div>
+          ))}
+        </dl>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FileLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+      {label}
+    </a>
   );
 }
 

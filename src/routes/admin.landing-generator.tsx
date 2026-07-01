@@ -531,6 +531,8 @@ document.addEventListener('submit', function(e){
           geschaeftsfuehrer: b.geschaeftsfuehrer, impressum: b.impressum,
           api_endpoint: b.api_endpoint, portal_url: b.portal_url, tenant_id: b.tenant_id,
           seo_title: b.seo_title, seo_description: b.seo_description, seo_image: b.seo_image,
+          recruiter_name: b.recruiter_name || "Sabine Schneider",
+          recruiter_avatar_url: b.recruiter_avatar_url || null,
         },
         slots: slotValues,
         flow_type: branding.flow_type,
@@ -589,8 +591,8 @@ document.addEventListener('submit', function(e){
         interview_voice_id: row.interview_voice_id ?? "XrExE9yKIg1WjnnlVkGX",
         interview_system_prompt: row.interview_system_prompt ?? "",
         linked_fasttrack_landing_id: row.linked_fasttrack_landing_id ?? "",
-        recruiter_name: row.recruiter_name ?? "Sabine Schneider",
-        recruiter_avatar_url: row.recruiter_avatar_url ?? "",
+        recruiter_name: row.recruiter_name ?? row.branding?.recruiter_name ?? "Sabine Schneider",
+        recruiter_avatar_url: row.recruiter_avatar_url ?? row.branding?.recruiter_avatar_url ?? "",
         recruiter_avatar_data_url: "",
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
