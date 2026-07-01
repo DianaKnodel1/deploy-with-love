@@ -110,10 +110,14 @@ function AdminMitarbeiterPage() {
             </p>
           </div>
         </div>
-        <div className="relative w-72">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Name oder E-Mail…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+        <div className="flex items-center gap-2">
+          <PurgeButton />
+          <div className="relative w-72">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Name oder E-Mail…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+          </div>
         </div>
+
       </div>
 
       <div className="flex flex-wrap gap-1.5">
