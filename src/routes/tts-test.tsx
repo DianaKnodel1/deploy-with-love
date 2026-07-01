@@ -8,13 +8,22 @@ export const Route = createFileRoute("/tts-test")({
   }),
 });
 
-const VOICES = ["alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse"];
+const VOICES: Array<{ id: string; label: string }> = [
+  { id: "", label: "Standard (aus AI Settings)" },
+  { id: "EXAVITQu4vr4xnSDxMaL", label: "Sarah (weiblich, warm)" },
+  { id: "XrExE9yKIg1WjnnlVkGX", label: "Matilda (weiblich, freundlich)" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", label: "Alice (weiblich, klar)" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", label: "Laura (weiblich)" },
+  { id: "cgSgspJ2msm6clMCkdW9", label: "Jessica (weiblich)" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", label: "George (männlich)" },
+  { id: "onwK4e9ZLuTAKqWW03F9", label: "Daniel (männlich)" },
+];
 
 function TtsTest() {
   const [text, setText] = useState(
     "Hallo, hier spricht Sabine Schneider vom Personal-Team. Schön, dass Sie sich bei uns beworben haben.",
   );
-  const [voice, setVoice] = useState("sage");
+  const [voice, setVoice] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -26,7 +35,7 @@ function TtsTest() {
       const res = await fetch("/api/public/tts-test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice }),
+        body: JSON.stringify({ text, voiceId: voice }),
       });
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();
@@ -62,8 +71,8 @@ function TtsTest() {
             onChange={(e) => setVoice(e.target.value)}
           >
             {VOICES.map((v) => (
-              <option key={v} value={v}>
-                {v}
+              <option key={v.id} value={v.id}>
+                {v.label}
               </option>
             ))}
           </select>
