@@ -279,7 +279,8 @@ export const getCohortStats = createServerFn({ method: "POST" })
       avg_conversion: pct(T.angenommen, T.beworben),
     };
 
-    return { rows, totals, error: null as string | null };
+    const by_source = Array.from(bySource.values()).sort((a, b) => b.beworben - a.beworben);
+    return { rows, totals, by_source, error: null as string | null };
   });
 
 function pct(n: number, d: number): number {
