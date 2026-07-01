@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/EmptyState";
 import { Users, Search, ExternalLink, Trash2 } from "lucide-react";
 import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders";
+import { StageTimeline, type Stage } from "@/components/StageTimeline";
 import { deleteOrphanApplications } from "@/lib/admin-delete.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -87,6 +88,44 @@ function computePhase(a: any, scheduledAt: Date | null, prof: ProfileInfo): Phas
     return "termin_gebucht";
   }
   return "termin_offen";
+}
+
+/** 5-Punkt-Funnel für die Timeline pro Zeile. */
+function phaseToStages(phase: Phase): Stage[] {
+  // 1 Termin  2 Interview  3 Entscheidung  4 Registriert  5 Onboarding
+  const order: Phase[] = [
+    "termin_offen","termin_gebucht","no_show",
+    "interview_laeuft","wird_geprueft",
+    "angenommen","abgelehnt",
+    "registriert","email_bestaetigt",
+    "onboarding_komplett","mitarbeiter_aktiv",
+  ];
+  const idx = order.indexOf(phase);
+  const isFailed = phase === "abgelehnt" || phase === "no_show";
+
+  // Progress-Level: 0=Termin, 1=Interview, 2=Entscheidung, 3=Registriert, 4=Onboarding
+  let lvl = 0;
+  if (idx >= order.indexOf("termin_gebucht")) lvl = 1;
+  if (idx >= order.indexOf("interview_laeuft")) lvl = 2;
+  if (idx >= order.indexOf("angenommen")) lvl = 3;
+  if (idx >= order.indexOf("registriert")) lvl = 4;
+  if (idx >= order.indexOf("onboarding_komplett")) lvl = 5;
+
+  const cur = phase === "termin_offen" ? 0
+    : phase === "termin_gebucht" ? 0
+    : phase === "no_show" ? 1
+    : phase === "interview_laeuft" || phase === "wird_geprueft" ? 1
+    : phase === "angenommen" || phase === "abgelehnt" ? 2
+    : phase === "registriert" || phase === "email_bestaetigt" ? 3
+    : 4;
+
+  const labels = ["Termin", "Interview", "Zusage", "Registriert", "Onboarding"];
+  return labels.map((label, i) => {
+    let state: Stage["state"] = "todo";
+    if (i < lvl) state = "done";
+    else if (i === cur) state = isFailed ? "failed" : "current";
+    return { key: label, label, state };
+  });
 }
 
 const searchSchema = z.object({
@@ -326,7 +365,7 @@ function AdminBewerbungenPage() {
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vermittlung</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Fortschritt</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Eingegangen</th>
                   <th className="px-4 py-2.5"></th>
                 </tr>
@@ -336,14 +375,19 @@ function AdminBewerbungenPage() {
                   const meta = PHASES.find(x => x.key === r.phase);
                   return (
                     <tr key={r.id} className="hover:bg-muted/20">
-                      <td className="px-4 py-2.5 font-medium">{r.name}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{r.phone}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{r.email}</td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.source ?? "—"}</td>
-                      <td className="px-4 py-2.5">
-                        <Badge className={PHASE_COLOR[r.phase]}>
-                          <span className="mr-1">{meta?.emoji}</span>{meta?.label}
-                        </Badge>
+                      <td className="px-4 py-3 font-medium">
+                        <div>{r.name}</div>
+                        <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                          <span className={`inline-block px-1.5 py-0.5 rounded ${PHASE_COLOR[r.phase]}`}>
+                            {meta?.emoji} {meta?.label}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{r.source ?? "—"}</td>
+                      <td className="px-4 py-3">
+                        <StageTimeline stages={phaseToStages(r.phase)} />
                       </td>
                       <td className="px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
