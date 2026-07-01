@@ -114,8 +114,8 @@ function VoiceInterviewPage() {
       // (ElevenLabs: Overrides für first_message / system_prompt / language / voice
       // müssen im Agent unter "Security" freigegeben sein). Nicht als "Gespräch
       // beendet" anzeigen, sondern klare Fehlermeldung geben.
-      const elapsed = startedAt ? (Date.now() - startedAt) / 1000 : 0;
-      if (transcript.length === 0 && elapsed < 4) {
+      const elapsed = startedAtRef.current ? (Date.now() - startedAtRef.current) / 1000 : 0;
+      if (transcriptCountRef.current === 0 && elapsed < 4) {
         setError(
           "Die Verbindung zum Personal-Assistenten wurde direkt wieder getrennt. " +
           "Bitte in ElevenLabs (Agent → Security) die Overrides für first_message, " +
