@@ -21,12 +21,14 @@ export const Route = createFileRoute("/admin/email-center")({
 
 // Aktive Templates im neuen Flow (Bewerbung -> Interview -> Onboarding).
 const ACTIVE_TEMPLATES: { key: string; label: string; group: string; trigger: string }[] = [
-  { key: "invitation",                       label: "Einladung / Willkommen",       group: "Onboarding", trigger: "Sofort nach KI-Annahme" },
-  { key: "appointment_reminder",             label: "Termin-Reminder (No-Show)",    group: "Reminder",   trigger: "2h / 24h / 72h nach verpasstem Termin" },
-  { key: "reminder_complete_registration",   label: "Registrierung abschließen",    group: "Reminder",   trigger: "Bei offener Registrierung" },
-  { key: "reminder_confirm_email",           label: "E-Mail bestätigen",            group: "Reminder",   trigger: "Bei unbestätigter Mail" },
-  { key: "reminder_no_recent_booking",       label: "30-Min Buchungs-Reminder",     group: "Reminder",   trigger: "Wenn längere Zeit kein Auftrag gebucht" },
-  { key: "chat_reminder",                    label: "Chat-Reminder",                group: "Support",    trigger: "Bei ungelesener Admin-Nachricht" },
+  { key: "invitation",                       label: "Zusage / Herzlichen Glückwunsch", group: "Onboarding", trigger: "Sofort nach positivem KI-Interview" },
+  { key: "reminder_complete_registration",   label: "Registrierung abschließen",    group: "Reminder",   trigger: "3 Reminder – 24h / 48h / 72h nach Zusage" },
+  { key: "reminder_onboarding_incomplete",   label: "Onboarding (Perso/Vertrag)",   group: "Reminder",   trigger: "3 Reminder – nach Registrierung ohne KYC/Vertrag" },
+  { key: "reminder_confirm_email",           label: "E-Mail bestätigen",            group: "Reminder",   trigger: "3 Reminder bei unbestätigter Mail" },
+  { key: "appointment_reminder",             label: "No-Show Interview",            group: "Reminder",   trigger: "3 Reminder – 2h / 24h / 72h nach verpasstem Termin" },
+  { key: "reminder_no_recent_booking",       label: "Keine Buchung (7 Tage)",       group: "Reminder",   trigger: "1 Reminder nach 7 Tagen ohne Auftragsbuchung" },
+  { key: "appointment_30min",                label: "30 Min vor Termin",            group: "Termin",     trigger: "Automatisch 30 Min vor jedem gebuchten Termin" },
+  { key: "chat_reminder",                    label: "Chat-Reminder (manuell)",      group: "Support",    trigger: "Wird vom Admin manuell ausgelöst" },
   { key: "password_reset",                   label: "Passwort zurücksetzen",        group: "Auth",       trigger: "User löst Reset aus" },
 ];
 
