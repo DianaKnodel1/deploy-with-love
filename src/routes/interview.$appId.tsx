@@ -92,19 +92,22 @@ function InterviewPage() {
     return () => { cancelled = true; };
   }, [appId, consent]);
 
-  // Countdown
+  // Countdown — bei 0 automatisch serverseitig beenden (löst Summary + Entscheidung aus)
   useEffect(() => {
     if (!startedAt || ended) return;
-    const tick = () => {
+    const tick = async () => {
       const elapsed = Math.floor((Date.now() - startedAt) / 1000);
       const left = Math.max(0, MAX_SEC - elapsed);
       setRemainingSec(left);
-      if (left === 0 && !ended) setEnded(true);
+      if (left === 0 && !ended) {
+        setEnded(true);
+        try { await postInterview({ applicationId: appId, action: "end" }); } catch { /* ignore */ }
+      }
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [startedAt, ended]);
+  }, [startedAt, ended, appId]);
 
   // Auto-scroll
   useEffect(() => {
