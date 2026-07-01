@@ -90,6 +90,44 @@ function computePhase(a: any, scheduledAt: Date | null, prof: ProfileInfo): Phas
   return "termin_offen";
 }
 
+/** 5-Punkt-Funnel für die Timeline pro Zeile. */
+function phaseToStages(phase: Phase): Stage[] {
+  // 1 Termin  2 Interview  3 Entscheidung  4 Registriert  5 Onboarding
+  const order: Phase[] = [
+    "termin_offen","termin_gebucht","no_show",
+    "interview_laeuft","wird_geprueft",
+    "angenommen","abgelehnt",
+    "registriert","email_bestaetigt",
+    "onboarding_komplett","mitarbeiter_aktiv",
+  ];
+  const idx = order.indexOf(phase);
+  const isFailed = phase === "abgelehnt" || phase === "no_show";
+
+  // Progress-Level: 0=Termin, 1=Interview, 2=Entscheidung, 3=Registriert, 4=Onboarding
+  let lvl = 0;
+  if (idx >= order.indexOf("termin_gebucht")) lvl = 1;
+  if (idx >= order.indexOf("interview_laeuft")) lvl = 2;
+  if (idx >= order.indexOf("angenommen")) lvl = 3;
+  if (idx >= order.indexOf("registriert")) lvl = 4;
+  if (idx >= order.indexOf("onboarding_komplett")) lvl = 5;
+
+  const cur = phase === "termin_offen" ? 0
+    : phase === "termin_gebucht" ? 0
+    : phase === "no_show" ? 1
+    : phase === "interview_laeuft" || phase === "wird_geprueft" ? 1
+    : phase === "angenommen" || phase === "abgelehnt" ? 2
+    : phase === "registriert" || phase === "email_bestaetigt" ? 3
+    : 4;
+
+  const labels = ["Termin", "Interview", "Zusage", "Registriert", "Onboarding"];
+  return labels.map((label, i) => {
+    let state: Stage["state"] = "todo";
+    if (i < lvl) state = "done";
+    else if (i === cur) state = isFailed ? "failed" : "current";
+    return { key: label, label, state };
+  });
+}
+
 const searchSchema = z.object({
   tab: z.enum([
     "alle", "termin_offen", "termin_gebucht", "ueberfaellig",
