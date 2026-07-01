@@ -223,7 +223,7 @@ async function runSummary(messages: Msg[]): Promise<{ summary: string; score: nu
     return {
       summary: String(parsed.summary ?? ""),
       score: Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0))),
-      recommendation: rec === "invite" || rec === "reject" || rec === "unsure" ? rec : "unsure",
+      recommendation: rec === "reject" ? "reject" : "invite",
     };
   } catch {
     return { summary: raw.slice(0, 2000), score: 50, recommendation: "unsure" };
