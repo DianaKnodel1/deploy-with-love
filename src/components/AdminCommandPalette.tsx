@@ -99,7 +99,7 @@ export function AdminCommandPalette() {
             <CommandSeparator />
             <CommandGroup heading="Mitarbeiter">
               {matchedEmployees.map((p: any) => (
-                <CommandItem key={p.user_id} onSelect={() => go(`/admin/employees/${p.user_id}`)}>
+                <CommandItem key={p.user_id} onSelect={() => go(`/admin/personen/${p.user_id}`)}>
                   <Users className="h-4 w-4 mr-2" />
                   <span>{p.full_name ?? "Unbenannt"}</span>
                   {p.email && <span className="ml-2 text-xs text-muted-foreground">{p.email}</span>}
