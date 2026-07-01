@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useParams, useNavigate } from "@/lib/router-compat";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAdminData } from "@/contexts/AdminDataContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ function PersonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { applications, profiles, kycList, allBookings, assignments, loading } = useAdminData();
+  const [kycDocUrls, setKycDocUrls] = useState<Record<string, string>>({});
 
   const resolved = useMemo(() => {
     const app = (applications as any[]).find((a) => a.id === id);
@@ -101,6 +103,30 @@ function PersonDetailPage() {
     if (!resolved.prof?.user_id) return null;
     return (kycList as any[]).find((k) => k.user_id === resolved.prof.user_id) ?? null;
   }, [resolved.prof, kycList]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadKycUrls() {
+      if (!kyc) { setKycDocUrls({}); return; }
+      const fields = ["id_front_url", "id_back_url", "selfie_url"] as const;
+      const entries = await Promise.all(
+        fields
+          .filter((field) => kyc[field])
+          .map(async (field) => {
+            const raw = String(kyc[field]);
+            if (/^https?:\/\//i.test(raw)) return [field, raw] as const;
+            const { data } = await supabase.storage.from("kyc-documents").createSignedUrl(raw, 3600);
+            return [field, data?.signedUrl ?? ""] as const;
+          }),
+      );
+      if (cancelled) return;
+      const next: Record<string, string> = {};
+      for (const [field, url] of entries) if (url) next[field] = url;
+      setKycDocUrls(next);
+    }
+    loadKycUrls();
+    return () => { cancelled = true; };
+  }, [kyc]);
 
   if (loading) {
     return <div className="p-6"><TableSkeleton /></div>;
@@ -387,9 +413,9 @@ function PersonDetailPage() {
           title="Ausweis / Prüfung"
           items={[
             ["KYC-Status", kyc?.status],
-            ["Ausweis Vorderseite", kyc?.id_front_url ? <FileLink href={kyc.id_front_url} label="Öffnen" /> : "—"],
-            ["Ausweis Rückseite", kyc?.id_back_url ? <FileLink href={kyc.id_back_url} label="Öffnen" /> : "—"],
-            ["Selfie", kyc?.selfie_url ? <FileLink href={kyc.selfie_url} label="Öffnen" /> : "—"],
+            ["Ausweis Vorderseite", kyc?.id_front_url ? <FileLink href={kycDocUrls.id_front_url} label={kycDocUrls.id_front_url ? "Öffnen" : "Lädt…"} /> : "—"],
+            ["Ausweis Rückseite", kyc?.id_back_url ? <FileLink href={kycDocUrls.id_back_url} label={kycDocUrls.id_back_url ? "Öffnen" : "Lädt…"} /> : "—"],
+            ["Selfie", kyc?.selfie_url ? <FileLink href={kycDocUrls.selfie_url} label={kycDocUrls.selfie_url ? "Öffnen" : "Lädt…"} /> : "—"],
           ]}
         />
         <InfoSection
@@ -440,6 +466,7 @@ function InfoSection({ icon: Icon, title, items }: { icon: any; title: string; i
 }
 
 function FileLink({ href, label }: { href: string; label: string }) {
+  if (!href) return <span className="text-muted-foreground">{label}</span>;
   return (
     <a href={href} target="_blank" rel="noreferrer" className="text-primary hover:underline">
       {label}
