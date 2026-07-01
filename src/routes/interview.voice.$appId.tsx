@@ -86,6 +86,10 @@ function VoiceInterviewPage() {
   const [remainingSec, setRemainingSec] = useState(600);
   const MAX_SEC = 600;
   const finalizedRef = useRef(false);
+  const startedAtRef = useRef<number | null>(null);
+  const transcriptCountRef = useRef(0);
+  useEffect(() => { startedAtRef.current = startedAt; }, [startedAt]);
+  useEffect(() => { transcriptCountRef.current = transcript.length; }, [transcript.length]);
 
   // Branding-Vorschau (Logo/Farben) für hübsche Header-Karte
   useEffect(() => {
@@ -106,6 +110,19 @@ function VoiceInterviewPage() {
     },
     onDisconnect: async () => {
       if (finalizedRef.current) return;
+      // Fast disconnect ohne jede Nachricht → wahrscheinlich Agent-Konfigurationsfehler
+      // (ElevenLabs: Overrides für first_message / system_prompt / language / voice
+      // müssen im Agent unter "Security" freigegeben sein). Nicht als "Gespräch
+      // beendet" anzeigen, sondern klare Fehlermeldung geben.
+      const elapsed = startedAtRef.current ? (Date.now() - startedAtRef.current) / 1000 : 0;
+      if (transcriptCountRef.current === 0 && elapsed < 4) {
+        setError(
+          "Die Verbindung zum Personal-Assistenten wurde direkt wieder getrennt. " +
+          "Bitte in ElevenLabs (Agent → Security) die Overrides für first_message, " +
+          "system_prompt, language und voice freigeben und erneut versuchen.",
+        );
+        return;
+      }
       finalizedRef.current = true;
       try {
         setFinalizing(true);
