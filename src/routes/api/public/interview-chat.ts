@@ -57,18 +57,19 @@ ENDE DES GESPRÄCHS — verbindlich:
 - Bei unangemessenem Verhalten ebenfalls höflich beenden mit [INTERVIEW_END].`;
 
 
-const SUMMARY_PROMPT = `Du bist ein erfahrener Personalleiter. Bewerte das folgende KI-Bewerbungsgespräch und gib eine kurze, ehrliche Einschätzung ab.
+const SUMMARY_PROMPT = `Du bist ein erfahrener Personalleiter. Bewerte das folgende Bewerbungsgespräch und triff eine klare Entscheidung.
 
-Antworte AUSSCHLIESSLICH als gültiges JSON-Objekt (keine Markdown-Codeblöcke), mit folgenden Feldern:
+WICHTIG — Entscheidungsregel:
+- Ablehnen ("reject") NUR wenn der Bewerber KEINE Zeit hat ODER KEIN echtes Interesse zeigt (verarscht das Gespräch, unangemessene Antworten, offensichtlich nicht ernst gemeint).
+- In ALLEN anderen Fällen: einladen ("invite"). Fehlende Erfahrung, Nervosität, kurze Antworten oder Rechtschreibfehler sind KEIN Ablehnungsgrund — jeder darf mitmachen.
+- "unsure" ist NICHT erlaubt. Triff eine klare Entscheidung.
+
+Antworte AUSSCHLIESSLICH als gültiges JSON-Objekt (keine Markdown-Codeblöcke):
 {
-  "summary": "string (3–6 Sätze, Deutsch, neutral, fasse die Antworten zusammen + nenne Stärken/Schwächen)",
-  "score": number,         // 0–100, Eignung für Versicherungs-/Finanzvermittlung
-  "recommendation": "invite" | "reject" | "unsure"
-}
-
-invite  = empfehlen, einladen
-reject  = nicht empfehlen
-unsure  = unsicher / weiteres Gespräch nötig`;
+  "summary": "string (3–6 Sätze, Deutsch, neutral, fasse die Antworten zusammen)",
+  "score": number,         // 0–100
+  "recommendation": "invite" | "reject"
+}`;
 
 type Msg = { role: "user" | "assistant"; text: string; ts: string };
 
