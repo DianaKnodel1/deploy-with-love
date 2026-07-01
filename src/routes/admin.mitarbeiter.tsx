@@ -30,7 +30,7 @@ export const Route = createFileRoute("/admin/mitarbeiter")({
 });
 
 function AdminMitarbeiterPage() {
-  const { profiles, adminUserIds, loading } = useAdminData();
+  const { profiles, adminUserIds, emailConfirmedUserIds, loading } = useAdminData();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"alle" | "wartet" | "aktiv" | "abgelehnt">("alle");
