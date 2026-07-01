@@ -55,6 +55,10 @@ function InterviewPage() {
   const [remainingSec, setRemainingSec] = useState<number>(900);
   const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null; recruiter_name?: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const spokenIdxRef = useRef<number>(-1);
+  const [muted, setMuted] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
   const MAX_SEC = 900; // 15 Minuten
 
