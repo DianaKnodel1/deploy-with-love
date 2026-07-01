@@ -72,3 +72,47 @@ export const deleteEmployeeAccount = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cleanup: verwaiste Bewerbungen (ohne user_id) älter als N Tage löschen.
+// Mitarbeiter (mit Profile / user_id) bleiben unberührt.
+// ─────────────────────────────────────────────────────────────────────────────
+const CleanupSchema = z.object({
+  older_than_days: z.number().int().min(0).max(3650).default(30),
+  dry_run: z.boolean().default(false),
+});
+
+export const deleteOrphanApplications = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => CleanupSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = supabaseAdmin as any;
+    const cutoff = new Date(Date.now() - data.older_than_days * 86_400_000).toISOString();
+
+    const { data: rows, error: qErr } = await sb
+      .from("applications")
+      .select("id")
+      .is("user_id", null)
+      .lt("created_at", cutoff);
+    if (qErr) throw new Error(qErr.message);
+
+    const ids = (rows ?? []).map((r: any) => r.id);
+    if (data.dry_run) return { ok: true, count: ids.length, deleted: 0 };
+    if (ids.length === 0) return { ok: true, count: 0, deleted: 0 };
+
+    const { error: delErr } = await sb.from("applications").delete().in("id", ids);
+    if (delErr) throw new Error(delErr.message);
+
+    try {
+      await sb.from("activity_log").insert({
+        action: "bewerbungen_cleanup",
+        entity_type: "application",
+        actor_id: context.userId,
+        comment: `${ids.length} verwaiste Bewerbungen gelöscht (>${data.older_than_days} Tage, ohne Registrierung)`,
+      });
+    } catch {}
+
+    return { ok: true, count: ids.length, deleted: ids.length };
+  });
+
