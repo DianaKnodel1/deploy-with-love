@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import {
   ArrowLeft, User, CalendarDays, Mic, Mail, UserCheck, FileText,
   ClipboardList, CheckCircle2, XCircle, Clock, HelpCircle, MapPin,
-  Phone, CreditCard, ShieldCheck, BriefcaseBusiness,
+  CreditCard, ShieldCheck, BriefcaseBusiness,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/SkeletonLoaders";
 
