@@ -173,7 +173,7 @@ function AdminPersonenPage() {
         phase,
         lastActivity: p.created_at,
         source: null,
-        detailUrl: `/admin/employees/${p.user_id}`,
+        detailUrl: `/admin/personen/${p.user_id}`,
       });
     }
 
