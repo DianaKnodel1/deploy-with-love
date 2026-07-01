@@ -29,7 +29,10 @@ const corsHeaders = {
 //   - 3 statt 5 Versuche pro Empfänger+Typ
 //   - 4 statt 3 Tage Mindestabstand
 const MAX_ATTEMPTS = 3;
-const MIN_DAYS_BETWEEN = 4;
+// Abstand vom letzten Reminder zum nächsten (Attempt-Index → Stunden).
+// Reminder 1: 24h nach Trigger, Reminder 2: 48h nach R1, Reminder 3: 72h nach R2.
+const ATTEMPT_HOURS = [24, 48, 72];
+const MIN_DAYS_BETWEEN = 1; // Legacy: nur noch für Cutoff-Queries (>=24h alt).
 const NO_BOOKING_DAYS = 7;
 
 // ─── Quiet Hours (Europe/Berlin) ───
