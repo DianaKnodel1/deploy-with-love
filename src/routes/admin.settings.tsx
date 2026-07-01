@@ -153,6 +153,15 @@ function AdminSettingsPage() {
             <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
           </Card>
         </Link>
+        <Link to="/admin/recovery" className="group">
+          <Card className="hover:border-primary/40 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Domain-Wechsel</CardTitle>
+              <CardDescription className="text-xs">Recovery-Mails an Mitarbeiter nach Domain-Umstellung</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
+          </Card>
+        </Link>
         </div>
 
       <StandardTasksCard />
