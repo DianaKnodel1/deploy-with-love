@@ -81,6 +81,7 @@ function InterviewPage() {
         if (cancelled) return;
         setMessages(data.history ?? []);
         if (data.ended) setEnded(true);
+        if (data.application_status) setAppStatus(data.application_status);
         setStartedAt(data.interview_started_at ? new Date(data.interview_started_at).getTime() : Date.now());
         setInitializing(false);
       } catch (e: any) {
