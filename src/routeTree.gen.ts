@@ -77,6 +77,7 @@ import { Route as ApiPublicCalendlyWebhookRouteImport } from './routes/api/publi
 import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/applications'
 import { Route as ApiPublicApplicationLookupRouteImport } from './routes/api/public/application-lookup'
 import { Route as ApiPublicApplicationByTokenRouteImport } from './routes/api/public/application-by-token'
+import { Route as ApiPublicAiChatRouteImport } from './routes/api/public/ai-chat'
 import { Route as AdminPersonenIdRouteImport } from './routes/admin.personen.$id'
 import { Route as AdminAssignmentsAssignmentIdRouteImport } from './routes/admin.assignments.$assignmentId'
 import { Route as EmployeeTasksAssignmentIdRouteImport } from './routes/_employee/tasks.$assignmentId'
@@ -428,6 +429,11 @@ const ApiPublicApplicationByTokenRoute =
     path: '/api/public/application-by-token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAiChatRoute = ApiPublicAiChatRouteImport.update({
+  id: '/api/public/ai-chat',
+  path: '/api/public/ai-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPersonenIdRoute = AdminPersonenIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -517,6 +523,7 @@ export interface FileRoutesByFullPath {
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/personen/$id': typeof AdminPersonenIdRoute
+  '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
@@ -590,6 +597,7 @@ export interface FileRoutesByTo {
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/personen/$id': typeof AdminPersonenIdRoute
+  '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
@@ -666,6 +674,7 @@ export interface FileRoutesById {
   '/_employee/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
   '/admin/personen/$id': typeof AdminPersonenIdRoute
+  '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
   '/api/public/applications': typeof ApiPublicApplicationsRoute
@@ -742,6 +751,7 @@ export interface FileRouteTypes {
     | '/tasks/$assignmentId'
     | '/admin/assignments/$assignmentId'
     | '/admin/personen/$id'
+    | '/api/public/ai-chat'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
@@ -815,6 +825,7 @@ export interface FileRouteTypes {
     | '/tasks/$assignmentId'
     | '/admin/assignments/$assignmentId'
     | '/admin/personen/$id'
+    | '/api/public/ai-chat'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
@@ -890,6 +901,7 @@ export interface FileRouteTypes {
     | '/_employee/tasks/$assignmentId'
     | '/admin/assignments/$assignmentId'
     | '/admin/personen/$id'
+    | '/api/public/ai-chat'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
     | '/api/public/applications'
@@ -919,6 +931,7 @@ export interface RootRouteChildren {
   BewerbungVerbindenRoute: typeof BewerbungVerbindenRoute
   InterviewAppIdRoute: typeof InterviewAppIdRoute
   BewerbungIndexRoute: typeof BewerbungIndexRoute
+  ApiPublicAiChatRoute: typeof ApiPublicAiChatRoute
   ApiPublicApplicationByTokenRoute: typeof ApiPublicApplicationByTokenRoute
   ApiPublicApplicationLookupRoute: typeof ApiPublicApplicationLookupRoute
   ApiPublicApplicationsRoute: typeof ApiPublicApplicationsRoute
@@ -1411,6 +1424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicApplicationByTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ai-chat': {
+      id: '/api/public/ai-chat'
+      path: '/api/public/ai-chat'
+      fullPath: '/api/public/ai-chat'
+      preLoaderRoute: typeof ApiPublicAiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/personen/$id': {
       id: '/admin/personen/$id'
       path: '/$id'
@@ -1598,6 +1618,7 @@ const rootRouteChildren: RootRouteChildren = {
   BewerbungVerbindenRoute: BewerbungVerbindenRoute,
   InterviewAppIdRoute: InterviewAppIdRoute,
   BewerbungIndexRoute: BewerbungIndexRoute,
+  ApiPublicAiChatRoute: ApiPublicAiChatRoute,
   ApiPublicApplicationByTokenRoute: ApiPublicApplicationByTokenRoute,
   ApiPublicApplicationLookupRoute: ApiPublicApplicationLookupRoute,
   ApiPublicApplicationsRoute: ApiPublicApplicationsRoute,
