@@ -95,7 +95,7 @@ function AdminMitarbeiterPage() {
       if (tab === "aktiv" && r.status !== "angenommen") return false;
       if (tab === "abgelehnt" && r.status !== "abgelehnt") return false;
       if (!ql) return true;
-      return r.name.toLowerCase().includes(ql) || r.email.toLowerCase().includes(ql);
+      return r.name.toLowerCase().includes(ql) || r.email.toLowerCase().includes(ql) || r.phone.toLowerCase().includes(ql);
     });
   }, [rows, q, tab]);
 
