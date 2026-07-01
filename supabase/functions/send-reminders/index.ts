@@ -286,8 +286,10 @@ async function canSend(
 
   if (sentLogs.length > 0) {
     const lastAt = new Date(sentLogs[0].sent_at).getTime();
-    const ageDays = (Date.now() - lastAt) / (1000 * 60 * 60 * 24);
-    if (ageDays < MIN_DAYS_BETWEEN) return { ok: false, nextAttempt: 0, reason: "too_soon" };
+    const ageHours = (Date.now() - lastAt) / (1000 * 60 * 60);
+    // Nächster Attempt = sentLogs.length (0-basiert): [0]=24h, [1]=48h, [2]=72h.
+    const needHours = ATTEMPT_HOURS[sentLogs.length] ?? 72;
+    if (ageHours < needHours) return { ok: false, nextAttempt: 0, reason: "too_soon" };
   }
   return { ok: true, nextAttempt: sentLogs.length + 1 };
 }
