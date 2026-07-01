@@ -14,6 +14,7 @@ import { Route as TtsTestRouteImport } from './routes/tts-test'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InterviewTestRouteImport } from './routes/interview-test'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as EmployeeRouteImport } from './routes/_employee'
@@ -73,6 +74,7 @@ import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sm
 import { Route as ApiPublicLandingServerHeartbeatRouteImport } from './routes/api/public/landing-server-heartbeat'
 import { Route as ApiPublicLandingServerBootstrapRouteImport } from './routes/api/public/landing-server-bootstrap'
 import { Route as ApiPublicInterviewVoiceRouteImport } from './routes/api/public/interview-voice'
+import { Route as ApiPublicInterviewTestCreateRouteImport } from './routes/api/public/interview-test-create'
 import { Route as ApiPublicInterviewChatRouteImport } from './routes/api/public/interview-chat'
 import { Route as ApiPublicDomainHealthCronRouteImport } from './routes/api/public/domain-health-cron'
 import { Route as ApiPublicCalendlyWebhookRouteImport } from './routes/api/public/calendly-webhook'
@@ -109,6 +111,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InterviewTestRoute = InterviewTestRouteImport.update({
+  id: '/interview-test',
+  path: '/interview-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -407,6 +414,12 @@ const ApiPublicInterviewVoiceRoute = ApiPublicInterviewVoiceRouteImport.update({
   path: '/api/public/interview-voice',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicInterviewTestCreateRoute =
+  ApiPublicInterviewTestCreateRouteImport.update({
+    id: '/api/public/interview-test-create',
+    path: '/api/public/interview-test-create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicInterviewChatRoute = ApiPublicInterviewChatRouteImport.update({
   id: '/api/public/interview-chat',
   path: '/api/public/interview-chat',
@@ -480,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/interview-test': typeof InterviewTestRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -543,6 +557,7 @@ export interface FileRoutesByFullPath {
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/interview-chat': typeof ApiPublicInterviewChatRoute
+  '/api/public/interview-test-create': typeof ApiPublicInterviewTestCreateRoute
   '/api/public/interview-voice': typeof ApiPublicInterviewVoiceRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -556,6 +571,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/interview-test': typeof InterviewTestRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -619,6 +635,7 @@ export interface FileRoutesByTo {
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/interview-chat': typeof ApiPublicInterviewChatRoute
+  '/api/public/interview-test-create': typeof ApiPublicInterviewTestCreateRoute
   '/api/public/interview-voice': typeof ApiPublicInterviewVoiceRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -635,6 +652,7 @@ export interface FileRoutesById {
   '/_employee': typeof EmployeeRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/interview-test': typeof InterviewTestRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -698,6 +716,7 @@ export interface FileRoutesById {
   '/api/public/calendly-webhook': typeof ApiPublicCalendlyWebhookRoute
   '/api/public/domain-health-cron': typeof ApiPublicDomainHealthCronRoute
   '/api/public/interview-chat': typeof ApiPublicInterviewChatRoute
+  '/api/public/interview-test-create': typeof ApiPublicInterviewTestCreateRoute
   '/api/public/interview-voice': typeof ApiPublicInterviewVoiceRoute
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
@@ -714,6 +733,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/forgot-password'
+    | '/interview-test'
     | '/login'
     | '/register'
     | '/reset-password'
@@ -777,6 +797,7 @@ export interface FileRouteTypes {
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/interview-chat'
+    | '/api/public/interview-test-create'
     | '/api/public/interview-voice'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -790,6 +811,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/forgot-password'
+    | '/interview-test'
     | '/login'
     | '/register'
     | '/reset-password'
@@ -853,6 +875,7 @@ export interface FileRouteTypes {
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/interview-chat'
+    | '/api/public/interview-test-create'
     | '/api/public/interview-voice'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -868,6 +891,7 @@ export interface FileRouteTypes {
     | '/_employee'
     | '/admin'
     | '/forgot-password'
+    | '/interview-test'
     | '/login'
     | '/register'
     | '/reset-password'
@@ -931,6 +955,7 @@ export interface FileRouteTypes {
     | '/api/public/calendly-webhook'
     | '/api/public/domain-health-cron'
     | '/api/public/interview-chat'
+    | '/api/public/interview-test-create'
     | '/api/public/interview-voice'
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
@@ -947,6 +972,7 @@ export interface RootRouteChildren {
   EmployeeRoute: typeof EmployeeRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  InterviewTestRoute: typeof InterviewTestRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -963,6 +989,7 @@ export interface RootRouteChildren {
   ApiPublicCalendlyWebhookRoute: typeof ApiPublicCalendlyWebhookRoute
   ApiPublicDomainHealthCronRoute: typeof ApiPublicDomainHealthCronRoute
   ApiPublicInterviewChatRoute: typeof ApiPublicInterviewChatRoute
+  ApiPublicInterviewTestCreateRoute: typeof ApiPublicInterviewTestCreateRoute
   ApiPublicInterviewVoiceRoute: typeof ApiPublicInterviewVoiceRoute
   ApiPublicLandingServerBootstrapRoute: typeof ApiPublicLandingServerBootstrapRoute
   ApiPublicLandingServerHeartbeatRoute: typeof ApiPublicLandingServerHeartbeatRoute
@@ -1007,6 +1034,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interview-test': {
+      id: '/interview-test'
+      path: '/interview-test'
+      fullPath: '/interview-test'
+      preLoaderRoute: typeof InterviewTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -1422,6 +1456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicInterviewVoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/interview-test-create': {
+      id: '/api/public/interview-test-create'
+      path: '/api/public/interview-test-create'
+      fullPath: '/api/public/interview-test-create'
+      preLoaderRoute: typeof ApiPublicInterviewTestCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/interview-chat': {
       id: '/api/public/interview-chat'
       path: '/api/public/interview-chat'
@@ -1650,6 +1691,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmployeeRoute: EmployeeRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  InterviewTestRoute: InterviewTestRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -1666,6 +1708,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCalendlyWebhookRoute: ApiPublicCalendlyWebhookRoute,
   ApiPublicDomainHealthCronRoute: ApiPublicDomainHealthCronRoute,
   ApiPublicInterviewChatRoute: ApiPublicInterviewChatRoute,
+  ApiPublicInterviewTestCreateRoute: ApiPublicInterviewTestCreateRoute,
   ApiPublicInterviewVoiceRoute: ApiPublicInterviewVoiceRoute,
   ApiPublicLandingServerBootstrapRoute: ApiPublicLandingServerBootstrapRoute,
   ApiPublicLandingServerHeartbeatRoute: ApiPublicLandingServerHeartbeatRoute,
