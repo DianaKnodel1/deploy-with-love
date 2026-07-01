@@ -6,7 +6,7 @@ import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, CheckCircle2 } from "lucide-react";
+import { Loader2, Send, CheckCircle2, UserPlus, ClipboardCheck } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; text: string; ts: string };
 
