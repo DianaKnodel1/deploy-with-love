@@ -111,14 +111,14 @@ function AdminBewerbungenPage() {
   const [busy, setBusy] = useState(false);
   const runCleanup = useServerFn(deleteOrphanApplications);
 
-  const profileEmails = useMemo(() => {
-    const s = new Set<string>();
-    const uids = new Set<string>();
+  const profileByKey = useMemo(() => {
+    const byUid = new Map<string, any>();
+    const byEmail = new Map<string, any>();
     for (const p of profiles as any[]) {
-      if (p.email) s.add(String(p.email).toLowerCase().trim());
-      if (p.user_id) uids.add(p.user_id);
+      if (p.user_id) byUid.set(p.user_id, p);
+      if (p.email) byEmail.set(String(p.email).toLowerCase().trim(), p);
     }
-    return { s, uids };
+    return { byUid, byEmail };
   }, [profiles]);
 
   const bookingByApp = useMemo(() => {
@@ -148,32 +148,42 @@ function AdminBewerbungenPage() {
   }, []);
 
   const resolveSource = (a: any): string | null => {
-    if (a?.source_slug) return a.source_slug;
-    if (a?.landing_page_id) {
-      const l = landingById.get(a.landing_page_id);
+    // Vermittlung = source_landing (Broker) — sonst target_landing / landing_page
+    const srcId = a?.source_landing_id ?? a?.landing_page_id ?? a?.target_landing_id;
+    if (srcId) {
+      const l = landingById.get(srcId);
       if (l) return l.firmenname || l.slug;
     }
+    if (a?.source_slug) return a.source_slug;
     return a?.flow_type ?? null;
   };
 
   const rows = useMemo(() => {
     return (applications as any[]).map((a) => {
       const email = String(a.email ?? "").toLowerCase().trim();
-      const hasProfile = !!(a.user_id && profileEmails.uids.has(a.user_id))
-        || (email && profileEmails.s.has(email));
+      const p = (a.user_id && profileByKey.byUid.get(a.user_id))
+        || (email && profileByKey.byEmail.get(email))
+        || null;
+      const prof: ProfileInfo = p ? {
+        onboarding: p.onboarding_status ?? null,
+        status: p.status ?? null,
+        emailConfirmed: !!(p.user_id && emailConfirmedUserIds.has(p.user_id)),
+        contractSigned: !!p.contract_signed_at,
+      } : null;
       const sched = bookingByApp.get(a.id) ?? null;
       return {
         id: a.id,
         name: a.full_name || `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || email || "—",
         email: a.email || "—",
-        phase: computePhase(a, sched, !!hasProfile),
+        phone: a.phone || "—",
+        phase: computePhase(a, sched, prof),
         lastActivity: a.created_at,
         source: resolveSource(a),
         createdAt: a.created_at,
-        hasProfile: !!hasProfile,
+        hasProfile: !!prof,
       };
     }).sort((a, b) => (b.lastActivity || "").localeCompare(a.lastActivity || ""));
-  }, [applications, bookingByApp, landingById, profileEmails]);
+  }, [applications, bookingByApp, landingById, profileByKey, emailConfirmedUserIds]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { alle: rows.length };
