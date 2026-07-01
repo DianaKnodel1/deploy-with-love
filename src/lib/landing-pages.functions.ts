@@ -143,12 +143,16 @@ export const saveLandingPage = createServerFn({ method: "POST" })
     if (data.logo_data_url) logo_url = (await uploadAsset(supabaseAdmin, slug, "logo", data.logo_data_url)) ?? undefined;
     if (data.favicon_data_url) favicon_url = (await uploadAsset(supabaseAdmin, slug, "favicon", data.favicon_data_url)) ?? undefined;
 
+    const recruiterName = data.recruiter_name?.trim() || null;
     const payload: any = {
       slug,
       domain,
       tenant_id: data.tenant_id || null,
       theme_id: data.theme_id,
-      branding: data.branding,
+      branding: {
+        ...data.branding,
+        recruiter_name: recruiterName,
+      },
       slots: data.slots,
       flow_type: data.flow_type,
       source_slug: data.source_slug || null,
@@ -162,7 +166,6 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       interview_voice_id: data.interview_voice_id ?? null,
       interview_system_prompt: data.interview_system_prompt ?? null,
       linked_fasttrack_landing_id: data.linked_fasttrack_landing_id ?? null,
-      recruiter_name: data.recruiter_name?.trim() || null,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
@@ -178,9 +181,11 @@ export const saveLandingPage = createServerFn({ method: "POST" })
         if (upErr) throw new Error(`Recruiter-Avatar Upload: ${upErr.message}`);
         const { data: pub } = supabaseAdmin.storage.from("recruiter-avatars").getPublicUrl(path);
         payload.recruiter_avatar_url = pub.publicUrl;
+        payload.branding.recruiter_avatar_url = pub.publicUrl;
       }
     } else if (data.recruiter_avatar_url !== undefined) {
       payload.recruiter_avatar_url = data.recruiter_avatar_url || null;
+      payload.branding.recruiter_avatar_url = data.recruiter_avatar_url || null;
     }
 
     // ── Server-Pool: least-full Auswahl, nur bei Neu-Anlage

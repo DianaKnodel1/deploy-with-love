@@ -199,14 +199,14 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
   if (app.source_slug) {
     const { data: lp } = await supabaseAdmin
       .from("landing_pages")
-      .select("slug, source_slug, interview_system_prompt, recruiter_name, recruiter_avatar_url, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id")
+      .select("slug, source_slug, interview_system_prompt, recruiter_avatar_url, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id")
       .eq("source_slug", app.source_slug)
       .maybeSingle();
     let landing: any = lp;
     if (landing?.linked_fasttrack_landing_id) {
       const { data: ft } = await supabaseAdmin
         .from("landing_pages")
-        .select("slug, source_slug, interview_system_prompt, recruiter_name, recruiter_avatar_url, branding, interview_mode, interview_voice_id")
+        .select("slug, source_slug, interview_system_prompt, recruiter_avatar_url, branding, interview_mode, interview_voice_id")
         .eq("id", landing.linked_fasttrack_landing_id)
         .maybeSingle();
       if (ft) landing = ft;
@@ -216,7 +216,7 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
       if (custom) systemPrompt = custom;
       const fn = landing.branding?.firmenname?.trim?.();
       if (fn) companyName = fn;
-      const rn = landing.recruiter_name?.trim?.();
+      const rn = landing.branding?.recruiter_name?.trim?.();
       if (rn) recruiterName = rn;
       if (landing.recruiter_avatar_url) recruiterAvatarUrl = landing.recruiter_avatar_url;
       if (landing.interview_voice_id) voiceId = landing.interview_voice_id;
