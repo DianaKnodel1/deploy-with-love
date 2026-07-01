@@ -116,3 +116,120 @@ export const deleteOrphanApplications = createServerFn({ method: "POST" })
     return { ok: true, count: ids.length, deleted: ids.length };
   });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Purge: alles außer aktive Mitarbeiter (profiles.status='angenommen') löschen.
+// - Alle applications (mit/ohne user_id) außer denen deren user_id zu einem
+//   aktiven Mitarbeiter gehört.
+// - Alle profiles + Auth-Users deren status != 'angenommen'.
+// ─────────────────────────────────────────────────────────────────────────────
+const PurgeSchema = z.object({
+  confirm: z.literal("ALLES LÖSCHEN AUSSER AKTIVE"),
+  dry_run: z.boolean().default(false),
+});
+
+export const purgeInactivePeople = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => PurgeSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = supabaseAdmin as any;
+
+    // 1) Aktive Mitarbeiter (nie anfassen) + Admins (Selbstschutz)
+    const { data: keepProfiles, error: pErr } = await sb
+      .from("profiles")
+      .select("user_id, status");
+    if (pErr) throw new Error(pErr.message);
+
+    const { data: adminRoles, error: rErr } = await sb
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+    if (rErr) throw new Error(rErr.message);
+
+    const keepIds = new Set<string>();
+    for (const p of keepProfiles ?? []) {
+      if (p.status === "angenommen") keepIds.add(p.user_id);
+    }
+    for (const a of adminRoles ?? []) keepIds.add(a.user_id);
+    keepIds.add(context.userId);
+
+    const deleteProfileIds = (keepProfiles ?? [])
+      .filter((p: any) => !keepIds.has(p.user_id))
+      .map((p: any) => p.user_id as string);
+
+    // 2) Bewerbungen: alles löschen, außer wenn user_id ein aktiver Mitarbeiter ist
+    const { data: allApps, error: aErr } = await sb
+      .from("applications")
+      .select("id, user_id");
+    if (aErr) throw new Error(aErr.message);
+    const deleteAppIds = (allApps ?? [])
+      .filter((a: any) => !a.user_id || !keepIds.has(a.user_id))
+      .map((a: any) => a.id as string);
+
+    if (data.dry_run) {
+      return {
+        ok: true,
+        dry_run: true,
+        applications_to_delete: deleteAppIds.length,
+        profiles_to_delete: deleteProfileIds.length,
+        kept: keepIds.size,
+      };
+    }
+
+    // 3) Applications löschen
+    let deletedApps = 0;
+    if (deleteAppIds.length > 0) {
+      // in Chunks von 500 (Postgrest in()-Limit)
+      for (let i = 0; i < deleteAppIds.length; i += 500) {
+        const chunk = deleteAppIds.slice(i, i + 500);
+        const { error } = await sb.from("applications").delete().in("id", chunk);
+        if (error) throw new Error(`Bewerbungen: ${error.message}`);
+        deletedApps += chunk.length;
+      }
+    }
+
+    // 4) Profiles + Auth-Users kaskadierend löschen
+    let deletedProfiles = 0;
+    const failures: { user_id: string; error: string }[] = [];
+    for (const uid of deleteProfileIds) {
+      try {
+        for (const bucket of ["kyc-documents", "documents", "task-submissions"] as const) {
+          try {
+            const { data: files } = await sb.storage.from(bucket).list(uid, { limit: 1000 });
+            if (files && files.length > 0) {
+              await sb.storage.from(bucket).remove(files.map((f: any) => `${uid}/${f.name}`));
+            }
+          } catch {}
+        }
+        const { error: rpcErr } = await sb.rpc("admin_delete_user_cascade", {
+          _user_id: uid,
+          _actor_id: context.userId,
+        });
+        if (rpcErr) throw new Error(rpcErr.message);
+        const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(uid);
+        if (authErr) throw new Error(authErr.message);
+        deletedProfiles++;
+      } catch (e: any) {
+        failures.push({ user_id: uid, error: e?.message ?? String(e) });
+      }
+    }
+
+    try {
+      await sb.from("activity_log").insert({
+        action: "purge_inactive_people",
+        entity_type: "profile",
+        actor_id: context.userId,
+        comment: `Purge: ${deletedApps} Bewerbungen + ${deletedProfiles} Profile gelöscht. Fehler: ${failures.length}.`,
+      });
+    } catch {}
+
+    return {
+      ok: true,
+      dry_run: false,
+      deleted_applications: deletedApps,
+      deleted_profiles: deletedProfiles,
+      failures,
+    };
+  });
+
+
