@@ -283,3 +283,82 @@ function InterviewPage() {
     </div>
   );
 }
+
+function WelcomeAccepted({
+  company,
+  primary,
+  recruiter,
+  portal,
+}: {
+  company: string;
+  primary: string;
+  recruiter: string;
+  portal: string;
+}) {
+  const base = (portal || "").replace(/\/+$/, "") || (typeof window !== "undefined" ? window.location.origin : "");
+  const registerHref = `${base}/register`;
+  const loginHref = `${base}/login`;
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-border shadow-sm p-8 space-y-6 text-center">
+      <div
+        className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+        style={{ background: `${primary}1a`, color: primary }}
+      >
+        <CheckCircle2 className="h-9 w-9" />
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold">Willkommen im Team!</h2>
+        <p className="text-sm text-muted-foreground">Wir freuen uns, dass Sie dabei sind.</p>
+        <p className="text-sm text-foreground">
+          Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!
+        </p>
+      </div>
+
+      <div className="text-left bg-muted/40 rounded-xl p-4 space-y-3">
+        <p className="text-sm font-semibold">Wie geht es weiter?</p>
+        <div className="flex items-start gap-3">
+          <span
+            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold"
+            style={{ background: primary }}
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+          </span>
+          <span className="text-sm">Registrieren Sie sich im Mitarbeiterportal</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span
+            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold"
+            style={{ background: primary }}
+          >
+            <ClipboardCheck className="h-3.5 w-3.5" />
+          </span>
+          <span className="text-sm">Führen Sie anschließend das Onboarding durch</span>
+        </div>
+      </div>
+
+      <Button
+        asChild
+        size="lg"
+        className="w-full font-semibold"
+        style={{ background: primary }}
+      >
+        <a href={registerHref}>Jetzt registrieren</a>
+      </Button>
+
+      <div className="text-left text-sm text-muted-foreground space-y-1 pt-2 border-t border-border">
+        <p className="text-foreground">Ich wünsche Ihnen einen erfolgreichen Start!</p>
+        <p>Mit freundlichen Grüßen</p>
+        <p className="font-semibold text-foreground">{recruiter}</p>
+        <p>HR Management</p>
+        <p>{company}</p>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Bereits registriert?{" "}
+        <a href={loginHref} className="underline hover:text-foreground">
+          Zum Login
+        </a>
+      </p>
+    </div>
+  );
+}
