@@ -236,13 +236,22 @@ function InterviewPage() {
         </div>
 
         {ended ? (
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-border p-6 text-center space-y-4">
-            <CheckCircle2 className="h-10 w-10 mx-auto" style={{ color: primary }} />
-            <h2 className="text-lg font-semibold">Vielen Dank für das Gespräch!</h2>
-            <p className="text-sm text-muted-foreground">
-              Ihre Antworten wurden gespeichert. Wir melden uns in Kürze bei Ihnen.
-            </p>
-          </div>
+          appStatus === "akzeptiert" ? (
+            <WelcomeAccepted
+              company={company}
+              primary={primary}
+              recruiter={branding?.recruiter_name || "Sabine Schneider"}
+              portal={portal}
+            />
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-border p-6 text-center space-y-4">
+              <CheckCircle2 className="h-10 w-10 mx-auto" style={{ color: primary }} />
+              <h2 className="text-lg font-semibold">Vielen Dank für das Gespräch!</h2>
+              <p className="text-sm text-muted-foreground">
+                Ihre Antworten wurden gespeichert. Wir melden uns in Kürze bei Ihnen.
+              </p>
+            </div>
+          )
         ) : (
           <div className="space-y-2">
             <div className="flex gap-2">
