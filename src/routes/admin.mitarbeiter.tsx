@@ -212,3 +212,73 @@ function AdminMitarbeiterPage() {
     </div>
   );
 }
+
+function PurgeButton() {
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState<{ apps: number; profs: number } | null>(null);
+
+  async function loadPreview() {
+    setBusy(true);
+    try {
+      const r: any = await purgeInactivePeople({ data: { confirm: "ALLES LÖSCHEN AUSSER AKTIVE", dry_run: true } });
+      setPreview({ apps: r.applications_to_delete, profs: r.profiles_to_delete });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Fehler");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function doPurge() {
+    setBusy(true);
+    try {
+      const r: any = await purgeInactivePeople({ data: { confirm: "ALLES LÖSCHEN AUSSER AKTIVE", dry_run: false } });
+      toast.success(`Gelöscht: ${r.deleted_applications} Bewerbungen, ${r.deleted_profiles} Profile${r.failures?.length ? ` (${r.failures.length} Fehler)` : ""}`);
+      setPreview(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Fehler");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AlertDialog onOpenChange={(o) => { if (o) loadPreview(); else setPreview(null); }}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5 text-destructive border-destructive/40 hover:bg-destructive/10">
+          <Trash2 className="h-3.5 w-3.5" /> Inaktive löschen
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Alle nicht-aktiven Personen löschen?</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-2 text-sm">
+              <p>Es bleiben nur <b>aktive Mitarbeiter</b> (Status „angenommen") und Admins erhalten.</p>
+              {preview ? (
+                <div className="rounded-md border p-3 bg-muted/40">
+                  <div>Bewerbungen: <b>{preview.apps}</b></div>
+                  <div>Profile + Auth-Accounts: <b>{preview.profs}</b></div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">Vorschau wird geladen…</p>
+              )}
+              <p className="text-destructive font-medium">Diese Aktion ist nicht rückgängig zu machen.</p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={busy || !preview || (preview.apps === 0 && preview.profs === 0)}
+            onClick={(e) => { e.preventDefault(); doPurge(); }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {busy ? "Läuft…" : "Endgültig löschen"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
