@@ -697,7 +697,7 @@ function AdminChatPage() {
             <div className="border-b border-border bg-card px-5 py-3 flex items-center gap-3 shrink-0">
               <button
                 type="button"
-                onClick={() => navigate(`/admin/employees/${selectedUserId}`)}
+                onClick={() => navigate(`/admin/personen/${selectedUserId}`)}
                 title="Mitarbeiter-Profil öffnen"
                 className="h-9 w-9 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors flex items-center justify-center"
               >
@@ -705,7 +705,7 @@ function AdminChatPage() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate(`/admin/employees/${selectedUserId}`)}
+                onClick={() => navigate(`/admin/personen/${selectedUserId}`)}
                 className="flex-1 text-left group"
                 title="Mitarbeiter-Profil öffnen"
               >

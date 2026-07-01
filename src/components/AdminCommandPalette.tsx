@@ -14,8 +14,7 @@ import { Users, FileText, ClipboardList, Mailbox, LayoutGrid, Settings, Calendar
 
 const PAGES: { label: string; path: string; icon: any }[] = [
   { label: "Dashboard", path: "/admin", icon: LayoutGrid },
-  { label: "Bewerbungen", path: "/admin/applications", icon: FileText },
-  { label: "Mitarbeiter", path: "/admin/employees", icon: Users },
+  { label: "Personen", path: "/admin/personen", icon: Users },
   { label: "Aufgaben", path: "/admin/tasks", icon: ClipboardList },
   { label: "Termine", path: "/admin/appointments", icon: CalendarDays },
   { label: "Chat", path: "/admin/chat", icon: MessageCircle },
@@ -100,7 +99,7 @@ export function AdminCommandPalette() {
             <CommandSeparator />
             <CommandGroup heading="Mitarbeiter">
               {matchedEmployees.map((p: any) => (
-                <CommandItem key={p.user_id} onSelect={() => go(`/admin/employees/${p.user_id}`)}>
+                <CommandItem key={p.user_id} onSelect={() => go(`/admin/personen/${p.user_id}`)}>
                   <Users className="h-4 w-4 mr-2" />
                   <span>{p.full_name ?? "Unbenannt"}</span>
                   {p.email && <span className="ml-2 text-xs text-muted-foreground">{p.email}</span>}
@@ -115,7 +114,7 @@ export function AdminCommandPalette() {
             <CommandSeparator />
             <CommandGroup heading="Bewerbungen">
               {matchedApplications.map((a: any) => (
-                <CommandItem key={a.id} onSelect={() => go(`/admin/applications/${a.id}`)}>
+                <CommandItem key={a.id} onSelect={() => go(`/admin/personen/${a.id}`)}>
                   <FileText className="h-4 w-4 mr-2" />
                   <span>{a.full_name}</span>
                   <span className="ml-2 text-xs text-muted-foreground">{a.email}</span>

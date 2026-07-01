@@ -1,373 +1,259 @@
-import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
-  Mail, RefreshCw, CheckCircle2, XCircle, Clock, AlertTriangle,
-  Send, CalendarCheck, BellRing, KeyRound, UserPlus, MessageCircle, ChevronRight,
+  Mail, RefreshCw, CheckCircle2, XCircle, Clock, AlertTriangle, Search,
 } from "lucide-react";
-import { useNavigate } from "@/lib/router-compat";
-import { AdminEmailLogsPage } from "./admin.email-logs";
-import { AdminRemindersPage } from "./admin.reminders";
-import { AdminRecoveryPage } from "./admin.recovery";
-import { CronHealthPanel } from "@/components/CronHealthPanel";
-import type { EmailLog } from "@/lib/email-stats";
-
-const searchSchema = z.object({
-  view: z.enum(["start", "logs", "reminders", "recovery", "cron"]).optional().catch("start"),
-});
 
 export const Route = createFileRoute("/admin/email-center")({
-  validateSearch: searchSchema,
   component: AdminEmailCenterPage,
 });
 
-/* ------------------------------- Mail-Katalog ------------------------------- *
- * Spiegelt den aktuellen Bewerber-/Mitarbeiter-Flow wider. Ein Eintrag pro
- * tatsächlich verwendetem Trigger; tote Templates (Drip, Bewerbungs­eingang)
- * sind hier bewusst nicht mehr aufgeführt.
- * --------------------------------------------------------------------------- */
+/**
+ * E-Mail-Center v2 — Reset & minimal.
+ * Zeigt ausschließlich das, was der aktuelle Flow tatsächlich versendet.
+ * Alles wird live aus email_send_log berechnet (dedupliziert per message_id).
+ */
 
-type FlowMail = {
-  key: string;
-  /** Phase im Flow */
-  group: "Bewerbung" | "Onboarding" | "Auth" | "Reminder" | "Support";
-  title: string;
-  trigger: string;
-  /** Suchmuster auf template_name in email_send_log */
-  templates: string[];
-  icon: any;
-};
-
-const FLOW_MAILS: FlowMail[] = [
-  {
-    key: "calendly_confirm",
-    group: "Bewerbung",
-    title: "Terminbestätigung (Calendly)",
-    trigger: "Sofort nach Terminbuchung durch Bewerber",
-    templates: ["calendly_confirmation"],
-    icon: CalendarCheck,
-  },
-  {
-    key: "no_show_reminders",
-    group: "Reminder",
-    title: "No-Show Reminder",
-    trigger: "2 h / 24 h / 72 h nach verpasstem Termin",
-    templates: ["reminder_no_show_2h", "reminder_no_show_24h", "reminder_no_show_72h"],
-    icon: BellRing,
-  },
-  {
-    key: "acceptance",
-    group: "Onboarding",
-    title: "Annahme & Registrierungs-Einladung",
-    trigger: "Nach erfolgreichem Interview (Empfehlung »invite«)",
-    templates: ["invitation", "auth_invite"],
-    icon: UserPlus,
-  },
-  {
-    key: "reg_reminders",
-    group: "Reminder",
-    title: "Registrierungs-Reminder",
-    trigger: "Wenn Bewerber Einladung nicht annimmt",
-    templates: ["reminder_invite", "reminder_confirm_email", "reminder_complete_registration"],
-    icon: Send,
-  },
-  {
-    key: "auth_password_reset",
-    group: "Auth",
-    title: "Passwort zurücksetzen",
-    trigger: "Wenn User auf »Passwort vergessen« klickt",
-    templates: ["auth_recovery"],
-    icon: KeyRound,
-  },
-  {
-    key: "appointment_30min",
-    group: "Reminder",
-    title: "30-Minuten Termin-Reminder",
-    trigger: "30 Min vor gebuchtem Termin (Cron)",
-    templates: ["appointment_reminder_30min", "reminder_appointment"],
-    icon: Clock,
-  },
-  {
-    key: "chat_reminder",
-    group: "Support",
-    title: "Chat-Reminder",
-    trigger: "Unbeantwortete Chat-Nachricht > X Min",
-    templates: ["chat_reminder"],
-    icon: MessageCircle,
-  },
+// Aktive Templates im neuen Flow (Bewerbung -> Interview -> Onboarding).
+const ACTIVE_TEMPLATES: { key: string; label: string; group: string; trigger: string }[] = [
+  { key: "invitation",                       label: "Einladung / Willkommen",       group: "Onboarding", trigger: "Sofort nach KI-Annahme" },
+  { key: "appointment_reminder",             label: "Termin-Reminder (No-Show)",    group: "Reminder",   trigger: "2h / 24h / 72h nach verpasstem Termin" },
+  { key: "reminder_complete_registration",   label: "Registrierung abschließen",    group: "Reminder",   trigger: "Bei offener Registrierung" },
+  { key: "reminder_confirm_email",           label: "E-Mail bestätigen",            group: "Reminder",   trigger: "Bei unbestätigter Mail" },
+  { key: "reminder_no_recent_booking",       label: "30-Min Buchungs-Reminder",     group: "Reminder",   trigger: "Wenn längere Zeit kein Auftrag gebucht" },
+  { key: "chat_reminder",                    label: "Chat-Reminder",                group: "Support",    trigger: "Bei ungelesener Admin-Nachricht" },
+  { key: "password_reset",                   label: "Passwort zurücksetzen",        group: "Auth",       trigger: "User löst Reset aus" },
 ];
 
-type MailStat = { sent24: number; pending: number; failed24: number; lastSent: string | null };
-
-/* --------------------------------- Layout --------------------------------- */
+type Row = { message_id: string; template_name: string; recipient_email: string; status: string; error_message: string | null; created_at: string };
 
 function AdminEmailCenterPage() {
-  const search = useSearch({ from: "/admin/email-center" });
-  const navigate = useNavigate();
-  const view = (search as any).view ?? "start";
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<"24h" | "7d" | "30d">("7d");
+  const [q, setQ] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    const since = new Date(Date.now() - (range === "24h" ? 1 : range === "7d" ? 7 : 30) * 86400_000).toISOString();
+    const { data } = await supabase
+      .from("email_send_log")
+      .select("message_id,template_name,recipient_email,status,error_message,created_at")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(5000);
+    // Dedup per message_id (neueste Zeile gewinnt)
+    const seen = new Set<string>();
+    const dedup: Row[] = [];
+    for (const r of (data as Row[] | null) ?? []) {
+      const key = r.message_id || `${r.template_name}:${r.recipient_email}:${r.created_at}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      dedup.push(r);
+    }
+    setRows(dedup);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [range]);
+
+  const stats = useMemo(() => {
+    const s = { total: rows.length, sent: 0, failed: 0, pending: 0 };
+    for (const r of rows) {
+      if (r.status === "sent") s.sent++;
+      else if (r.status === "dlq" || r.status === "failed" || r.status === "bounced") s.failed++;
+      else if (r.status === "pending") s.pending++;
+    }
+    return s;
+  }, [rows]);
+
+  const perTemplate = useMemo(() => {
+    const m = new Map<string, { sent: number; failed: number; pending: number; last?: string }>();
+    for (const r of rows) {
+      const cur = m.get(r.template_name) ?? { sent: 0, failed: 0, pending: 0 };
+      if (r.status === "sent") cur.sent++;
+      else if (r.status === "dlq" || r.status === "failed" || r.status === "bounced") cur.failed++;
+      else if (r.status === "pending") cur.pending++;
+      if (!cur.last || r.created_at > cur.last) cur.last = r.created_at;
+      m.set(r.template_name, cur);
+    }
+    return m;
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    const ql = q.trim().toLowerCase();
+    if (!ql) return rows.slice(0, 100);
+    return rows.filter(r =>
+      r.recipient_email?.toLowerCase().includes(ql) ||
+      r.template_name?.toLowerCase().includes(ql)
+    ).slice(0, 100);
+  }, [rows, q]);
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <header className="flex items-center justify-between gap-4">
+    <div className="p-6 lg:p-8 space-y-5 max-w-6xl mx-auto">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-2xl bg-primary/10 grid place-items-center">
             <Mail className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-heading font-bold">E-Mail-Center</h1>
-            <p className="text-sm text-muted-foreground">
-              Was wird wann verschickt — und hat es geklappt?
-            </p>
+            <p className="text-sm text-muted-foreground">Aktive Templates im neuen Flow — live aus email_send_log.</p>
           </div>
         </div>
-        {view !== "start" && (
-          <Button variant="outline" size="sm" onClick={() => navigate("/admin/email-center")}>
-            ← Zurück zur Übersicht
+        <div className="flex items-center gap-2">
+          {(["24h", "7d", "30d"] as const).map(k => (
+            <Button key={k} size="sm" variant={range === k ? "default" : "outline"} onClick={() => setRange(k)} className="h-8 text-xs">
+              {k === "24h" ? "24 h" : k === "7d" ? "7 Tage" : "30 Tage"}
+            </Button>
+          ))}
+          <Button size="sm" variant="ghost" onClick={load} disabled={loading} className="h-8">
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           </Button>
-        )}
-      </header>
-
-      {view === "start" && <StartView onOpen={(v) => navigate(`/admin/email-center?view=${v}`)} />}
-      {view === "logs" && (<div className="-mx-6 lg:-mx-8 -mb-6 lg:-mb-8"><AdminEmailLogsPage /></div>)}
-      {view === "reminders" && (<div className="-mx-6 lg:-mx-8 -mb-6 lg:-mb-8"><AdminRemindersPage /></div>)}
-      {view === "recovery" && (<div className="-mx-6 lg:-mx-8 -mb-6 lg:-mb-8"><AdminRecoveryPage /></div>)}
-      {view === "cron" && <CronHealthPanel />}
-    </div>
-  );
-}
-
-/* --------------------------------- Start-View --------------------------------- */
-
-function StartView({ onOpen }: { onOpen: (v: "logs" | "reminders" | "recovery" | "cron") => void }) {
-  const [loading, setLoading] = useState(true);
-  const [statsByTemplate, setStatsByTemplate] = useState<Record<string, MailStat>>({});
-  const [recentFailures, setRecentFailures] = useState<EmailLog[]>([]);
-  const [totals, setTotals] = useState({ sent: 0, pending: 0, failed: 0 });
-
-  const load = async () => {
-    setLoading(true);
-    const since = new Date(Date.now() - 24 * 3600_000).toISOString();
-    const { data } = await supabase
-      .from("email_send_log")
-      .select("id, message_id, template_name, recipient_email, status, error_message, metadata, created_at")
-      .gte("created_at", since)
-      .order("created_at", { ascending: false })
-      .limit(5000);
-
-    const rows = (data ?? []) as EmailLog[];
-    const map: Record<string, MailStat> = {};
-    const fails: EmailLog[] = [];
-    let sent = 0, pending = 0, failed = 0;
-    for (const r of rows) {
-      const t = r.template_name || "unknown";
-      const cur = (map[t] ??= { sent24: 0, pending: 0, failed24: 0, lastSent: null });
-      if (r.status === "sent") {
-        cur.sent24++; sent++;
-        if (!cur.lastSent) cur.lastSent = r.created_at;
-      } else if (r.status === "pending") {
-        cur.pending++; pending++;
-      } else if (r.status === "failed" || r.status === "dlq" || r.status === "bounced") {
-        cur.failed24++; failed++;
-        if (fails.length < 8) fails.push(r);
-      }
-    }
-    setStatsByTemplate(map);
-    setRecentFailures(fails);
-    setTotals({ sent, pending, failed });
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const mailStats = useMemo(() => {
-    return FLOW_MAILS.map(m => {
-      const agg: MailStat = { sent24: 0, pending: 0, failed24: 0, lastSent: null };
-      for (const tpl of m.templates) {
-        const s = statsByTemplate[tpl];
-        if (!s) continue;
-        agg.sent24 += s.sent24;
-        agg.pending += s.pending;
-        agg.failed24 += s.failed24;
-        if (s.lastSent && (!agg.lastSent || s.lastSent > agg.lastSent)) agg.lastSent = s.lastSent;
-      }
-      return { ...m, stat: agg };
-    });
-  }, [statsByTemplate]);
-
-  return (
-    <div className="space-y-6">
-      {/* KPIs — nur Sent + Pending. "Fehler" wandert in die Problem-Liste unten. */}
-      <div className="grid grid-cols-2 gap-3">
-        <Kpi tone="success" icon={CheckCircle2} label="Heute gesendet" value={totals.sent} />
-        <Kpi tone={totals.pending > 20 ? "warning" : "neutral"} icon={Clock} label="In Warteschlange" value={totals.pending} />
+        </div>
       </div>
 
-      {totals.pending > 20 && (
-        <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50">
-          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-amber-800 dark:text-amber-200">
-            <strong>{totals.pending}</strong> Mails hängen in der Warteschlange. Falls das in 5 Minuten
-            nicht sinkt, prüfe „Cron-Health".
-          </div>
-        </div>
-      )}
+      {/* KPI */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Kpi label="Gesamt" value={stats.total} icon={Mail} tone="muted" />
+        <Kpi label="Versendet" value={stats.sent} icon={CheckCircle2} tone="emerald" />
+        <Kpi label="Ausstehend" value={stats.pending} icon={Clock} tone="amber" />
+        <Kpi label="Fehlgeschlagen" value={stats.failed} icon={XCircle} tone="rose" />
+      </div>
 
-      {/* Aktive Mails im Flow */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-base font-semibold">Aktive Mails im Bewerber-Flow</h2>
-            <p className="text-xs text-muted-foreground">Nur das, was wirklich verschickt wird — sortiert nach Phase.</p>
+      {/* Aktive Templates */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="px-4 py-3 border-b flex items-center justify-between">
+            <div className="text-sm font-semibold">Aktive Mail-Templates</div>
+            <div className="text-xs text-muted-foreground">Zeitraum: {range === "24h" ? "24 h" : range === "7d" ? "7 Tage" : "30 Tage"}</div>
           </div>
-          <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-1.5">
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Aktualisieren
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {mailStats.map(m => (
-            <FlowMailCard key={m.key} mail={m} onOpenLogs={() => onOpen("logs")} />
-          ))}
-        </div>
-      </section>
-
-      {/* Probleme — einzige Fehleranzeige (KPI + Liste zusammengeführt) */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold">Probleme (24 h)</h2>
-            <Badge variant={totals.failed > 0 ? "destructive" : "secondary"} className="tabular-nums">
-              {totals.failed}
-            </Badge>
+          <div className="divide-y">
+            {ACTIVE_TEMPLATES.map(t => {
+              const s = perTemplate.get(t.key) ?? { sent: 0, failed: 0, pending: 0 };
+              const total = s.sent + s.failed + s.pending;
+              return (
+                <div key={t.key} className="px-4 py-3 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{t.label}</span>
+                      <Badge variant="secondary" className="text-[10px]">{t.group}</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{t.trigger} · <code className="text-[10px]">{t.key}</code></div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-4 text-xs tabular-nums">
+                    <span className="text-emerald-600">✓ {s.sent}</span>
+                    <span className="text-amber-600">⏳ {s.pending}</span>
+                    <span className="text-rose-600">✗ {s.failed}</span>
+                  </div>
+                  <div className="w-32 text-right text-[11px] text-muted-foreground">
+                    {s.last ? new Date(s.last).toLocaleString("de-DE") : total === 0 ? "—" : ""}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          {recentFailures.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => onOpen("logs")} className="gap-1 text-xs">
-              Alles im Protokoll <ChevronRight className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
+        </CardContent>
+      </Card>
+
+      {/* Fehler-Feed */}
+      {stats.failed > 0 && (
         <Card>
           <CardContent className="p-0">
-            {recentFailures.length === 0 ? (
-              <div className="px-4 py-6 text-center text-xs text-muted-foreground">
-                {loading ? "Lade…" : "Keine Probleme. Alles läuft. 🎉"}
-              </div>
-            ) : (
-              <ul className="divide-y">
-                {recentFailures.map(f => (
-                  <li key={f.id} className="px-4 py-2.5 flex items-center gap-3 text-xs">
-                    <XCircle className="h-4 w-4 text-rose-500 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{f.recipient_email}</div>
-                      <div className="text-muted-foreground truncate">
-                        <span className="font-mono">{f.template_name}</span>
-                        {f.error_message ? <> — {f.error_message}</> : null}
-                      </div>
-                    </div>
-                    <span className="tabular-nums text-muted-foreground shrink-0">
-                      {new Date(f.created_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div className="px-4 py-3 border-b flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-rose-500" />
+              <div className="text-sm font-semibold">Probleme</div>
+              <Badge variant="destructive" className="text-[10px]">{stats.failed}</Badge>
+            </div>
+            <div className="divide-y max-h-72 overflow-auto">
+              {rows.filter(r => r.status === "dlq" || r.status === "failed" || r.status === "bounced").slice(0, 30).map((r, i) => (
+                <div key={i} className="px-4 py-2 text-xs flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{r.template_name} → {r.recipient_email}</div>
+                    {r.error_message && <div className="text-rose-600 truncate">{r.error_message}</div>}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground shrink-0">{new Date(r.created_at).toLocaleString("de-DE")}</div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
-      </section>
+      )}
 
-      {/* Mehr / Tools */}
-      <section>
-        <h2 className="text-base font-semibold mb-3">Mehr</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <ToolButton title="Volles Protokoll" desc="Jede Mail · Filter · Re-Send" onClick={() => onOpen("logs")} />
-          <ToolButton title="Reminder-Cron" desc="Manuell auslösen + Status" onClick={() => onOpen("reminders")} />
-          <ToolButton title="Recovery" desc="Inaktive Domains anstoßen" onClick={() => onOpen("recovery")} />
-          <ToolButton title="Cron-Health" desc="Laufen alle Jobs?" onClick={() => onOpen("cron")} />
-        </div>
-      </section>
+      {/* Log-Explorer */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="px-4 py-3 border-b flex items-center gap-2">
+            <div className="text-sm font-semibold flex-1">Verlauf</div>
+            <div className="relative w-64">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input value={q} onChange={e => setQ(e.target.value)} placeholder="E-Mail oder Template…" className="h-8 pl-8 text-xs" />
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/30">
+                <tr>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Template</th>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Empfänger</th>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Status</th>
+                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Wann</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.map((r, i) => (
+                  <tr key={i} className="hover:bg-muted/20">
+                    <td className="px-4 py-1.5 font-mono text-[11px]">{r.template_name}</td>
+                    <td className="px-4 py-1.5 text-muted-foreground">{r.recipient_email}</td>
+                    <td className="px-4 py-1.5"><StatusBadge status={r.status} /></td>
+                    <td className="px-4 py-1.5 text-[10px] text-muted-foreground tabular-nums">{new Date(r.created_at).toLocaleString("de-DE")}</td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Nichts zu sehen.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-function FlowMailCard({ mail, onOpenLogs }: { mail: FlowMail & { stat: MailStat }; onOpenLogs: () => void }) {
-  const { stat } = mail;
-  const Icon = mail.icon;
-  const isQuiet = stat.sent24 === 0 && stat.pending === 0 && stat.failed24 === 0;
-  return (
-    <Card className="hover:bg-muted/20 transition-colors">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center shrink-0">
-            <Icon className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="font-medium text-sm truncate">{mail.title}</h3>
-              <Badge variant="secondary" className="text-[10px] shrink-0">{mail.group}</Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">{mail.trigger}</p>
-
-            <div className="flex items-center gap-3 mt-3 text-xs tabular-nums">
-              <span className="text-emerald-700 dark:text-emerald-300">
-                ✓ {stat.sent24} <span className="text-muted-foreground font-normal">24h</span>
-              </span>
-              {stat.pending > 0 && (
-                <span className="text-amber-700 dark:text-amber-300">⏱ {stat.pending}</span>
-              )}
-              {stat.failed24 > 0 && (
-                <span className="text-rose-700 dark:text-rose-300 font-semibold">✕ {stat.failed24}</span>
-              )}
-              {isQuiet && <span className="text-muted-foreground italic">Heute noch nichts verschickt</span>}
-              <button onClick={onOpenLogs} className="ml-auto text-primary hover:underline">Logs →</button>
-            </div>
-
-            {stat.lastSent && (
-              <p className="text-[11px] text-muted-foreground mt-1.5">
-                Zuletzt gesendet: {new Date(stat.lastSent).toLocaleString("de-DE")}
-              </p>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ToolButton({ title, desc, onClick }: { title: string; desc: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="text-left p-4 rounded-xl border bg-card hover:bg-muted/30 hover:border-primary/30 transition-colors group"
-    >
-      <div className="font-medium text-sm flex items-center justify-between">
-        {title}
-        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-      </div>
-      <div className="text-xs text-muted-foreground mt-1">{desc}</div>
-    </button>
-  );
-}
-
-function Kpi({ icon: Icon, label, value, tone }: { icon: any; label: string; value: number; tone: "success" | "danger" | "warning" | "neutral" }) {
-  const cls = {
-    success: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300",
-    danger: "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/40 text-rose-700 dark:text-rose-300",
-    warning: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/40 text-amber-700 dark:text-amber-300",
-    neutral: "bg-muted/40 border-border text-foreground",
+function Kpi({ label, value, icon: Icon, tone }: { label: string; value: number; icon: any; tone: "muted" | "emerald" | "amber" | "rose" }) {
+  const c = {
+    muted:   "bg-muted/40 text-foreground",
+    emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+    amber:   "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+    rose:    "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
   }[tone];
   return (
-    <Card className={`border ${cls}`}>
+    <Card>
       <CardContent className="p-4 flex items-center gap-3">
-        <Icon className="h-5 w-5 opacity-80" />
+        <div className={`h-9 w-9 rounded-lg grid place-items-center ${c}`}><Icon className="h-4 w-4" /></div>
         <div>
-          <p className="text-2xl font-bold tabular-nums">{value}</p>
-          <p className="text-[11px] opacity-80">{label}</p>
+          <div className="text-xs text-muted-foreground">{label}</div>
+          <div className="text-xl font-heading font-bold tabular-nums">{value}</div>
         </div>
       </CardContent>
     </Card>
   );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    sent:       "bg-emerald-100 text-emerald-700",
+    pending:    "bg-amber-100 text-amber-800",
+    dlq:        "bg-rose-100 text-rose-700",
+    failed:     "bg-rose-100 text-rose-700",
+    bounced:    "bg-rose-100 text-rose-700",
+    suppressed: "bg-slate-200 text-slate-700",
+  };
+  return <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${map[status] ?? "bg-muted text-muted-foreground"}`}>{status}</span>;
 }
