@@ -338,7 +338,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Lade Bewerbung + Landing-Prompt
         const { data: app, error: appErr } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at, scheduled_at")
+          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at, scheduled_at, is_test")
           .eq("id", applicationId)
           .maybeSingle();
         if (appErr || !app) return json({ error: "Bewerbung nicht gefunden" }, 404);
@@ -346,15 +346,17 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           return json({ error: "Interview bereits abgeschlossen", status: app.interview_status }, 409);
         }
 
+        const isTest = !!(app as any).is_test;
+
         // Termin-Gating: Gespräch erst ab gebuchtem Calendly-Termin (mit 5 Min Vorlauf) beitretbar.
         const scheduledAtMs = (app as any).scheduled_at ? new Date((app as any).scheduled_at as string).getTime() : null;
-        if (scheduledAtMs && Date.now() < scheduledAtMs - 5 * 60 * 1000) {
+        if (!isTest && scheduledAtMs && Date.now() < scheduledAtMs - 5 * 60 * 1000) {
           const dt = new Date(scheduledAtMs).toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short" });
           return json({ error: `Ihr Gespräch startet erst am ${dt}. Bitte kommen Sie zum gebuchten Termin wieder.`, scheduled_at: (app as any).scheduled_at, not_yet: true }, 425);
         }
 
         // Geschäftszeiten-Gate: Recruiter ist täglich zwischen 8 und 20 Uhr (Europe/Berlin) erreichbar.
-        try {
+        if (!isTest) try {
           const berlinHour = Number(new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", hour12: false }).format(new Date()));
           if (berlinHour < 8 || berlinHour >= 20) {
             return json({
