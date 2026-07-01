@@ -196,7 +196,12 @@ function AdminBewerbungenPage() {
     return rows.filter(r => {
       if (tab !== "alle" && r.phase !== tab) return false;
       if (!ql) return true;
-      return (r.name?.toLowerCase().includes(ql) || r.email?.toLowerCase().includes(ql));
+      return (
+        r.name?.toLowerCase().includes(ql) ||
+        r.email?.toLowerCase().includes(ql) ||
+        r.phone?.toLowerCase().includes(ql) ||
+        (r.source ?? "").toLowerCase().includes(ql)
+      );
     });
   }, [rows, tab, q]);
 
