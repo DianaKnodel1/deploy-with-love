@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as TtsTestRouteImport } from './routes/tts-test'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
@@ -67,6 +68,7 @@ import { Route as EmployeeChatRouteImport } from './routes/_employee/chat'
 import { Route as EmployeeAppointmentsRouteImport } from './routes/_employee/appointments'
 import { Route as AdminTasksIndexRouteImport } from './routes/admin.tasks.index'
 import { Route as InterviewVoiceAppIdRouteImport } from './routes/interview.voice.$appId'
+import { Route as ApiPublicTtsTestRouteImport } from './routes/api/public/tts-test'
 import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sms-poll-cron'
 import { Route as ApiPublicLandingServerHeartbeatRouteImport } from './routes/api/public/landing-server-heartbeat'
 import { Route as ApiPublicLandingServerBootstrapRouteImport } from './routes/api/public/landing-server-bootstrap'
@@ -87,6 +89,11 @@ import { Route as AdminTasksBuilderTemplateIdRouteImport } from './routes/admin.
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TtsTestRoute = TtsTestRouteImport.update({
+  id: '/tts-test',
+  path: '/tts-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -373,6 +380,11 @@ const InterviewVoiceAppIdRoute = InterviewVoiceAppIdRouteImport.update({
   path: '/interview/voice/$appId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTtsTestRoute = ApiPublicTtsTestRouteImport.update({
+  id: '/api/public/tts-test',
+  path: '/api/public/tts-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSmsPollCronRoute = ApiPublicSmsPollCronRouteImport.update({
   id: '/api/public/sms-poll-cron',
   path: '/api/public/sms-poll-cron',
@@ -471,6 +483,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tts-test': typeof TtsTestRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/appointments': typeof EmployeeAppointmentsRoute
   '/chat': typeof EmployeeChatRoute
@@ -534,6 +547,7 @@ export interface FileRoutesByFullPath {
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/api/public/tts-test': typeof ApiPublicTtsTestRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
@@ -545,6 +559,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tts-test': typeof TtsTestRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/appointments': typeof EmployeeAppointmentsRoute
   '/chat': typeof EmployeeChatRoute
@@ -608,6 +623,7 @@ export interface FileRoutesByTo {
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/api/public/tts-test': typeof ApiPublicTtsTestRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/tasks': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
@@ -622,6 +638,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tts-test': typeof TtsTestRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/_employee/appointments': typeof EmployeeAppointmentsRoute
   '/_employee/chat': typeof EmployeeChatRoute
@@ -685,6 +702,7 @@ export interface FileRoutesById {
   '/api/public/landing-server-bootstrap': typeof ApiPublicLandingServerBootstrapRoute
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
+  '/api/public/tts-test': typeof ApiPublicTtsTestRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
@@ -699,6 +717,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/tts-test'
     | '/unsubscribe'
     | '/appointments'
     | '/chat'
@@ -762,6 +781,7 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/api/public/tts-test'
     | '/interview/voice/$appId'
     | '/admin/tasks/'
     | '/admin/tasks/builder/$templateId'
@@ -773,6 +793,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/tts-test'
     | '/unsubscribe'
     | '/appointments'
     | '/chat'
@@ -836,6 +857,7 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/api/public/tts-test'
     | '/interview/voice/$appId'
     | '/admin/tasks'
     | '/admin/tasks/builder/$templateId'
@@ -849,6 +871,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/tts-test'
     | '/unsubscribe'
     | '/_employee/appointments'
     | '/_employee/chat'
@@ -912,6 +935,7 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-bootstrap'
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
+    | '/api/public/tts-test'
     | '/interview/voice/$appId'
     | '/admin/tasks/'
     | '/admin/tasks/builder/$templateId'
@@ -926,6 +950,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TtsTestRoute: typeof TtsTestRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AuthConfirmedRoute: typeof AuthConfirmedRoute
   BewerbungVerbindenRoute: typeof BewerbungVerbindenRoute
@@ -942,6 +967,7 @@ export interface RootRouteChildren {
   ApiPublicLandingServerBootstrapRoute: typeof ApiPublicLandingServerBootstrapRoute
   ApiPublicLandingServerHeartbeatRoute: typeof ApiPublicLandingServerHeartbeatRoute
   ApiPublicSmsPollCronRoute: typeof ApiPublicSmsPollCronRoute
+  ApiPublicTtsTestRoute: typeof ApiPublicTtsTestRoute
   InterviewVoiceAppIdRoute: typeof InterviewVoiceAppIdRoute
   ApiPublicLandingServerFilesSplatRoute: typeof ApiPublicLandingServerFilesSplatRoute
 }
@@ -953,6 +979,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tts-test': {
+      id: '/tts-test'
+      path: '/tts-test'
+      fullPath: '/tts-test'
+      preLoaderRoute: typeof TtsTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -1354,6 +1387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InterviewVoiceAppIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tts-test': {
+      id: '/api/public/tts-test'
+      path: '/api/public/tts-test'
+      fullPath: '/api/public/tts-test'
+      preLoaderRoute: typeof ApiPublicTtsTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sms-poll-cron': {
       id: '/api/public/sms-poll-cron'
       path: '/api/public/sms-poll-cron'
@@ -1613,6 +1653,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TtsTestRoute: TtsTestRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AuthConfirmedRoute: AuthConfirmedRoute,
   BewerbungVerbindenRoute: BewerbungVerbindenRoute,
@@ -1629,6 +1670,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLandingServerBootstrapRoute: ApiPublicLandingServerBootstrapRoute,
   ApiPublicLandingServerHeartbeatRoute: ApiPublicLandingServerHeartbeatRoute,
   ApiPublicSmsPollCronRoute: ApiPublicSmsPollCronRoute,
+  ApiPublicTtsTestRoute: ApiPublicTtsTestRoute,
   InterviewVoiceAppIdRoute: InterviewVoiceAppIdRoute,
   ApiPublicLandingServerFilesSplatRoute: ApiPublicLandingServerFilesSplatRoute,
 }
