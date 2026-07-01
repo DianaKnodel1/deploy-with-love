@@ -244,8 +244,18 @@ function InterviewPage() {
             </div>
           </div>
           {startedAt && !ended && (
-            <div className={`text-sm font-mono tabular-nums ${remainingSec < 60 ? "text-destructive" : "text-muted-foreground"}`}>
-              {mm}:{ss}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleMute}
+                title={muted ? "Ton einschalten" : "Ton ausschalten"}
+                className={`p-2 rounded-lg hover:bg-muted transition ${speaking ? "text-primary animate-pulse" : "text-muted-foreground"}`}
+                style={speaking ? { color: primary } : undefined}
+              >
+                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+              <div className={`text-sm font-mono tabular-nums ${remainingSec < 60 ? "text-destructive" : "text-muted-foreground"}`}>
+                {mm}:{ss}
+              </div>
             </div>
           )}
         </div>
