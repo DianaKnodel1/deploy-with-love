@@ -178,37 +178,48 @@ export const getCohortStats = createServerFn({ method: "POST" })
       }
     }
 
-    // Aggregation pro Bewerbungs-Kohorte
+    // Aggregation pro Bewerbungs-Kohorte + pro Vermittlungs-Quelle
     const byDay = new Map<string, FunnelRow>();
+    const bySource = new Map<string, SourceFunnel>();
     const ensure = (k: string) => {
       let r = byDay.get(k);
       if (!r) { r = emptyRow(k); byDay.set(k, r); }
       return r;
     };
+    const ensureSrc = (key: string, label: string) => {
+      let s = bySource.get(key);
+      if (!s) {
+        s = { key, label, beworben: 0, termin_gebucht: 0, termin_wahrgenommen: 0, angenommen: 0, registriert: 0, onboarded: 0 };
+        bySource.set(key, s);
+      }
+      return s;
+    };
 
     for (const a of allApps) {
       const k = dayKey(a.created_at);
       const r = ensure(k);
-      r.beworben++;
+      const src = sourceOf(a);
+      const s = ensureSrc(src.key, src.label);
+      r.beworben++; s.beworben++;
 
       const bs = a.booking_status as string | null;
       const interviewDone = !!a.interview_completed_at;
-      if (bs === "scheduled" || bs === "completed") r.termin_gebucht++;
-      if (bs === "completed" || interviewDone) r.termin_wahrgenommen++;
+      if (bs === "scheduled" || bs === "completed") { r.termin_gebucht++; s.termin_gebucht++; }
+      if (bs === "completed" || interviewDone) { r.termin_wahrgenommen++; s.termin_wahrgenommen++; }
       if (bs === "no_show") r.no_show++;
 
       const rec = a.interview_recommendation as string | null;
       const accepted = a.status === "akzeptiert" || rec === "invite";
       const rejected = a.status === "abgelehnt" || rec === "reject";
-      if (accepted) r.angenommen++;
+      if (accepted) { r.angenommen++; s.angenommen++; }
       if (rejected) r.abgelehnt++;
 
       const email = String(a.email ?? "").toLowerCase().trim();
       if (email && mailedEmails.has(email)) r.reg_mail++;
       const prof = email ? profByEmail.get(email) : undefined;
       if (prof) {
-        r.registriert++;
-        if (prof.onboarding === "abgeschlossen") r.onboarded++;
+        r.registriert++; s.registriert++;
+        if (prof.onboarding === "abgeschlossen") { r.onboarded++; s.onboarded++; }
       }
     }
 
