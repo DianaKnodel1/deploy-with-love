@@ -226,7 +226,7 @@ async function runSummary(messages: Msg[]): Promise<{ summary: string; score: nu
       recommendation: rec === "reject" ? "reject" : "invite",
     };
   } catch {
-    return { summary: raw.slice(0, 2000), score: 50, recommendation: "unsure" };
+    return { summary: raw.slice(0, 2000), score: 60, recommendation: "invite" };
   }
 }
 
