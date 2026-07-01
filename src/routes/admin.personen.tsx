@@ -1,8 +1,9 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useNavigate } from "@/lib/router-compat";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { useAdminData } from "@/contexts/AdminDataContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -114,21 +115,58 @@ function AdminPersonenPage() {
     return m;
   }, [allBookings]);
 
+  // Landing-Pages für "Quelle"-Auflösung (landing_page_id → firmenname/slug)
+  const [landingById, setLandingById] = useState<Map<string, { slug: string; firmenname: string | null }>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("landing_pages").select("id, slug, firmenname");
+      if (cancelled || !data) return;
+      const m = new Map<string, { slug: string; firmenname: string | null }>();
+      for (const l of data as any[]) m.set(l.id, { slug: l.slug, firmenname: l.firmenname ?? null });
+      setLandingById(m);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const resolveSource = (a: any): string | null => {
+    if (a?.source_slug) return a.source_slug;
+    if (a?.landing_page_id) {
+      const l = landingById.get(a.landing_page_id);
+      if (l) return l.firmenname || l.slug;
+    }
+    if (a?.flow_type) return a.flow_type;
+    return null;
+  };
+
   const persons = useMemo<Person[]>(() => {
     const out: Person[] = [];
     const emailToProfile = new Map<string, any>();
+    const userIdToApps = new Map<string, any[]>();
     for (const p of profiles as any[]) {
       const e = String(p.email ?? "").toLowerCase().trim();
       if (e) emailToProfile.set(e, p);
     }
+    // Auch nach user_id gruppieren (Applications können via user_id verlinkt sein)
+    for (const a of applications as any[]) {
+      const uid = (a as any).user_id;
+      if (uid) {
+        const arr = userIdToApps.get(uid) ?? [];
+        arr.push(a);
+        userIdToApps.set(uid, arr);
+      }
+    }
 
     // 1) Bewerbungen → application kind, ABER: wenn passender Profile da, gehört sie zu employee
     const usedEmails = new Set<string>();
+    const usedUserIds = new Set<string>();
     for (const a of applications as any[]) {
       const email = String(a.email ?? "").toLowerCase().trim();
-      const prof = email ? emailToProfile.get(email) : undefined;
+      const prof = (email ? emailToProfile.get(email) : undefined)
+        ?? ((a as any).user_id ? (profiles as any[]).find(p => p.user_id === (a as any).user_id) : undefined);
       if (prof) {
-        usedEmails.add(email);
+        if (email) usedEmails.add(email);
+        usedUserIds.add(prof.user_id);
         const phase: Phase = prof.onboarding_status === "abgeschlossen"
           ? "onboarded"
           : "mitarbeiter";
@@ -136,10 +174,10 @@ function AdminPersonenPage() {
           id: prof.user_id,
           kind: "employee",
           name: prof.full_name || a.full_name || email,
-          email: prof.email || a.email,
+          email: prof.email || a.email || "—",
           phase,
           lastActivity: prof.created_at || a.created_at,
-          source: a.source_slug || null,
+          source: resolveSource(a),
           detailUrl: `/admin/personen/${prof.user_id}`,
         });
         continue;
@@ -150,35 +188,39 @@ function AdminPersonenPage() {
         id: a.id,
         kind: "application",
         name: a.full_name || `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || email,
-        email: a.email,
+        email: a.email || "—",
         phase,
         lastActivity: a.created_at,
-        source: a.source_slug || null,
+        source: resolveSource(a),
         detailUrl: `/admin/personen/${a.id}`,
       });
     }
 
-    // 2) Profile ohne Bewerbung
+    // 2) Profile ohne Bewerbung — Quelle aus verlinkter Application (via user_id) auflösen
     for (const p of profiles as any[]) {
       const e = String(p.email ?? "").toLowerCase().trim();
+      if (usedUserIds.has(p.user_id)) continue;
       if (e && usedEmails.has(e)) continue;
+      const linkedApps = userIdToApps.get(p.user_id) ?? [];
+      const linkedApp = linkedApps[0] ?? null;
       const phase: Phase = p.onboarding_status === "abgeschlossen"
         ? "onboarded"
         : "mitarbeiter";
       out.push({
         id: p.user_id,
         kind: "employee",
-        name: p.full_name || e,
-        email: p.email,
+        name: p.full_name || e || "—",
+        email: p.email || linkedApp?.email || "—",
         phase,
         lastActivity: p.created_at,
-        source: null,
+        source: linkedApp ? resolveSource(linkedApp) : null,
         detailUrl: `/admin/personen/${p.user_id}`,
       });
     }
 
     return out.sort((a, b) => (b.lastActivity || "").localeCompare(a.lastActivity || ""));
-  }, [applications, profiles, bookingByApp]);
+  }, [applications, profiles, bookingByApp, landingById]);
+
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { alle: persons.length };
