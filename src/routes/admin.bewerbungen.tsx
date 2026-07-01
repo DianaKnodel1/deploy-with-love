@@ -228,7 +228,7 @@ function AdminBewerbungenPage() {
   const GROUPS: { key: string; label: string; emoji: string; phases: Phase[] }[] = [
     { key: "alle",        label: "Alle",         emoji: "👥", phases: [] },
     { key: "offen",       label: "Offen",        emoji: "📅", phases: ["termin_offen", "termin_gebucht"] },
-    { key: "interview",   label: "Interview",    emoji: "🎙", phases: ["interview_laeuft", "wird_geprueft", "no_show"] },
+    { key: "interview",   label: "Interview",    emoji: "🎙", phases: ["interview_laeuft", "no_show"] },
     { key: "angenommen",  label: "Angenommen",   emoji: "✅", phases: ["angenommen"] },
     { key: "abgelehnt",   label: "Abgelehnt",    emoji: "❌", phases: ["abgelehnt"] },
     { key: "mitarbeiter", label: "Im Portal",    emoji: "🚀", phases: ["registriert", "email_bestaetigt", "onboarding_komplett", "mitarbeiter_aktiv"] },
