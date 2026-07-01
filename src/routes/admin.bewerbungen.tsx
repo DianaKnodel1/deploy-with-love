@@ -28,7 +28,7 @@ import {
 
 type Phase =
   | "termin_offen" | "termin_gebucht" | "no_show"
-  | "interview_laeuft" | "wird_geprueft"
+  | "interview_laeuft"
   | "angenommen" | "abgelehnt"
   | "registriert" | "email_bestaetigt" | "onboarding_komplett" | "mitarbeiter_aktiv";
 
@@ -38,7 +38,6 @@ const PHASES: { key: Phase | "alle"; label: string; emoji: string }[] = [
   { key: "termin_gebucht", label: "Termin gebucht", emoji: "⏰" },
   { key: "no_show", label: "Nicht erschienen", emoji: "⚠️" },
   { key: "interview_laeuft", label: "Interview läuft", emoji: "🎙" },
-  { key: "wird_geprueft", label: "Wird geprüft", emoji: "🟡" },
   { key: "angenommen", label: "Zusage erteilt", emoji: "✅" },
   { key: "abgelehnt", label: "Abgelehnt", emoji: "❌" },
   { key: "registriert", label: "Registriert", emoji: "🧾" },
@@ -52,7 +51,6 @@ const PHASE_COLOR: Record<Phase, string> = {
   termin_gebucht: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
   no_show: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
   interview_laeuft: "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
-  wird_geprueft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300",
   angenommen: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
   abgelehnt: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
   registriert: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300",
@@ -60,6 +58,7 @@ const PHASE_COLOR: Record<Phase, string> = {
   onboarding_komplett: "bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300",
   mitarbeiter_aktiv: "bg-emerald-500 text-white dark:bg-emerald-600 border-0",
 };
+
 
 type ProfileInfo = {
   onboarding: string | null;
@@ -81,7 +80,8 @@ function computePhase(a: any, scheduledAt: Date | null, prof: ProfileInfo): Phas
   if (a.booking_status === "no_show") return "no_show";
   if (rec === "invite" || a.status === "akzeptiert") return "angenommen";
   if (rec === "reject" || a.status === "abgelehnt") return "abgelehnt";
-  if (a.interview_completed_at) return "wird_geprueft";
+  if (a.interview_completed_at) return "angenommen";
+
   if (a.interview_started_at) return "interview_laeuft";
   if (scheduledAt) {
     if (scheduledAt.getTime() < now - 30 * 60_000 && !a.interview_completed_at) return "no_show";
@@ -95,11 +95,12 @@ function phaseToStages(phase: Phase): Stage[] {
   // 1 Termin  2 Interview  3 Entscheidung  4 Registriert  5 Onboarding
   const order: Phase[] = [
     "termin_offen","termin_gebucht","no_show",
-    "interview_laeuft","wird_geprueft",
+    "interview_laeuft",
     "angenommen","abgelehnt",
     "registriert","email_bestaetigt",
     "onboarding_komplett","mitarbeiter_aktiv",
   ];
+
   const idx = order.indexOf(phase);
   const isFailed = phase === "abgelehnt" || phase === "no_show";
 
@@ -114,7 +115,7 @@ function phaseToStages(phase: Phase): Stage[] {
   const cur = phase === "termin_offen" ? 0
     : phase === "termin_gebucht" ? 0
     : phase === "no_show" ? 1
-    : phase === "interview_laeuft" || phase === "wird_geprueft" ? 1
+    : phase === "interview_laeuft" ? 1
     : phase === "angenommen" || phase === "abgelehnt" ? 2
     : phase === "registriert" || phase === "email_bestaetigt" ? 3
     : 4;
@@ -227,7 +228,7 @@ function AdminBewerbungenPage() {
   const GROUPS: { key: string; label: string; emoji: string; phases: Phase[] }[] = [
     { key: "alle",        label: "Alle",         emoji: "👥", phases: [] },
     { key: "offen",       label: "Offen",        emoji: "📅", phases: ["termin_offen", "termin_gebucht"] },
-    { key: "interview",   label: "Interview",    emoji: "🎙", phases: ["interview_laeuft", "wird_geprueft", "no_show"] },
+    { key: "interview",   label: "Interview",    emoji: "🎙", phases: ["interview_laeuft", "no_show"] },
     { key: "angenommen",  label: "Angenommen",   emoji: "✅", phases: ["angenommen"] },
     { key: "abgelehnt",   label: "Abgelehnt",    emoji: "❌", phases: ["abgelehnt"] },
     { key: "mitarbeiter", label: "Im Portal",    emoji: "🚀", phases: ["registriert", "email_bestaetigt", "onboarding_komplett", "mitarbeiter_aktiv"] },
