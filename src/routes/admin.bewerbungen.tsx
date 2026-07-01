@@ -243,7 +243,7 @@ function AdminBewerbungenPage() {
         <div className="flex items-center gap-2">
           <div className="relative w-64">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Name oder E-Mail…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+            <Input placeholder="Name, Rufnummer, E-Mail, Vermittlung…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
