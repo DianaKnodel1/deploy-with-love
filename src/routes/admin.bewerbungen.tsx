@@ -130,8 +130,7 @@ function phaseToStages(phase: Phase): Stage[] {
 
 const searchSchema = z.object({
   tab: z.enum([
-    "alle", "termin_offen", "termin_gebucht", "ueberfaellig",
-    "interview_laeuft", "wird_geprueft", "angenommen", "registriert", "abgelehnt",
+    "alle", "offen", "interview", "angenommen", "abgelehnt", "mitarbeiter",
   ]).optional().catch("alle"),
 });
 
