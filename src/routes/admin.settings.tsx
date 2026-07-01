@@ -144,24 +144,6 @@ function AdminSettingsPage() {
             <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
           </Card>
         </Link>
-        <Link to="/admin/applications" className="group">
-          <Card className="hover:border-primary/40 transition-colors h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> Bewerbungen (Liste)</CardTitle>
-              <CardDescription className="text-xs">Alte Roh-Liste — neuer Flow: Personen</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
-          </Card>
-        </Link>
-        <Link to="/admin/employees" className="group">
-          <Card className="hover:border-primary/40 transition-colors h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2"><UsersIcon className="h-4 w-4" /> Mitarbeiter (Liste)</CardTitle>
-              <CardDescription className="text-xs">Alte Roh-Liste — neuer Flow: Personen</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0"><span className="text-xs text-primary inline-flex items-center gap-1">Öffnen <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" /></span></CardContent>
-          </Card>
-        </Link>
         <Link to="/admin/activity" className="group">
           <Card className="hover:border-primary/40 transition-colors h-full">
             <CardHeader className="pb-2">
