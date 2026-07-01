@@ -6,7 +6,7 @@ import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, CheckCircle2 } from "lucide-react";
+import { Loader2, Send, CheckCircle2, UserPlus, ClipboardCheck } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; text: string; ts: string };
 
@@ -41,18 +41,19 @@ export const Route = createFileRoute("/interview/$appId")({
 
 function InterviewPage() {
   const { appId } = useParams({ from: "/interview/$appId" });
-  const { landing } = useSearch({ from: "/interview/$appId" }) as { landing: string; portal: string };
+  const { landing, portal } = useSearch({ from: "/interview/$appId" }) as { landing: string; portal: string };
 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [ended, setEnded] = useState(false);
+  const [appStatus, setAppStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [remainingSec, setRemainingSec] = useState<number>(900);
-  const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null } | null>(null);
+  const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null; recruiter_name?: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const MAX_SEC = 900; // 15 Minuten
@@ -80,6 +81,7 @@ function InterviewPage() {
         if (cancelled) return;
         setMessages(data.history ?? []);
         if (data.ended) setEnded(true);
+        if (data.application_status) setAppStatus(data.application_status);
         setStartedAt(data.interview_started_at ? new Date(data.interview_started_at).getTime() : Date.now());
         setInitializing(false);
       } catch (e: any) {
@@ -125,6 +127,7 @@ function InterviewPage() {
       const data = await postInterview({ applicationId: appId, action: "message", text });
       setMessages(data.history ?? []);
       if (data.ended) setEnded(true);
+      if (data.application_status) setAppStatus(data.application_status);
     } catch (e: any) {
       setError(e?.message ?? "Unbekannter Fehler");
     } finally {
@@ -233,13 +236,22 @@ function InterviewPage() {
         </div>
 
         {ended ? (
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-border p-6 text-center space-y-4">
-            <CheckCircle2 className="h-10 w-10 mx-auto" style={{ color: primary }} />
-            <h2 className="text-lg font-semibold">Vielen Dank für das Gespräch!</h2>
-            <p className="text-sm text-muted-foreground">
-              Ihre Antworten wurden gespeichert. Wir melden uns in Kürze bei Ihnen.
-            </p>
-          </div>
+          appStatus === "akzeptiert" ? (
+            <WelcomeAccepted
+              company={company}
+              primary={primary}
+              recruiter={branding?.recruiter_name || "Sabine Schneider"}
+              portal={portal}
+            />
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-border p-6 text-center space-y-4">
+              <CheckCircle2 className="h-10 w-10 mx-auto" style={{ color: primary }} />
+              <h2 className="text-lg font-semibold">Vielen Dank für das Gespräch!</h2>
+              <p className="text-sm text-muted-foreground">
+                Ihre Antworten wurden gespeichert. Wir melden uns in Kürze bei Ihnen.
+              </p>
+            </div>
+          )
         ) : (
           <div className="space-y-2">
             <div className="flex gap-2">
@@ -268,6 +280,85 @@ function InterviewPage() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function WelcomeAccepted({
+  company,
+  primary,
+  recruiter,
+  portal,
+}: {
+  company: string;
+  primary: string;
+  recruiter: string;
+  portal: string;
+}) {
+  const base = (portal || "").replace(/\/+$/, "") || (typeof window !== "undefined" ? window.location.origin : "");
+  const registerHref = `${base}/register`;
+  const loginHref = `${base}/login`;
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-border shadow-sm p-8 space-y-6 text-center">
+      <div
+        className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+        style={{ background: `${primary}1a`, color: primary }}
+      >
+        <CheckCircle2 className="h-9 w-9" />
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold">Willkommen im Team!</h2>
+        <p className="text-sm text-muted-foreground">Wir freuen uns, dass Sie dabei sind.</p>
+        <p className="text-sm text-foreground">
+          Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!
+        </p>
+      </div>
+
+      <div className="text-left bg-muted/40 rounded-xl p-4 space-y-3">
+        <p className="text-sm font-semibold">Wie geht es weiter?</p>
+        <div className="flex items-start gap-3">
+          <span
+            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold"
+            style={{ background: primary }}
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+          </span>
+          <span className="text-sm">Registrieren Sie sich im Mitarbeiterportal</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span
+            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold"
+            style={{ background: primary }}
+          >
+            <ClipboardCheck className="h-3.5 w-3.5" />
+          </span>
+          <span className="text-sm">Führen Sie anschließend das Onboarding durch</span>
+        </div>
+      </div>
+
+      <Button
+        asChild
+        size="lg"
+        className="w-full font-semibold"
+        style={{ background: primary }}
+      >
+        <a href={registerHref}>Jetzt registrieren</a>
+      </Button>
+
+      <div className="text-left text-sm text-muted-foreground space-y-1 pt-2 border-t border-border">
+        <p className="text-foreground">Ich wünsche Ihnen einen erfolgreichen Start!</p>
+        <p>Mit freundlichen Grüßen</p>
+        <p className="font-semibold text-foreground">{recruiter}</p>
+        <p>HR Management</p>
+        <p>{company}</p>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Bereits registriert?{" "}
+        <a href={loginHref} className="underline hover:text-foreground">
+          Zum Login
+        </a>
+      </p>
     </div>
   );
 }
