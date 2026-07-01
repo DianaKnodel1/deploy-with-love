@@ -185,7 +185,7 @@ function InterviewPage() {
             {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-8 object-contain" />}
             <div>
               <h1 className="text-sm font-semibold text-foreground">Bewerbungsgespräch mit {company}</h1>
-              <p className="text-xs text-muted-foreground">Bewerbungsgespräch · max. 10 Minuten</p>
+              <p className="text-xs text-muted-foreground">Bewerbungsgespräch · max. 15 Minuten</p>
             </div>
           </div>
           {startedAt && !ended && (
