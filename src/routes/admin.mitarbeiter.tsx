@@ -181,8 +181,8 @@ function AdminMitarbeiterPage() {
                 <tr>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Onboarding</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Telefon</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Onboarding-Fortschritt</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Registriert</th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aktion</th>
                 </tr>
@@ -191,18 +191,20 @@ function AdminMitarbeiterPage() {
                 {filtered.map(r => {
                   const wartet = r.status === "registriert" && r.onboarding === "abgeschlossen";
                   const st = STATUS_CONFIG[r.status];
-                  const ob = ONBOARDING_STATUS_CONFIG[r.onboarding];
                   return (
                     <tr key={r.id} className="hover:bg-muted/20">
-                      <td className="px-4 py-2.5 font-medium">{r.name}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{r.email}</td>
-                      <td className="px-4 py-2.5">
-                        <Badge className={`${ob?.color} border-0 text-[10px]`}>{ob?.label}</Badge>
+                      <td className="px-4 py-3 font-medium">
+                        <div>{r.name}</div>
+                        <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                          <span className={`inline-block px-1.5 py-0.5 rounded ${st?.color}`}>{st?.label}</span>
+                        </div>
                       </td>
-                      <td className="px-4 py-2.5">
-                        <Badge className={`${st?.color} border-0 text-[10px]`}>{st?.label}</Badge>
+                      <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
+                      <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
+                      <td className="px-4 py-3">
+                        <StageTimeline stages={stagesFor(r)} />
                       </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
+                      <td className="px-4 py-3 text-xs text-muted-foreground tabular-nums">
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
                       </td>
                       <td className="px-4 py-2.5">
