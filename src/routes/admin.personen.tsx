@@ -1,8 +1,9 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useNavigate } from "@/lib/router-compat";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { useAdminData } from "@/contexts/AdminDataContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
