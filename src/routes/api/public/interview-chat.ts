@@ -336,7 +336,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Lade Bewerbung + Landing-Prompt
         const { data: app, error: appErr } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at")
+          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at, scheduled_at")
           .eq("id", applicationId)
           .maybeSingle();
         if (appErr || !app) return json({ error: "Bewerbung nicht gefunden" }, 404);
@@ -344,8 +344,15 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           return json({ error: "Interview bereits abgeschlossen", status: app.interview_status }, 409);
         }
 
-        // Hartes 10-Min-Limit ab erstem Start
-        const MAX_DURATION_MS = 10 * 60 * 1000;
+        // Termin-Gating: Gespräch erst ab gebuchtem Calendly-Termin (mit 5 Min Vorlauf) beitretbar.
+        const scheduledAtMs = (app as any).scheduled_at ? new Date((app as any).scheduled_at as string).getTime() : null;
+        if (scheduledAtMs && Date.now() < scheduledAtMs - 5 * 60 * 1000) {
+          const dt = new Date(scheduledAtMs).toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short" });
+          return json({ error: `Ihr Gespräch startet erst am ${dt}. Bitte kommen Sie zum gebuchten Termin wieder.`, scheduled_at: (app as any).scheduled_at, not_yet: true }, 425);
+        }
+
+        // Hartes 15-Min-Limit ab erstem Start
+        const MAX_DURATION_MS = 15 * 60 * 1000;
         const startedAt = app.interview_started_at ? new Date(app.interview_started_at as string).getTime() : null;
         const timedOut = startedAt !== null && Date.now() - startedAt > MAX_DURATION_MS;
 
