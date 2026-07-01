@@ -57,18 +57,19 @@ ENDE DES GESPRÄCHS — verbindlich:
 - Bei unangemessenem Verhalten ebenfalls höflich beenden mit [INTERVIEW_END].`;
 
 
-const SUMMARY_PROMPT = `Du bist ein erfahrener Personalleiter. Bewerte das folgende KI-Bewerbungsgespräch und gib eine kurze, ehrliche Einschätzung ab.
+const SUMMARY_PROMPT = `Du bist ein erfahrener Personalleiter. Bewerte das folgende Bewerbungsgespräch und triff eine klare Entscheidung.
 
-Antworte AUSSCHLIESSLICH als gültiges JSON-Objekt (keine Markdown-Codeblöcke), mit folgenden Feldern:
+WICHTIG — Entscheidungsregel:
+- Ablehnen ("reject") NUR wenn der Bewerber KEINE Zeit hat ODER KEIN echtes Interesse zeigt (verarscht das Gespräch, unangemessene Antworten, offensichtlich nicht ernst gemeint).
+- In ALLEN anderen Fällen: einladen ("invite"). Fehlende Erfahrung, Nervosität, kurze Antworten oder Rechtschreibfehler sind KEIN Ablehnungsgrund — jeder darf mitmachen.
+- "unsure" ist NICHT erlaubt. Triff eine klare Entscheidung.
+
+Antworte AUSSCHLIESSLICH als gültiges JSON-Objekt (keine Markdown-Codeblöcke):
 {
-  "summary": "string (3–6 Sätze, Deutsch, neutral, fasse die Antworten zusammen + nenne Stärken/Schwächen)",
-  "score": number,         // 0–100, Eignung für Versicherungs-/Finanzvermittlung
-  "recommendation": "invite" | "reject" | "unsure"
-}
-
-invite  = empfehlen, einladen
-reject  = nicht empfehlen
-unsure  = unsicher / weiteres Gespräch nötig`;
+  "summary": "string (3–6 Sätze, Deutsch, neutral, fasse die Antworten zusammen)",
+  "score": number,         // 0–100
+  "recommendation": "invite" | "reject"
+}`;
 
 type Msg = { role: "user" | "assistant"; text: string; ts: string };
 
@@ -222,10 +223,10 @@ async function runSummary(messages: Msg[]): Promise<{ summary: string; score: nu
     return {
       summary: String(parsed.summary ?? ""),
       score: Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0))),
-      recommendation: rec === "invite" || rec === "reject" || rec === "unsure" ? rec : "unsure",
+      recommendation: rec === "reject" ? "reject" : "invite",
     };
   } catch {
-    return { summary: raw.slice(0, 2000), score: 50, recommendation: "unsure" };
+    return { summary: raw.slice(0, 2000), score: 60, recommendation: "invite" };
   }
 }
 
@@ -335,7 +336,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Lade Bewerbung + Landing-Prompt
         const { data: app, error: appErr } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at")
+          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at, scheduled_at")
           .eq("id", applicationId)
           .maybeSingle();
         if (appErr || !app) return json({ error: "Bewerbung nicht gefunden" }, 404);
@@ -343,8 +344,15 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           return json({ error: "Interview bereits abgeschlossen", status: app.interview_status }, 409);
         }
 
-        // Hartes 10-Min-Limit ab erstem Start
-        const MAX_DURATION_MS = 10 * 60 * 1000;
+        // Termin-Gating: Gespräch erst ab gebuchtem Calendly-Termin (mit 5 Min Vorlauf) beitretbar.
+        const scheduledAtMs = (app as any).scheduled_at ? new Date((app as any).scheduled_at as string).getTime() : null;
+        if (scheduledAtMs && Date.now() < scheduledAtMs - 5 * 60 * 1000) {
+          const dt = new Date(scheduledAtMs).toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short" });
+          return json({ error: `Ihr Gespräch startet erst am ${dt}. Bitte kommen Sie zum gebuchten Termin wieder.`, scheduled_at: (app as any).scheduled_at, not_yet: true }, 425);
+        }
+
+        // Hartes 15-Min-Limit ab erstem Start
+        const MAX_DURATION_MS = 15 * 60 * 1000;
         const startedAt = app.interview_started_at ? new Date(app.interview_started_at as string).getTime() : null;
         const timedOut = startedAt !== null && Date.now() - startedAt > MAX_DURATION_MS;
 

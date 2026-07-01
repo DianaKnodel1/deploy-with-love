@@ -51,11 +51,11 @@ function InterviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [remainingSec, setRemainingSec] = useState<number>(600);
+  const [remainingSec, setRemainingSec] = useState<number>(900);
   const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const MAX_SEC = 600; // 10 Minuten
+  const MAX_SEC = 900; // 15 Minuten
 
   // Branding laden
   useEffect(() => {
@@ -161,7 +161,7 @@ function InterviewPage() {
           <h1 className="text-xl font-semibold">Bewerbungsgespräch mit {company}</h1>
           <div className="text-sm text-muted-foreground space-y-2">
             <p><strong>Das Gespräch wird digital geführt</strong> und automatisiert ausgewertet.</p>
-            <p>Das Gespräch dauert <strong>maximal 10 Minuten</strong> und besteht aus 6–8 Fragen zu Ihrer Person, Motivation und Erfahrung.</p>
+            <p>Das Gespräch dauert <strong>maximal 15 Minuten</strong> und besteht aus einigen kurzen Fragen zu Ihrer Person, Motivation und Verfügbarkeit.</p>
             <p>Ihre Antworten werden zur Bewerbungsauswertung gespeichert und für maximal 6 Monate aufbewahrt. Es findet keine Audio-Aufnahme statt.</p>
           </div>
           <Button
@@ -185,7 +185,7 @@ function InterviewPage() {
             {branding?.logo_url && <img src={branding.logo_url} alt={company} className="h-8 object-contain" />}
             <div>
               <h1 className="text-sm font-semibold text-foreground">Bewerbungsgespräch mit {company}</h1>
-              <p className="text-xs text-muted-foreground">Bewerbungsgespräch · max. 10 Minuten</p>
+              <p className="text-xs text-muted-foreground">Bewerbungsgespräch · max. 15 Minuten</p>
             </div>
           </div>
           {startedAt && !ended && (
