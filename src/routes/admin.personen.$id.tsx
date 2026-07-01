@@ -258,7 +258,7 @@ function PersonDetailPage() {
               Transkript ({messages.length} Nachrichten)
             </summary>
 
-            <div className="mt-2 space-y-1.5 max-h-96 overflow-y-auto pr-1">
+            <div className="mt-2 space-y-1.5">
               {messages.map((m: any, i: number) => (
                 <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-[11px] whitespace-pre-wrap ${
