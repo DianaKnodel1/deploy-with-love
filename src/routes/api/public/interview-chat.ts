@@ -355,16 +355,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
           return json({ error: `Ihr Gespräch startet erst am ${dt}. Bitte kommen Sie zum gebuchten Termin wieder.`, scheduled_at: (app as any).scheduled_at, not_yet: true }, 425);
         }
 
-        // Geschäftszeiten-Gate: Recruiter ist täglich zwischen 8 und 20 Uhr (Europe/Berlin) erreichbar.
-        if (!isTest) try {
-          const berlinHour = Number(new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", hour12: false }).format(new Date()));
-          if (berlinHour < 8 || berlinHour >= 20) {
-            return json({
-              error: "Unsere Recruiterin ist täglich von 8:00 bis 20:00 Uhr erreichbar. Bitte kommen Sie innerhalb dieser Zeit wieder — Ihr Termin bleibt reserviert.",
-              off_hours: true,
-            }, 425);
-          }
-        } catch { /* ignore tz errors */ }
+        // Geschäftszeiten-Gate deaktiviert (Testphase) — Recruiter rund um die Uhr erreichbar.
 
         // Hartes 15-Min-Limit ab erstem Start
         const MAX_DURATION_MS = 15 * 60 * 1000;
