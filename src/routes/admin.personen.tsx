@@ -154,7 +154,7 @@ function AdminPersonenPage() {
         phase,
         lastActivity: a.created_at,
         source: a.source_slug || null,
-        detailUrl: `/admin/applications/${a.id}`,
+        detailUrl: `/admin/personen/${a.id}`,
       });
     }
 
