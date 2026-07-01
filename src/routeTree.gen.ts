@@ -64,8 +64,6 @@ import { Route as EmployeeContractRouteImport } from './routes/_employee/contrac
 import { Route as EmployeeChatRouteImport } from './routes/_employee/chat'
 import { Route as EmployeeAppointmentsRouteImport } from './routes/_employee/appointments'
 import { Route as AdminTasksIndexRouteImport } from './routes/admin.tasks.index'
-import { Route as AdminEmployeesIndexRouteImport } from './routes/admin.employees.index'
-import { Route as AdminApplicationsIndexRouteImport } from './routes/admin.applications.index'
 import { Route as InterviewVoiceAppIdRouteImport } from './routes/interview.voice.$appId'
 import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sms-poll-cron'
 import { Route as ApiPublicLandingServerHeartbeatRouteImport } from './routes/api/public/landing-server-heartbeat'
@@ -78,9 +76,7 @@ import { Route as ApiPublicApplicationsRouteImport } from './routes/api/public/a
 import { Route as ApiPublicApplicationLookupRouteImport } from './routes/api/public/application-lookup'
 import { Route as ApiPublicApplicationByTokenRouteImport } from './routes/api/public/application-by-token'
 import { Route as AdminPersonenIdRouteImport } from './routes/admin.personen.$id'
-import { Route as AdminEmployeesUserIdRouteImport } from './routes/admin.employees.$userId'
 import { Route as AdminAssignmentsAssignmentIdRouteImport } from './routes/admin.assignments.$assignmentId'
-import { Route as AdminApplicationsAppIdRouteImport } from './routes/admin.applications.$appId'
 import { Route as EmployeeTasksAssignmentIdRouteImport } from './routes/_employee/tasks.$assignmentId'
 import { Route as ApiPublicLandingServerFilesSplatRouteImport } from './routes/api/public/landing-server-files.$'
 import { Route as AdminTasksBuilderTemplateIdRouteImport } from './routes/admin.tasks.builder.$templateId'
@@ -359,16 +355,6 @@ const AdminTasksIndexRoute = AdminTasksIndexRouteImport.update({
   path: '/tasks/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminEmployeesIndexRoute = AdminEmployeesIndexRouteImport.update({
-  id: '/employees/',
-  path: '/employees/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminApplicationsIndexRoute = AdminApplicationsIndexRouteImport.update({
-  id: '/applications/',
-  path: '/applications/',
-  getParentRoute: () => AdminRoute,
-} as any)
 const InterviewVoiceAppIdRoute = InterviewVoiceAppIdRouteImport.update({
   id: '/interview/voice/$appId',
   path: '/interview/voice/$appId',
@@ -435,22 +421,12 @@ const AdminPersonenIdRoute = AdminPersonenIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AdminPersonenRoute,
 } as any)
-const AdminEmployeesUserIdRoute = AdminEmployeesUserIdRouteImport.update({
-  id: '/employees/$userId',
-  path: '/employees/$userId',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminAssignmentsAssignmentIdRoute =
   AdminAssignmentsAssignmentIdRouteImport.update({
     id: '/assignments/$assignmentId',
     path: '/assignments/$assignmentId',
     getParentRoute: () => AdminRoute,
   } as any)
-const AdminApplicationsAppIdRoute = AdminApplicationsAppIdRouteImport.update({
-  id: '/applications/$appId',
-  path: '/applications/$appId',
-  getParentRoute: () => AdminRoute,
-} as any)
 const EmployeeTasksAssignmentIdRoute =
   EmployeeTasksAssignmentIdRouteImport.update({
     id: '/$assignmentId',
@@ -525,9 +501,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/bewerbung/': typeof BewerbungIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
-  '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
-  '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/admin/personen/$id': typeof AdminPersonenIdRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
@@ -540,8 +514,6 @@ export interface FileRoutesByFullPath {
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
-  '/admin/applications/': typeof AdminApplicationsIndexRoute
-  '/admin/employees/': typeof AdminEmployeesIndexRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
   '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
@@ -600,9 +572,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/bewerbung': typeof BewerbungIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
-  '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
-  '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/admin/personen/$id': typeof AdminPersonenIdRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
@@ -615,8 +585,6 @@ export interface FileRoutesByTo {
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
-  '/admin/applications': typeof AdminApplicationsIndexRoute
-  '/admin/employees': typeof AdminEmployeesIndexRoute
   '/admin/tasks': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
   '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
@@ -678,9 +646,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/bewerbung/': typeof BewerbungIndexRoute
   '/_employee/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
-  '/admin/applications/$appId': typeof AdminApplicationsAppIdRoute
   '/admin/assignments/$assignmentId': typeof AdminAssignmentsAssignmentIdRoute
-  '/admin/employees/$userId': typeof AdminEmployeesUserIdRoute
   '/admin/personen/$id': typeof AdminPersonenIdRoute
   '/api/public/application-by-token': typeof ApiPublicApplicationByTokenRoute
   '/api/public/application-lookup': typeof ApiPublicApplicationLookupRoute
@@ -693,8 +659,6 @@ export interface FileRoutesById {
   '/api/public/landing-server-heartbeat': typeof ApiPublicLandingServerHeartbeatRoute
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
-  '/admin/applications/': typeof AdminApplicationsIndexRoute
-  '/admin/employees/': typeof AdminEmployeesIndexRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
   '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
@@ -756,9 +720,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/bewerbung/'
     | '/tasks/$assignmentId'
-    | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
-    | '/admin/employees/$userId'
     | '/admin/personen/$id'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
@@ -771,8 +733,6 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
     | '/interview/voice/$appId'
-    | '/admin/applications/'
-    | '/admin/employees/'
     | '/admin/tasks/'
     | '/admin/tasks/builder/$templateId'
     | '/api/public/landing-server-files/$'
@@ -831,9 +791,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/bewerbung'
     | '/tasks/$assignmentId'
-    | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
-    | '/admin/employees/$userId'
     | '/admin/personen/$id'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
@@ -846,8 +804,6 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
     | '/interview/voice/$appId'
-    | '/admin/applications'
-    | '/admin/employees'
     | '/admin/tasks'
     | '/admin/tasks/builder/$templateId'
     | '/api/public/landing-server-files/$'
@@ -908,9 +864,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/bewerbung/'
     | '/_employee/tasks/$assignmentId'
-    | '/admin/applications/$appId'
     | '/admin/assignments/$assignmentId'
-    | '/admin/employees/$userId'
     | '/admin/personen/$id'
     | '/api/public/application-by-token'
     | '/api/public/application-lookup'
@@ -923,8 +877,6 @@ export interface FileRouteTypes {
     | '/api/public/landing-server-heartbeat'
     | '/api/public/sms-poll-cron'
     | '/interview/voice/$appId'
-    | '/admin/applications/'
-    | '/admin/employees/'
     | '/admin/tasks/'
     | '/admin/tasks/builder/$templateId'
     | '/api/public/landing-server-files/$'
@@ -1344,20 +1296,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTasksIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/employees/': {
-      id: '/admin/employees/'
-      path: '/employees'
-      fullPath: '/admin/employees/'
-      preLoaderRoute: typeof AdminEmployeesIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/applications/': {
-      id: '/admin/applications/'
-      path: '/applications'
-      fullPath: '/admin/applications/'
-      preLoaderRoute: typeof AdminApplicationsIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/interview/voice/$appId': {
       id: '/interview/voice/$appId'
       path: '/interview/voice/$appId'
@@ -1442,25 +1380,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPersonenIdRouteImport
       parentRoute: typeof AdminPersonenRoute
     }
-    '/admin/employees/$userId': {
-      id: '/admin/employees/$userId'
-      path: '/employees/$userId'
-      fullPath: '/admin/employees/$userId'
-      preLoaderRoute: typeof AdminEmployeesUserIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/assignments/$assignmentId': {
       id: '/admin/assignments/$assignmentId'
       path: '/assignments/$assignmentId'
       fullPath: '/admin/assignments/$assignmentId'
       preLoaderRoute: typeof AdminAssignmentsAssignmentIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/applications/$appId': {
-      id: '/admin/applications/$appId'
-      path: '/applications/$appId'
-      fullPath: '/admin/applications/$appId'
-      preLoaderRoute: typeof AdminApplicationsAppIdRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_employee/tasks/$assignmentId': {
@@ -1577,11 +1501,7 @@ interface AdminRouteChildren {
   AdminUploadsRoute: typeof AdminUploadsRoute
   AdminVermittlungRoute: typeof AdminVermittlungRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  AdminApplicationsAppIdRoute: typeof AdminApplicationsAppIdRoute
   AdminAssignmentsAssignmentIdRoute: typeof AdminAssignmentsAssignmentIdRoute
-  AdminEmployeesUserIdRoute: typeof AdminEmployeesUserIdRoute
-  AdminApplicationsIndexRoute: typeof AdminApplicationsIndexRoute
-  AdminEmployeesIndexRoute: typeof AdminEmployeesIndexRoute
   AdminTasksIndexRoute: typeof AdminTasksIndexRoute
   AdminTasksBuilderTemplateIdRoute: typeof AdminTasksBuilderTemplateIdRoute
 }
@@ -1616,11 +1536,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminUploadsRoute: AdminUploadsRoute,
   AdminVermittlungRoute: AdminVermittlungRoute,
   AdminIndexRoute: AdminIndexRoute,
-  AdminApplicationsAppIdRoute: AdminApplicationsAppIdRoute,
   AdminAssignmentsAssignmentIdRoute: AdminAssignmentsAssignmentIdRoute,
-  AdminEmployeesUserIdRoute: AdminEmployeesUserIdRoute,
-  AdminApplicationsIndexRoute: AdminApplicationsIndexRoute,
-  AdminEmployeesIndexRoute: AdminEmployeesIndexRoute,
   AdminTasksIndexRoute: AdminTasksIndexRoute,
   AdminTasksBuilderTemplateIdRoute: AdminTasksBuilderTemplateIdRoute,
 }
@@ -1656,13 +1572,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
