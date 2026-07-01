@@ -37,6 +37,7 @@ import { Route as AdminRecoveryRouteImport } from './routes/admin.recovery'
 import { Route as AdminPostRouteImport } from './routes/admin.post'
 import { Route as AdminPersonenRouteImport } from './routes/admin.personen'
 import { Route as AdminPartnerCompaniesRouteImport } from './routes/admin.partner-companies'
+import { Route as AdminMitarbeiterRouteImport } from './routes/admin.mitarbeiter'
 import { Route as AdminLandingGeneratorRouteImport } from './routes/admin.landing-generator'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
 import { Route as AdminInfrastructureRouteImport } from './routes/admin.infrastructure'
@@ -47,6 +48,7 @@ import { Route as AdminDomainsRouteImport } from './routes/admin.domains'
 import { Route as AdminContractsRouteImport } from './routes/admin.contracts'
 import { Route as AdminChatRouteImport } from './routes/admin.chat'
 import { Route as AdminCalendlyRouteImport } from './routes/admin.calendly'
+import { Route as AdminBewerbungenRouteImport } from './routes/admin.bewerbungen'
 import { Route as AdminAppointmentsRouteImport } from './routes/admin.appointments'
 import { Route as AdminAiSettingsRouteImport } from './routes/admin.ai-settings'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
@@ -220,6 +222,11 @@ const AdminPartnerCompaniesRoute = AdminPartnerCompaniesRouteImport.update({
   path: '/partner-companies',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMitarbeiterRoute = AdminMitarbeiterRouteImport.update({
+  id: '/mitarbeiter',
+  path: '/mitarbeiter',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLandingGeneratorRoute = AdminLandingGeneratorRouteImport.update({
   id: '/landing-generator',
   path: '/landing-generator',
@@ -268,6 +275,11 @@ const AdminChatRoute = AdminChatRouteImport.update({
 const AdminCalendlyRoute = AdminCalendlyRouteImport.update({
   id: '/calendly',
   path: '/calendly',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBewerbungenRoute = AdminBewerbungenRouteImport.update({
+  id: '/bewerbungen',
+  path: '/bewerbungen',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAppointmentsRoute = AdminAppointmentsRouteImport.update({
@@ -470,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/bewerbungen': typeof AdminBewerbungenRoute
   '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
@@ -480,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
+  '/admin/mitarbeiter': typeof AdminMitarbeiterRoute
   '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
   '/admin/personen': typeof AdminPersonenRouteWithChildren
   '/admin/post': typeof AdminPostRoute
@@ -541,6 +555,7 @@ export interface FileRoutesByTo {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/bewerbungen': typeof AdminBewerbungenRoute
   '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
@@ -551,6 +566,7 @@ export interface FileRoutesByTo {
   '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
+  '/admin/mitarbeiter': typeof AdminMitarbeiterRoute
   '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
   '/admin/personen': typeof AdminPersonenRouteWithChildren
   '/admin/post': typeof AdminPostRoute
@@ -615,6 +631,7 @@ export interface FileRoutesById {
   '/admin/activity': typeof AdminActivityRoute
   '/admin/ai-settings': typeof AdminAiSettingsRoute
   '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/bewerbungen': typeof AdminBewerbungenRoute
   '/admin/calendly': typeof AdminCalendlyRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/contracts': typeof AdminContractsRoute
@@ -625,6 +642,7 @@ export interface FileRoutesById {
   '/admin/infrastructure': typeof AdminInfrastructureRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/landing-generator': typeof AdminLandingGeneratorRoute
+  '/admin/mitarbeiter': typeof AdminMitarbeiterRoute
   '/admin/partner-companies': typeof AdminPartnerCompaniesRoute
   '/admin/personen': typeof AdminPersonenRouteWithChildren
   '/admin/post': typeof AdminPostRoute
@@ -689,6 +707,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/bewerbungen'
     | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
@@ -699,6 +718,7 @@ export interface FileRouteTypes {
     | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
+    | '/admin/mitarbeiter'
     | '/admin/partner-companies'
     | '/admin/personen'
     | '/admin/post'
@@ -760,6 +780,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/bewerbungen'
     | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
@@ -770,6 +791,7 @@ export interface FileRouteTypes {
     | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
+    | '/admin/mitarbeiter'
     | '/admin/partner-companies'
     | '/admin/personen'
     | '/admin/post'
@@ -833,6 +855,7 @@ export interface FileRouteTypes {
     | '/admin/activity'
     | '/admin/ai-settings'
     | '/admin/appointments'
+    | '/admin/bewerbungen'
     | '/admin/calendly'
     | '/admin/chat'
     | '/admin/contracts'
@@ -843,6 +866,7 @@ export interface FileRouteTypes {
     | '/admin/infrastructure'
     | '/admin/kyc'
     | '/admin/landing-generator'
+    | '/admin/mitarbeiter'
     | '/admin/partner-companies'
     | '/admin/personen'
     | '/admin/post'
@@ -1107,6 +1131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPartnerCompaniesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/mitarbeiter': {
+      id: '/admin/mitarbeiter'
+      path: '/mitarbeiter'
+      fullPath: '/admin/mitarbeiter'
+      preLoaderRoute: typeof AdminMitarbeiterRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/landing-generator': {
       id: '/admin/landing-generator'
       path: '/landing-generator'
@@ -1175,6 +1206,13 @@ declare module '@tanstack/react-router' {
       path: '/calendly'
       fullPath: '/admin/calendly'
       preLoaderRoute: typeof AdminCalendlyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bewerbungen': {
+      id: '/admin/bewerbungen'
+      path: '/bewerbungen'
+      fullPath: '/admin/bewerbungen'
+      preLoaderRoute: typeof AdminBewerbungenRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/appointments': {
@@ -1475,6 +1513,7 @@ interface AdminRouteChildren {
   AdminActivityRoute: typeof AdminActivityRoute
   AdminAiSettingsRoute: typeof AdminAiSettingsRoute
   AdminAppointmentsRoute: typeof AdminAppointmentsRoute
+  AdminBewerbungenRoute: typeof AdminBewerbungenRoute
   AdminCalendlyRoute: typeof AdminCalendlyRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
@@ -1485,6 +1524,7 @@ interface AdminRouteChildren {
   AdminInfrastructureRoute: typeof AdminInfrastructureRoute
   AdminKycRoute: typeof AdminKycRoute
   AdminLandingGeneratorRoute: typeof AdminLandingGeneratorRoute
+  AdminMitarbeiterRoute: typeof AdminMitarbeiterRoute
   AdminPartnerCompaniesRoute: typeof AdminPartnerCompaniesRoute
   AdminPersonenRoute: typeof AdminPersonenRouteWithChildren
   AdminPostRoute: typeof AdminPostRoute
@@ -1510,6 +1550,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminActivityRoute: AdminActivityRoute,
   AdminAiSettingsRoute: AdminAiSettingsRoute,
   AdminAppointmentsRoute: AdminAppointmentsRoute,
+  AdminBewerbungenRoute: AdminBewerbungenRoute,
   AdminCalendlyRoute: AdminCalendlyRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
@@ -1520,6 +1561,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInfrastructureRoute: AdminInfrastructureRoute,
   AdminKycRoute: AdminKycRoute,
   AdminLandingGeneratorRoute: AdminLandingGeneratorRoute,
+  AdminMitarbeiterRoute: AdminMitarbeiterRoute,
   AdminPartnerCompaniesRoute: AdminPartnerCompaniesRoute,
   AdminPersonenRoute: AdminPersonenRouteWithChildren,
   AdminPostRoute: AdminPostRoute,
