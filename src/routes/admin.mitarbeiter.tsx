@@ -23,7 +23,7 @@ export const Route = createFileRoute("/admin/mitarbeiter")({
 });
 
 function AdminMitarbeiterPage() {
-  const { profiles, adminUserIds, loading, refresh } = useAdminData();
+  const { profiles, adminUserIds, loading } = useAdminData();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"alle" | "wartet" | "aktiv" | "abgelehnt">("alle");
@@ -71,7 +71,7 @@ function AdminMitarbeiterPage() {
         .eq("user_id", userId);
       if (error) throw error;
       toast.success(status === "angenommen" ? "Mitarbeiter freigeschaltet" : "Status aktualisiert");
-      await refresh();
+      // AdminDataContext hört auf Realtime-Updates.
     } catch (e: any) {
       toast.error(e?.message ?? "Fehler");
     } finally {
