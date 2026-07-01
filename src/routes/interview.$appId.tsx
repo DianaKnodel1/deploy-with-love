@@ -41,18 +41,19 @@ export const Route = createFileRoute("/interview/$appId")({
 
 function InterviewPage() {
   const { appId } = useParams({ from: "/interview/$appId" });
-  const { landing } = useSearch({ from: "/interview/$appId" }) as { landing: string; portal: string };
+  const { landing, portal } = useSearch({ from: "/interview/$appId" }) as { landing: string; portal: string };
 
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [ended, setEnded] = useState(false);
+  const [appStatus, setAppStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [remainingSec, setRemainingSec] = useState<number>(900);
-  const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null } | null>(null);
+  const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null; recruiter_name?: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const MAX_SEC = 900; // 15 Minuten
