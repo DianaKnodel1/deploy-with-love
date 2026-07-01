@@ -14,8 +14,7 @@ import { Users, FileText, ClipboardList, Mailbox, LayoutGrid, Settings, Calendar
 
 const PAGES: { label: string; path: string; icon: any }[] = [
   { label: "Dashboard", path: "/admin", icon: LayoutGrid },
-  { label: "Bewerbungen", path: "/admin/applications", icon: FileText },
-  { label: "Mitarbeiter", path: "/admin/employees", icon: Users },
+  { label: "Personen", path: "/admin/personen", icon: Users },
   { label: "Aufgaben", path: "/admin/tasks", icon: ClipboardList },
   { label: "Termine", path: "/admin/appointments", icon: CalendarDays },
   { label: "Chat", path: "/admin/chat", icon: MessageCircle },
