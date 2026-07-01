@@ -34,6 +34,7 @@ function StatistikenPage() {
   const [tenants, setTenants] = useState<Array<{ id: string; name: string }>>([]);
   const [rows, setRows] = useState<FunnelRow[]>([]);
   const [totals, setTotals] = useState<Totals | null>(null);
+  const [bySource, setBySource] = useState<SourceFunnel[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -48,7 +49,12 @@ function StatistikenPage() {
     const payload: any = { days };
     if (tenantId) payload.tenant_id = tenantId;
     fn({ data: payload })
-      .then((r: any) => { setRows(r.rows ?? []); setTotals(r.totals ?? null); if (r.error) setErr(r.error); })
+      .then((r: any) => {
+        setRows(r.rows ?? []);
+        setTotals(r.totals ?? null);
+        setBySource(r.by_source ?? []);
+        if (r.error) setErr(r.error);
+      })
       .catch((e: any) => setErr(e?.message ?? "Fehler"))
       .finally(() => setLoading(false));
   };
