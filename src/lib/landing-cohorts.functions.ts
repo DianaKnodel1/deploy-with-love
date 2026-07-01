@@ -60,6 +60,17 @@ export type FunnelTotals = {
   biggest_drop_pct: number;        // % gefallen an größter Stelle
 };
 
+export type SourceFunnel = {
+  key: string;                     // slug oder landing-id
+  label: string;                   // Firmenname / Slug
+  beworben: number;
+  termin_gebucht: number;
+  termin_wahrgenommen: number;
+  angenommen: number;
+  registriert: number;
+  onboarded: number;
+};
+
 // Backwards compat exports — admin.statistiken.tsx liest noch `CohortRow`/`CohortTotals`.
 export type CohortRow = FunnelRow;
 export type CohortTotals = FunnelTotals & {
