@@ -253,10 +253,11 @@ function PersonDetailPage() {
           </p>
         )}
         {messages.length > 0 && (
-          <details className="text-xs">
+          <details className="text-xs" open>
             <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
               Transkript ({messages.length} Nachrichten)
             </summary>
+
             <div className="mt-2 space-y-1.5 max-h-96 overflow-y-auto pr-1">
               {messages.map((m: any, i: number) => (
                 <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
