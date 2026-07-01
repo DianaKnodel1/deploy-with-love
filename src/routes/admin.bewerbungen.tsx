@@ -296,7 +296,7 @@ function AdminBewerbungenPage() {
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {PHASES.map(p => {
+        {GROUPS.map(p => {
           const active = tab === p.key;
           const cnt = counts[p.key] ?? 0;
           return (
