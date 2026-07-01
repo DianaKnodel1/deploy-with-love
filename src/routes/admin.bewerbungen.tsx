@@ -26,43 +26,64 @@ import {
  */
 
 type Phase =
-  | "termin_offen" | "termin_gebucht" | "ueberfaellig"
+  | "termin_offen" | "termin_gebucht" | "no_show"
   | "interview_laeuft" | "wird_geprueft"
-  | "angenommen" | "abgelehnt" | "registriert";
+  | "angenommen" | "abgelehnt"
+  | "registriert" | "email_bestaetigt" | "onboarding_komplett" | "mitarbeiter_aktiv";
 
 const PHASES: { key: Phase | "alle"; label: string; emoji: string }[] = [
   { key: "alle", label: "Alle", emoji: "👥" },
-  { key: "termin_offen", label: "Termin offen", emoji: "📅" },
+  { key: "termin_offen", label: "Kein Termin", emoji: "📅" },
   { key: "termin_gebucht", label: "Termin gebucht", emoji: "⏰" },
-  { key: "ueberfaellig", label: "Überfällig", emoji: "⚠️" },
+  { key: "no_show", label: "Nicht erschienen", emoji: "⚠️" },
   { key: "interview_laeuft", label: "Interview läuft", emoji: "🎙" },
   { key: "wird_geprueft", label: "Wird geprüft", emoji: "🟡" },
-  { key: "angenommen", label: "Angenommen", emoji: "✅" },
-  { key: "registriert", label: "Registriert", emoji: "🧾" },
+  { key: "angenommen", label: "Zusage erteilt", emoji: "✅" },
   { key: "abgelehnt", label: "Abgelehnt", emoji: "❌" },
+  { key: "registriert", label: "Registriert", emoji: "🧾" },
+  { key: "email_bestaetigt", label: "E-Mail bestätigt", emoji: "✉️" },
+  { key: "onboarding_komplett", label: "Onboarding fertig", emoji: "📄" },
+  { key: "mitarbeiter_aktiv", label: "Mitarbeiter aktiv", emoji: "🚀" },
 ];
 
 const PHASE_COLOR: Record<Phase, string> = {
   termin_offen: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
   termin_gebucht: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-  ueberfaellig: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+  no_show: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
   interview_laeuft: "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
   wird_geprueft: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300",
   angenommen: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-  registriert: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300",
   abgelehnt: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  registriert: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300",
+  email_bestaetigt: "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+  onboarding_komplett: "bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300",
+  mitarbeiter_aktiv: "bg-emerald-500 text-white dark:bg-emerald-600 border-0",
 };
 
-function computePhase(a: any, scheduledAt: Date | null, hasProfile: boolean): Phase {
+type ProfileInfo = {
+  onboarding: string | null;
+  status: string | null;
+  emailConfirmed: boolean;
+  contractSigned: boolean;
+} | null;
+
+function computePhase(a: any, scheduledAt: Date | null, prof: ProfileInfo): Phase {
   const now = Date.now();
   const rec = a.interview_recommendation as string | null;
-  if (hasProfile) return "registriert";
+  // Profile existiert → tiefer im Funnel
+  if (prof) {
+    if (prof.status === "angenommen") return "mitarbeiter_aktiv";
+    if (prof.onboarding === "abgeschlossen" || prof.contractSigned) return "onboarding_komplett";
+    if (prof.emailConfirmed) return "email_bestaetigt";
+    return "registriert";
+  }
+  if (a.booking_status === "no_show") return "no_show";
   if (rec === "invite" || a.status === "akzeptiert") return "angenommen";
   if (rec === "reject" || a.status === "abgelehnt") return "abgelehnt";
   if (a.interview_completed_at) return "wird_geprueft";
   if (a.interview_started_at) return "interview_laeuft";
   if (scheduledAt) {
-    if (scheduledAt.getTime() < now - 30 * 60_000) return "ueberfaellig";
+    if (scheduledAt.getTime() < now - 30 * 60_000 && !a.interview_completed_at) return "no_show";
     return "termin_gebucht";
   }
   return "termin_offen";
@@ -81,7 +102,7 @@ export const Route = createFileRoute("/admin/bewerbungen")({
 });
 
 function AdminBewerbungenPage() {
-  const { applications, profiles, allBookings, loading } = useAdminData();
+  const { applications, profiles, allBookings, emailConfirmedUserIds, loading } = useAdminData();
   const search = useSearch({ from: "/admin/bewerbungen" });
   const navigate = useNavigate();
   const tab = (search as any).tab ?? "alle";
@@ -90,14 +111,14 @@ function AdminBewerbungenPage() {
   const [busy, setBusy] = useState(false);
   const runCleanup = useServerFn(deleteOrphanApplications);
 
-  const profileEmails = useMemo(() => {
-    const s = new Set<string>();
-    const uids = new Set<string>();
+  const profileByKey = useMemo(() => {
+    const byUid = new Map<string, any>();
+    const byEmail = new Map<string, any>();
     for (const p of profiles as any[]) {
-      if (p.email) s.add(String(p.email).toLowerCase().trim());
-      if (p.user_id) uids.add(p.user_id);
+      if (p.user_id) byUid.set(p.user_id, p);
+      if (p.email) byEmail.set(String(p.email).toLowerCase().trim(), p);
     }
-    return { s, uids };
+    return { byUid, byEmail };
   }, [profiles]);
 
   const bookingByApp = useMemo(() => {
@@ -127,32 +148,42 @@ function AdminBewerbungenPage() {
   }, []);
 
   const resolveSource = (a: any): string | null => {
-    if (a?.source_slug) return a.source_slug;
-    if (a?.landing_page_id) {
-      const l = landingById.get(a.landing_page_id);
+    // Vermittlung = source_landing (Broker) — sonst target_landing / landing_page
+    const srcId = a?.source_landing_id ?? a?.landing_page_id ?? a?.target_landing_id;
+    if (srcId) {
+      const l = landingById.get(srcId);
       if (l) return l.firmenname || l.slug;
     }
+    if (a?.source_slug) return a.source_slug;
     return a?.flow_type ?? null;
   };
 
   const rows = useMemo(() => {
     return (applications as any[]).map((a) => {
       const email = String(a.email ?? "").toLowerCase().trim();
-      const hasProfile = !!(a.user_id && profileEmails.uids.has(a.user_id))
-        || (email && profileEmails.s.has(email));
+      const p = (a.user_id && profileByKey.byUid.get(a.user_id))
+        || (email && profileByKey.byEmail.get(email))
+        || null;
+      const prof: ProfileInfo = p ? {
+        onboarding: p.onboarding_status ?? null,
+        status: p.status ?? null,
+        emailConfirmed: !!(p.user_id && emailConfirmedUserIds.has(p.user_id)),
+        contractSigned: !!p.contract_signed_at,
+      } : null;
       const sched = bookingByApp.get(a.id) ?? null;
       return {
         id: a.id,
         name: a.full_name || `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || email || "—",
         email: a.email || "—",
-        phase: computePhase(a, sched, !!hasProfile),
+        phone: a.phone || "—",
+        phase: computePhase(a, sched, prof),
         lastActivity: a.created_at,
         source: resolveSource(a),
         createdAt: a.created_at,
-        hasProfile: !!hasProfile,
+        hasProfile: !!prof,
       };
     }).sort((a, b) => (b.lastActivity || "").localeCompare(a.lastActivity || ""));
-  }, [applications, bookingByApp, landingById, profileEmails]);
+  }, [applications, bookingByApp, landingById, profileByKey, emailConfirmedUserIds]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { alle: rows.length };
@@ -165,7 +196,12 @@ function AdminBewerbungenPage() {
     return rows.filter(r => {
       if (tab !== "alle" && r.phase !== tab) return false;
       if (!ql) return true;
-      return (r.name?.toLowerCase().includes(ql) || r.email?.toLowerCase().includes(ql));
+      return (
+        r.name?.toLowerCase().includes(ql) ||
+        r.email?.toLowerCase().includes(ql) ||
+        r.phone?.toLowerCase().includes(ql) ||
+        (r.source ?? "").toLowerCase().includes(ql)
+      );
     });
   }, [rows, tab, q]);
 
@@ -207,7 +243,7 @@ function AdminBewerbungenPage() {
         <div className="flex items-center gap-2">
           <div className="relative w-64">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Name oder E-Mail…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
+            <Input placeholder="Name, Rufnummer, E-Mail, Vermittlung…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -272,10 +308,11 @@ function AdminBewerbungenPage() {
               <thead className="bg-muted/30 border-b">
                 <tr>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Phase</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Quelle</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Erstellt</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vermittlung</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Eingegangen</th>
                   <th className="px-4 py-2.5"></th>
                 </tr>
               </thead>
@@ -285,13 +322,14 @@ function AdminBewerbungenPage() {
                   return (
                     <tr key={r.id} className="hover:bg-muted/20">
                       <td className="px-4 py-2.5 font-medium">{r.name}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{r.phone}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{r.email}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.source ?? "—"}</td>
                       <td className="px-4 py-2.5">
-                        <Badge className={`${PHASE_COLOR[r.phase]} border-0`}>
+                        <Badge className={PHASE_COLOR[r.phase]}>
                           <span className="mr-1">{meta?.emoji}</span>{meta?.label}
                         </Badge>
                       </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.source ?? "—"}</td>
                       <td className="px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
                         {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
                       </td>

@@ -7,7 +7,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getCohortStats, type FunnelRow, type FunnelTotals } from "@/lib/landing-cohorts.functions";
+import { getCohortStats, type FunnelRow, type FunnelTotals, type SourceFunnel } from "@/lib/landing-cohorts.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ function StatistikenPage() {
   const [tenants, setTenants] = useState<Array<{ id: string; name: string }>>([]);
   const [rows, setRows] = useState<FunnelRow[]>([]);
   const [totals, setTotals] = useState<Totals | null>(null);
+  const [bySource, setBySource] = useState<SourceFunnel[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -48,7 +49,12 @@ function StatistikenPage() {
     const payload: any = { days };
     if (tenantId) payload.tenant_id = tenantId;
     fn({ data: payload })
-      .then((r: any) => { setRows(r.rows ?? []); setTotals(r.totals ?? null); if (r.error) setErr(r.error); })
+      .then((r: any) => {
+        setRows(r.rows ?? []);
+        setTotals(r.totals ?? null);
+        setBySource(r.by_source ?? []);
+        if (r.error) setErr(r.error);
+      })
       .catch((e: any) => setErr(e?.message ?? "Fehler"))
       .finally(() => setLoading(false));
   };
@@ -115,6 +121,9 @@ function StatistikenPage() {
 
       {/* Gesamt-Trichter */}
       {totals && <FunnelChart totals={totals} />}
+
+      {/* Per-Vermittlung Funnel */}
+      {bySource.length > 0 && <SourceBreakdown sources={bySource} />}
 
       {/* Tageskohorten */}
       <Card>
@@ -270,6 +279,61 @@ function FunnelChart({ totals }: { totals: Totals }) {
             </div>
           );
         })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SourceBreakdown({ sources }: { sources: SourceFunnel[] }) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Funnel nach Vermittlung</CardTitle>
+        <CardDescription>
+          Pro Vermittlungs-Landing: von Bewerbung → Termin gebucht → wahrgenommen → angenommen → registriert → onboarded.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-[11px] uppercase tracking-wider text-muted-foreground border-b">
+              <tr>
+                <th className="text-left py-2 px-3 font-medium">Vermittlung</th>
+                <th className="text-right py-2 px-3 font-medium">Bewerbungen</th>
+                <th className="text-right py-2 px-3 font-medium">Termin gebucht</th>
+                <th className="text-right py-2 px-3 font-medium">Wahrgenommen</th>
+                <th className="text-right py-2 px-3 font-medium">Angenommen</th>
+                <th className="text-right py-2 px-3 font-medium">Registriert</th>
+                <th className="text-right py-2 px-3 font-medium">Onboarded</th>
+                <th className="text-right py-2 px-3 font-medium">E2E</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sources.map((s) => {
+                const e2e = s.beworben > 0 ? Math.round((s.onboarded / s.beworben) * 1000) / 10 : 0;
+                return (
+                  <tr key={s.key} className="border-b last:border-0 hover:bg-muted/30">
+                    <td className="py-3 px-3 font-medium">{s.label}</td>
+                    <td className="text-right py-3 px-3 font-semibold tabular-nums">{s.beworben}</td>
+                    <td className="text-right py-3 px-3 tabular-nums">{s.termin_gebucht}</td>
+                    <td className="text-right py-3 px-3 tabular-nums text-emerald-600 dark:text-emerald-400">{s.termin_wahrgenommen}</td>
+                    <td className="text-right py-3 px-3 tabular-nums text-emerald-700 dark:text-emerald-300 font-semibold">{s.angenommen}</td>
+                    <td className="text-right py-3 px-3 tabular-nums">{s.registriert}</td>
+                    <td className="text-right py-3 px-3 tabular-nums font-bold text-emerald-700 dark:text-emerald-300">{s.onboarded}</td>
+                    <td className="text-right py-3 px-3 tabular-nums">
+                      <span className={cn(
+                        "text-[10px] font-semibold px-1.5 py-0.5 rounded",
+                        e2e >= 20 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                          : e2e >= 5 ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                          : "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+                      )}>{e2e}%</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </CardContent>
     </Card>
   );

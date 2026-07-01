@@ -60,6 +60,17 @@ export type FunnelTotals = {
   biggest_drop_pct: number;        // % gefallen an größter Stelle
 };
 
+export type SourceFunnel = {
+  key: string;                     // slug oder landing-id
+  label: string;                   // Firmenname / Slug
+  beworben: number;
+  termin_gebucht: number;
+  termin_wahrgenommen: number;
+  angenommen: number;
+  registriert: number;
+  onboarded: number;
+};
+
 // Backwards compat exports — admin.statistiken.tsx liest noch `CohortRow`/`CohortTotals`.
 export type CohortRow = FunnelRow;
 export type CohortTotals = FunnelTotals & {
@@ -98,14 +109,36 @@ export const getCohortStats = createServerFn({ method: "POST" })
     // 1) Bewerbungen
     let appQ = supabase
       .from("applications")
-      .select("id, email, tenant_id, status, flow_type, booking_status, interview_completed_at, interview_recommendation, created_at, is_test")
+      .select("id, email, tenant_id, status, flow_type, booking_status, interview_completed_at, interview_recommendation, created_at, is_test, source_slug, source_landing_id, target_landing_id, landing_page_id")
       .eq("is_test", false)
       .in("flow_type", ["broker", "fasttrack"])
       .gte("created_at", sinceIso);
     if (data.tenant_id) appQ = appQ.eq("tenant_id", data.tenant_id);
     const { data: apps, error: appErr } = await appQ;
-    if (appErr) return { rows: [] as FunnelRow[], totals: emptyTotals(), error: appErr.message };
+    if (appErr) return { rows: [] as FunnelRow[], totals: emptyTotals(), by_source: [] as SourceFunnel[], error: appErr.message };
     const allApps = (apps ?? []) as any[];
+
+    // Landing-Pages für Vermittlungs-Label
+    const landingIds = Array.from(new Set(
+      allApps.flatMap(a => [a.source_landing_id, a.target_landing_id, a.landing_page_id]).filter(Boolean),
+    )) as string[];
+    const landingLabel = new Map<string, string>();
+    if (landingIds.length > 0) {
+      const { data: lps } = await supabase
+        .from("landing_pages")
+        .select("id, slug, firmenname")
+        .in("id", landingIds);
+      for (const l of (lps ?? []) as any[]) {
+        landingLabel.set(l.id, l.firmenname || l.slug || l.id);
+      }
+    }
+    const sourceOf = (a: any): { key: string; label: string } => {
+      const id = a.source_landing_id ?? a.landing_page_id ?? a.target_landing_id;
+      if (id && landingLabel.has(id)) return { key: id, label: landingLabel.get(id)! };
+      if (a.source_slug) return { key: `slug:${a.source_slug}`, label: a.source_slug };
+      return { key: "unbekannt", label: "Unbekannt" };
+    };
+
 
     const emails = Array.from(new Set(
       allApps.map(a => String(a.email ?? "").toLowerCase().trim()).filter(Boolean),
@@ -145,37 +178,48 @@ export const getCohortStats = createServerFn({ method: "POST" })
       }
     }
 
-    // Aggregation pro Bewerbungs-Kohorte
+    // Aggregation pro Bewerbungs-Kohorte + pro Vermittlungs-Quelle
     const byDay = new Map<string, FunnelRow>();
+    const bySource = new Map<string, SourceFunnel>();
     const ensure = (k: string) => {
       let r = byDay.get(k);
       if (!r) { r = emptyRow(k); byDay.set(k, r); }
       return r;
     };
+    const ensureSrc = (key: string, label: string) => {
+      let s = bySource.get(key);
+      if (!s) {
+        s = { key, label, beworben: 0, termin_gebucht: 0, termin_wahrgenommen: 0, angenommen: 0, registriert: 0, onboarded: 0 };
+        bySource.set(key, s);
+      }
+      return s;
+    };
 
     for (const a of allApps) {
       const k = dayKey(a.created_at);
       const r = ensure(k);
-      r.beworben++;
+      const src = sourceOf(a);
+      const s = ensureSrc(src.key, src.label);
+      r.beworben++; s.beworben++;
 
       const bs = a.booking_status as string | null;
       const interviewDone = !!a.interview_completed_at;
-      if (bs === "scheduled" || bs === "completed") r.termin_gebucht++;
-      if (bs === "completed" || interviewDone) r.termin_wahrgenommen++;
+      if (bs === "scheduled" || bs === "completed") { r.termin_gebucht++; s.termin_gebucht++; }
+      if (bs === "completed" || interviewDone) { r.termin_wahrgenommen++; s.termin_wahrgenommen++; }
       if (bs === "no_show") r.no_show++;
 
       const rec = a.interview_recommendation as string | null;
       const accepted = a.status === "akzeptiert" || rec === "invite";
       const rejected = a.status === "abgelehnt" || rec === "reject";
-      if (accepted) r.angenommen++;
+      if (accepted) { r.angenommen++; s.angenommen++; }
       if (rejected) r.abgelehnt++;
 
       const email = String(a.email ?? "").toLowerCase().trim();
       if (email && mailedEmails.has(email)) r.reg_mail++;
       const prof = email ? profByEmail.get(email) : undefined;
       if (prof) {
-        r.registriert++;
-        if (prof.onboarding === "abgeschlossen") r.onboarded++;
+        r.registriert++; s.registriert++;
+        if (prof.onboarding === "abgeschlossen") { r.onboarded++; s.onboarded++; }
       }
     }
 
@@ -235,7 +279,8 @@ export const getCohortStats = createServerFn({ method: "POST" })
       avg_conversion: pct(T.angenommen, T.beworben),
     };
 
-    return { rows, totals, error: null as string | null };
+    const by_source = Array.from(bySource.values()).sort((a, b) => b.beworben - a.beworben);
+    return { rows, totals, by_source, error: null as string | null };
   });
 
 function pct(n: number, d: number): number {
