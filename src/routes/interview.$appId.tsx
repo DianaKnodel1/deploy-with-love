@@ -51,11 +51,11 @@ function InterviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [remainingSec, setRemainingSec] = useState<number>(600);
+  const [remainingSec, setRemainingSec] = useState<number>(900);
   const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const MAX_SEC = 600; // 10 Minuten
+  const MAX_SEC = 900; // 15 Minuten
 
   // Branding laden
   useEffect(() => {
