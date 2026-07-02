@@ -1176,9 +1176,13 @@ function AdminTenantsPage() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" title="Domain wechseln (Wizard)" onClick={() => setSwitchTenant(t)}>
                       <ArrowRightLeft className="h-3.5 w-3.5" />
                     </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="portal.<domain>+Aliases DNS anlegen/aktualisieren" onClick={() => setupDns(t)}>
+                      <Globe className="h-3.5 w-3.5" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditTenant(t); setDialogOpen(true); }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
+
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteTenant(t.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
