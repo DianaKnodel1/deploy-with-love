@@ -65,7 +65,7 @@
     { "key": "contact_email",   "label": "E-Mail",        "type": "text", "default": "kontakt@tts-beratung.de" },
     { "key": "contact_phone",   "label": "Telefon",       "type": "text", "default": "+49 30 000 000 00" },
     { "key": "contact_address", "label": "Adresse",       "type": "text", "default": "Berlin, Deutschland" },
-    { "key": "impressum_url",   "label": "Impressum-URL", "type": "text", "default": "/impressum" },
-    { "key": "datenschutz_url", "label": "Datenschutz-URL","type": "text","default": "/datenschutz" }
+    { "key": "impressum_url",   "label": "Impressum-URL", "type": "text", "default": "impressum.html" },
+    { "key": "datenschutz_url", "label": "Datenschutz-URL","type": "text","default": "datenschutz.html" }
   ]
 }
