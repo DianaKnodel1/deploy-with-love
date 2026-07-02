@@ -4,7 +4,19 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { THEMES } from "@/lib/landing-themes";
+import { THEME_ASSETS } from "@/lib/theme-assets.generated";
 import landingServerSource from "../../../../landing-server/server.js?raw";
+
+function mimeFor(name: string): string {
+  const ext = name.toLowerCase().split(".").pop() || "";
+  return ({
+    png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
+    gif: "image/gif", svg: "image/svg+xml", ico: "image/x-icon",
+    woff: "font/woff", woff2: "font/woff2", ttf: "font/ttf", otf: "font/otf",
+    css: "text/css", js: "application/javascript", json: "application/json",
+    html: "text/html", txt: "text/plain",
+  } as Record<string, string>)[ext] || "application/octet-stream";
+}
 
 const PACKAGE_JSON = `{
   "name": "landing-server",
