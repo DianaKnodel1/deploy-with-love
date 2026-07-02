@@ -15,7 +15,9 @@ a{color:inherit;text-decoration:none}
 .cle-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--cle-line)}
 .cle-header-inner{display:flex;align-items:center;gap:24px;padding:14px 24px}
 .cle-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;color:var(--cle-ink)}
-.cle-brand-logo{height:38px;width:auto}
+.cle-brand-logo{height:38px;width:auto;display:none}
+.cle-brand.has-logo .cle-brand-logo{display:inline-block}
+.cle-brand.has-logo .cle-brand-mark{display:none}
 .cle-brand-mark{display:inline-flex}
 .cle-nav{display:flex;gap:6px;margin-left:24px}
 .cle-nav-link{padding:10px 14px;border-radius:999px;font-weight:500;color:var(--cle-muted);transition:.2s}
