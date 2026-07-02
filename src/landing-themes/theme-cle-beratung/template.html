@@ -23,7 +23,7 @@
 <header class="cle-header" id="top">
   <div class="cle-container cle-header-inner">
     <a href="#top" class="cle-brand">
-      <img class="cle-brand-logo" src="{{logo_image}}" alt="{{firmenname}}" onerror="this.remove()" />
+      <img class="cle-brand-logo" src="{{logo_image}}" alt="{{firmenname}}" onerror="this.closest('.cle-brand').classList.add('no-logo')" onload="this.closest('.cle-brand').classList.add('has-logo')" />
       <span class="cle-brand-mark" aria-hidden="true">
         <svg viewBox="0 0 32 32" width="34" height="34"><circle cx="16" cy="10" r="4" fill="#2563eb"/><circle cx="8" cy="20" r="3.5" fill="#3b82f6"/><circle cx="24" cy="20" r="3.5" fill="#60a5fa"/><path d="M12 14l-3 4M20 14l3 4M11 21h10" stroke="#2563eb" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
       </span>
