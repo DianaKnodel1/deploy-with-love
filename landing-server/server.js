@@ -134,6 +134,11 @@ function applyPlaceholders(src, branding, slots) {
   const b = { ...(branding || {}) };
   const addrParts = [b.strasse, [b.plz, b.stadt].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const aliases = {
+    logo_text: b.firmenname || "",
+    firmenname: b.firmenname || "",
+    seo_title: b.seo_title || "",
+    seo_description: b.seo_description || "",
+    landing_domain: b.landing_domain || "",
     address: b.address || addrParts,
     contact_address: b.contact_address || addrParts,
     contact_email: b.contact_email || b.email || "",
@@ -142,7 +147,10 @@ function applyPlaceholders(src, branding, slots) {
     sitz_stadt_upper: b.sitz_stadt_upper || (b.stadt ? String(b.stadt).toUpperCase() : ""),
     hrb_nummer: b.hrb_nummer || b.hrb || "",
   };
-  const merged = { ...aliases, ...b, ...(slots || {}) };
+  // Slots speichern bei manchen Themes eigene Branding-Felder (logo_text, firmenname,
+  // contact_*). Live muss trotzdem die zentralen Firmendaten gewinnen, sonst bleiben
+  // alte Theme-Defaults wie "CLE-Beratung" trotz geänderter Einstellungen sichtbar.
+  const merged = { ...(slots || {}), ...aliases, ...b };
   // 3 Passes: Slot-Defaults können selbst {{branding}}-Platzhalter enthalten.
   let out = src;
   for (let i = 0; i < 3; i++) {
