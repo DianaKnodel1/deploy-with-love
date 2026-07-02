@@ -261,6 +261,17 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       dnsMessage = "Kein Landing-Server im Pool — bitte erst unter /admin/infrastructure registrieren.";
     }
 
+    // Jede gespeicherte Landing fordert auf dem zugewiesenen Renderer automatisch
+    // einen Theme-/server.js-Resync an. Sonst bleiben ältere Remote-Templates
+    // sichtbar, obwohl im Generator Theme/Einstellungen geändert wurden.
+    const resyncServerId = assignedServer?.id ?? row?.server_id ?? null;
+    if (resyncServerId) {
+      await context.supabase
+        .from("landing_servers")
+        .update({ themes_resync_requested_at: new Date().toISOString() })
+        .eq("id", resyncServerId);
+    }
+
     await context.supabase.from("automation_log").insert({
       action: data.id ? "landing.updated" : "landing.live",
       target: domain,
