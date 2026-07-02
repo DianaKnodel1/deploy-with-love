@@ -69,6 +69,53 @@ function requestJson(url, headers) {
   });
 }
 
+function requestBuffer(url, headers) {
+  return new Promise((resolve, reject) => {
+    const request = url.protocol === "http:" ? httpRequest : httpsRequest;
+    const req = request(url, { method: "GET", headers }, (res) => {
+      const chunks = [];
+      let total = 0;
+      res.on("data", (chunk) => {
+        chunks.push(chunk);
+        total += chunk.length;
+        if (total > 10_000_000) req.destroy(new Error("response too large"));
+      });
+      res.on("end", () => {
+        resolve({
+          ok: (res.statusCode || 0) >= 200 && (res.statusCode || 0) < 300,
+          status: res.statusCode || 0,
+          buf: Buffer.concat(chunks),
+          ct: String(res.headers["content-type"] || "application/octet-stream"),
+        });
+      });
+    });
+    req.setTimeout(15_000, () => req.destroy(new Error("request timeout")));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+async function loadAsset(themeId, file) {
+  const safeTheme = String(themeId || "").replace(/[^a-z0-9_-]/gi, "");
+  const safeFile = String(file || "").replace(/[^A-Za-z0-9._-]/g, "");
+  if (!safeTheme || !safeFile) return null;
+  const key = `${safeTheme}/${safeFile}`;
+  const cached = assetCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached;
+  if (!PORTAL_FILES_BASE) return null;
+  try {
+    const url = new URL(`${PORTAL_FILES_BASE}/themes/${safeTheme}/assets/${safeFile}`);
+    const res = await requestBuffer(url, { accept: "*/*" });
+    if (!res.ok) return null;
+    const entry = { buf: res.buf, ct: res.ct, expiresAt: Date.now() + ASSET_CACHE_TTL_MS };
+    assetCache.set(key, entry);
+    return entry;
+  } catch (e) {
+    console.error(`[landing-server] asset fetch failed ${key}:`, e?.message || e);
+    return null;
+  }
+}
+
 function loadTheme(id) {
   const safeId = basename(String(id || "")).replace(/[^a-z0-9_-]/gi, "");
   if (!safeId) return null;
