@@ -13,8 +13,12 @@ import { fileURLToPath } from "node:url";
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
 const PORTAL_API_ENDPOINT = process.env.PORTAL_API_ENDPOINT || "";
+// Basis-URL zum Portal für Theme-Assets (…/applications → …/landing-server-files).
+const PORTAL_FILES_BASE = (process.env.PORTAL_FILES_BASE || PORTAL_API_ENDPOINT.replace(/\/applications\/?$/, "/landing-server-files")).replace(/\/+$/, "");
 const PORT = Number(process.env.PORT || 3001);
 const CACHE_TTL_MS = 60_000;
+const ASSET_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const assetCache = new Map();
 
 const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,calendly_url,intermediate_company_name,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding,calendly_url,intermediate_company_name,logo_url)";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -63,6 +67,53 @@ function requestJson(url, headers) {
     req.on("error", reject);
     req.end();
   });
+}
+
+function requestBuffer(url, headers) {
+  return new Promise((resolve, reject) => {
+    const request = url.protocol === "http:" ? httpRequest : httpsRequest;
+    const req = request(url, { method: "GET", headers }, (res) => {
+      const chunks = [];
+      let total = 0;
+      res.on("data", (chunk) => {
+        chunks.push(chunk);
+        total += chunk.length;
+        if (total > 10_000_000) req.destroy(new Error("response too large"));
+      });
+      res.on("end", () => {
+        resolve({
+          ok: (res.statusCode || 0) >= 200 && (res.statusCode || 0) < 300,
+          status: res.statusCode || 0,
+          buf: Buffer.concat(chunks),
+          ct: String(res.headers["content-type"] || "application/octet-stream"),
+        });
+      });
+    });
+    req.setTimeout(15_000, () => req.destroy(new Error("request timeout")));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+async function loadAsset(themeId, file) {
+  const safeTheme = String(themeId || "").replace(/[^a-z0-9_-]/gi, "");
+  const safeFile = String(file || "").replace(/[^A-Za-z0-9._-]/g, "");
+  if (!safeTheme || !safeFile) return null;
+  const key = `${safeTheme}/${safeFile}`;
+  const cached = assetCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached;
+  if (!PORTAL_FILES_BASE) return null;
+  try {
+    const url = new URL(`${PORTAL_FILES_BASE}/themes/${safeTheme}/assets/${safeFile}`);
+    const res = await requestBuffer(url, { accept: "*/*" });
+    if (!res.ok) return null;
+    const entry = { buf: res.buf, ct: res.ct, expiresAt: Date.now() + ASSET_CACHE_TTL_MS };
+    assetCache.set(key, entry);
+    return entry;
+  } catch (e) {
+    console.error(`[landing-server] asset fetch failed ${key}:`, e?.message || e);
+    return null;
+  }
 }
 
 function loadTheme(id) {
@@ -343,6 +394,13 @@ const server = createServer(async (req, res) => {
     }
     if (path.startsWith("/assets/favicon")) {
       return row.favicon_url ? send(res, 302, "", { location: row.favicon_url }) : send(res, 404, "no favicon");
+    }
+    if (path.startsWith("/assets/")) {
+      const rel = path.slice("/assets/".length);
+      if (!rel || rel.includes("..") || rel.includes("/")) return send(res, 404, "not found");
+      const asset = await loadAsset(row.theme_id, rel);
+      if (!asset) return send(res, 404, "asset not found");
+      return send(res, 200, asset.buf, { "content-type": asset.ct, "cache-control": "public,max-age=86400,immutable" });
     }
     if (path === "/" || path === "/index.html") {
       const { body, status } = renderHtml(row, host);

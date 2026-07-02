@@ -4,7 +4,19 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { THEMES } from "@/lib/landing-themes";
+import { THEME_ASSETS } from "@/lib/theme-assets.generated";
 import landingServerSource from "../../../../landing-server/server.js?raw";
+
+function mimeFor(name: string): string {
+  const ext = name.toLowerCase().split(".").pop() || "";
+  return ({
+    png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
+    gif: "image/gif", svg: "image/svg+xml", ico: "image/x-icon",
+    woff: "font/woff", woff2: "font/woff2", ttf: "font/ttf", otf: "font/otf",
+    css: "text/css", js: "application/javascript", json: "application/json",
+    html: "text/html", txt: "text/plain",
+  } as Record<string, string>)[ext] || "application/octet-stream";
+}
 
 const PACKAGE_JSON = `{
   "name": "landing-server",
@@ -109,6 +121,19 @@ export const Route = createFileRoute("/api/public/landing-server-files/$")({
           const body = m[2] === "template.html" ? theme.html : m[2] === "style.css" ? theme.css : theme.js;
           const ct = m[2].endsWith(".html") ? "text/html" : m[2].endsWith(".css") ? "text/css" : "application/javascript";
           return new Response(body, { headers: { "content-type": `${ct}; charset=utf-8` } });
+        }
+        // themes/<id>/assets/<file>  → aus THEME_ASSETS (base64) dekodieren
+        const a = /^themes\/([^/]+)\/assets\/([A-Za-z0-9._-]+)$/.exec(path);
+        if (a) {
+          const b64 = THEME_ASSETS[a[1]]?.[a[2]];
+          if (!b64) return new Response("asset not found", { status: 404 });
+          const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+          return new Response(bytes, {
+            headers: {
+              "content-type": mimeFor(a[2]),
+              "cache-control": "public, max-age=86400, immutable",
+            },
+          });
         }
         return new Response("not found", { status: 404 });
       },
