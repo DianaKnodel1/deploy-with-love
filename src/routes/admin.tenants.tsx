@@ -1041,6 +1041,19 @@ function AdminTenantsPage() {
   const setDnsFn = useServerFn(setLandingDnsRecord);
 
   const setupDns = async (t: Tenant) => {
+    const { data: fastRows } = await supabase
+      .from("landing_pages")
+      .select("id")
+      .eq("tenant_id", t.id)
+      .eq("flow_type", "fast")
+      .limit(1);
+    if (!fastRows || !fastRows.length) {
+      toast({
+        title: "portal.<domain> nicht nötig",
+        description: "Tenant hat keine Fasttrack-Landing — Subdomain wird nur für Fasttrack angelegt.",
+      });
+      return;
+    }
     const primary = ((t as any).primary_domain ?? t.domain ?? "").toLowerCase();
     const aliases: string[] = Array.isArray((t as any).domain_aliases) ? (t as any).domain_aliases : [];
     const hosts = Array.from(new Set([primary, ...aliases].filter(Boolean))).map((d) => `portal.${d}`);
