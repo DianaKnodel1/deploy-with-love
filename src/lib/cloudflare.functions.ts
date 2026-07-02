@@ -56,11 +56,34 @@ async function cfFetch(token: string, path: string, init: RequestInit = {}): Pro
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json?.success === false) {
-    const errors = Array.isArray(json?.errors) ? json.errors : [];
-    const msg = errors.map((e: any) => [e?.code, e?.message].filter(Boolean).join(": ")).filter(Boolean).join("; ") || `HTTP ${res.status}`;
-    throw new Error(`Cloudflare-API: ${msg}`);
+    throw new Error(formatCloudflareError(json, res.status));
   }
   return json;
+}
+
+function formatCloudflareError(json: any, status: number): string {
+  const errors = Array.isArray(json?.errors) ? json.errors : [];
+  const msg = errors
+    .map((e: any) => [e?.code, e?.message].filter(Boolean).join(": "))
+    .filter(Boolean)
+    .join("; ") || `HTTP ${status}`;
+
+  if (errors.some((e: any) => Number(e?.code) === 1000)) {
+    return (
+      `Cloudflare-API: ${msg}. ` +
+      `Das ist kein Rechte-/Scope-Problem, sondern Cloudflare akzeptiert den Token nicht. ` +
+      `Bitte einen User API Token neu erstellen und exakt den frisch angezeigten Token einfügen — nicht Global API Key, nicht Account API Token.`
+    );
+  }
+
+  if (status === 403 || /permission|scope|not authorized|unauthorized/i.test(msg)) {
+    return (
+      `Cloudflare-API: ${msg}. ` +
+      `Der Token muss unter Zone Permissions diese Rechte haben: Zone → Zone → Read und Zone → DNS → Edit.`
+    );
+  }
+
+  return `Cloudflare-API: ${msg}`;
 }
 
 // ── Accounts CRUD ──────────────────────────────────────────────────────────
@@ -147,7 +170,8 @@ export const deleteCloudflareAccount = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Testet den Token über den Account-spezifischen Verify-Endpunkt.
+// Testet den Token über Cloudflares offiziellen User-Token-Verify-Endpunkt
+// und prüft danach, ob der Token mindestens eine Zone sehen darf.
 export const verifyCloudflareToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
@@ -160,17 +184,25 @@ export const verifyCloudflareToken = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     const token = ensureToken(acc.api_token, acc.name);
-    const accountId = normalizeCloudflareAccountId(acc.account_id);
-    const res = await fetch(`${CF_API}/accounts/${accountId}/tokens/verify`, {
+    normalizeCloudflareAccountId(acc.account_id);
+    const res = await fetch(`${CF_API}/user/tokens/verify`, {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     });
     const json: any = await res.json().catch(() => ({}));
     if (!res.ok || json?.success === false) {
-      const errors = Array.isArray(json?.errors) ? json.errors : [];
-      const msg = errors.map((e: any) => [e?.code, e?.message].filter(Boolean).join(": ")).filter(Boolean).join("; ") || `HTTP ${res.status}`;
-      throw new Error(`Cloudflare-API: ${msg}`);
+      throw new Error(formatCloudflareError(json, res.status));
     }
-    return { ok: true, status: json?.result?.status ?? "active", name: acc.name };
+
+    const zones = await cfFetch(token, `/zones?per_page=1`);
+    const visibleZones = zones.result_info?.total_count ?? (zones.result ?? []).length;
+    if (!visibleZones) {
+      throw new Error(
+        `Token ist gültig, sieht aber keine Cloudflare-Zone. ` +
+          `Setze Zone Resources auf "Specific zone" für deine Domain oder "All zones from an account" und füge Zone → Zone → Read hinzu.`,
+      );
+    }
+
+    return { ok: true, status: json?.result?.status ?? "active", name: acc.name, zonesVisible: visibleZones };
   });
 
 // Sync: listet alle Zonen des Accounts und schreibt sie in cloudflare_zones
@@ -202,7 +234,7 @@ export const syncCloudflareZones = createServerFn({ method: "POST" })
     if (zones.length === 0) {
       throw new Error(
         `Cloudflare lieferte 0 Zonen für Account "${acc.name}" (${acc.account_id}). ` +
-          `Prüfe: (1) Token-Permissions enthalten "Zone → Read" für "All zones from an account" (oder spezifische Zonen), ` +
+          `Prüfe: (1) Token-Permissions enthalten "Zone → Zone → Read" für "All zones from an account" (oder spezifische Zonen), ` +
           `(2) im Cloudflare-Account sind tatsächlich Domains/Zonen angelegt.`,
       );
     }
