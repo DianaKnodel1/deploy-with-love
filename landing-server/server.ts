@@ -108,6 +108,11 @@ function applyPlaceholders(src: string, branding: Record<string, any>, slots: Re
   const b = { ...(branding || {}) };
   const addrParts = [b.strasse, [b.plz, b.stadt].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const aliases = {
+    logo_text: b.firmenname || "",
+    firmenname: b.firmenname || "",
+    seo_title: b.seo_title || "",
+    seo_description: b.seo_description || "",
+    landing_domain: b.landing_domain || "",
     address: b.address || addrParts,
     contact_address: b.contact_address || addrParts,
     contact_email: b.contact_email || b.email || "",
@@ -116,7 +121,7 @@ function applyPlaceholders(src: string, branding: Record<string, any>, slots: Re
     sitz_stadt_upper: b.sitz_stadt_upper || (b.stadt ? String(b.stadt).toUpperCase() : ""),
     hrb_nummer: b.hrb_nummer || b.hrb || "",
   };
-  const merged = { ...aliases, ...b, ...(slots || {}) };
+  const merged = { ...(slots || {}), ...aliases, ...b };
   let out = src;
   for (let i = 0; i < 3; i++) {
     let changed = false;
