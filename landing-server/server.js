@@ -116,30 +116,41 @@ async function loadAsset(themeId, file) {
   }
 }
 
-function loadTheme(id) {
+async function loadTheme(id) {
   const safeId = basename(String(id || "")).replace(/[^a-z0-9_-]/gi, "");
   if (!safeId) return null;
   const cached = themeCache.get(safeId);
   if (cached && Date.now() - cached.ts < THEME_CACHE_TTL_MS) return cached.theme;
   const dir = join(themesDir, safeId);
-  if (!existsSync(dir)) {
+  const files = { html: "template.html", css: "style.css", js: "script.js" };
+  const out = { id: safeId, html: "", css: "", js: "" };
+  for (const [k, fname] of Object.entries(files)) {
+    let content = "";
+    try {
+      if (existsSync(join(dir, fname))) {
+        content = readFileSync(join(dir, fname), "utf8");
+      }
+    } catch (_) { content = ""; }
+    // Fallback: fehlt/leer lokal → vom Portal nachladen (identische Quelle wie Heartbeat-Resync).
+    if (!content && PORTAL_FILES_BASE) {
+      try {
+        const url = new URL(`${PORTAL_FILES_BASE}/themes/${safeId}/${fname}`);
+        const res = await requestBuffer(url, { accept: "*/*" });
+        if (res.ok && res.buf.length > 0) content = res.buf.toString("utf8");
+      } catch (e) {
+        console.warn(`[themes] portal fetch failed ${safeId}/${fname}: ${e?.message || e}`);
+      }
+    }
+    out[k] = content;
+  }
+  if (!out.html) {
     themeCache.set(safeId, { ts: Date.now(), theme: null });
     return null;
   }
-  try {
-    const theme = {
-      id: safeId,
-      html: readFileSync(join(dir, "template.html"), "utf8"),
-      css: readFileSync(join(dir, "style.css"), "utf8"),
-      js: readFileSync(join(dir, "script.js"), "utf8"),
-    };
-    themeCache.set(safeId, { ts: Date.now(), theme });
-    return theme;
-  } catch (e) {
-    console.warn(`[themes] Skip ${safeId}: ${e?.message || e}`);
-    return null;
-  }
+  themeCache.set(safeId, { ts: Date.now(), theme: out });
+  return out;
 }
+
 
 
 async function loadLanding(domain) {
@@ -322,8 +333,8 @@ function buildLegalPage(title, body, row) {
   return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>${t} – ${firm}</title><meta name="robots" content="noindex,follow"/><link rel="stylesheet" href="/style.css"/><style>.legal-page{max-width:820px;margin:0 auto;padding:64px 24px 96px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1a1a1a;line-height:1.7}.legal-page h1{font-size:36px;margin:0 0 8px}.legal-page h3{font-size:18px;margin:28px 0 8px}.legal-page p{margin:0 0 12px}.legal-page a{color:#2563eb}.legal-back{display:inline-block;margin-bottom:24px;color:#64748b;text-decoration:none;font-size:14px}.legal-footer{max-width:820px;margin:0 auto;padding:24px;border-top:1px solid #e5e7eb;font-size:13px;color:#64748b;text-align:center}</style></head><body><main class="legal-page"><a href="/" class="legal-back">← Zurück zur Startseite</a><h1>${t}</h1>${body}</main><footer class="legal-footer">© ${new Date().getFullYear()} ${firm} · <a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutz</a></footer></body></html>`;
 }
 
-function renderHtml(row, host) {
-  const theme = loadTheme(row.theme_id);
+async function renderHtml(row, host) {
+  const theme = await loadTheme(row.theme_id);
   if (!theme) return { body: `Theme nicht gefunden: ${row.theme_id}`, status: 500 };
   // Branding-Logo automatisch in {{logo_image}}/{{favicon_image}}-Slots spiegeln,
   // damit Themes wie Eilers/TTS/AZB den hochgeladenen Logo nutzen.
@@ -344,20 +355,20 @@ function renderHtml(row, host) {
   return { body: html, status: 200 };
 }
 
+
 function renderLegal(row, type) {
   const body = type === "datenschutz" ? renderDatenschutz(row.branding || {}) : renderImpressum(row.branding || {});
   return buildLegalPage(type === "datenschutz" ? "Datenschutz" : "Impressum", body, row);
 }
 
 function renderCss(row) {
-  const theme = loadTheme(row.theme_id);
-  return theme ? applyPlaceholders(theme.css, row.branding, row.slots) : "/* theme missing */";
+  return loadTheme(row.theme_id).then((theme) => theme ? applyPlaceholders(theme.css, row.branding, row.slots) : "/* theme missing */");
 }
 
 function renderJs(row) {
-  const theme = loadTheme(row.theme_id);
-  return theme ? applyPlaceholders(theme.js, row.branding, row.slots) : "// theme missing";
+  return loadTheme(row.theme_id).then((theme) => theme ? applyPlaceholders(theme.js, row.branding, row.slots) : "// theme missing");
 }
+
 
 function send(res, status, body, headers = {}) {
   res.writeHead(status, headers);
@@ -384,10 +395,10 @@ const server = createServer(async (req, res) => {
     if (!row) return send(res, 404, `Keine Landing für ${host} konfiguriert.`);
 
     if (path === "/style.css") {
-      return send(res, 200, renderCss(row), { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" });
+      return send(res, 200, await renderCss(row), { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path === "/script.js") {
-      return send(res, 200, renderJs(row), { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" });
+      return send(res, 200, await renderJs(row), { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path.startsWith("/assets/logo")) {
       return row.logo_url ? send(res, 302, "", { location: row.logo_url }) : send(res, 404, "no logo");
@@ -403,9 +414,10 @@ const server = createServer(async (req, res) => {
       return send(res, 200, asset.buf, { "content-type": asset.ct, "cache-control": "public,max-age=86400,immutable" });
     }
     if (path === "/" || path === "/index.html") {
-      const { body, status } = renderHtml(row, host);
+      const { body, status } = await renderHtml(row, host);
       return send(res, status, body, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
     }
+
     if (path === "/impressum" || path === "/impressum.html") {
       return send(res, 200, renderLegal(row, "impressum"), { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
     }
