@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateLandingZip } from "@/lib/landing-generator.functions";
 
@@ -123,6 +123,92 @@ const EMPTY: Branding = {
   recruiter_avatar_data_url: "",
 };
 
+const BRANDING_DRIVEN_SLOT_KEYS = new Set([
+  "logo_text",
+  "firmenname",
+  "seo_title",
+  "seo_description",
+  "landing_domain",
+  "address",
+  "contact_address",
+  "contact_email",
+  "contact_phone",
+  "sitz_stadt",
+  "sitz_stadt_upper",
+  "hrb_nummer",
+  "footer_address",
+  "footer_email",
+  "footer_phone",
+]);
+
+const GENERATED_PAGE_SLOT_VALUES: Record<string, string> = {
+  impressum_url: "impressum.html",
+  datenschutz_url: "datenschutz.html",
+};
+
+function formatBrandingAddress(b: Branding, separator = ", ") {
+  return [b.strasse, [b.plz, b.stadt].filter(Boolean).join(" ")].filter(Boolean).join(separator);
+}
+
+function brandingSlotValue(key: string, b: Branding): string | undefined {
+  if (key === "logo_text" || key === "firmenname") return b.firmenname || undefined;
+  if (key === "seo_title") return b.seo_title || undefined;
+  if (key === "seo_description") return b.seo_description || undefined;
+  if (key === "landing_domain") return b.landing_domain || undefined;
+  if (key === "address" || key === "contact_address") return formatBrandingAddress(b) || undefined;
+  if (key === "sitz_stadt") return b.stadt || undefined;
+  if (key === "sitz_stadt_upper") return b.stadt ? b.stadt.toUpperCase() : undefined;
+  if (key === "hrb_nummer") return b.hrb || undefined;
+  if (key === "footer_address") return formatBrandingAddress(b, "\n") || undefined;
+  if (key === "contact_email" || key === "footer_email") return b.email || undefined;
+  if (key === "contact_phone" || key === "footer_phone") return b.telefon || undefined;
+  return undefined;
+}
+
+function themeSlotDefaults(id: string): Record<string, string> {
+  const theme = THEME_LIST.find((t) => t.id === id);
+  const defaults: Record<string, string> = {};
+  for (const s of theme?.slots ?? []) defaults[s.key] = s.default;
+  return defaults;
+}
+
+function normalizeSlotsForTheme(
+  id: string,
+  values: Record<string, string> = {},
+  brandingValue?: Branding,
+): Record<string, string> {
+  const theme = THEME_LIST.find((t) => t.id === id);
+  const slots = theme?.slots ?? [];
+  const allowed = new Set(slots.map((s) => s.key));
+  const normalized = themeSlotDefaults(id);
+  for (const [key, value] of Object.entries(values)) {
+    if (allowed.has(key)) normalized[key] = value;
+  }
+  if (brandingValue) {
+    for (const key of BRANDING_DRIVEN_SLOT_KEYS) {
+      if (!allowed.has(key)) continue;
+      const synced = brandingSlotValue(key, brandingValue);
+      if (synced !== undefined) normalized[key] = synced;
+    }
+  }
+  for (const [key, value] of Object.entries(GENERATED_PAGE_SLOT_VALUES)) {
+    if (allowed.has(key)) normalized[key] = value;
+  }
+  return normalized;
+}
+
+function withSeoDefaults(b: Branding): Branding {
+  return {
+    ...b,
+    seo_title: b.seo_title || (b.firmenname ? `${b.firmenname} — Karriere & Beratung` : ""),
+    seo_description:
+      b.seo_description ||
+      (b.firmenname
+        ? `${b.firmenname} — Jetzt bewerben und Teil unseres Teams werden. Strategische Beratung mit messbaren Ergebnissen.`
+        : ""),
+  };
+}
+
 function LandingGeneratorPage() {
   const { toast } = useToast();
   const generate = useServerFn(generateLandingZip);
@@ -166,17 +252,14 @@ function LandingGeneratorPage() {
   useEffect(() => { reloadLandings(); }, [reloadLandings]);
 
   // Slot-Werte pro Theme — bei Theme-Wechsel mit Defaults vorbelegen.
-  const [slotValues, setSlotValues] = useState<Record<string, string>>({});
+  const [slotValues, setSlotValues] = useState<Record<string, string>>(() => themeSlotDefaults(THEME_LIST[0]?.id ?? ""));
   const currentTheme = THEME_LIST.find((t) => t.id === themeId);
   const currentSlots = currentTheme?.slots ?? [];
-  // Bei Theme-Wechsel Slot-Defaults laden (überschreibt vorhandene Werte nicht).
-  const lastThemeRef = useRef<string>("");
-  if (themeId && lastThemeRef.current !== themeId) {
-    lastThemeRef.current = themeId;
-    const defaults: Record<string, string> = {};
-    for (const s of currentSlots) defaults[s.key] = s.default;
-    setSlotValues((prev) => ({ ...defaults, ...prev }));
-  }
+  const slotsForOutput = normalizeSlotsForTheme(themeId, slotValues, withSeoDefaults(branding));
+  const selectTheme = (id: string) => {
+    setThemeId(id);
+    setSlotValues(normalizeSlotsForTheme(id, {}, withSeoDefaults(branding)));
+  };
   const setSlot = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setSlotValues((v) => ({ ...v, [key]: e.target.value }));
 
@@ -219,7 +302,7 @@ function LandingGeneratorPage() {
       const seoDesc = branding.seo_description || (branding.firmenname ? `${branding.firmenname} — Jetzt bewerben.` : "");
       const previewBranding = { ...branding, seo_title: seoTitle, seo_description: seoDesc };
       // Hochgeladenes Logo/Favicon in {{logo_image}}/{{favicon_image}} spiegeln.
-      const previewSlots: Record<string, string> = { ...(slotValues as Record<string, string>) };
+      const previewSlots: Record<string, string> = { ...slotsForOutput };
       if (logoDataUrl && !previewSlots.logo_image) previewSlots.logo_image = logoDataUrl;
       if (faviconDataUrl && !previewSlots.favicon_image) previewSlots.favicon_image = faviconDataUrl;
       // Computed Aliase: address/contact_email/contact_phone aus Firmendaten.
@@ -231,6 +314,8 @@ function LandingGeneratorPage() {
         contact_email: previewBranding.email || "",
         contact_phone: previewBranding.telefon || "",
         sitz_stadt: previewBranding.stadt || "",
+        sitz_stadt_upper: previewBranding.stadt ? previewBranding.stadt.toUpperCase() : "",
+        hrb_nummer: previewBranding.hrb || "",
       };
       const merged: Record<string, unknown> = { ...aliases, ...previewBranding, ...previewSlots };
       for (let i = 0; i < 3; i++) {
@@ -253,6 +338,10 @@ function LandingGeneratorPage() {
       html = html.replace(/\s*<link[^>]*rel=["']canonical["'][^>]*href=["']https?:\/\/\/[^"']*["'][^>]*>\s*/gi, "\n");
       html = html.replace(/\s*<meta[^>]*property=["']og:url["'][^>]*content=["']https?:\/\/\/[^"']*["'][^>]*>\s*/gi, "\n");
     }
+    // Live-Renderer und ZIP liefern Impressum/Datenschutz als eigene Seiten.
+    // Preview ebenfalls ohne Inline-Rechtstexte rendern, sonst wirkt die Landing
+    // unnötig lang und alte #impressum/#datenschutz-Sektionen bleiben sichtbar.
+    html = html.replace(/<section[^>]*id=["'](?:impressum|datenschutz)["'][\s\S]*?<\/section>\s*/gi, "");
     // <link rel="stylesheet" href="style.css"> durch inline <style> ersetzen
     // + Override für Scroll-Animationen (data-animate ist im Theme initial opacity:0,
     //   wird normal per IntersectionObserver in script.js eingeblendet – im Preview
@@ -429,16 +518,6 @@ document.addEventListener('submit', function(e){
     return html;
   })();
 
-  const withSeoDefaults = (b: Branding): Branding => ({
-    ...b,
-    seo_title: b.seo_title || (b.firmenname ? `${b.firmenname} — Karriere & Beratung` : ""),
-    seo_description:
-      b.seo_description ||
-      (b.firmenname
-        ? `${b.firmenname} — Jetzt bewerben und Teil unseres Teams werden. Strategische Beratung mit messbaren Ergebnissen.`
-        : ""),
-  });
-
   const handleGenerate = async () => {
     if (!branding.firmenname || !branding.email) {
       toast({ title: "Fehlende Felder", description: "Firmenname und E-Mail sind Pflicht.", variant: "destructive" });
@@ -463,7 +542,7 @@ document.addEventListener('submit', function(e){
 
     setLoading(true);
     try {
-      const res = await generate({ data: { themeId, branding: withSeoDefaults(branding), logoDataUrl, faviconDataUrl, slots: slotValues } });
+      const res = await generate({ data: { themeId, branding: withSeoDefaults(branding), logoDataUrl, faviconDataUrl, slots: slotsForOutput } });
       // Base64 → Blob → Download
       const bin = atob(res.zipBase64);
       const bytes = new Uint8Array(bin.length);
@@ -534,7 +613,7 @@ document.addEventListener('submit', function(e){
           recruiter_name: b.recruiter_name || "Sabine Schneider",
           recruiter_avatar_url: b.recruiter_avatar_url || null,
         },
-        slots: slotValues,
+        slots: slotsForOutput,
         flow_type: branding.flow_type,
         source_slug: branding.source_slug || "",
         is_published: true,
@@ -573,10 +652,8 @@ document.addEventListener('submit', function(e){
       const row: any = await getFn({ data: { id } } as any);
       setEditingId(row.id);
       setSlug(row.slug);
-      setThemeId(row.theme_id);
-      setSlotValues(row.slots ?? {});
       setLogoDataUrl(null); setFaviconDataUrl(null);
-      setBranding({
+      const loadedBranding = {
         ...EMPTY,
         ...(row.branding ?? {}),
         landing_domain: row.domain,
@@ -594,7 +671,10 @@ document.addEventListener('submit', function(e){
         recruiter_name: row.recruiter_name ?? row.branding?.recruiter_name ?? "Sabine Schneider",
         recruiter_avatar_url: row.recruiter_avatar_url ?? row.branding?.recruiter_avatar_url ?? "",
         recruiter_avatar_data_url: "",
-      });
+      } as Branding;
+      setThemeId(row.theme_id);
+      setSlotValues(normalizeSlotsForTheme(row.theme_id, row.slots ?? {}, withSeoDefaults(loadedBranding)));
+      setBranding(loadedBranding);
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast({ title: "Landing geladen", description: row.domain });
     } catch (e: any) {
@@ -603,9 +683,11 @@ document.addEventListener('submit', function(e){
   };
 
   const handleNewLanding = () => {
+    const nextThemeId = THEME_LIST[0]?.id ?? "";
     setEditingId(null); setSlug(""); setBranding(EMPTY);
     setLogoDataUrl(null); setFaviconDataUrl(null); setSlotValues({});
-    setThemeId(THEME_LIST[0]?.id ?? "");
+    setThemeId(nextThemeId);
+    setSlotValues(themeSlotDefaults(nextThemeId));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -745,7 +827,7 @@ document.addEventListener('submit', function(e){
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => setThemeId(t.id)}
+                    onClick={() => selectTheme(t.id)}
                     className={cn(
                       "text-left rounded-lg border-2 p-3 transition-all",
                       themeId === t.id
@@ -1207,16 +1289,16 @@ document.addEventListener('submit', function(e){
                 {currentSlots.map((slot) => (
                   <Field key={slot.key} label={slot.label}>
                     {slot.type === "longtext" ? (
-                      <Textarea rows={3} value={slotValues[slot.key] ?? slot.default} onChange={setSlot(slot.key)} className="font-mono text-xs" />
+                      <Textarea rows={3} value={slotsForOutput[slot.key] ?? slot.default} onChange={setSlot(slot.key)} className="font-mono text-xs" />
                     ) : slot.type === "color" ? (
                       <div className="flex gap-2">
-                        <Input type="color" value={slotValues[slot.key] ?? slot.default} onChange={setSlot(slot.key)} className="w-16 p-1 h-10" />
-                        <Input value={slotValues[slot.key] ?? slot.default} onChange={setSlot(slot.key)} />
+                        <Input type="color" value={slotsForOutput[slot.key] ?? slot.default} onChange={setSlot(slot.key)} className="w-16 p-1 h-10" />
+                        <Input value={slotsForOutput[slot.key] ?? slot.default} onChange={setSlot(slot.key)} />
                       </div>
                     ) : slot.type === "image" ? (
-                      <Input value={slotValues[slot.key] ?? slot.default} onChange={setSlot(slot.key)} placeholder="https://… oder /assets/foo.jpg" />
+                      <Input value={slotsForOutput[slot.key] ?? slot.default} onChange={setSlot(slot.key)} placeholder="https://… oder /assets/foo.jpg" />
                     ) : (
-                      <Input value={slotValues[slot.key] ?? slot.default} onChange={setSlot(slot.key)} />
+                      <Input value={slotsForOutput[slot.key] ?? slot.default} onChange={setSlot(slot.key)} />
                     )}
                   </Field>
                 ))}
