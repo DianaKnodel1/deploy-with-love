@@ -1021,6 +1021,26 @@ function AdminTenantsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [switchTenant, setSwitchTenant] = useState<Tenant | undefined>();
   const { toast } = useToast();
+  const setDnsFn = useServerFn(setLandingDnsRecord);
+
+  const setupDns = async (t: Tenant) => {
+    const primary = ((t as any).primary_domain ?? t.domain ?? "").toLowerCase();
+    const aliases: string[] = Array.isArray((t as any).domain_aliases) ? (t as any).domain_aliases : [];
+    const hosts = Array.from(new Set([primary, ...aliases].filter(Boolean))).map((d) => `portal.${d}`);
+    for (const host of hosts) {
+      try {
+        await setDnsFn({ data: { domain: host, ip: PORTAL_SERVER_IP, proxied: false } });
+        toast({ title: "DNS gesetzt", description: `${host} → ${PORTAL_SERVER_IP}` });
+      } catch (err: any) {
+        toast({
+          title: "DNS fehlgeschlagen",
+          description: `${host}: ${err?.message ?? "Zone erst syncen"}`,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
 
 
   const toggleActive = async (t: Tenant) => {
