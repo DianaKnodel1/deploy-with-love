@@ -71,7 +71,7 @@
     { "key": "footer_address", "label": "Footer Adresse", "type": "longtext", "default": "Musterstraße 1\n12345 Musterstadt\nDeutschland" },
     { "key": "footer_email", "label": "Footer E-Mail", "type": "text", "default": "info@tts-beratung.de" },
     { "key": "footer_phone", "label": "Footer Telefon", "type": "text", "default": "+49 (0) 123 456 789" },
-    { "key": "impressum_url", "label": "Impressum-Link", "type": "text", "default": "#impressum" },
-    { "key": "datenschutz_url", "label": "Datenschutz-Link", "type": "text", "default": "#datenschutz" }
+    { "key": "impressum_url", "label": "Impressum-Link", "type": "text", "default": "impressum.html" },
+    { "key": "datenschutz_url", "label": "Datenschutz-Link", "type": "text", "default": "datenschutz.html" }
   ]
 }
