@@ -122,15 +122,6 @@ export const Route = createFileRoute("/api/public/landing-server-files/$")({
           const ct = m[2].endsWith(".html") ? "text/html" : m[2].endsWith(".css") ? "text/css" : "application/javascript";
           return new Response(body, { headers: { "content-type": `${ct}; charset=utf-8` } });
         }
-        // themes/<id>/<file>
-        const m = /^themes\/([^/]+)\/(template\.html|style\.css|script\.js)$/.exec(path);
-        if (m) {
-          const theme = THEMES.find((t) => t.id === m[1]);
-          if (!theme) return new Response("theme not found", { status: 404 });
-          const body = m[2] === "template.html" ? theme.html : m[2] === "style.css" ? theme.css : theme.js;
-          const ct = m[2].endsWith(".html") ? "text/html" : m[2].endsWith(".css") ? "text/css" : "application/javascript";
-          return new Response(body, { headers: { "content-type": `${ct}; charset=utf-8` } });
-        }
         // themes/<id>/assets/<file>  → aus THEME_ASSETS (base64) dekodieren
         const a = /^themes\/([^/]+)\/assets\/([A-Za-z0-9._-]+)$/.exec(path);
         if (a) {
