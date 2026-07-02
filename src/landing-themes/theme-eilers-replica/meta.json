@@ -15,7 +15,7 @@
     { "key": "gruendungsjahr",        "label": "Gründungsjahr",                    "type": "text",     "default": "2023" },
     { "key": "sitz_stadt",            "label": "Sitz (Stadt)",                     "type": "text",     "default": "Kiel" },
     { "key": "sitz_stadt_upper",      "label": "Sitz (Großbuchstaben)",            "type": "text",     "default": "KIEL" },
-    { "key": "stammkapital",          "label": "Stammkapital",                     "type": "text",     "default": "100.000 €" },
+    
     { "key": "hrb_nummer",            "label": "HRB-Nummer",                       "type": "text",     "default": "HRB 25516 KI" },
 
     { "key": "hero_eyebrow",          "label": "Hero Eyebrow",                     "type": "text",     "default": "Unternehmensberatung — Kiel, seit 2023" },
