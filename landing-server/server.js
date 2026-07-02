@@ -395,10 +395,10 @@ const server = createServer(async (req, res) => {
     if (!row) return send(res, 404, `Keine Landing für ${host} konfiguriert.`);
 
     if (path === "/style.css") {
-      return send(res, 200, renderCss(row), { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" });
+      return send(res, 200, await renderCss(row), { "content-type": "text/css; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path === "/script.js") {
-      return send(res, 200, renderJs(row), { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" });
+      return send(res, 200, await renderJs(row), { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path.startsWith("/assets/logo")) {
       return row.logo_url ? send(res, 302, "", { location: row.logo_url }) : send(res, 404, "no logo");
@@ -414,9 +414,10 @@ const server = createServer(async (req, res) => {
       return send(res, 200, asset.buf, { "content-type": asset.ct, "cache-control": "public,max-age=86400,immutable" });
     }
     if (path === "/" || path === "/index.html") {
-      const { body, status } = renderHtml(row, host);
+      const { body, status } = await renderHtml(row, host);
       return send(res, status, body, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
     }
+
     if (path === "/impressum" || path === "/impressum.html") {
       return send(res, 200, renderLegal(row, "impressum"), { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
     }
