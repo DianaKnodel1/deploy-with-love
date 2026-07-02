@@ -1288,8 +1288,9 @@ document.addEventListener('submit', function(e){
               <CardContent className="space-y-3">
                 {currentSlots.map((slot) => (
                   <Field key={slot.key} label={slot.label}>
-                    {slot.type === "longtext" ? (
+                    {slot.type === "longtext" || slot.type === "textarea" ? (
                       <Textarea rows={3} value={slotsForOutput[slot.key] ?? slot.default} onChange={setSlot(slot.key)} className="font-mono text-xs" />
+
                     ) : slot.type === "color" ? (
                       <div className="flex gap-2">
                         <Input type="color" value={slotsForOutput[slot.key] ?? slot.default} onChange={setSlot(slot.key)} className="w-16 p-1 h-10" />
