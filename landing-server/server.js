@@ -13,8 +13,12 @@ import { fileURLToPath } from "node:url";
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
 const PORTAL_API_ENDPOINT = process.env.PORTAL_API_ENDPOINT || "";
+// Basis-URL zum Portal für Theme-Assets (…/applications → …/landing-server-files).
+const PORTAL_FILES_BASE = (process.env.PORTAL_FILES_BASE || PORTAL_API_ENDPOINT.replace(/\/applications\/?$/, "/landing-server-files")).replace(/\/+$/, "");
 const PORT = Number(process.env.PORT || 3001);
 const CACHE_TTL_MS = 60_000;
+const ASSET_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const assetCache = new Map();
 
 const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,calendly_url,intermediate_company_name,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding,calendly_url,intermediate_company_name,logo_url)";
 const __dirname = dirname(fileURLToPath(import.meta.url));
