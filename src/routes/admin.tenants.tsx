@@ -155,16 +155,20 @@ function TenantForm({ tenant, onSaved }: { tenant?: Tenant; onSaved: () => void 
     toast({ title: tenant ? "Domain aktualisiert" : "Domain hinzugefügt" });
 
     // Automatisch portal.<domain> A-Record in Cloudflare anlegen (best effort).
-    const portalHost = `portal.${payload.domain}`;
-    try {
-      await setDnsFn({ data: { domain: portalHost, ip: PORTAL_SERVER_IP, proxied: false } });
-      toast({ title: "DNS gesetzt", description: `${portalHost} → ${PORTAL_SERVER_IP}` });
-    } catch (err: any) {
-      toast({
-        title: "DNS nicht automatisch gesetzt",
-        description: `${portalHost}: ${err?.message ?? "Cloudflare-Zone fehlt? Erst Zonen syncen."} — manuell anlegen.`,
-        variant: "destructive",
-      });
+    // Sowohl Primary als auch alle Aliases — Bewerber, die portal.<alias>
+    // aufrufen, sollen ebenfalls im Tenant landen.
+    const dnsHosts = [payload.domain, ...aliasList].map((d) => `portal.${d}`);
+    for (const portalHost of dnsHosts) {
+      try {
+        await setDnsFn({ data: { domain: portalHost, ip: PORTAL_SERVER_IP, proxied: false } });
+        toast({ title: "DNS gesetzt", description: `${portalHost} → ${PORTAL_SERVER_IP}` });
+      } catch (err: any) {
+        toast({
+          title: "DNS nicht automatisch gesetzt",
+          description: `${portalHost}: ${err?.message ?? "Cloudflare-Zone fehlt? Erst Zonen syncen."} — manuell anlegen.`,
+          variant: "destructive",
+        });
+      }
     }
 
     onSaved();
@@ -1017,6 +1021,26 @@ function AdminTenantsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [switchTenant, setSwitchTenant] = useState<Tenant | undefined>();
   const { toast } = useToast();
+  const setDnsFn = useServerFn(setLandingDnsRecord);
+
+  const setupDns = async (t: Tenant) => {
+    const primary = ((t as any).primary_domain ?? t.domain ?? "").toLowerCase();
+    const aliases: string[] = Array.isArray((t as any).domain_aliases) ? (t as any).domain_aliases : [];
+    const hosts = Array.from(new Set([primary, ...aliases].filter(Boolean))).map((d) => `portal.${d}`);
+    for (const host of hosts) {
+      try {
+        await setDnsFn({ data: { domain: host, ip: PORTAL_SERVER_IP, proxied: false } });
+        toast({ title: "DNS gesetzt", description: `${host} → ${PORTAL_SERVER_IP}` });
+      } catch (err: any) {
+        toast({
+          title: "DNS fehlgeschlagen",
+          description: `${host}: ${err?.message ?? "Zone erst syncen"}`,
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
 
 
   const toggleActive = async (t: Tenant) => {
@@ -1152,9 +1176,13 @@ function AdminTenantsPage() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" title="Domain wechseln (Wizard)" onClick={() => setSwitchTenant(t)}>
                       <ArrowRightLeft className="h-3.5 w-3.5" />
                     </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" title="portal.<domain>+Aliases DNS anlegen/aktualisieren" onClick={() => setupDns(t)}>
+                      <Globe className="h-3.5 w-3.5" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditTenant(t); setDialogOpen(true); }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
+
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteTenant(t.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
