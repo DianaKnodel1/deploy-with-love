@@ -154,21 +154,38 @@ function TenantForm({ tenant, onSaved }: { tenant?: Tenant; onSaved: () => void 
     }
     toast({ title: tenant ? "Domain aktualisiert" : "Domain hinzugefügt" });
 
-    // Automatisch portal.<domain> A-Record in Cloudflare anlegen (best effort).
-    // Sowohl Primary als auch alle Aliases — Bewerber, die portal.<alias>
-    // aufrufen, sollen ebenfalls im Tenant landen.
-    const dnsHosts = [payload.domain, ...aliasList].map((d) => `portal.${d}`);
-    for (const portalHost of dnsHosts) {
-      try {
-        await setDnsFn({ data: { domain: portalHost, ip: PORTAL_SERVER_IP, proxied: false } });
-        toast({ title: "DNS gesetzt", description: `${portalHost} → ${PORTAL_SERVER_IP}` });
-      } catch (err: any) {
-        toast({
-          title: "DNS nicht automatisch gesetzt",
-          description: `${portalHost}: ${err?.message ?? "Cloudflare-Zone fehlt? Erst Zonen syncen."} — manuell anlegen.`,
-          variant: "destructive",
-        });
+    // portal.<domain> A-Record NUR für FASTTRACK-Landings anlegen.
+    // Classic/Broker leiten nicht ins Portal → kein Subdomain nötig.
+    const tenantIdForCheck = tenant?.id;
+    let hasFastLanding = false;
+    if (tenantIdForCheck) {
+      const { data: fastRows } = await supabase
+        .from("landing_pages")
+        .select("id")
+        .eq("tenant_id", tenantIdForCheck)
+        .eq("flow_type", "fast")
+        .limit(1);
+      hasFastLanding = !!(fastRows && fastRows.length);
+    }
+    if (hasFastLanding) {
+      const dnsHosts = [payload.domain, ...aliasList].map((d) => `portal.${d}`);
+      for (const portalHost of dnsHosts) {
+        try {
+          await setDnsFn({ data: { domain: portalHost, ip: PORTAL_SERVER_IP, proxied: false } });
+          toast({ title: "DNS gesetzt", description: `${portalHost} → ${PORTAL_SERVER_IP}` });
+        } catch (err: any) {
+          toast({
+            title: "DNS nicht automatisch gesetzt",
+            description: `${portalHost}: ${err?.message ?? "Cloudflare-Zone fehlt? Erst Zonen syncen."} — manuell anlegen.`,
+            variant: "destructive",
+          });
+        }
       }
+    } else {
+      toast({
+        title: "portal.<domain> übersprungen",
+        description: "Kein Fasttrack-Landing für diesen Tenant — DNS-Record wird nicht benötigt.",
+      });
     }
 
     onSaved();
