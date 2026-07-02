@@ -361,14 +361,13 @@ function renderLegal(row, type) {
 }
 
 function renderCss(row) {
-  const theme = loadTheme(row.theme_id);
-  return theme ? applyPlaceholders(theme.css, row.branding, row.slots) : "/* theme missing */";
+  return loadTheme(row.theme_id).then((theme) => theme ? applyPlaceholders(theme.css, row.branding, row.slots) : "/* theme missing */");
 }
 
 function renderJs(row) {
-  const theme = loadTheme(row.theme_id);
-  return theme ? applyPlaceholders(theme.js, row.branding, row.slots) : "// theme missing";
+  return loadTheme(row.theme_id).then((theme) => theme ? applyPlaceholders(theme.js, row.branding, row.slots) : "// theme missing");
 }
+
 
 function send(res, status, body, headers = {}) {
   res.writeHead(status, headers);
