@@ -26,7 +26,7 @@
   <header class="bpo-header">
     <div class="bpo-container">
       <div class="bpo-header-inner">
-        <a href="#top" class="bpo-logo">
+        <a href="/" class="bpo-logo" onclick="if(event.target.tagName!=='IMG'||true){event.preventDefault();window.scrollTo({top:0,behavior:'smooth'});if(location.hash)history.replaceState(null,'',location.pathname+location.search);}">
           <img src="{{logo_image}}" alt="{{firmenname}} Logo" width="36" height="36" onerror="this.remove()" />
           <span>{{logo_text}}</span>
         </a>
