@@ -282,6 +282,25 @@ const server = Bun.serve({
       if (row.favicon_url) return Response.redirect(row.favicon_url, 302);
       return new Response("no favicon", { status: 404 });
     }
+    // Statische Theme-Assets (Hero-Bilder, Service-Bilder etc.) direkt von Disk
+    // ausliefern — liegen unter themes/<theme_id>/assets/<file>.
+    if (path.startsWith("/assets/")) {
+      const rel = path.slice("/assets/".length);
+      // Sicherheit: keine Path-Traversal, kein Unterordner
+      if (!rel || rel.includes("..") || rel.includes("/") || rel.includes("\\")) {
+        return new Response("bad path", { status: 400 });
+      }
+      const file = Bun.file(join(themesDir, row.theme_id, "assets", rel));
+      if (await file.exists()) {
+        return new Response(file, {
+          headers: {
+            "content-type": file.type || "application/octet-stream",
+            "cache-control": "public,max-age=86400,immutable",
+          },
+        });
+      }
+      return new Response("asset not found", { status: 404 });
+    }
     if (path === "/" || path === "/index.html") {
       const { body, status } = renderHtml(row, host);
       return new Response(body, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
