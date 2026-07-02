@@ -79,7 +79,7 @@ import tjgMeta from "../landing-themes/theme-job-gleiter/meta.json";
 export type ThemeSlot = {
   key: string;
   label: string;
-  type: "text" | "longtext" | "image" | "color";
+  type: "text" | "longtext" | "textarea" | "image" | "color";
   default: string;
 };
 
