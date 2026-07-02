@@ -116,30 +116,41 @@ async function loadAsset(themeId, file) {
   }
 }
 
-function loadTheme(id) {
+async function loadTheme(id) {
   const safeId = basename(String(id || "")).replace(/[^a-z0-9_-]/gi, "");
   if (!safeId) return null;
   const cached = themeCache.get(safeId);
   if (cached && Date.now() - cached.ts < THEME_CACHE_TTL_MS) return cached.theme;
   const dir = join(themesDir, safeId);
-  if (!existsSync(dir)) {
+  const files = { html: "template.html", css: "style.css", js: "script.js" };
+  const out = { id: safeId, html: "", css: "", js: "" };
+  for (const [k, fname] of Object.entries(files)) {
+    let content = "";
+    try {
+      if (existsSync(join(dir, fname))) {
+        content = readFileSync(join(dir, fname), "utf8");
+      }
+    } catch (_) { content = ""; }
+    // Fallback: fehlt/leer lokal → vom Portal nachladen (identische Quelle wie Heartbeat-Resync).
+    if (!content && PORTAL_FILES_BASE) {
+      try {
+        const url = new URL(`${PORTAL_FILES_BASE}/themes/${safeId}/${fname}`);
+        const res = await requestBuffer(url, { accept: "*/*" });
+        if (res.ok && res.buf.length > 0) content = res.buf.toString("utf8");
+      } catch (e) {
+        console.warn(`[themes] portal fetch failed ${safeId}/${fname}: ${e?.message || e}`);
+      }
+    }
+    out[k] = content;
+  }
+  if (!out.html) {
     themeCache.set(safeId, { ts: Date.now(), theme: null });
     return null;
   }
-  try {
-    const theme = {
-      id: safeId,
-      html: readFileSync(join(dir, "template.html"), "utf8"),
-      css: readFileSync(join(dir, "style.css"), "utf8"),
-      js: readFileSync(join(dir, "script.js"), "utf8"),
-    };
-    themeCache.set(safeId, { ts: Date.now(), theme });
-    return theme;
-  } catch (e) {
-    console.warn(`[themes] Skip ${safeId}: ${e?.message || e}`);
-    return null;
-  }
+  themeCache.set(safeId, { ts: Date.now(), theme: out });
+  return out;
 }
+
 
 
 async function loadLanding(domain) {
