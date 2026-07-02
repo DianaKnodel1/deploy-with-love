@@ -95,6 +95,17 @@ function requestBuffer(url, headers) {
   });
 }
 
+function guessMime(name) {
+  const ext = String(name).toLowerCase().split(".").pop() || "";
+  return ({
+    png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
+    gif: "image/gif", svg: "image/svg+xml", ico: "image/x-icon",
+    woff: "font/woff", woff2: "font/woff2", ttf: "font/ttf", otf: "font/otf",
+    css: "text/css", js: "application/javascript", json: "application/json",
+    html: "text/html", txt: "text/plain",
+  })[ext] || "application/octet-stream";
+}
+
 async function loadAsset(themeId, file) {
   const safeTheme = String(themeId || "").replace(/[^a-z0-9_-]/gi, "");
   const safeFile = String(file || "").replace(/[^A-Za-z0-9._-]/g, "");
@@ -102,6 +113,17 @@ async function loadAsset(themeId, file) {
   const key = `${safeTheme}/${safeFile}`;
   const cached = assetCache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached;
+  // 1) Lokales FS (via Heartbeat gesynct)
+  try {
+    const localPath = join(themesDir, safeTheme, "assets", safeFile);
+    if (existsSync(localPath)) {
+      const buf = readFileSync(localPath);
+      const entry = { buf, ct: guessMime(safeFile), expiresAt: Date.now() + ASSET_CACHE_TTL_MS };
+      assetCache.set(key, entry);
+      return entry;
+    }
+  } catch (_) { /* fall through */ }
+  // 2) Portal-Fallback
   if (!PORTAL_FILES_BASE) return null;
   try {
     const url = new URL(`${PORTAL_FILES_BASE}/themes/${safeTheme}/assets/${safeFile}`);
