@@ -113,6 +113,12 @@ export const Route = createFileRoute("/api/public/landing-server-files/$")({
         if (path === "themes.json") {
           return Response.json({ themes: THEMES.map((t) => t.id) });
         }
+        // themes/<id>/assets.json → Liste aller Asset-Dateinamen
+        const list = /^themes\/([^/]+)\/assets\.json$/.exec(path);
+        if (list) {
+          const files = Object.keys(THEME_ASSETS[list[1]] || {});
+          return Response.json({ files });
+        }
         // themes/<id>/<file>
         const m = /^themes\/([^/]+)\/(template\.html|style\.css|script\.js)$/.exec(path);
         if (m) {
