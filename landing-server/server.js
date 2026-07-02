@@ -333,8 +333,8 @@ function buildLegalPage(title, body, row) {
   return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>${t} – ${firm}</title><meta name="robots" content="noindex,follow"/><link rel="stylesheet" href="/style.css"/><style>.legal-page{max-width:820px;margin:0 auto;padding:64px 24px 96px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1a1a1a;line-height:1.7}.legal-page h1{font-size:36px;margin:0 0 8px}.legal-page h3{font-size:18px;margin:28px 0 8px}.legal-page p{margin:0 0 12px}.legal-page a{color:#2563eb}.legal-back{display:inline-block;margin-bottom:24px;color:#64748b;text-decoration:none;font-size:14px}.legal-footer{max-width:820px;margin:0 auto;padding:24px;border-top:1px solid #e5e7eb;font-size:13px;color:#64748b;text-align:center}</style></head><body><main class="legal-page"><a href="/" class="legal-back">← Zurück zur Startseite</a><h1>${t}</h1>${body}</main><footer class="legal-footer">© ${new Date().getFullYear()} ${firm} · <a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutz</a></footer></body></html>`;
 }
 
-function renderHtml(row, host) {
-  const theme = loadTheme(row.theme_id);
+async function renderHtml(row, host) {
+  const theme = await loadTheme(row.theme_id);
   if (!theme) return { body: `Theme nicht gefunden: ${row.theme_id}`, status: 500 };
   // Branding-Logo automatisch in {{logo_image}}/{{favicon_image}}-Slots spiegeln,
   // damit Themes wie Eilers/TTS/AZB den hochgeladenen Logo nutzen.
@@ -354,6 +354,7 @@ function renderHtml(row, host) {
   if (row.favicon_url) html = html.replace(/assets\/favicon\.[a-z]+/gi, "/assets/favicon");
   return { body: html, status: 200 };
 }
+
 
 function renderLegal(row, type) {
   const body = type === "datenschutz" ? renderDatenschutz(row.branding || {}) : renderImpressum(row.branding || {});
