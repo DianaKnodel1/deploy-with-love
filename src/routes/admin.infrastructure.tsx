@@ -421,7 +421,8 @@ function CloudflareTab() {
         </CardHeader>
         <CardContent className="text-sm space-y-2 text-muted-foreground">
           <p>Jeder Cloudflare-Account, in dem Kunden-Domains liegen, wird hier 1× hinterlegt. Der API-Token wird direkt im Portal eingetragen — beliebig viele Accounts möglich, jederzeit änderbar.</p>
-          <p><strong>Berechtigungen des Tokens:</strong> Zone → Read, DNS → Edit (für alle relevanten Zonen).</p>
+          <p><strong>Token-Typ:</strong> Cloudflare → My Profile → API Tokens → Create Custom Token. Nicht „Global API Key" und nicht Account-Permissions.</p>
+          <p><strong>Zone Permissions:</strong> Zone → Zone → Read und Zone → DNS → Edit. Zone Resources: Specific zone oder All zones from an account.</p>
         </CardContent>
       </Card>
 
@@ -441,7 +442,7 @@ function CloudflareTab() {
                 <div>
                   <Label>API-Token</Label>
                   <Input type="password" value={form.api_token} onChange={(e) => setForm({ ...form, api_token: e.target.value })} placeholder="cfat_…" autoComplete="off" />
-                  <p className="text-xs text-muted-foreground mt-1">Benötigt Zone:Read + DNS:Edit. Wird im Portal gespeichert.</p>
+                  <p className="text-xs text-muted-foreground mt-1">User API Token aus „My Profile“. Benötigt Zone → Zone → Read + Zone → DNS → Edit.</p>
                 </div>
               </div>
               <DialogFooter>
@@ -473,7 +474,7 @@ function CloudflareTab() {
                       </Button>
                       <Button size="sm" variant="outline" disabled={working === r.id} onClick={async () => {
                         setWorking(r.id);
-                        try { const v = await verify({ data: { id: r.id } }); toast({ title: "Token gültig", description: `Status: ${v.status}` }); }
+                        try { const v = await verify({ data: { id: r.id } }); toast({ title: "Token gültig", description: `Status: ${v.status} · sichtbare Zonen: ${v.zonesVisible}` }); }
                         catch (e: any) { toast({ title: "Token-Fehler", description: e.message, variant: "destructive" }); }
                         finally { setWorking(null); }
                       }}><CheckCircle2 className="w-4 h-4 mr-1" />Verify</Button>
