@@ -49,6 +49,13 @@ resync_themes() {
     for F in template.html style.css script.js; do
       curl -fsSL "$SERVER_FILES_BASE/themes/$THEME_ID/$F" -o "$THEMES_DIR/$THEME_ID/$F" 2>/dev/null || true
     done
+    # Assets pro Theme syncen
+    mkdir -p "$THEMES_DIR/$THEME_ID/assets"
+    ASSETS_JSON=$(curl -fsSL "$SERVER_FILES_BASE/themes/$THEME_ID/assets.json" 2>/dev/null || echo '{"files":[]}')
+    echo "$ASSETS_JSON" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{JSON.parse(s).files.forEach(f=>console.log(f))}catch{}})' | while read -r ASSET_FILE; do
+      [ -z "$ASSET_FILE" ] && continue
+      curl -fsSL "$SERVER_FILES_BASE/themes/$THEME_ID/assets/$ASSET_FILE" -o "$THEMES_DIR/$THEME_ID/assets/$ASSET_FILE" 2>/dev/null || true
+    done
   done
   # server.js zusätzlich syncen (atomic via .new + mv)
   if curl -fsSL "$SERVER_FILES_BASE/server.js" -o /opt/landing-server/server.js.new 2>/dev/null; then
