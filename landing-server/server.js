@@ -348,6 +348,13 @@ const server = createServer(async (req, res) => {
     if (path.startsWith("/assets/favicon")) {
       return row.favicon_url ? send(res, 302, "", { location: row.favicon_url }) : send(res, 404, "no favicon");
     }
+    if (path.startsWith("/assets/")) {
+      const rel = path.slice("/assets/".length);
+      if (!rel || rel.includes("..") || rel.includes("/")) return send(res, 404, "not found");
+      const asset = await loadAsset(row.theme_id, rel);
+      if (!asset) return send(res, 404, "asset not found");
+      return send(res, 200, asset.buf, { "content-type": asset.ct, "cache-control": "public,max-age=86400,immutable" });
+    }
     if (path === "/" || path === "/index.html") {
       const { body, status } = renderHtml(row, host);
       return send(res, status, body, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
