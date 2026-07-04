@@ -123,13 +123,6 @@ function InterviewPage() {
   // KI Chat ist bewusst ein reiner Text-Chat — keine TTS, keine Stimme.
   // Sprachausgabe läuft ausschließlich über /interview/voice/$appId (KI Telefon).
 
-  function toggleMute() {
-    setMuted((m) => {
-      const next = !m;
-      if (next && audioRef.current) { audioRef.current.pause(); setSpeaking(false); }
-      return next;
-    });
-  }
 
   async function send() {
     const text = input.trim();
