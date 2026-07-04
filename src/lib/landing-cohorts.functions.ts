@@ -120,7 +120,7 @@ export const getCohortStats = createServerFn({ method: "POST" })
 
     // Landing-Pages für Vermittlungs-Label
     const landingIds = Array.from(new Set(
-      allApps.flatMap(a => [a.source_landing_id, a.target_landing_id, a.landing_page_id]).filter(Boolean),
+      allApps.flatMap(a => [a.source_landing_id, a.target_landing_id]).filter(Boolean),
     )) as string[];
     const landingLabel = new Map<string, string>();
     if (landingIds.length > 0) {
