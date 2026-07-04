@@ -13,9 +13,9 @@
     { "key": "logo_image",      "label": "Logo (optional)",   "type": "image",    "default": "" },
     { "key": "firmenname",      "label": "Firmenname",        "type": "text",     "default": "for.tel Solutions" },
 
-    { "key": "topbar_phone",    "label": "Topbar Telefon",    "type": "text",     "default": "+49 711-96880944" },
-    { "key": "topbar_email",    "label": "Topbar E-Mail",     "type": "text",     "default": "kontakt@for-tel.com" },
-    { "key": "topbar_meta",     "label": "Topbar Zusatz",     "type": "text",     "default": "Filderstadt · DE — Mo – Fr · 08:00 – 18:00" },
+    { "key": "topbar_phone",    "label": "Topbar Telefon",    "type": "text",     "default": "" },
+    { "key": "topbar_email",    "label": "Topbar E-Mail",     "type": "text",     "default": "" },
+    { "key": "topbar_meta",     "label": "Topbar Zusatz",     "type": "text",     "default": "" },
 
     { "key": "hero_eyebrow",    "label": "Hero Eyebrow",      "type": "text",     "default": "Software & Web aus Filderstadt · seit 2006" },
     { "key": "hero_headline_1", "label": "Headline Zeile 1",  "type": "text",     "default": "Maßgeschneiderte Software." },
