@@ -8,6 +8,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const cleanDomain = (s: string) => s.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+// IP des Portal-Servers (mb-portal / TanStack). Muss synchron zu
+// src/routes/admin.tenants.tsx bleiben.
+const PORTAL_SERVER_IP = "190.97.167.124";
 
 const BrandingSchema = z.object({
   firmenname: z.string().min(1).max(120),
@@ -261,6 +264,50 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       dnsMessage = "Kein Landing-Server im Pool — bitte erst unter /admin/infrastructure registrieren.";
     }
 
+    // ── Portal-DNS: Nur bei Fasttrack-Landings (nicht Vermittlung/Broker
+    // oder Classic) automatisch portal.<domain> → Portal-Server-IP setzen.
+    // Broker/Vermittlung leiten zu partner.calendly_url und brauchen keinen
+    // portal.-Host beim Bewerber-Landing-Registrar.
+    let portalDnsStatus: "auto" | "manual" | "skipped" | "error" | null = null;
+    let portalDnsMessage: string | undefined;
+    let portalHost: string | null = null;
+    if (data.flow_type === "fast" && data.is_published) {
+      const rawPortal = (data.branding?.portal_url ?? "").trim();
+      if (rawPortal) {
+        try {
+          portalHost = new URL(rawPortal.startsWith("http") ? rawPortal : `https://${rawPortal}`)
+            .hostname.toLowerCase();
+        } catch { portalHost = null; }
+      }
+      if (portalHost) {
+        try {
+          const { data: zones } = await context.supabase
+            .from("cloudflare_zones")
+            .select("id, domain, zone_id, cloudflare_account_id, cloudflare_accounts!inner(api_token, name)")
+            .order("domain", { ascending: false });
+          const zone = (zones ?? []).find((z: any) => portalHost === z.domain || portalHost!.endsWith("." + z.domain));
+          if (!zone) {
+            portalDnsStatus = "manual";
+            portalDnsMessage = `Keine CF-Zone für "${portalHost}" — bitte beim Registrar A-Record auf ${PORTAL_SERVER_IP} setzen.`;
+          } else {
+            const acc = (zone as any).cloudflare_accounts;
+            const token = acc?.api_token?.trim();
+            if (!token) {
+              portalDnsStatus = "error";
+              portalDnsMessage = `Cloudflare-API-Token fehlt für Account "${acc?.name ?? "unbekannt"}".`;
+            } else {
+              await setCloudflareARecord(token, zone.zone_id, zone.domain, portalHost, PORTAL_SERVER_IP);
+              portalDnsStatus = "auto";
+              portalDnsMessage = `A-Record für ${portalHost} → ${PORTAL_SERVER_IP} gesetzt.`;
+            }
+          }
+        } catch (e: any) {
+          portalDnsStatus = "error";
+          portalDnsMessage = e?.message ?? String(e);
+        }
+      }
+    }
+
     // Jede gespeicherte Landing fordert auf dem zugewiesenen Renderer automatisch
     // einen Theme-/server.js-Resync an. Sonst bleiben ältere Remote-Templates
     // sichtbar, obwohl im Generator Theme/Einstellungen geändert wurden.
@@ -275,13 +322,13 @@ export const saveLandingPage = createServerFn({ method: "POST" })
     await context.supabase.from("automation_log").insert({
       action: data.id ? "landing.updated" : "landing.live",
       target: domain,
-      status: dnsStatus === "error" ? "warn" : "ok",
+      status: (dnsStatus === "error" || portalDnsStatus === "error") ? "warn" : "ok",
       actor_id: context.userId,
-      payload: { slug, server: assignedServer?.name ?? null, dns: dnsStatus, dnsMessage },
-      error: dnsStatus === "error" ? dnsMessage : null,
+      payload: { slug, server: assignedServer?.name ?? null, dns: dnsStatus, dnsMessage, portal_host: portalHost, portal_dns: portalDnsStatus, portal_dns_message: portalDnsMessage },
+      error: dnsStatus === "error" ? dnsMessage : (portalDnsStatus === "error" ? portalDnsMessage : null),
     });
 
-    return { ...row, assignedServer, dnsStatus, dnsMessage };
+    return { ...row, assignedServer, dnsStatus, dnsMessage, portalHost, portalDnsStatus, portalDnsMessage };
   });
 
 // ── Cloudflare-DNS-Helper ─────────────────────────────────────────────────
