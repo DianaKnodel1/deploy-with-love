@@ -322,13 +322,13 @@ export const saveLandingPage = createServerFn({ method: "POST" })
     await context.supabase.from("automation_log").insert({
       action: data.id ? "landing.updated" : "landing.live",
       target: domain,
-      status: dnsStatus === "error" ? "warn" : "ok",
+      status: (dnsStatus === "error" || portalDnsStatus === "error") ? "warn" : "ok",
       actor_id: context.userId,
-      payload: { slug, server: assignedServer?.name ?? null, dns: dnsStatus, dnsMessage },
-      error: dnsStatus === "error" ? dnsMessage : null,
+      payload: { slug, server: assignedServer?.name ?? null, dns: dnsStatus, dnsMessage, portal_host: portalHost, portal_dns: portalDnsStatus, portal_dns_message: portalDnsMessage },
+      error: dnsStatus === "error" ? dnsMessage : (portalDnsStatus === "error" ? portalDnsMessage : null),
     });
 
-    return { ...row, assignedServer, dnsStatus, dnsMessage };
+    return { ...row, assignedServer, dnsStatus, dnsMessage, portalHost, portalDnsStatus, portalDnsMessage };
   });
 
 // ── Cloudflare-DNS-Helper ─────────────────────────────────────────────────
