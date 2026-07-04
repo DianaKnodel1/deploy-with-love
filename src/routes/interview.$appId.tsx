@@ -123,45 +123,8 @@ function InterviewPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  // TTS: letzte Assistant-Nachricht vorlesen
-  useEffect(() => {
-    if (muted || ended || initializing) return;
-    let lastIdx = -1;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === "assistant") { lastIdx = i; break; }
-    }
-    if (lastIdx < 0 || lastIdx <= spokenIdxRef.current) return;
-    // Bei Init nicht die gesamte Historie vorlesen
-    if (spokenIdxRef.current === -1 && lastIdx < messages.length - 1) {
-      spokenIdxRef.current = lastIdx;
-      return;
-    }
-    const text = messages[lastIdx].text;
-    spokenIdxRef.current = lastIdx;
-    let cancelled = false;
-    (async () => {
-      try {
-        setSpeaking(true);
-        const res = await fetch("/api/public/tts-test", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
-        });
-        if (!res.ok || cancelled) return;
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        if (audioRef.current) { audioRef.current.pause(); }
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = () => { setSpeaking(false); URL.revokeObjectURL(url); };
-        audio.onerror = () => { setSpeaking(false); URL.revokeObjectURL(url); };
-        await audio.play().catch(() => { setSpeaking(false); });
-      } catch {
-        setSpeaking(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [messages, muted, ended, initializing]);
+  // KI Chat ist bewusst ein reiner Text-Chat — keine TTS, keine Stimme.
+  // Sprachausgabe läuft ausschließlich über /interview/voice/$appId (KI Telefon).
 
   function toggleMute() {
     setMuted((m) => {
@@ -266,13 +229,6 @@ function InterviewPage() {
           </div>
           {startedAt && !ended && (
             <div className="flex items-center gap-2">
-              <button
-                onClick={toggleMute}
-                title={muted ? "Ton einschalten" : "Ton ausschalten"}
-                className="p-2 rounded-full hover:bg-muted transition text-muted-foreground"
-              >
-                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-              </button>
               <div className={`text-xs font-mono tabular-nums px-2 py-1 rounded-full ${remainingSec < 60 ? "bg-destructive/10 text-destructive" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"}`}>
                 {mm}:{ss}
               </div>
