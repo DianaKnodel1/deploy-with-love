@@ -109,9 +109,9 @@ export const getCohortStats = createServerFn({ method: "POST" })
     // 1) Bewerbungen
     let appQ = supabase
       .from("applications")
-      .select("id, email, tenant_id, status, flow_type, booking_status, interview_completed_at, interview_recommendation, created_at, is_test, source_slug, source_landing_id, target_landing_id, landing_page_id")
+      .select("id, email, tenant_id, status, flow_type, booking_status, interview_completed_at, interview_recommendation, created_at, is_test, source_slug, source_landing_id, target_landing_id")
       .eq("is_test", false)
-      .in("flow_type", ["broker", "fasttrack"])
+      .in("flow_type", ["broker", "fast"])
       .gte("created_at", sinceIso);
     if (data.tenant_id) appQ = appQ.eq("tenant_id", data.tenant_id);
     const { data: apps, error: appErr } = await appQ;
