@@ -233,41 +233,10 @@ export const Route = createFileRoute("/api/public/applications")({
               .eq("email", d.email.toLowerCase())
               .in("status", ["queued", "sending"]);
           } catch (e) { console.warn("[applications fast] skip drip queue:", e); }
-
-          // Portal-Eintrag (auth user + profile) automatisch anlegen — nur
-          // bei Fasttrack, nicht bei Vermittlung/Broker/Classic. Passwort
-          // setzt der Bewerber später via Registrierungs-/Reset-Link aus
-          // der Einladungs-Mail. Idempotent: doppelte E-Mail wird geloggt
-          // und ignoriert, damit der Submit trotzdem grün durchgeht.
-          const parts = d.full_name.trim().split(/\s+/);
-          const firstName = parts[0] ?? "";
-          const lastName = parts.slice(1).join(" ");
           try {
-            const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-              email: d.email,
-              email_confirm: true,
-              user_metadata: { full_name: d.full_name, tenant_id: resolvedTenantId },
-            });
-            if (createErr) {
-              if (!/already|registered|exists/i.test(createErr.message)) {
-                console.warn("[applications fast] createUser:", createErr);
-              }
-            } else if (created?.user?.id) {
-              // handle_new_user Trigger legt Profile-Zeile an — nur mit
-              // Bewerbungsdaten anreichern.
-              await supabaseAdmin.from("profiles").update({
-                full_name: d.full_name,
-                phone: d.phone ?? null,
-                zip_code: d.postal_code ?? null,
-                city: d.city ?? null,
-                tenant_id: resolvedTenantId,
-                status: "registriert",
-                onboarding_status: "in_bearbeitung",
-              } as any).eq("user_id", created.user.id);
-            }
-          } catch (e) { console.warn("[applications fast] portal entry error:", e); }
-
-          try {
+            const parts = d.full_name.trim().split(/\s+/);
+            const firstName = parts[0] ?? "";
+            const lastName = parts.slice(1).join(" ");
             const { error: mailErr } = await supabaseAdmin.functions.invoke("send-invitation-email", {
               body: { to: d.email, fullName: d.full_name, firstName, lastName, registrationLink: redirect_url, tenantId: resolvedTenantId },
             });
