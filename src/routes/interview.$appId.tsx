@@ -229,13 +229,6 @@ function InterviewPage() {
           </div>
           {startedAt && !ended && (
             <div className="flex items-center gap-2">
-              <button
-                onClick={toggleMute}
-                title={muted ? "Ton einschalten" : "Ton ausschalten"}
-                className="p-2 rounded-full hover:bg-muted transition text-muted-foreground"
-              >
-                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-              </button>
               <div className={`text-xs font-mono tabular-nums px-2 py-1 rounded-full ${remainingSec < 60 ? "bg-destructive/10 text-destructive" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"}`}>
                 {mm}:{ss}
               </div>
