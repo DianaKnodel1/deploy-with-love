@@ -32,7 +32,7 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   process.exit(1);
 }
 
-const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published";
+const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain)";
 
 // ── Themes von Disk laden (einmal beim Start) ────────────────────────────
 const __dirname = dirname(fileURLToPath(import.meta.url));
