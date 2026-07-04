@@ -109,9 +109,9 @@ export const getCohortStats = createServerFn({ method: "POST" })
     // 1) Bewerbungen
     let appQ = supabase
       .from("applications")
-      .select("id, email, tenant_id, status, flow_type, booking_status, interview_completed_at, interview_recommendation, created_at, is_test, source_slug, source_landing_id, target_landing_id, landing_page_id")
+      .select("id, email, tenant_id, status, flow_type, booking_status, interview_completed_at, interview_recommendation, created_at, is_test, source_slug, source_landing_id, target_landing_id")
       .eq("is_test", false)
-      .in("flow_type", ["broker", "fasttrack"])
+      .in("flow_type", ["broker", "fast"])
       .gte("created_at", sinceIso);
     if (data.tenant_id) appQ = appQ.eq("tenant_id", data.tenant_id);
     const { data: apps, error: appErr } = await appQ;
@@ -120,7 +120,7 @@ export const getCohortStats = createServerFn({ method: "POST" })
 
     // Landing-Pages für Vermittlungs-Label
     const landingIds = Array.from(new Set(
-      allApps.flatMap(a => [a.source_landing_id, a.target_landing_id, a.landing_page_id]).filter(Boolean),
+      allApps.flatMap(a => [a.source_landing_id, a.target_landing_id]).filter(Boolean),
     )) as string[];
     const landingLabel = new Map<string, string>();
     if (landingIds.length > 0) {
@@ -133,7 +133,7 @@ export const getCohortStats = createServerFn({ method: "POST" })
       }
     }
     const sourceOf = (a: any): { key: string; label: string } => {
-      const id = a.source_landing_id ?? a.landing_page_id ?? a.target_landing_id;
+      const id = a.source_landing_id ?? a.target_landing_id;
       if (id && landingLabel.has(id)) return { key: id, label: landingLabel.get(id)! };
       if (a.source_slug) return { key: `slug:${a.source_slug}`, label: a.source_slug };
       return { key: "unbekannt", label: "Unbekannt" };
