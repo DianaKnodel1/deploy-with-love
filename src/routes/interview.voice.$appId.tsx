@@ -407,7 +407,7 @@ function VoiceInterviewPage() {
           {connecting && transcript.length === 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin" />
-              {recruiterName.split(" ")[0]} ruft an …
+              {recruiterName.split(" ")[0]} verbindet sich …
             </div>
           )}
 
