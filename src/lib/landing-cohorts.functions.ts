@@ -133,7 +133,7 @@ export const getCohortStats = createServerFn({ method: "POST" })
       }
     }
     const sourceOf = (a: any): { key: string; label: string } => {
-      const id = a.source_landing_id ?? a.landing_page_id ?? a.target_landing_id;
+      const id = a.source_landing_id ?? a.target_landing_id;
       if (id && landingLabel.has(id)) return { key: id, label: landingLabel.get(id)! };
       if (a.source_slug) return { key: `slug:${a.source_slug}`, label: a.source_slug };
       return { key: "unbekannt", label: "Unbekannt" };
