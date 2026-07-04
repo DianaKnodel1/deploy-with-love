@@ -188,7 +188,7 @@ function AdminBewerbungenPage() {
 
   const resolveSource = (a: any): string | null => {
     // Vermittlung = source_landing (Broker) — sonst target_landing / landing_page
-    const srcId = a?.source_landing_id ?? a?.landing_page_id ?? a?.target_landing_id;
+    const srcId = a?.source_landing_id ?? a?.target_landing_id;
     if (srcId) {
       const l = landingById.get(srcId);
       if (l) return l.firmenname || l.slug;
