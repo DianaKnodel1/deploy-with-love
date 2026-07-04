@@ -23,7 +23,7 @@ a{color:inherit;text-decoration:none}
 .site-header{position:sticky;top:0;z-index:50;background:rgba(238,240,244,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .header-row{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 0}
 .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;color:var(--primary)}
-.logo-img{height:72px;width:auto}
+.logo-img{height:110px;width:auto}
 .logo-img:not([src]),.logo-img[src=""]{display:none}
 .logo:has(.logo-img[src]:not([src=""])) .logo-mark{display:none}
 .logo-text{letter-spacing:-.5px}
