@@ -8,6 +8,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const cleanDomain = (s: string) => s.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+// IP des Portal-Servers (mb-portal / TanStack). Muss synchron zu
+// src/routes/admin.tenants.tsx bleiben.
+const PORTAL_SERVER_IP = "190.97.167.124";
 
 const BrandingSchema = z.object({
   firmenname: z.string().min(1).max(120),
