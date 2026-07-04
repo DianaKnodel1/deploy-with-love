@@ -436,13 +436,6 @@ const server = createServer(async (req, res) => {
       return send(res, 200, asset.buf, { "content-type": asset.ct, "cache-control": "public,max-age=86400,immutable" });
     }
     if (path === "/" || path === "/index.html") {
-      // Personalvermittlung (broker) leitet IMMER auf die verknüpfte Fasttrack-Landing
-      // weiter (mit ?ref=<broker_landing_id>, damit das Tracking erhalten bleibt).
-      if (row.flow_type === "broker" && row.linked_fasttrack?.domain) {
-        const extra = url.search ? `&${url.search.slice(1)}` : "";
-        const target = `https://${row.linked_fasttrack.domain}/?ref=${row.id}${extra}`;
-        return send(res, 302, "", { location: target, "cache-control": "no-store" });
-      }
       const { body, status } = await renderHtml(row, host);
       return send(res, status, body, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
     }
