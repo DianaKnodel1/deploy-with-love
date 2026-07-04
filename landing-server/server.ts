@@ -302,6 +302,13 @@ const server = Bun.serve({
       return new Response("asset not found", { status: 404 });
     }
     if (path === "/" || path === "/index.html") {
+      // Personalvermittlung (broker) leitet IMMER auf die verknüpfte Fasttrack-Landing weiter.
+      const linked = (row as any).linked_fasttrack;
+      if ((row as any).flow_type === "broker" && linked?.domain) {
+        const extra = url.search ? `&${url.search.slice(1)}` : "";
+        const target = `https://${linked.domain}/?ref=${row.id}${extra}`;
+        return new Response(null, { status: 302, headers: { location: target, "cache-control": "no-store" } });
+      }
       const { body, status } = renderHtml(row, host);
       return new Response(body, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
     }
