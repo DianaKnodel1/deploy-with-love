@@ -88,8 +88,8 @@
     { "key": "testimonial_role", "label": "Testimonial Rolle","type": "text",   "default": "zufriedener Kunde" },
     { "key": "testimonial_image","label": "Testimonial Bild","type": "image",   "default": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80" },
 
-    { "key": "cta_title", "label": "CTA Titel","type": "text",    "default": "Sie haben ein ambitioniertes Vorhaben? Wir sind bereit." },
-    { "key": "cta_text",  "label": "CTA Text", "type": "textarea","default": "Buchen Sie eine 30-minütige Erstberatung mit unseren Expert:innen. Wir analysieren Ihren Status quo, geben Impulse und zeigen konkrete Hebel auf." },
+    { "key": "cta_title", "label": "CTA Titel","type": "text",    "default": "Bereit für den nächsten Karriereschritt? Wir suchen Sie." },
+    { "key": "cta_text",  "label": "CTA Text", "type": "textarea","default": "Bewerben Sie sich in wenigen Minuten und werden Sie Teil unseres Teams. Wir melden uns kurzfristig für ein persönliches Kennenlernen." },
     { "key": "cta_label", "label": "CTA Label","type": "text",    "default": "Jetzt bewerben" },
 
     { "key": "contact_email",  "label": "E-Mail",  "type": "text", "default": "kontakt@cle-beratung.de" },
