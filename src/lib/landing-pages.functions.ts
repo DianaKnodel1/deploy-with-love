@@ -303,6 +303,7 @@ export const saveLandingPage = createServerFn({ method: "POST" })
           portalDnsMessage = e?.message ?? String(e);
         }
       }
+    }
 
     // Jede gespeicherte Landing fordert auf dem zugewiesenen Renderer automatisch
     // einen Theme-/server.js-Resync an. Sonst bleiben ältere Remote-Templates
