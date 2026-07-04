@@ -36,7 +36,7 @@ img    { max-width: 100%; display: block; }
 .bpo-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 80px; }
 
 .bpo-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.bpo-logo img { width: 38px; height: 38px; }
+.bpo-logo img { width: 72px; height: 72px; object-fit: contain; }
 .bpo-logo span { font-size: 1.75rem; letter-spacing: 1px; font-weight: 700; color: var(--heading); }
 
 .bpo-nav { display: flex; align-items: center; gap: 30px; }
