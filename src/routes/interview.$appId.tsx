@@ -192,11 +192,11 @@ function InterviewPage() {
   const recruiterName = branding?.recruiter_name || "Sabine Schneider";
   const avatarUrl = branding?.recruiter_avatar_url || null;
   const initials = recruiterName.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
-  const status = loading ? "tippt…" : speaking ? "spricht…" : ended ? "Gespräch beendet" : "hört zu";
+  const status = loading ? "tippt…" : ended ? "Gespräch beendet" : "online";
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-black">
-      {/* Call-Header — WhatsApp/Skype Stil */}
+      {/* Chat-Header */}
       <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-border sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <div className="relative shrink-0">
@@ -213,7 +213,7 @@ function InterviewPage() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-[15px] font-semibold text-foreground truncate">{recruiterName}</h1>
-            <p className={`text-xs truncate ${speaking ? "" : "text-muted-foreground"}`} style={speaking ? { color: primary } : undefined}>
+            <p className="text-xs truncate text-muted-foreground">
               {status} · {company}
             </p>
           </div>
@@ -227,34 +227,6 @@ function InterviewPage() {
         </div>
       </header>
 
-      {/* Speaking-Zone: Großer Avatar mit Puls, wenn KI spricht */}
-      {!ended && (
-        <div className="max-w-2xl w-full mx-auto px-4 pt-6 pb-2 flex flex-col items-center">
-          <div className="relative">
-            {speaking && (
-              <>
-                <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ background: primary }} />
-                <span className="absolute -inset-3 rounded-full animate-pulse opacity-20" style={{ background: primary }} />
-              </>
-            )}
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={recruiterName} className="relative h-24 w-24 rounded-full object-cover ring-4 ring-white dark:ring-slate-900 shadow-lg" />
-            ) : (
-              <div className="relative h-24 w-24 rounded-full flex items-center justify-center text-white text-2xl font-semibold ring-4 ring-white dark:ring-slate-900 shadow-lg" style={{ background: primary }}>
-                {initials}
-              </div>
-            )}
-          </div>
-          {/* Wellenanimation */}
-          <div className={`mt-3 flex items-end gap-1 h-6 ${speaking ? "opacity-100" : "opacity-30"}`}>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <span
-                key={i}
-                className="w-1 rounded-full"
-                style={{
-                  background: primary,
-                  height: speaking ? `${8 + ((i * 7) % 16)}px` : "4px",
-                  animation: speaking ? `waveBar 0.9s ease-in-out ${i * 0.12}s infinite` : "none",
                 }}
               />
             ))}
