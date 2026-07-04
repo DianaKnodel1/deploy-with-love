@@ -228,7 +228,7 @@ em{font-style:italic;font-weight:400;color:var(--amber);}
 .brand { max-width: 260px; }
 .brand-footer { max-width: 320px; }
 .brand-logo {
-  max-height: 72px !important;
+  max-height: 110px !important;
   max-width: 260px !important;
   width: auto !important;
   height: auto !important;
@@ -236,6 +236,6 @@ em{font-style:italic;font-weight:400;color:var(--amber);}
   display: block;
   flex: 0 0 auto;
 }
-.brand-footer .brand-logo { max-height: 72px !important; max-width: 260px !important; }
+.brand-footer .brand-logo { max-height: 110px !important; max-width: 320px !important; }
 .brand-logo:not([src]), .brand-logo[src=""] { display: none; }
 .brand:has(.brand-logo[src]:not([src=""])) .brand-fallback { display: none; }
