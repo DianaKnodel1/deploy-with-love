@@ -227,13 +227,7 @@ function InterviewPage() {
         </div>
       </header>
 
-                }}
-              />
-            ))}
-          </div>
-          <style>{`@keyframes waveBar { 0%,100% { transform: scaleY(0.4);} 50% { transform: scaleY(1.8);} }`}</style>
-        </div>
-      )}
+
 
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 pb-4 flex flex-col">
         {error && (
