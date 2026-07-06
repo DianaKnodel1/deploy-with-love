@@ -69,8 +69,14 @@ function splitName(fullName: string) {
 function PersonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { applications, profiles, kycList, allBookings, assignments, loading } = useAdminData();
+  const { applications, profiles, kycList, allBookings, assignments, loading, loadData } = useAdminData();
   const [kycDocUrls, setKycDocUrls] = useState<Record<string, string>>({});
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [empType, setEmpType] = useState<string>("");
+  const [empStart, setEmpStart] = useState<string>("");
+  const [savingEmp, setSavingEmp] = useState(false);
+  const { toast } = useToast();
+  const updateEmp = useServerFn(updateEmployeeEmployment);
 
   const resolved = useMemo(() => {
     const app = (applications as any[]).find((a) => a.id === id);
