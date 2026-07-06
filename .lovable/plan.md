@@ -94,10 +94,10 @@ Bei `vermittlung_zusage`:
 6. **Fasttrack-Landing**: `ref+token`-Handling, Link zurück auf Vermittlungs-Bewerbung.
 7. **Dashboard**: 2-Spalten-Funnel.
 
-## Offene Entscheidungen (bitte kurz bestätigen)
+## Entscheidungen (bestätigt)
 
-1. Soll bei `vermittlung_zusage` **automatisch** Email+SMS raus, oder erst nach Admin-Klick "Link senden"?
-2. Soll die Fasttrack-Bewerbung eine **eigene neue Zeile** in `applications` sein (mein Vorschlag, sauberer Funnel), oder **dieselbe Zeile** mit umgeschaltetem `flow_type`?
-3. Auto-Übergang `fasttrack_angenommen`: an **Vertragsunterschrift** oder an **manueller Admin-Bestätigung** koppeln?
+1. Bei `vermittlung_zusage` (KI-Interview → invite) geht die Registrierungs-Email **automatisch** raus. Bereits umgesetzt via `sendRegistrationInviteAfterAiAccept` in `interview-engine.server.ts`.
+2. Fasttrack-Bewerbung = **eigene neue Zeile** in `applications` (`flow_type='fast'`), verknüpft via `linked_application_id`.
+3. `fasttrack_angenommen` wird durch **manuelle Admin-Bestätigung** gesetzt (Button "Als Mitarbeiter übernehmen" im Bewerberdetail).
 
 Sobald geklärt, fange ich mit Schritt 1 (Migration) an.
