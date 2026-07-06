@@ -141,6 +141,31 @@ function PersonDetailPage() {
     return () => { cancelled = true; };
   }, [kyc]);
 
+  useEffect(() => {
+    setEmpType(resolved.prof?.employment_type ?? "");
+    setEmpStart(resolved.prof?.employment_start_date ?? "");
+  }, [resolved.prof]);
+
+  const handleSaveEmployment = async () => {
+    if (!resolved.prof?.user_id) return;
+    setSavingEmp(true);
+    try {
+      await updateEmp({
+        data: {
+          user_id: resolved.prof.user_id,
+          employment_type: (empType || null) as any,
+          employment_start_date: empStart?.trim() ? empStart : null,
+        } as any,
+      });
+      toast({ title: "Beschäftigung aktualisiert" });
+      await loadData();
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingEmp(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6"><TableSkeleton /></div>;
   }
