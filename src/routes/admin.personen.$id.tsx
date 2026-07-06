@@ -229,17 +229,55 @@ function PersonDetailPage() {
     ) : null,
   });
 
-  // 2) Termin
+  // 2) Termin — nutzt applications.scheduled_at + booking_status (Calendly-Webhook).
+  const bookingStatus: string | null = app?.booking_status ?? null;
+  const cancelled = bookingStatus === "cancelled";
+  
+  const hasScheduledAt = !!scheduledAt;
+  const isScheduledState = bookingStatus === "scheduled" || hasScheduledAt;
+
+  let apptTitle = "Kein Termin gebucht";
+  let apptStatus: Status = app ? "pending" : "skipped";
+  let apptMeta = "—";
+  if (cancelled) {
+    apptTitle = "Termin abgesagt";
+    apptStatus = "failed";
+    apptMeta = hasScheduledAt ? fmt(scheduledAt!) : "abgesagt";
+  } else if (bookingStatus === "no_show") {
+    apptTitle = "Termin nicht wahrgenommen";
+    apptStatus = "failed";
+    apptMeta = hasScheduledAt ? fmt(scheduledAt!) : "no-show";
+  } else if (interviewDone && hasScheduledAt) {
+    apptTitle = "Termin wahrgenommen";
+    apptStatus = "done";
+    apptMeta = fmt(scheduledAt!);
+  } else if (isScheduledState) {
+    apptTitle = "Interview gebucht";
+    apptStatus = overdue ? "failed" : "current";
+    apptMeta = hasScheduledAt ? fmt(scheduledAt!) : "Termin bestätigt";
+  }
+
   steps.push({
     key: "appointment",
     icon: CalendarDays,
-    title: "Termin gebucht",
-    status: scheduledAt ? (interviewDone ? "done" : overdue ? "failed" : "current") : app ? "pending" : "skipped",
-    meta: scheduledAt ? fmt(scheduledAt) : "Kein Termin",
-    body: overdue ? (
-      <div className="text-xs text-amber-700 dark:text-amber-300">⚠️ Termin liegt zurück, aber kein Interview registriert (No-Show?)</div>
-    ) : null,
+    title: apptTitle,
+    status: apptStatus,
+    meta: apptMeta,
+    body: (
+      <div className="text-xs text-muted-foreground space-y-1">
+        {bookingStatus && (
+          <div>Status: <span className="text-foreground font-medium">{bookingStatus}</span></div>
+        )}
+        {overdue && !interviewStarted && !interviewDone && !cancelled && bookingStatus !== "no_show" && (
+          <div className="text-amber-700 dark:text-amber-300">⚠️ Termin liegt zurück, aber kein Interview registriert (No-Show?)</div>
+        )}
+        {!hasScheduledAt && !bookingStatus && app && (
+          <div className="text-[11px]">Bewerbung eingegangen, aber noch kein Calendly-Termin gebucht.</div>
+        )}
+      </div>
+    ),
   });
+
 
   // 3) Interview
   const interviewStatus: Status = rec === "invite" || rec === "reject"
