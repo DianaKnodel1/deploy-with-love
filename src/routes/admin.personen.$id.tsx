@@ -232,7 +232,7 @@ function PersonDetailPage() {
   // 2) Termin — nutzt applications.scheduled_at + booking_status (Calendly-Webhook).
   const bookingStatus: string | null = app?.booking_status ?? null;
   const cancelled = bookingStatus === "cancelled";
-  const noShow = bookingStatus === "no_show" || (overdue && !interviewStarted && !interviewDone);
+  const _noShow = bookingStatus === "no_show" || (overdue && !interviewStarted && !interviewDone); void _noShow;
   const hasScheduledAt = !!scheduledAt;
   const isScheduledState = bookingStatus === "scheduled" || hasScheduledAt;
 
