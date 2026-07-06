@@ -166,12 +166,13 @@ AS $$
 DECLARE
   _app_id uuid;
   _target text;
+  _email  text;
 BEGIN
-  IF NEW.email IS NULL THEN
+  SELECT u.email INTO _email FROM auth.users u WHERE u.id = NEW.user_id;
+  IF _email IS NULL THEN
     RETURN NEW;
   END IF;
 
-  -- Zielstufe aus profile ableiten
   IF NEW.onboarding_status = 'abgeschlossen' THEN
     _target := 'fasttrack_abgeschlossen';
   ELSIF NEW.onboarding_status IN ('in_bearbeitung', 'gestartet') THEN
@@ -180,10 +181,9 @@ BEGIN
     _target := 'fasttrack_registriert';
   END IF;
 
-  -- Passende application (per email + optional tenant) finden
   SELECT id INTO _app_id
     FROM public.applications
-   WHERE lower(email) = lower(NEW.email)
+   WHERE lower(email) = lower(_email)
      AND (tenant_id IS NULL OR NEW.tenant_id IS NULL OR tenant_id = NEW.tenant_id)
    ORDER BY created_at DESC
    LIMIT 1;
@@ -198,7 +198,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_profiles_advance_stage ON public.profiles;
 CREATE TRIGGER trg_profiles_advance_stage
-  AFTER INSERT OR UPDATE OF onboarding_status, email ON public.profiles
+  AFTER INSERT OR UPDATE OF onboarding_status ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public._profiles_advance_application_stage();
 
 -- 5) Backfill: bestehende Bewerbungen bekommen sinnvollen Start-Stage
@@ -213,15 +213,17 @@ UPDATE public.applications SET stage =
   END
 WHERE stage = 'vermittlung_neu';
 
--- Fasttrack-Bewerbungen, die bereits ein Profil haben, ins Stufe-2-Set heben
 UPDATE public.applications a SET stage = 'fasttrack_registriert'
   FROM public.profiles p
- WHERE lower(a.email) = lower(p.email)
+  JOIN auth.users u ON u.id = p.user_id
+ WHERE lower(a.email) = lower(u.email)
    AND a.stage IN ('vermittlung_neu','vermittlung_zusage')
    AND a.flow_type = 'fast';
 
 UPDATE public.applications a SET stage = 'fasttrack_abgeschlossen'
   FROM public.profiles p
- WHERE lower(a.email) = lower(p.email)
+  JOIN auth.users u ON u.id = p.user_id
+ WHERE lower(a.email) = lower(u.email)
    AND p.onboarding_status = 'abgeschlossen'
    AND a.stage NOT IN ('fasttrack_angenommen','abgelehnt','cold');
+
