@@ -1,16 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useParams, useNavigate } from "@/lib/router-compat";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useAdminData } from "@/contexts/AdminDataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
+import { IndividualContractDialog } from "@/components/admin/IndividualContractDialog";
+import { updateEmployeeEmployment } from "@/lib/admin-employees.functions";
+import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, User, CalendarDays, Mic, Mail, UserCheck, FileText,
   ClipboardList, CheckCircle2, XCircle, Clock, HelpCircle, MapPin,
-  CreditCard, ShieldCheck, BriefcaseBusiness,
+  CreditCard, ShieldCheck, BriefcaseBusiness, Pencil, Check, Loader2,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/SkeletonLoaders";
 
