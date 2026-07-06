@@ -112,3 +112,62 @@ export const createEmployeeAccount = createServerFn({ method: "POST" })
 
     return { user_id: newUserId };
   });
+
+// ------------------------------------------------------------------
+// Admin: Beschäftigungsart / Startdatum eines bestehenden Mitarbeiters
+// ändern. Wird aus admin.personen.$id "AV bearbeiten" aufgerufen.
+// ------------------------------------------------------------------
+const UpdateEmploymentSchema = z.object({
+  user_id: z.string().uuid(),
+  employment_type: z.enum(["minijob", "teilzeit", "vollzeit"]).nullable(),
+  employment_start_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
+});
+
+export const updateEmployeeEmployment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => UpdateEmploymentSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: roleRow, error: roleErr } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (roleErr) throw new Error(roleErr.message);
+    if (!roleRow) throw new Error("Nicht autorisiert");
+
+    const patch: Record<string, any> = {
+      employment_type: data.employment_type,
+    };
+    if (data.employment_start_date !== undefined) {
+      patch.employment_start_date = data.employment_start_date;
+    }
+
+    const { data: before } = await supabaseAdmin
+      .from("profiles")
+      .select("employment_type, employment_start_date, full_name")
+      .eq("user_id", data.user_id)
+      .maybeSingle();
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update(patch)
+      .eq("user_id", data.user_id);
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("activity_log").insert({
+      action: "mitarbeiter_beschaeftigung_geaendert",
+      entity_type: "profile",
+      entity_id: data.user_id,
+      actor_id: context.userId,
+      comment: `Beschäftigungsart/Startdatum aktualisiert für ${before?.full_name ?? data.user_id} (${before?.employment_type ?? "—"} → ${data.employment_type ?? "—"}).`,
+      old_status: before?.employment_type ?? null,
+      new_status: data.employment_type ?? null,
+    }).then(() => {}, () => {});
+
+    return { ok: true };
+  });

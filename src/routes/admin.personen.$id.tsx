@@ -1,16 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useParams, useNavigate } from "@/lib/router-compat";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useAdminData } from "@/contexts/AdminDataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
+import { IndividualContractDialog } from "@/components/admin/IndividualContractDialog";
+import { updateEmployeeEmployment } from "@/lib/admin-employees.functions";
+import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, User, CalendarDays, Mic, Mail, UserCheck, FileText,
   ClipboardList, CheckCircle2, XCircle, Clock, HelpCircle, MapPin,
-  CreditCard, ShieldCheck, BriefcaseBusiness,
+  CreditCard, ShieldCheck, BriefcaseBusiness, Pencil, Check, Loader2,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/SkeletonLoaders";
 
@@ -62,8 +69,14 @@ function splitName(fullName: string) {
 function PersonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { applications, profiles, kycList, allBookings, assignments, loading } = useAdminData();
+  const { applications, profiles, kycList, allBookings, assignments, loading, loadData } = useAdminData();
   const [kycDocUrls, setKycDocUrls] = useState<Record<string, string>>({});
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [empType, setEmpType] = useState<string>("");
+  const [empStart, setEmpStart] = useState<string>("");
+  const [savingEmp, setSavingEmp] = useState(false);
+  const { toast } = useToast();
+  const updateEmp = useServerFn(updateEmployeeEmployment);
 
   const resolved = useMemo(() => {
     const app = (applications as any[]).find((a) => a.id === id);
@@ -127,6 +140,31 @@ function PersonDetailPage() {
     loadKycUrls();
     return () => { cancelled = true; };
   }, [kyc]);
+
+  useEffect(() => {
+    setEmpType(resolved.prof?.employment_type ?? "");
+    setEmpStart(resolved.prof?.employment_start_date ?? "");
+  }, [resolved.prof]);
+
+  const handleSaveEmployment = async () => {
+    if (!resolved.prof?.user_id) return;
+    setSavingEmp(true);
+    try {
+      await updateEmp({
+        data: {
+          user_id: resolved.prof.user_id,
+          employment_type: (empType || null) as any,
+          employment_start_date: empStart?.trim() ? empStart : null,
+        } as any,
+      });
+      toast({ title: "Beschäftigung aktualisiert" });
+      await loadData();
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingEmp(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-6"><TableSkeleton /></div>;
@@ -360,6 +398,58 @@ function PersonDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {prof && (
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-primary/10 grid place-items-center">
+                  <BriefcaseBusiness className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="font-semibold text-sm">Beschäftigung & Arbeitsvertrag</h2>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setContractDialogOpen(true)} className="gap-1.5">
+                <Pencil className="h-3.5 w-3.5" /> AV bearbeiten (Text / PDF / Gehalt)
+              </Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] items-end">
+              <div>
+                <Label className="text-[11px]">Beschäftigungsart</Label>
+                <Select value={empType || "__none"} onValueChange={(v) => setEmpType(v === "__none" ? "" : v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">— nicht gesetzt —</SelectItem>
+                    <SelectItem value="minijob">Minijob</SelectItem>
+                    <SelectItem value="teilzeit">Teilzeit</SelectItem>
+                    <SelectItem value="vollzeit">Vollzeit</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-[11px]">Startdatum Arbeitsverhältnis</Label>
+                <Input type="date" value={empStart} onChange={(e) => setEmpStart(e.target.value)} className="h-9 text-sm" />
+              </div>
+              <Button size="sm" onClick={handleSaveEmployment} disabled={savingEmp} className="gap-1.5">
+                {savingEmp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                Speichern
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Für individuelles Gehalt, Wochenstunden oder einen abweichenden Vertragstext / PDF „AV bearbeiten" öffnen.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <IndividualContractDialog
+        open={contractDialogOpen}
+        onOpenChange={setContractDialogOpen}
+        employees={prof ? [{ user_id: prof.user_id, full_name: prof.full_name || email }] : []}
+        applicants={[]}
+        initialUserId={prof?.user_id ?? null}
+      />
+
 
       <div className="grid gap-4 lg:grid-cols-3">
         <InfoSection
