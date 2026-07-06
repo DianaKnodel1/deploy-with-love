@@ -1,52 +1,39 @@
-## Ziel
+# Plan: 5 Fixes
 
-Klarer Ablauf abgebildet in der Sidebar + saubere Datenbasis:
+## 1) Mitarbeiterprofile — AV bearbeiten / Beschäftigungsverhältnis ändern
+- In `src/routes/admin.personen.$id.tsx`: neuen Tab/Card „Arbeitsvertrag" mit
+  - „AV öffnen" (bestehende PDF-URL / `contract-pdf.functions.ts`)
+  - „AV bearbeiten" → Dialog mit `employee_contract_overrides` Feldern (Gehalt, Startdatum, Beschäftigungsart)
+  - „Beschäftigungsverhältnis ändern" (Select: Vollzeit / Teilzeit / Minijob / Werkstudent) → persistiert via bestehender `employee-contract-override.functions.ts` (falls Feld fehlt: Migration `employment_type text`).
 
-```
-Vermittlung → Calendly → Fasttrack Interview
-    → (positiv) angenommen → E-Mail „Registriere dich"
-    → Registrierung → Onboarding (Vertrag + Ausweis)
-    → Admin prüft & schaltet frei → Mitarbeiter
-```
+## 2) Chat-Anhänge für Mitarbeiter
+- Storage-Bucket `chat-attachments` (private) via `supabase--storage_create_bucket`.
+- RLS auf `storage.objects`: nur Owner + Admin lesen; Mitarbeiter schreiben nur eigene Objekte.
+- Migration: `chat_messages` bekommt `attachment_url text`, `attachment_name text`, `attachment_mime text`.
+- `src/routes/_employee/chat.tsx` + `src/routes/admin.chat.tsx`: Paperclip-Button, Upload via `supabase.storage.from('chat-attachments').upload(...)`, Anzeige als Bild-Thumbnail oder Datei-Chip mit Signed URL.
 
-## 1. Sidebar aufteilen
+## 3) Theme `theme-for-tel`: „Projekt Anfragen" → „Jetzt Bewerben"
+- In `src/landing-themes/theme-for-tel/template.html`: alle Vorkommen im Header-Nav und Hero-CTA ersetzen.
+- In `script.js` / `style.css` prüfen falls dort statischer Text.
+- Re-build Theme-Assets via `scripts/build-theme-assets.mjs`.
 
-Aus einem Punkt „Personen" werden **zwei**:
+## 4) Löschen von Mitarbeitern & Bewerbern durch Admin
+- Bewerber: `admin.bewerbungen.tsx` — Zeilen-Action „Löschen" (bereits als `purgeInactivePeople` en gros vorhanden). Neu: Einzel-Löschen via `admin-delete.functions.ts` → `deleteApplication({id})`.
+- Mitarbeiter: `admin.mitarbeiter.tsx` und `admin.personen.$id.tsx` — Button „Mitarbeiter löschen" → `deletePerson({user_id})` (löscht profile + auth.user + zugehörige applications). Bereits vorhandene `purgeInactivePeople`-Logik als Basis pro Einzelfall extrahieren.
+- Confirm-Dialog mit Textbestätigung.
 
-- **👥 Bewerbungen** — alle im Funnel bis „angenommen + registriert"
-  Spalten: Name · E-Mail · Phase (Termin/Interview/Angenommen/Registriert) · Quelle · Aktion
-- **👤 Mitarbeiter** — nur registrierte Personen ab Onboarding
-  Spalten: Name · E-Mail · Onboarding-Fortschritt · Status (Prüfung/Freigeschaltet/Abgelehnt) · Aktion „Annehmen / Ablehnen"
+## 5) Fasttrack-Bewerbung Redirect: nur Root statt `/bewerbung/verbinden?...`
+- Fluss: Bewerbung wird auf Fasttrack-Landing abgeschickt → `landing-server` erzeugt `application` → Redirect derzeit `https://portal.<domain>/bewerbung/verbinden?app=...&landing=...&first_name=...`
+- Gewünscht: nur `https://portal.<domain>` (ohne Query/Path). Verbindung erfolgt später im Portal via Login.
+- Änderung in `landing-server/server.js` (und `server.ts`) an der Stelle, wo nach erfolgreichem `applications`-Insert das 302 gesetzt wird: `Location: https://portal.${primaryDomain}/`.
+- `bewerbung.verbinden.tsx` bleibt für Alt-Links funktionsfähig (Backwards-Compat), wird aber nicht mehr aktiv verlinkt.
+- `./deploy.sh` für den Landing-Server nötig nach Merge.
 
-`admin/personen` bleibt als Redirect auf `admin/bewerbungen`, damit alte Links nicht brechen.
+## Reihenfolge der Umsetzung
+1. Redirect-Fix (kleinste Änderung, sofort deploybar)
+2. Theme-Text
+3. Einzel-Löschen (Bewerber + Mitarbeiter)
+4. AV-Bearbeitung
+5. Chat-Anhänge (größte Änderung: Bucket + Schema + UI beidseitig)
 
-## 2. Status-Automatik (kein Admin-Klick nach Interview)
-
-- Interview `recommendation = invite` → `applications.status = 'akzeptiert'` **automatisch** (macht `interview-voice` bereits).
-- Trigger: **E-Mail „Herzlichen Glückwunsch, jetzt registrieren"** wird beim Wechsel auf `akzeptiert` versendet (mit Link auf `/register?token=...`).
-- Nach Registrierung: Profile entsteht, `profiles.onboarding_status = 'offen'`.
-- Nach Onboarding-Abschluss (Vertrag + Ausweis eingereicht): `profiles.onboarding_status = 'wartet_pruefung'`.
-- **Admin klickt „Annehmen"** in Mitarbeiter-Liste → `profiles.status = 'angenommen'` → voller Portal-Zugang.
-- Ablehnen: `profiles.status = 'abgelehnt'` → kein Zugang.
-
-## 3. Cleanup alter Bewerber
-
-Einmalige Aktion mit Vorschau:
-
-- Zähle: Bewerbungen ohne `user_id` und älter als X Tage.
-- Admin sieht Zahl + Button „Löschen" (Bestätigungsdialog).
-- Mitarbeiter (mit Profile) bleiben **immer** unangetastet.
-- Registrierte Bewerbungen (mit `user_id`) bleiben.
-
-## Technisch
-
-- Neue Route `src/routes/admin.bewerbungen.tsx` (aus jetziger `admin.personen.tsx` ausgekoppelt, nur Application-Zeilen + Filter Termin/Interview/Angenommen).
-- Neue Route `src/routes/admin.mitarbeiter.tsx` (nur Profiles, mit „Annehmen/Ablehnen" wenn `onboarding_status = 'wartet_pruefung'`).
-- `admin.personen.tsx` → Redirect-Stub auf `/admin/bewerbungen`.
-- `AdminLayout` Sidebar: „Personen" ersetzt durch die zwei neuen Einträge.
-- Server-Fn `deleteOrphanApplications({ olderThanDays })` in `src/lib/admin-delete.functions.ts` (nur admin, nur ohne `user_id`).
-- E-Mail-Trigger: In `interview-voice.ts` beim Setzen von `status='akzeptiert'` → `send-invitation-email` mit Template „registrierung".
-
-## Offene Frage
-
-- Cleanup-Alter: **30 / 60 / 90 Tage** — welche Schwelle möchtest du als Default?
+Soll ich alle 5 in dieser Reihenfolge umsetzen, oder priorisierst du anders (z. B. Chat-Anhänge zuerst, da „sehr wichtig")?
