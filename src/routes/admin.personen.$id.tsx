@@ -20,6 +20,7 @@ import {
   CreditCard, ShieldCheck, BriefcaseBusiness, Pencil, Check, Loader2,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/SkeletonLoaders";
+import { StageHistoryCard } from "@/components/StageHistoryCard";
 
 export const Route = createFileRoute("/admin/personen/$id")({
   component: PersonDetailPage,
@@ -436,6 +437,10 @@ function PersonDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {app?.id && (
+        <StageHistoryCard applicationId={app.id} canTakeover={onboardingDone} />
+      )}
 
       {prof && (
         <Card>
