@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Users, Search, ExternalLink, Trash2 } from "lucide-react";
 import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders";
 import { StageTimeline, type Stage } from "@/components/StageTimeline";
-import { deleteOrphanApplications } from "@/lib/admin-delete.functions";
+import { deleteOrphanApplications, deleteApplication } from "@/lib/admin-delete.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
