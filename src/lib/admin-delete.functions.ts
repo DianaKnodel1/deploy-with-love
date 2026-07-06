@@ -74,9 +74,48 @@ export const deleteEmployeeAccount = createServerFn({ method: "POST" })
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Cleanup: verwaiste Bewerbungen (ohne user_id) älter als N Tage löschen.
-// Mitarbeiter (mit Profile / user_id) bleiben unberührt.
+// Einzelne Bewerbung (application) hart löschen. Für Bewerber, die noch kein
+// Profil / keinen Auth-Account haben. Falls doch eine user_id verknüpft ist,
+// wird der Auth-Account NICHT gelöscht — dafür `deleteEmployeeAccount` nutzen.
 // ─────────────────────────────────────────────────────────────────────────────
+const DeleteAppSchema = z.object({
+  application_id: z.string().uuid(),
+  confirm: z.literal("BEWERBUNG LÖSCHEN"),
+});
+
+export const deleteApplication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => DeleteAppSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = supabaseAdmin as any;
+    const { data: app, error: fetchErr } = await sb
+      .from("applications")
+      .select("id, full_name, email")
+      .eq("id", data.application_id)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!app) throw new Error("Bewerbung nicht gefunden");
+
+    const { error: delErr } = await sb
+      .from("applications")
+      .delete()
+      .eq("id", data.application_id);
+    if (delErr) throw new Error(delErr.message);
+
+    try {
+      await sb.from("activity_log").insert({
+        action: "bewerbung_geloescht",
+        entity_type: "application",
+        entity_id: data.application_id,
+        actor_id: context.userId,
+        comment: `Bewerbung von ${app.full_name ?? app.email ?? "?"} gelöscht`,
+      });
+    } catch {}
+
+    return { ok: true };
+  });
+
 const CleanupSchema = z.object({
   older_than_days: z.number().int().min(0).max(3650).default(30),
   dry_run: z.boolean().default(false),

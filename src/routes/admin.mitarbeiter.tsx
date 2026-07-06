@@ -13,7 +13,8 @@ import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders"
 import { STATUS_CONFIG, ONBOARDING_STATUS_CONFIG, type EmployeeStatus } from "@/lib/status";
 import { StageTimeline, type Stage } from "@/components/StageTimeline";
 import { toast } from "sonner";
-import { purgeInactivePeople } from "@/lib/admin-delete.functions";
+import { purgeInactivePeople, deleteEmployeeAccount } from "@/lib/admin-delete.functions";
+import { useServerFn } from "@tanstack/react-start";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -232,6 +233,7 @@ function AdminMitarbeiterPage() {
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/personen/${r.id}`)} className="h-7 gap-1.5 text-xs">
                             Öffnen <ExternalLink className="h-3 w-3" />
                           </Button>
+                          <DeleteEmployeeButton userId={r.id} name={r.name} />
                         </div>
                       </td>
                     </tr>
@@ -314,4 +316,68 @@ function PurgeButton() {
     </AlertDialog>
   );
 }
+
+function DeleteEmployeeButton({ userId, name }: { userId: string; name: string }) {
+  const [busy, setBusy] = useState(false);
+  const [text, setText] = useState("");
+  const runDelete = useServerFn(deleteEmployeeAccount);
+  async function doDelete() {
+    setBusy(true);
+    try {
+      await runDelete({ data: { user_id: userId, confirm: "MITARBEITER LÖSCHEN" } });
+      toast.success("Mitarbeiter gelöscht");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Löschen fehlgeschlagen");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <AlertDialog onOpenChange={(o) => { if (!o) setText(""); }}>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+          title="Mitarbeiter löschen"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Mitarbeiter endgültig löschen?</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-3 text-sm">
+              <p>
+                <b>{name}</b> wird inklusive Profil, Auth-Account, Dokumenten,
+                KYC-Uploads und Aufgaben-Einreichungen unwiderruflich gelöscht.
+              </p>
+              <p className="text-destructive font-medium">
+                Zur Bestätigung tippe <code>MITARBEITER LÖSCHEN</code>:
+              </p>
+              <Input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="MITARBEITER LÖSCHEN"
+                autoFocus
+              />
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={busy || text !== "MITARBEITER LÖSCHEN"}
+            onClick={(e) => { e.preventDefault(); doDelete(); }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {busy ? "Läuft…" : "Endgültig löschen"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 
