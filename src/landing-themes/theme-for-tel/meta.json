@@ -21,7 +21,7 @@
     { "key": "hero_headline_1", "label": "Headline Zeile 1",  "type": "text",     "default": "Maßgeschneiderte Software." },
     { "key": "hero_headline_2", "label": "Headline Zeile 2",  "type": "text",     "default": "Exzellente Webentwicklung." },
     { "key": "hero_subtext",    "label": "Hero Subtext",      "type": "textarea", "default": "Wir begleiten mittelständische Unternehmen bei der digitalen Transformation. Von performanten Web-Applikationen bis hin zu komplexen Software-Architekturen — verlässlich, individuell und technologisch auf höchstem Niveau." },
-    { "key": "hero_cta1",       "label": "Hero CTA 1",        "type": "text",     "default": "Projekt starten" },
+    { "key": "hero_cta1",       "label": "Hero CTA 1",        "type": "text",     "default": "Jetzt bewerben" },
     { "key": "hero_cta2",       "label": "Hero CTA 2",        "type": "text",     "default": "Referenzen ansehen" },
     { "key": "hero_tag1",       "label": "Hero Tag 1",        "type": "text",     "default": "Maßgeschneidert" },
     { "key": "hero_tag2",       "label": "Hero Tag 2",        "type": "text",     "default": "Skalierbar" },
