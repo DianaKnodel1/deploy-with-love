@@ -209,6 +209,11 @@ export const Route = createFileRoute("/api/public/applications")({
             intro_subline: partner.intro_subline ?? null,
             portal_register_url: partner.portal_register_url ?? null,
           };
+        } else if (isFast && d.portal_url) {
+          // Fasttrack: direkt zur Portal-Startseite. Verbindung / Login
+          // erfolgt dort separat — keine PII in der URL.
+          const base = d.portal_url.replace(/\/+$/, "");
+          redirect_url = `${base}/`;
         } else if (useCalendly && d.portal_url && d.source_slug) {
           const base = d.portal_url.replace(/\/+$/, "");
           const parts = d.full_name.trim().split(/\s+/);
@@ -220,9 +225,6 @@ export const Route = createFileRoute("/api/public/applications")({
             email: d.email, phone: d.phone ?? "",
           }).toString();
           redirect_url = `${base}/bewerbung/verbinden?${qs}`;
-        } else if (isFast && d.portal_url) {
-          const base = d.portal_url.replace(/\/+$/, "");
-          redirect_url = `${base}/register?email=${encodeURIComponent(d.email)}&fast=1`;
         }
 
         if (isFast && resolvedTenantId && redirect_url && !d.is_test) {
