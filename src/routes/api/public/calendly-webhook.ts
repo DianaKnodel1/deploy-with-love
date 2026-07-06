@@ -188,6 +188,22 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
             upd.magic_token_expires_at = expiresAt;
           }
           await supabaseAdmin.from("applications").update(upd).eq("id", appRow.id);
+
+          // Stage-Lifecycle mitziehen (Migration 20260706000000).
+          const targetStage =
+            newStatus === "scheduled" ? "vermittlung_termin_gebucht"
+            : newStatus === "no_show" ? "vermittlung_no_show"
+            : newStatus === "cancelled" ? "vermittlung_absage"
+            : null;
+          if (targetStage) {
+            await supabaseAdmin.rpc("advance_application_stage", {
+              _application_id: appRow.id,
+              _to_stage: targetStage,
+              _actor_id: null,
+              _reason: `calendly:${event}`,
+              _force: false,
+            } as any).then(() => {}, (e) => console.warn("[calendly-webhook] stage rpc:", e));
+          }
         }
 
         // Send magic-link email so the candidate can launch the AI interview
