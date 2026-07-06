@@ -399,6 +399,58 @@ function PersonDetailPage() {
         </CardContent>
       </Card>
 
+      {prof && (
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-primary/10 grid place-items-center">
+                  <BriefcaseBusiness className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="font-semibold text-sm">Beschäftigung & Arbeitsvertrag</h2>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setContractDialogOpen(true)} className="gap-1.5">
+                <Pencil className="h-3.5 w-3.5" /> AV bearbeiten (Text / PDF / Gehalt)
+              </Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] items-end">
+              <div>
+                <Label className="text-[11px]">Beschäftigungsart</Label>
+                <Select value={empType || "__none"} onValueChange={(v) => setEmpType(v === "__none" ? "" : v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">— nicht gesetzt —</SelectItem>
+                    <SelectItem value="minijob">Minijob</SelectItem>
+                    <SelectItem value="teilzeit">Teilzeit</SelectItem>
+                    <SelectItem value="vollzeit">Vollzeit</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-[11px]">Startdatum Arbeitsverhältnis</Label>
+                <Input type="date" value={empStart} onChange={(e) => setEmpStart(e.target.value)} className="h-9 text-sm" />
+              </div>
+              <Button size="sm" onClick={handleSaveEmployment} disabled={savingEmp} className="gap-1.5">
+                {savingEmp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                Speichern
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Für individuelles Gehalt, Wochenstunden oder einen abweichenden Vertragstext / PDF „AV bearbeiten" öffnen.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <IndividualContractDialog
+        open={contractDialogOpen}
+        onOpenChange={setContractDialogOpen}
+        employees={prof ? [{ user_id: prof.user_id, full_name: prof.full_name || email }] : []}
+        applicants={[]}
+        initialUserId={prof?.user_id ?? null}
+      />
+
+
       <div className="grid gap-4 lg:grid-cols-3">
         <InfoSection
           icon={User}
