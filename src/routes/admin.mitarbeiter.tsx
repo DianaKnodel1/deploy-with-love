@@ -13,7 +13,8 @@ import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders"
 import { STATUS_CONFIG, ONBOARDING_STATUS_CONFIG, type EmployeeStatus } from "@/lib/status";
 import { StageTimeline, type Stage } from "@/components/StageTimeline";
 import { toast } from "sonner";
-import { purgeInactivePeople } from "@/lib/admin-delete.functions";
+import { purgeInactivePeople, deleteEmployeeAccount } from "@/lib/admin-delete.functions";
+import { useServerFn } from "@tanstack/react-start";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
