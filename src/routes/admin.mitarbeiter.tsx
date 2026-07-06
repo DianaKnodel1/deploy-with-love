@@ -233,6 +233,7 @@ function AdminMitarbeiterPage() {
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/personen/${r.id}`)} className="h-7 gap-1.5 text-xs">
                             Öffnen <ExternalLink className="h-3 w-3" />
                           </Button>
+                          <DeleteEmployeeButton userId={r.id} name={r.name} />
                         </div>
                       </td>
                     </tr>
