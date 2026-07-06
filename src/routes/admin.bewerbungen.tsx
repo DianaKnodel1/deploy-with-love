@@ -411,3 +411,52 @@ function AdminBewerbungenPage() {
     </div>
   );
 }
+
+function DeleteAppButton({ appId, name }: { appId: string; name: string }) {
+  const [busy, setBusy] = useState(false);
+  const runDelete = useServerFn(deleteApplication);
+  async function doDelete() {
+    setBusy(true);
+    try {
+      await runDelete({ data: { application_id: appId, confirm: "BEWERBUNG LÖSCHEN" } });
+      toast.success("Bewerbung gelöscht");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Löschen fehlgeschlagen");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+          title="Bewerbung löschen"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Bewerbung löschen?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Die Bewerbung von <b>{name}</b> wird endgültig entfernt. Diese Aktion ist nicht rückgängig zu machen.
+            Ein bereits verknüpftes Mitarbeiter-Konto bleibt bestehen und muss separat in „Mitarbeiter" gelöscht werden.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={busy}
+            onClick={(e) => { e.preventDefault(); doDelete(); }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {busy ? "Läuft…" : "Endgültig löschen"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
