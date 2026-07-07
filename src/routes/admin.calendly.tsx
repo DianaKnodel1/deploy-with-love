@@ -155,18 +155,74 @@ function AdminCalendlyPage() {
             <p className="text-sm text-muted-foreground">Noch keine Accounts hinterlegt.</p>
           )}
           <ul className="space-y-2">
-            {rows.map((r: any) => (
+            {rows.map((r: any) => {
+              const isEditing = editingId === r.id;
+              return (
               <li key={r.id} className="border rounded-md p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{r.display_name}</div>
-                    {r.calendly_user_uri
-                      ? <div className="text-xs text-muted-foreground">{r.calendly_user_uri}</div>
-                      : <div className="text-xs text-amber-600">Noch keine User-URI — Webhook registrieren füllt sie automatisch.</div>}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <div>
+                          <Label className="text-xs">Bezeichnung</Label>
+                          <Input value={editDraft.display_name} onChange={(e) => setEditDraft((d) => ({ ...d, display_name: e.target.value }))} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Calendly-User-URI</Label>
+                          <Input value={editDraft.calendly_user_uri} onChange={(e) => setEditDraft((d) => ({ ...d, calendly_user_uri: e.target.value }))} placeholder="https://api.calendly.com/users/..." />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Webhook Signing Key</Label>
+                          <Input value={editDraft.webhook_signing_key} onChange={(e) => setEditDraft((d) => ({ ...d, webhook_signing_key: e.target.value }))} className="font-mono text-xs" />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            disabled={savingEdit}
+                            onClick={async () => {
+                              setSavingEdit(true);
+                              try {
+                                await save({ data: {
+                                  id: r.id,
+                                  display_name: editDraft.display_name,
+                                  calendly_user_uri: editDraft.calendly_user_uri,
+                                  webhook_signing_key: editDraft.webhook_signing_key,
+                                }});
+                                toast({ title: "Gespeichert" });
+                                setEditingId(null);
+                                q.refetch();
+                              } catch (e: any) {
+                                toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
+                              } finally { setSavingEdit(false); }
+                            }}
+                          >{savingEdit ? "Speichere…" : "Speichern"}</Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Abbrechen</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="font-medium">{r.display_name}</div>
+                        {r.calendly_user_uri
+                          ? <div className="text-xs text-muted-foreground truncate">{r.calendly_user_uri}</div>
+                          : <div className="text-xs text-amber-600">Noch keine User-URI — Webhook registrieren füllt sie automatisch.</div>}
+                      </>
+                    )}
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}>
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </Button>
+                  {!isEditing && (
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setEditingId(r.id);
+                        setEditDraft({
+                          display_name: r.display_name ?? "",
+                          calendly_user_uri: r.calendly_user_uri ?? "",
+                          webhook_signing_key: r.webhook_signing_key ?? "",
+                        });
+                      }}>Bearbeiten</Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Input
@@ -210,7 +266,8 @@ function AdminCalendlyPage() {
                   </Button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </CardContent>
       </Card>
