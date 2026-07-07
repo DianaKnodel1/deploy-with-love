@@ -366,16 +366,26 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         let companyName = "unserem Unternehmen";
         let recruiterName = "Sabine Schneider";
         if (app.source_slug) {
-          const { data: lp } = await supabaseAdmin
-            .from("landing_pages")
-            .select("interview_system_prompt, branding")
-            .eq("source_slug", app.source_slug)
-            .maybeSingle();
-          const custom = (lp as any)?.interview_system_prompt?.trim();
+          const sel = "interview_system_prompt, branding, recruiter_name, linked_fasttrack_landing_id";
+          let lp: any = null;
+          const { data: bySource } = await supabaseAdmin
+            .from("landing_pages").select(sel).eq("source_slug", app.source_slug).maybeSingle();
+          lp = bySource ?? null;
+          if (!lp) {
+            const { data: bySlug } = await supabaseAdmin
+              .from("landing_pages").select(sel).eq("slug", app.source_slug).maybeSingle();
+            lp = bySlug ?? null;
+          }
+          if (lp?.linked_fasttrack_landing_id) {
+            const { data: ft } = await supabaseAdmin
+              .from("landing_pages").select(sel).eq("id", lp.linked_fasttrack_landing_id).maybeSingle();
+            if (ft) lp = ft;
+          }
+          const custom = lp?.interview_system_prompt?.trim();
           if (custom) systemPrompt = custom;
-          const fn = (lp as any)?.branding?.firmenname?.trim?.();
+          const fn = lp?.branding?.firmenname?.trim?.();
           if (fn) companyName = fn;
-          const rn = (lp as any)?.branding?.recruiter_name?.trim?.();
+          const rn = lp?.branding?.recruiter_name?.trim?.() || lp?.recruiter_name?.trim?.();
           if (rn) recruiterName = rn;
         }
         // Platzhalter pro Landing personalisieren
