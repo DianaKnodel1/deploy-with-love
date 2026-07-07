@@ -99,7 +99,9 @@ export const Route = createFileRoute("/api/public/applications")({
             lp = bySlug ?? null;
           }
           landingPage = lp;
-          calendlyOnLanding = lp?.calendly_url ?? null;
+          calendlyOnLanding = typeof lp?.calendly_url === "string" && lp.calendly_url.trim()
+            ? lp.calendly_url.trim()
+            : null;
           interviewMode = lp?.interview_mode ?? null;
           const partnerId = lp?.partner_company_id ?? null;
           if (partnerId) {
@@ -108,7 +110,9 @@ export const Route = createFileRoute("/api/public/applications")({
               .select("name, logo_url, calendly_url, portal_register_url, intro_headline, intro_subline, button_label")
               .eq("id", partnerId)
               .maybeSingle();
-            partner = pc ?? null;
+            partner = pc
+              ? { ...pc, calendly_url: calendlyOnLanding || pc.calendly_url }
+              : null;
           }
           if (!partner && d.flow_type === "broker" && lp?.linked_fasttrack_landing_id) {
             const { data: linked } = await supabaseAdmin
@@ -123,7 +127,7 @@ export const Route = createFileRoute("/api/public/applications")({
               partner = {
                 name: (linked as any).intermediate_company_name || linkedBranding.firmenname || lp.intermediate_company_name || ownBranding.firmenname || "unserem Partner",
                 logo_url: (linked as any).logo_url || linkedBranding.logo_image || null,
-                calendly_url: (linked as any).calendly_url || linkedBranding.calendly_url || lp.calendly_url || null,
+                calendly_url: calendlyOnLanding || (linked as any).calendly_url || linkedBranding.calendly_url || null,
                 portal_register_url: null,
                 intro_headline: null,
                 intro_subline: null,
