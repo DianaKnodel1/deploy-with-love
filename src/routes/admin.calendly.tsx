@@ -30,6 +30,9 @@ function AdminCalendlyPage() {
   const [saving, setSaving] = useState(false);
   const [patPerRow, setPatPerRow] = useState<Record<string, string>>({});
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<{ display_name: string; calendly_user_uri: string; webhook_signing_key: string }>({ display_name: "", calendly_user_uri: "", webhook_signing_key: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
 
 
   const portalOrigin = typeof window !== "undefined" ? window.location.origin : "";
