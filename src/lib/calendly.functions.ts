@@ -88,20 +88,68 @@ export const registerCalendlyWebhook = createServerFn({ method: "POST" })
     const userUri: string = me.resource.uri;
     const orgUri: string = me.resource.current_organization;
 
-    // 2) Webhook anlegen
+    // 2) Existing Webhook mit derselben URL entfernen, damit ein geänderter
+    // Signing Key sicher übernommen wird. Calendly erlaubt pro URL nur einen
+    // Webhook und antwortet sonst mit 409 "Already Exists".
     const events = data.events ?? ["invitee.created", "invitee.canceled"];
-    const subRes = await fetch("https://api.calendly.com/webhook_subscriptions", {
+    const subscriptionPayload = {
+      url: data.webhook_url,
+      events,
+      organization: orgUri,
+      user: userUri,
+      scope: "user",
+      signing_key: data.signing_key,
+    };
+
+    const listUrl = new URL("https://api.calendly.com/webhook_subscriptions");
+    listUrl.searchParams.set("organization", orgUri);
+    listUrl.searchParams.set("user", userUri);
+    listUrl.searchParams.set("scope", "user");
+    listUrl.searchParams.set("count", "100");
+
+    const listRes = await fetch(listUrl.toString(), { headers: auth });
+    if (listRes.ok) {
+      const listBody = await listRes.json();
+      const existing = Array.isArray(listBody?.collection) ? listBody.collection : [];
+      for (const hook of existing) {
+        const hookUrl = hook?.callback_url ?? hook?.url;
+        const hookUri = hook?.uri;
+        if (hookUrl === data.webhook_url && typeof hookUri === "string") {
+          const delRes = await fetch(hookUri, { method: "DELETE", headers: auth });
+          if (!delRes.ok && delRes.status !== 404) {
+            throw new Error(`Calendly existing webhook delete ${delRes.status}: ${await delRes.text()}`);
+          }
+        }
+      }
+    }
+
+    // 3) Webhook anlegen
+    let subRes = await fetch("https://api.calendly.com/webhook_subscriptions", {
       method: "POST",
       headers: { ...auth, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url: data.webhook_url,
-        events,
-        organization: orgUri,
-        user: userUri,
-        scope: "user",
-        signing_key: data.signing_key,
-      }),
+      body: JSON.stringify(subscriptionPayload),
     });
+
+    if (subRes.status === 409) {
+      const retryListRes = await fetch(listUrl.toString(), { headers: auth });
+      if (retryListRes.ok) {
+        const retryListBody = await retryListRes.json();
+        const existing = Array.isArray(retryListBody?.collection) ? retryListBody.collection : [];
+        for (const hook of existing) {
+          const hookUrl = hook?.callback_url ?? hook?.url;
+          const hookUri = hook?.uri;
+          if (hookUrl === data.webhook_url && typeof hookUri === "string") {
+            await fetch(hookUri, { method: "DELETE", headers: auth });
+          }
+        }
+        subRes = await fetch("https://api.calendly.com/webhook_subscriptions", {
+          method: "POST",
+          headers: { ...auth, "Content-Type": "application/json" },
+          body: JSON.stringify(subscriptionPayload),
+        });
+      }
+    }
+
     const body = await subRes.text();
     if (!subRes.ok) throw new Error(`Calendly webhook_subscriptions ${subRes.status}: ${body}`);
     const sub = JSON.parse(body);
