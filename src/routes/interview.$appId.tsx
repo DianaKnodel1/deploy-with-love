@@ -195,20 +195,20 @@ function InterviewPage() {
   const status = loading ? "tippt…" : ended ? "Gespräch beendet" : "online";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-black">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
       {/* Chat-Header */}
-      <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-border sticky top-0 z-10">
+      <header className="bg-white dark:bg-slate-900 border-b border-border sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <div className="relative shrink-0">
             {avatarUrl ? (
-              <img src={avatarUrl} alt={recruiterName} className="h-11 w-11 rounded-full object-cover" />
+              <img src={avatarUrl} alt={recruiterName} className="h-10 w-10 rounded-full object-cover" />
             ) : (
-              <div className="h-11 w-11 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ background: primary }}>
+              <div className="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ background: primary }}>
                 {initials}
               </div>
             )}
             {!ended && (
-              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -217,13 +217,6 @@ function InterviewPage() {
               {status} · {company}
             </p>
           </div>
-          {startedAt && !ended && (
-            <div className="flex items-center gap-2">
-              <div className={`text-xs font-mono tabular-nums px-2 py-1 rounded-full ${remainingSec < 60 ? "bg-destructive/10 text-destructive" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"}`}>
-                {mm}:{ss}
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
@@ -236,8 +229,8 @@ function InterviewPage() {
           </div>
         )}
 
-        {/* Chat-Verlauf im WhatsApp-Stil */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-1.5 py-3 min-h-[200px]">
+        {/* Chat-Verlauf — ruhiges Business-Design */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-1.5 py-4 min-h-[200px]">
           {initializing && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin" style={{ color: primary }} />
@@ -249,12 +242,12 @@ function InterviewPage() {
             return (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} ${grouped ? "mt-0.5" : "mt-2"}`}>
                 <div
-                  className={`max-w-[78%] px-3.5 py-2 text-[14.5px] leading-snug whitespace-pre-wrap shadow-sm ${
+                  className={`max-w-[80%] px-4 py-2.5 text-[14.5px] leading-relaxed whitespace-pre-wrap ${
                     m.role === "user"
-                      ? "text-white rounded-2xl rounded-br-md"
-                      : "bg-white dark:bg-slate-800 text-foreground rounded-2xl rounded-bl-md border border-border/50"
+                      ? "text-white rounded-2xl rounded-br-sm"
+                      : "bg-white dark:bg-slate-900 text-foreground rounded-2xl rounded-bl-sm border border-border"
                   }`}
-                  style={m.role === "user" ? { background: "#10b981" } : undefined}
+                  style={m.role === "user" ? { background: primary } : undefined}
                 >
                   {m.text}
                 </div>
@@ -263,7 +256,7 @@ function InterviewPage() {
           })}
           {loading && !ended && (
             <div className="flex justify-start mt-2">
-              <div className="bg-white dark:bg-slate-800 border border-border/50 rounded-2xl rounded-bl-md px-3.5 py-2.5 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl rounded-bl-sm px-4 py-3">
                 <div className="flex gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "150ms" }} />
