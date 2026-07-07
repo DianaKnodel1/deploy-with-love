@@ -197,18 +197,19 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
   let recruiterAvatarUrl: string | null = null;
 
   if (app.source_slug) {
-    const { data: lp } = await supabaseAdmin
-      .from("landing_pages")
-      .select("slug, source_slug, interview_system_prompt, recruiter_avatar_url, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id")
-      .eq("source_slug", app.source_slug)
-      .maybeSingle();
-    let landing: any = lp;
+    const sel = "slug, source_slug, interview_system_prompt, recruiter_avatar_url, recruiter_name, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id";
+    let landing: any = null;
+    const { data: bySource } = await supabaseAdmin
+      .from("landing_pages").select(sel).eq("source_slug", app.source_slug).maybeSingle();
+    landing = bySource ?? null;
+    if (!landing) {
+      const { data: bySlug } = await supabaseAdmin
+        .from("landing_pages").select(sel).eq("slug", app.source_slug).maybeSingle();
+      landing = bySlug ?? null;
+    }
     if (landing?.linked_fasttrack_landing_id) {
       const { data: ft } = await supabaseAdmin
-        .from("landing_pages")
-        .select("slug, source_slug, interview_system_prompt, recruiter_avatar_url, branding, interview_mode, interview_voice_id")
-        .eq("id", landing.linked_fasttrack_landing_id)
-        .maybeSingle();
+        .from("landing_pages").select(sel).eq("id", landing.linked_fasttrack_landing_id).maybeSingle();
       if (ft) landing = ft;
     }
     if (landing) {
@@ -216,7 +217,7 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
       if (custom) systemPrompt = custom;
       const fn = landing.branding?.firmenname?.trim?.();
       if (fn) companyName = fn;
-      const rn = landing.branding?.recruiter_name?.trim?.();
+      const rn = landing.branding?.recruiter_name?.trim?.() || landing.recruiter_name?.trim?.();
       if (rn) recruiterName = rn;
       if (landing.recruiter_avatar_url) recruiterAvatarUrl = landing.recruiter_avatar_url;
       if (landing.interview_voice_id) voiceId = landing.interview_voice_id;
