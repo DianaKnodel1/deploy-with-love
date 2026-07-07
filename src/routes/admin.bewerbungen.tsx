@@ -209,7 +209,7 @@ function AdminBewerbungenPage() {
         emailConfirmed: !!(p.user_id && emailConfirmedUserIds.has(p.user_id)),
         contractSigned: !!p.contract_signed_at,
       } : null;
-      const sched = bookingByApp.get(a.id) ?? null;
+      const sched = bookingByApp.get(a.id) ?? (a.scheduled_at ? new Date(a.scheduled_at) : null);
       return {
         id: a.id,
         name: a.full_name || `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim() || email || "—",
