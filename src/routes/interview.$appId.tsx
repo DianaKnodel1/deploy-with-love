@@ -6,7 +6,7 @@ import { createFileRoute, useParams, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, CheckCircle2, UserPlus, ClipboardCheck } from "lucide-react";
+import { Loader2, Send, CheckCircle2, UserPlus } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; text: string; ts: string };
 
@@ -195,20 +195,20 @@ function InterviewPage() {
   const status = loading ? "tippt…" : ended ? "Gespräch beendet" : "online";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-black">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
       {/* Chat-Header */}
-      <header className="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-border sticky top-0 z-10">
+      <header className="bg-white dark:bg-slate-900 border-b border-border sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <div className="relative shrink-0">
             {avatarUrl ? (
-              <img src={avatarUrl} alt={recruiterName} className="h-11 w-11 rounded-full object-cover" />
+              <img src={avatarUrl} alt={recruiterName} className="h-10 w-10 rounded-full object-cover" />
             ) : (
-              <div className="h-11 w-11 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ background: primary }}>
+              <div className="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-semibold" style={{ background: primary }}>
                 {initials}
               </div>
             )}
             {!ended && (
-              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -217,13 +217,6 @@ function InterviewPage() {
               {status} · {company}
             </p>
           </div>
-          {startedAt && !ended && (
-            <div className="flex items-center gap-2">
-              <div className={`text-xs font-mono tabular-nums px-2 py-1 rounded-full ${remainingSec < 60 ? "bg-destructive/10 text-destructive" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"}`}>
-                {mm}:{ss}
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
@@ -236,8 +229,8 @@ function InterviewPage() {
           </div>
         )}
 
-        {/* Chat-Verlauf im WhatsApp-Stil */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-1.5 py-3 min-h-[200px]">
+        {/* Chat-Verlauf — ruhiges Business-Design */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-1.5 py-4 min-h-[200px]">
           {initializing && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin" style={{ color: primary }} />
@@ -249,12 +242,12 @@ function InterviewPage() {
             return (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} ${grouped ? "mt-0.5" : "mt-2"}`}>
                 <div
-                  className={`max-w-[78%] px-3.5 py-2 text-[14.5px] leading-snug whitespace-pre-wrap shadow-sm ${
+                  className={`max-w-[80%] px-4 py-2.5 text-[14.5px] leading-relaxed whitespace-pre-wrap ${
                     m.role === "user"
-                      ? "text-white rounded-2xl rounded-br-md"
-                      : "bg-white dark:bg-slate-800 text-foreground rounded-2xl rounded-bl-md border border-border/50"
+                      ? "text-white rounded-2xl rounded-br-sm"
+                      : "bg-white dark:bg-slate-900 text-foreground rounded-2xl rounded-bl-sm border border-border"
                   }`}
-                  style={m.role === "user" ? { background: "#10b981" } : undefined}
+                  style={m.role === "user" ? { background: primary } : undefined}
                 >
                   {m.text}
                 </div>
@@ -263,7 +256,7 @@ function InterviewPage() {
           })}
           {loading && !ended && (
             <div className="flex justify-start mt-2">
-              <div className="bg-white dark:bg-slate-800 border border-border/50 rounded-2xl rounded-bl-md px-3.5 py-2.5 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl rounded-bl-sm px-4 py-3">
                 <div className="flex gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -346,67 +339,36 @@ function WelcomeAccepted({
 }) {
   const base = (portal || "").replace(/\/+$/, "") || (typeof window !== "undefined" ? window.location.origin : "");
   const registerHref = `${base}/register`;
-  const loginHref = `${base}/login`;
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-border shadow-sm p-8 space-y-6 text-center">
-      <div
-        className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
-        style={{ background: `${primary}1a`, color: primary }}
-      >
-        <CheckCircle2 className="h-9 w-9" />
-      </div>
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold">Willkommen im Team!</h2>
-        <p className="text-sm text-muted-foreground">Wir freuen uns, dass Sie dabei sind.</p>
-        <p className="text-sm text-foreground">
-          Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!
-        </p>
-      </div>
-
-      <div className="text-left bg-muted/40 rounded-xl p-4 space-y-3">
-        <p className="text-sm font-semibold">Wie geht es weiter?</p>
-        <div className="flex items-start gap-3">
-          <span
-            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold"
-            style={{ background: primary }}
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-          </span>
-          <span className="text-sm">Registrieren Sie sich im Mitarbeiterportal</span>
+    <div className="mt-4 bg-white dark:bg-slate-900 rounded-2xl border border-border p-6 space-y-4">
+      <div className="flex items-start gap-3">
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+          style={{ background: `${primary}1a`, color: primary }}
+        >
+          <CheckCircle2 className="h-5 w-5" />
         </div>
-        <div className="flex items-start gap-3">
-          <span
-            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold"
-            style={{ background: primary }}
-          >
-            <ClipboardCheck className="h-3.5 w-3.5" />
-          </span>
-          <span className="text-sm">Führen Sie anschließend das Onboarding durch</span>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold leading-tight">Vielen Dank für das Gespräch.</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Ihr Profil passt zu {company}. Im nächsten Schritt legen Sie kurz Ihr Zugangs-Konto an — danach begleiten wir Sie durchs Onboarding.
+          </p>
         </div>
       </div>
 
       <Button
         asChild
-        size="lg"
-        className="w-full font-semibold"
+        className="w-full font-medium"
         style={{ background: primary }}
       >
-        <a href={registerHref}>Jetzt registrieren</a>
+        <a href={registerHref}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Jetzt Konto anlegen
+        </a>
       </Button>
 
-      <div className="text-left text-sm text-muted-foreground space-y-1 pt-2 border-t border-border">
-        <p className="text-foreground">Ich wünsche Ihnen einen erfolgreichen Start!</p>
-        <p>Mit freundlichen Grüßen</p>
-        <p className="font-semibold text-foreground">{recruiter}</p>
-        <p>HR Management</p>
-        <p>{company}</p>
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        Bereits registriert?{" "}
-        <a href={loginHref} className="underline hover:text-foreground">
-          Zum Login
-        </a>
+      <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+        Herzliche Grüße, {recruiter} · HR bei {company}
       </p>
     </div>
   );

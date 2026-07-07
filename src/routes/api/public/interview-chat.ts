@@ -53,9 +53,11 @@ Bezahlung — auswendig, nur wenn gefragt:
 - Vollzeit angestellt 21 €/h, Teilzeit 19 €/h, Minijob 538 €/Monat (~12,41 €/h), Selbstständig 40–60 € pro erfolgreicher Vermittlung.
 
 ENDE DES GESPRÄCHS — verbindlich:
-- Nach 6–8 sinnvollen Frage-Antwort-Runden bedanke dich kurz.
+- Sobald die Kernpunkte geklärt sind (aktuelle Situation, Motivation, Modell/Umfang, Verfügbarkeit), beende zügig — spätestens nach 6 Frage-Antwort-Runden, gerne früher wenn die Person offen und ausführlich antwortet.
+- Zieh das Gespräch NICHT künstlich in die Länge. Wenn du merkst, dass du alles Wesentliche weißt: bedanke dich freundlich in 1–2 Sätzen und schließe ab.
 - Schreibe dann in derselben Nachricht am Ende auf einer eigenen Zeile GENAU: [INTERVIEW_END]
-- Ohne dieses Signal wird das Gespräch NICHT ausgewertet. Verwende [INTERVIEW_END] IMMER, wenn Situation, Motivation, Modell und Verfügbarkeit geklärt sind.
+- Beispiel-Abschluss: "Perfekt, damit habe ich alles, was ich brauche. Vielen Dank für das offene Gespräch — wir melden uns zeitnah mit dem nächsten Schritt.\\n[INTERVIEW_END]"
+- Ohne dieses Signal wird das Gespräch NICHT ausgewertet. Verwende [INTERVIEW_END] IMMER, sobald die Kernpunkte durch sind.
 - Bei unangemessenem Verhalten ebenfalls höflich beenden mit [INTERVIEW_END].`;
 
 
