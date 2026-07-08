@@ -381,6 +381,13 @@ function syncLegal(){
 window.addEventListener("hashchange", syncLegal);
 setTimeout(syncLegal, 50);
 document.addEventListener('click', function(e){
+  // Bewerbungs-Modal schließen (Backdrop-Klick oder ×-Button)
+  if (e.target && (e.target.id==='lov-apply-modal' || (e.target.classList && e.target.classList.contains('lov-apply-close')))){
+    e.preventDefault();
+    var m2 = document.getElementById('lov-apply-modal');
+    if(m2){ m2.classList.remove('is-open'); document.body.classList.remove('lov-apply-open'); }
+    return;
+  }
   var burger = e.target.closest && e.target.closest('#burger, .burger, [aria-label="Menü"], [aria-label="Menu"]');
   if(burger){
     e.preventDefault();
@@ -388,6 +395,7 @@ document.addEventListener('click', function(e){
     if(nav) nav.classList.toggle('open');
     return;
   }
+
   var a = e.target.closest && e.target.closest('a[href^="#"]');
   if(a){
     var id = a.getAttribute('href');
