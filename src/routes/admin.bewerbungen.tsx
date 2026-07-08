@@ -186,16 +186,20 @@ function AdminBewerbungenPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const resolveSource = (a: any): string | null => {
-    // Vermittlung = source_landing (Broker) — sonst target_landing / landing_page
-    const srcId = a?.source_landing_id ?? a?.target_landing_id;
-    if (srcId) {
-      const l = landingById.get(srcId);
-      if (l) return l.firmenname || l.slug;
-    }
-    if (a?.source_slug) return a.source_slug;
-    return a?.flow_type ?? null;
+  const nameOf = (id: string | null | undefined): string | null => {
+    if (!id) return null;
+    const l = landingById.get(id);
+    return l ? (l.firmenname || l.slug) : null;
   };
+  const resolveSource = (a: any): { from: string | null; to: string | null } => {
+    // "Von" = Vermittlungs-Landing (source), "An" = Fasttrack-Landing (target).
+    // target_landing_id wird beim Submit aus landing_pages.linked_fasttrack_landing_id
+    // eingefroren — bleibt korrekt, auch wenn die Zuordnung später umgehängt wird.
+    const from = nameOf(a?.source_landing_id) ?? a?.source_slug ?? null;
+    const to = nameOf(a?.target_landing_id);
+    return { from, to };
+  };
+
 
   const rows = useMemo(() => {
     return (applications as any[]).map((a) => {
