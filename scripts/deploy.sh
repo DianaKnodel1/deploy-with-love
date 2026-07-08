@@ -69,5 +69,11 @@ fi
 log "4/4  portal.service neu starten"
 systemctl restart portal.service
 sleep 2
-systemctl status portal.service --no-pager | head -n 10
+if systemctl is-active --quiet portal.service; then
+  systemctl status portal.service --no-pager | head -n 10
+else
+  echo "  ✗ portal.service ist nach dem Restart nicht aktiv. Letzte Logs:" >&2
+  journalctl -u portal.service -n 120 --no-pager >&2
+  exit 1
+fi
 ok "Deploy fertig ✅"
