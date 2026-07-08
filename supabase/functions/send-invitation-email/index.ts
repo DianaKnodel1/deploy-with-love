@@ -31,6 +31,8 @@ interface Payload {
   intro?: string;
   buttonLabel?: string;
   templateName?: string;
+  /** Extra placeholder values (z.B. {{partner_name}}) für DB-Templates. */
+  placeholders?: Record<string, string>;
 }
 
 serve(async (req) => {
