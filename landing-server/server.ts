@@ -72,7 +72,9 @@ type LandingRow = {
 const cache = new Map<string, { row: LandingRow | null; expiresAt: number }>();
 
 async function loadLanding(domain: string): Promise<LandingRow | null> {
-  const key = domain.toLowerCase();
+  // www.example.com und example.com auf denselben Datensatz mappen —
+  // Caddy on_demand_tls fragt sonst für www.* nach und bekommt 404.
+  const key = domain.toLowerCase().replace(/^www\./, "");
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.row;
   const apiUrl = new URL("/rest/v1/landing_pages", SUPABASE_URL);
