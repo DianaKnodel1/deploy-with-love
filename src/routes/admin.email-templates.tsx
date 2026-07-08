@@ -456,6 +456,9 @@ function AdminEmailTemplatesPage() {
         reminder_appointment_body: rAppointmentBody,
         reminder_chat_subject: rChatSubject,
         reminder_chat_body: rChatBody,
+        application_received_subject: appRecvSubject,
+        application_received_body: appRecvBody,
+        application_received_button_label: appRecvButton || null,
       } as any)
       .eq("id", selectedTenantId);
     setSaving(false);
