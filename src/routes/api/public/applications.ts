@@ -262,6 +262,9 @@ export const Route = createFileRoute("/api/public/applications")({
             const firstName = parts[0] ?? "";
             const lastName = parts.slice(1).join(" ");
             const partnerName = broker_block!.partner_name || "unser Team";
+            // Template kommt aus tenants.application_received_* (editierbar unter
+            // /admin/email-templates → Tab "Bewerbungseingang"). Fallback siehe
+            // send-invitation-email/index.ts, wenn Spalten leer sind.
             void supabaseAdmin.functions.invoke("send-invitation-email", {
               body: {
                 to: d.email,
@@ -270,11 +273,12 @@ export const Route = createFileRoute("/api/public/applications")({
                 lastName,
                 registrationLink: broker_block!.calendly_url,
                 tenantId: resolvedTenantId,
-                subject: `Deine Bewerbung ist eingegangen – jetzt Termin buchen`,
-                headline: "Danke für deine Bewerbung!",
-                intro: `Guten Tag${firstName ? ` ${firstName}` : ""},<br/><br/>vielen Dank für deine Bewerbung. Damit es weitergehen kann, buche bitte jetzt deinen persönlichen Gesprächstermin bei <strong>${partnerName}</strong> über den Button unten.`,
-                buttonLabel: broker_block!.button_label || "Jetzt Termin buchen",
                 templateName: "application_received",
+                buttonLabel: broker_block!.button_label || undefined,
+                placeholders: {
+                  partner_name: partnerName,
+                  calendly_link: broker_block!.calendly_url!,
+                },
               },
             }).catch((e) => console.warn("[applications broker] confirm mail:", e));
           } catch (e) { console.warn("[applications broker] confirm mail error:", e); }
