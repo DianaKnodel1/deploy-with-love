@@ -360,8 +360,8 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Termin-Gating: Gespräch erst ab gebuchtem Calendly-Termin (mit 5 Min Vorlauf) beitretbar.
         const scheduledAtMs = (app as any).scheduled_at ? new Date((app as any).scheduled_at as string).getTime() : null;
         if (!isTest && scheduledAtMs && Date.now() < scheduledAtMs - 5 * 60 * 1000) {
-          const dt = new Date(scheduledAtMs).toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short" });
-          return json({ error: `Ihr Gespräch startet erst am ${dt}. Bitte kommen Sie zum gebuchten Termin wieder.`, scheduled_at: (app as any).scheduled_at, not_yet: true }, 425);
+          const dt = new Date(scheduledAtMs).toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Berlin" });
+          return json({ error: `Ihr Gespräch startet erst am ${dt} Uhr (Europe/Berlin). Bitte kommen Sie zum gebuchten Termin wieder.`, scheduled_at: (app as any).scheduled_at, not_yet: true }, 425);
         }
 
         // Geschäftszeiten-Gate deaktiviert (Testphase) — Recruiter rund um die Uhr erreichbar.
