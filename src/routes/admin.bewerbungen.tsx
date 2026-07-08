@@ -390,7 +390,16 @@ function AdminBewerbungenPage() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
                       <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{r.source ?? "—"}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {r.source?.from || r.source?.to ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span>{r.source.from ?? "—"}</span>
+                            {r.source.to && (
+                              <span className="text-[10px] opacity-70">→ {r.source.to}</span>
+                            )}
+                          </div>
+                        ) : "—"}
+                      </td>
                       <td className="px-4 py-3">
                         <StageTimeline stages={phaseToStages(r.phase)} />
                       </td>
