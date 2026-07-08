@@ -1360,7 +1360,7 @@ document.addEventListener('submit', function(e){
               <div className="text-[11px] text-muted-foreground bg-muted/40 rounded p-2 leading-relaxed">
                 <strong>DNS-Anleitung für den Kunden:</strong> A-Record <code>{branding.landing_domain || "kunde.de"}</code> → IP von Server 1.
                 Optional <code>www</code> als CNAME auf die Apex-Domain.
-                <br/>Bei Cloudflare: Proxy <strong>aus</strong> („DNS only"/graue Wolke), sonst kollidiert es mit Caddy SSL.
+                <br/>Bei Cloudflare: Proxy <strong>an</strong> („orange Wolke"). Voraussetzung: Caddy nutzt Cloudflare-DNS-Challenge.
               </div>
             </CardContent>
           </Card>
