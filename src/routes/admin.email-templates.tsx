@@ -402,6 +402,12 @@ function AdminEmailTemplatesPage() {
     setRAppointmentBody(t.reminder_appointment_body || REMINDER_DEFAULTS.appointment_30min.body);
     setRChatSubject(t.reminder_chat_subject || REMINDER_DEFAULTS.chat.subject);
     setRChatBody(t.reminder_chat_body || REMINDER_DEFAULTS.chat.body);
+    setAppRecvSubject(t.application_received_subject || "Deine Bewerbung ist eingegangen – jetzt Termin buchen");
+    setAppRecvBody(
+      t.application_received_body ||
+        "Guten Tag {{first_name}},\n\nvielen Dank für deine Bewerbung. Damit es weitergehen kann, buche bitte jetzt deinen persönlichen Gesprächstermin bei {{partner_name}} über den Button unten.\n\n{{cta:Jetzt Termin buchen|{{booking_link}}}}"
+    );
+    setAppRecvButton(t.application_received_button_label || "Jetzt Termin buchen");
   };
 
   useEffect(() => {
