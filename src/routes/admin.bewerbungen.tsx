@@ -258,7 +258,8 @@ function AdminBewerbungenPage() {
         r.name?.toLowerCase().includes(ql) ||
         r.email?.toLowerCase().includes(ql) ||
         r.phone?.toLowerCase().includes(ql) ||
-        (r.source ?? "").toLowerCase().includes(ql)
+        (r.source?.from ?? "").toLowerCase().includes(ql) ||
+        (r.source?.to ?? "").toLowerCase().includes(ql)
       );
     });
   }, [rows, tab, q]);
