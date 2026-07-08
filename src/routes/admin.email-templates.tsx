@@ -482,6 +482,7 @@ function AdminEmailTemplatesPage() {
       case "recovery_bew": return { subject: rRecoveryBewSubject, body: rRecoveryBewBody };
       case "appointment": return { subject: rAppointmentSubject, body: rAppointmentBody };
       case "chat": return { subject: rChatSubject, body: rChatBody };
+      case "app_received": return { subject: appRecvSubject, body: appRecvBody };
     }
   };
 
