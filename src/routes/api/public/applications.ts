@@ -165,8 +165,13 @@ export const Route = createFileRoute("/api/public/applications")({
           status: isFast ? "akzeptiert" : "neu",
           flow_type: d.flow_type ?? "classic",
           source_slug: d.source_slug ?? null,
-          source_landing_id: d.source_landing_id ?? null,
-          target_landing_id: d.target_landing_id ?? null,
+          // Tracking-Anker: source = die Vermittlungs-Landing (wo submit passierte),
+          // target = die per landing_pages.linked_fasttrack_landing_id hinterlegte
+          // Fasttrack-Landing. Server-seitig ableiten, damit die Zuordnung auch dann
+          // korrekt gespeichert ist, wenn sie später am landing_page-Datensatz geändert
+          // wird — historisch bleibt sichtbar: "Bewerber X kam von A und ging zu B".
+          source_landing_id: d.source_landing_id ?? landingPage?.id ?? null,
+          target_landing_id: d.target_landing_id ?? landingPage?.linked_fasttrack_landing_id ?? null,
           is_test: !!d.is_test,
           booking_status: (isBroker || useCalendly) ? "pending" : "none",
         } as any);
