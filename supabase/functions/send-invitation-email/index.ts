@@ -31,6 +31,8 @@ interface Payload {
   intro?: string;
   buttonLabel?: string;
   templateName?: string;
+  /** Extra placeholder values (z.B. {{partner_name}}) für DB-Templates. */
+  placeholders?: Record<string, string>;
 }
 
 serve(async (req) => {
@@ -41,7 +43,7 @@ serve(async (req) => {
     const { to, fullName, firstName, lastName, registrationLink, tenantId,
       subject: subjectOverride, headline: headlineOverride,
       intro: introOverride, buttonLabel: buttonLabelOverride,
-      templateName: templateNameOverride } = body;
+      templateName: templateNameOverride, placeholders: extraPlaceholders } = body;
 
     if (!to || !registrationLink || !tenantId) {
       return json({ error: "Missing required fields: to, registrationLink, tenantId" }, 400);
@@ -56,7 +58,7 @@ serve(async (req) => {
 
     const { data: tenant, error: tErr } = await supabaseAdmin
       .from("tenants")
-      .select("id, name, domain, logo_url, primary_color, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, is_active, emails_paused, emails_paused_reason")
+      .select("id, name, domain, logo_url, primary_color, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, is_active, emails_paused, emails_paused_reason, application_received_subject, application_received_body, application_received_button_label")
       .eq("id", tenantId)
       .maybeSingle();
     if (tErr || !tenant) return json({ error: "Tenant nicht gefunden" }, 404);
@@ -77,18 +79,46 @@ serve(async (req) => {
     const senderEmail = tenant.sender_email ?? tenant.smtp_username;
     const brand = tenant.primary_color ?? "#0f172a";
     const greetingName = firstName || (fullName ? fullName.split(" ")[0] : "");
+
+    // Placeholder-Map für DB-Templates (application_received etc.).
+    const phMap: Record<string, string> = {
+      first_name: greetingName,
+      last_name: lastName || "",
+      full_name: fullName || `${firstName ?? ""} ${lastName ?? ""}`.trim(),
+      email: to,
+      tenant_name: tenant.name,
+      company_name: tenant.name,
+      portal_link: registrationLink,
+      booking_link: registrationLink,
+      registration_link: registrationLink,
+      ...(extraPlaceholders || {}),
+    };
+    const applyPh = (s: string) => s.replace(/\{\{(\w+)\}\}/g, (_m, k) => phMap[k] ?? "");
+
+    // Template-Defaults aus tenant-Spalten laden (aktuell nur application_received).
+    let dbSubject: string | null = null;
+    let dbBody: string | null = null;
+    let dbButton: string | null = null;
+    if (templateNameOverride === "application_received") {
+      dbSubject = tenant.application_received_subject || null;
+      dbBody = tenant.application_received_body || null;
+      dbButton = tenant.application_received_button_label || null;
+    }
+
     const subject = subjectOverride && subjectOverride.trim()
       ? subjectOverride.trim()
-      : `Willkommen im Team – ${tenant.name}`;
+      : (dbSubject ? applyPh(dbSubject) : `Willkommen im Team – ${tenant.name}`);
     const headline = headlineOverride && headlineOverride.trim()
       ? headlineOverride.trim()
-      : "Willkommen im Team!";
+      : (dbSubject ? applyPh(dbSubject) : "Willkommen im Team!");
     const intro = introOverride && introOverride.trim()
       ? introOverride.trim()
-      : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""}, mein Name ist Sabine Schneider von <strong>${escapeHtml(tenant.name)}</strong>, wir hatten gemeinsam das Bewerbungsgespräch.<br/><br/>Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!`;
+      : (dbBody
+          ? applyPh(dbBody).replace(/\n/g, "<br/>")
+          : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""}, mein Name ist Sabine Schneider von <strong>${escapeHtml(tenant.name)}</strong>, wir hatten gemeinsam das Bewerbungsgespräch.<br/><br/>Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!`);
     const buttonLabel = buttonLabelOverride && buttonLabelOverride.trim()
       ? buttonLabelOverride.trim()
-      : "Jetzt registrieren";
+      : (dbButton ? applyPh(dbButton) : "Jetzt registrieren");
 
     const logo = tenant.logo_url
       ? `<img src="${tenant.logo_url}" alt="${escapeHtml(tenant.name)}" style="max-height:48px;margin-bottom:24px"/>`

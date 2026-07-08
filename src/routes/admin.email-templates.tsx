@@ -91,6 +91,9 @@ interface TenantEmail {
   reminder_appointment_body: string | null;
   reminder_chat_subject: string | null;
   reminder_chat_body: string | null;
+  application_received_subject: string | null;
+  application_received_body: string | null;
+  application_received_button_label: string | null;
 }
 
 const PLACEHOLDERS = [
@@ -297,7 +300,7 @@ function AdminEmailTemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
-  type TestTemplateKey = "welcome" | "reset" | "invite" | "confirm" | "completion" | "no_booking" | "recovery_ma" | "recovery_bew" | "appointment" | "chat";
+  type TestTemplateKey = "welcome" | "reset" | "invite" | "confirm" | "completion" | "no_booking" | "recovery_ma" | "recovery_bew" | "appointment" | "chat" | "app_received";
   const [testType, setTestType] = useState<TestTemplateKey>("welcome");
   const { toast } = useToast();
 
@@ -327,10 +330,13 @@ function AdminEmailTemplatesPage() {
   const [rAppointmentBody, setRAppointmentBody] = useState("");
   const [rChatSubject, setRChatSubject] = useState("");
   const [rChatBody, setRChatBody] = useState("");
+  const [appRecvSubject, setAppRecvSubject] = useState("");
+  const [appRecvBody, setAppRecvBody] = useState("");
+  const [appRecvButton, setAppRecvButton] = useState("");
 
   const loadTenants = async () => {
     setLoading(true);
-    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_recovery_bewerber_subject, reminder_recovery_bewerber_body, reminder_appointment_subject, reminder_appointment_body, reminder_chat_subject, reminder_chat_body";
+    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_recovery_bewerber_subject, reminder_recovery_bewerber_body, reminder_appointment_subject, reminder_appointment_body, reminder_chat_subject, reminder_chat_body, application_received_subject, application_received_body, application_received_button_label";
     // Fallback: ohne neue Reminder-Spalten (Migrationen 20260606200000 + 20260608120000), falls noch nicht angewandt.
     const FALLBACK_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body";
 
@@ -396,6 +402,12 @@ function AdminEmailTemplatesPage() {
     setRAppointmentBody(t.reminder_appointment_body || REMINDER_DEFAULTS.appointment_30min.body);
     setRChatSubject(t.reminder_chat_subject || REMINDER_DEFAULTS.chat.subject);
     setRChatBody(t.reminder_chat_body || REMINDER_DEFAULTS.chat.body);
+    setAppRecvSubject(t.application_received_subject || "Deine Bewerbung ist eingegangen – jetzt Termin buchen");
+    setAppRecvBody(
+      t.application_received_body ||
+        "Guten Tag {{first_name}},\n\nvielen Dank für deine Bewerbung. Damit es weitergehen kann, buche bitte jetzt deinen persönlichen Gesprächstermin bei {{partner_name}} über den Button unten.\n\n{{cta:Jetzt Termin buchen|{{booking_link}}}}"
+    );
+    setAppRecvButton(t.application_received_button_label || "Jetzt Termin buchen");
   };
 
   useEffect(() => {
@@ -444,6 +456,9 @@ function AdminEmailTemplatesPage() {
         reminder_appointment_body: rAppointmentBody,
         reminder_chat_subject: rChatSubject,
         reminder_chat_body: rChatBody,
+        application_received_subject: appRecvSubject,
+        application_received_body: appRecvBody,
+        application_received_button_label: appRecvButton || null,
       } as any)
       .eq("id", selectedTenantId);
     setSaving(false);
@@ -467,6 +482,7 @@ function AdminEmailTemplatesPage() {
       case "recovery_bew": return { subject: rRecoveryBewSubject, body: rRecoveryBewBody };
       case "appointment": return { subject: rAppointmentSubject, body: rAppointmentBody };
       case "chat": return { subject: rChatSubject, body: rChatBody };
+      case "app_received": return { subject: appRecvSubject, body: appRecvBody };
     }
   };
 
@@ -607,6 +623,9 @@ function AdminEmailTemplatesPage() {
             <TabsTrigger value="reminders" className="text-xs gap-1.5">
               <Mail className="h-3.5 w-3.5" /> Erinnerungen
             </TabsTrigger>
+            <TabsTrigger value="app_received" className="text-xs gap-1.5">
+              <Mail className="h-3.5 w-3.5" /> Bewerbungseingang
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="welcome">
@@ -725,6 +744,29 @@ function AdminEmailTemplatesPage() {
               </TabsContent>
             </Tabs>
           </TabsContent>
+
+          <TabsContent value="app_received">
+            <div className="rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-700 px-3 py-2 mb-3 text-[11px] text-emerald-900 dark:text-emerald-200">
+              Wird <strong>sofort nach Bewerbungseingang</strong> an Vermittlungs-Bewerber gesendet (Broker-Flow mit Calendly-Link). Enthält den Termin-Buchungslink. Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{partner_name}}"}</code>, <code>{"{{booking_link}}"}</code>, <code>{"{{tenant_name}}"}</code>.
+            </div>
+            <TemplateEditor
+              label="Bewerbungseingang (Vermittlung)"
+              subject={appRecvSubject} onSubjectChange={setAppRecvSubject}
+              body={appRecvBody} onBodyChange={setAppRecvBody}
+              signature={signature} onSignatureChange={setSignature}
+              tenant={selectedTenant}
+            />
+            <div className="mt-4">
+              <Label className="text-xs font-medium">Button-Beschriftung</Label>
+              <Input
+                value={appRecvButton}
+                onChange={(e) => setAppRecvButton(e.target.value)}
+                placeholder="Jetzt Termin buchen"
+                className="mt-1 max-w-md"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">Fällt zurück auf den Wert im Broker-Block, falls leer.</p>
+            </div>
+          </TabsContent>
         </Tabs>
       )}
 
@@ -769,6 +811,7 @@ function AdminEmailTemplatesPage() {
                     <SelectItem value="recovery_bew">Domain-Wechsel: Bewerber</SelectItem>
                     <SelectItem value="appointment">30 Min vor Termin</SelectItem>
                     <SelectItem value="chat">Chat-Reminder</SelectItem>
+                    <SelectItem value="app_received">Bewerbungseingang</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
