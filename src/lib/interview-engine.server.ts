@@ -260,7 +260,9 @@ export async function sendRegistrationInviteAfterAiAccept(app: ApplicationRow, r
   const activeDomain = (tenant as any)?.primary_domain || (tenant as any)?.domain || null;
   const fallbackOrigin = new URL(request.url).origin.replace(/\/+$/, "");
   const base = activeDomain ? `https://portal.${activeDomain}` : fallbackOrigin;
-  const registrationLink = `${base}/register?token=${encodeURIComponent(tokenRow.token)}`;
+  // ?ref=<application_id> hängt die Vermittlungs-Bewerbung an den Registrierungs-Link,
+  // damit später eindeutig zurück-verknüpft werden kann (linked_application_id / Funnel).
+  const registrationLink = `${base}/register?token=${encodeURIComponent(tokenRow.token)}&ref=${encodeURIComponent(app.id)}`;
   const name = app.full_name || email;
   const firstName = app.first_name || String(name).trim().split(/\s+/)[0] || "";
   const lastName = app.last_name || String(name).trim().split(/\s+/).slice(1).join(" ");

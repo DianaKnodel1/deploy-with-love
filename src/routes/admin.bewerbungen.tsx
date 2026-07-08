@@ -186,16 +186,20 @@ function AdminBewerbungenPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const resolveSource = (a: any): string | null => {
-    // Vermittlung = source_landing (Broker) — sonst target_landing / landing_page
-    const srcId = a?.source_landing_id ?? a?.target_landing_id;
-    if (srcId) {
-      const l = landingById.get(srcId);
-      if (l) return l.firmenname || l.slug;
-    }
-    if (a?.source_slug) return a.source_slug;
-    return a?.flow_type ?? null;
+  const nameOf = (id: string | null | undefined): string | null => {
+    if (!id) return null;
+    const l = landingById.get(id);
+    return l ? (l.firmenname || l.slug) : null;
   };
+  const resolveSource = (a: any): { from: string | null; to: string | null } => {
+    // "Von" = Vermittlungs-Landing (source), "An" = Fasttrack-Landing (target).
+    // target_landing_id wird beim Submit aus landing_pages.linked_fasttrack_landing_id
+    // eingefroren — bleibt korrekt, auch wenn die Zuordnung später umgehängt wird.
+    const from = nameOf(a?.source_landing_id) ?? a?.source_slug ?? null;
+    const to = nameOf(a?.target_landing_id);
+    return { from, to };
+  };
+
 
   const rows = useMemo(() => {
     return (applications as any[]).map((a) => {
@@ -254,7 +258,8 @@ function AdminBewerbungenPage() {
         r.name?.toLowerCase().includes(ql) ||
         r.email?.toLowerCase().includes(ql) ||
         r.phone?.toLowerCase().includes(ql) ||
-        (r.source ?? "").toLowerCase().includes(ql)
+        (r.source?.from ?? "").toLowerCase().includes(ql) ||
+        (r.source?.to ?? "").toLowerCase().includes(ql)
       );
     });
   }, [rows, tab, q]);
@@ -364,7 +369,7 @@ function AdminBewerbungenPage() {
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vermittlung</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vermittlung → Fasttrack</th>
                   <th className="text-left px-4 py-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Fortschritt</th>
                   <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Eingegangen</th>
                   <th className="px-4 py-2.5"></th>
@@ -385,7 +390,16 @@ function AdminBewerbungenPage() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
                       <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{r.source ?? "—"}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {r.source?.from || r.source?.to ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span>{r.source.from ?? "—"}</span>
+                            {r.source.to && (
+                              <span className="text-[10px] opacity-70">→ {r.source.to}</span>
+                            )}
+                          </div>
+                        ) : "—"}
+                      </td>
                       <td className="px-4 py-3">
                         <StageTimeline stages={phaseToStages(r.phase)} />
                       </td>
