@@ -381,6 +381,13 @@ function syncLegal(){
 window.addEventListener("hashchange", syncLegal);
 setTimeout(syncLegal, 50);
 document.addEventListener('click', function(e){
+  // Bewerbungs-Modal schließen (Backdrop-Klick oder ×-Button)
+  if (e.target && (e.target.id==='lov-apply-modal' || (e.target.classList && e.target.classList.contains('lov-apply-close')))){
+    e.preventDefault();
+    var m2 = document.getElementById('lov-apply-modal');
+    if(m2){ m2.classList.remove('is-open'); document.body.classList.remove('lov-apply-open'); }
+    return;
+  }
   var burger = e.target.closest && e.target.closest('#burger, .burger, [aria-label="Menü"], [aria-label="Menu"]');
   if(burger){
     e.preventDefault();
@@ -388,11 +395,19 @@ document.addEventListener('click', function(e){
     if(nav) nav.classList.toggle('open');
     return;
   }
+
   var a = e.target.closest && e.target.closest('a[href^="#"]');
   if(a){
     var id = a.getAttribute('href');
     if(id && id.length > 1){
       var target = id.slice(1);
+      // Bewerbungs-Modal: CTA öffnet Modal statt zum versteckten Container zu scrollen
+      if (target === 'bewerbung-form'){
+        e.preventDefault();
+        var m = document.getElementById('lov-apply-modal');
+        if(m){ m.classList.add('is-open'); document.body.classList.add('lov-apply-open'); }
+        return;
+      }
       // Legal-Links: nativen Hash-Wechsel zulassen → :target + hashchange greifen
       if (LEGAL_IDS.indexOf(target) >= 0){
         e.preventDefault();
@@ -407,6 +422,7 @@ document.addEventListener('click', function(e){
     }
     return;
   }
+
   var b = e.target.closest && e.target.closest('.faq-q');
   if(b){ var item = b.closest('.faq-item'); if(item) item.classList.toggle('open'); }
 }, true);
