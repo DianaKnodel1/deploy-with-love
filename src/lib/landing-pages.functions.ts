@@ -359,7 +359,7 @@ async function setCloudflareARecord(token: string, zoneId: string, zoneDomain: s
   const recordName = fullDomain === zoneDomain ? "@" : fullDomain;
   const list = await cfReq(token, `/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(fullDomain)}`);
   const existing = list.result?.[0];
-  const body = { type: "A", name: recordName, content: ip, ttl: 1, proxied: false, comment: "managed by mb-portal landing-pool" };
+  const body = { type: "A", name: recordName, content: ip, ttl: 1, proxied: true, comment: "managed by mb-portal landing-pool" };
   if (existing) {
     await cfReq(token, `/zones/${zoneId}/dns_records/${existing.id}`, { method: "PUT", body: JSON.stringify(body) });
   } else {

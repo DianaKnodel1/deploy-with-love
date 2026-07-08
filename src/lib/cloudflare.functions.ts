@@ -287,7 +287,7 @@ export const setLandingDnsRecord = createServerFn({ method: "POST" })
     z.object({
       domain: z.string().min(3),
       ip: z.string().min(7),
-      proxied: z.boolean().default(false),
+      proxied: z.boolean().default(true),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {

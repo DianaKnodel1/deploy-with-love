@@ -171,7 +171,7 @@ function TenantForm({ tenant, onSaved }: { tenant?: Tenant; onSaved: () => void 
       const dnsHosts = [payload.domain, ...aliasList].map((d) => `portal.${d}`);
       for (const portalHost of dnsHosts) {
         try {
-          await setDnsFn({ data: { domain: portalHost, ip: PORTAL_SERVER_IP, proxied: false } });
+          await setDnsFn({ data: { domain: portalHost, ip: PORTAL_SERVER_IP, proxied: true } });
           toast({ title: "DNS gesetzt", description: `${portalHost} → ${PORTAL_SERVER_IP}` });
         } catch (err: any) {
           toast({
@@ -1059,7 +1059,7 @@ function AdminTenantsPage() {
     const hosts = Array.from(new Set([primary, ...aliases].filter(Boolean))).map((d) => `portal.${d}`);
     for (const host of hosts) {
       try {
-        await setDnsFn({ data: { domain: host, ip: PORTAL_SERVER_IP, proxied: false } });
+        await setDnsFn({ data: { domain: host, ip: PORTAL_SERVER_IP, proxied: true } });
         toast({ title: "DNS gesetzt", description: `${host} → ${PORTAL_SERVER_IP}` });
       } catch (err: any) {
         toast({
