@@ -181,7 +181,7 @@ async function loadLanding(domain) {
     return null;
   }
 
-  const key = domain.toLowerCase();
+  const key = domain.toLowerCase().replace(/^www\./, "");
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now()) return cached.row;
 
