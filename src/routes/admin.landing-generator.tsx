@@ -393,6 +393,13 @@ document.addEventListener('click', function(e){
     var id = a.getAttribute('href');
     if(id && id.length > 1){
       var target = id.slice(1);
+      // Bewerbungs-Modal: CTA öffnet Modal statt zum versteckten Container zu scrollen
+      if (target === 'bewerbung-form'){
+        e.preventDefault();
+        var m = document.getElementById('lov-apply-modal');
+        if(m){ m.classList.add('is-open'); document.body.classList.add('lov-apply-open'); }
+        return;
+      }
       // Legal-Links: nativen Hash-Wechsel zulassen → :target + hashchange greifen
       if (LEGAL_IDS.indexOf(target) >= 0){
         e.preventDefault();
@@ -407,6 +414,7 @@ document.addEventListener('click', function(e){
     }
     return;
   }
+
   var b = e.target.closest && e.target.closest('.faq-q');
   if(b){ var item = b.closest('.faq-item'); if(item) item.classList.toggle('open'); }
 }, true);
