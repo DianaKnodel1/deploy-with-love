@@ -44,6 +44,10 @@ else
 fi
 
 echo "▸ Starte Functions/Edge Runtime neu"
-ssh "$BACKEND_HOST" "cd '$SUPABASE_DIR' && (docker compose restart functions || docker compose restart edge-runtime)"
+ssh "$BACKEND_HOST" "docker restart supabase-edge-functions \
+  || (cd '$SUPABASE_DIR/docker' 2>/dev/null && docker compose restart functions) \
+  || (cd '$SUPABASE_DIR' && docker compose restart functions) \
+  || (cd '$SUPABASE_DIR/docker' 2>/dev/null && docker compose restart edge-runtime) \
+  || (cd '$SUPABASE_DIR' && docker compose restart edge-runtime)"
 
 echo "✓ Edge Function deployt"
