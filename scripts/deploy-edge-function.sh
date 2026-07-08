@@ -31,7 +31,17 @@ fi
 
 echo "▸ Kopiere $FUNCTION_NAME nach $BACKEND_HOST:$DEST_DIR"
 ssh "$BACKEND_HOST" "rm -rf '$DEST_DIR' && mkdir -p '$DEST_DIR'"
-tar -C "$SRC_DIR" -czf - . | ssh "$BACKEND_HOST" "tar -xzf - -C '$DEST_DIR'"
+
+if command -v tar >/dev/null 2>&1 && ssh "$BACKEND_HOST" "command -v tar >/dev/null 2>&1"; then
+  tar -C "$SRC_DIR" -czf - . | ssh "$BACKEND_HOST" "tar -xzf - -C '$DEST_DIR'"
+elif command -v scp >/dev/null 2>&1; then
+  echo "  · tar fehlt lokal oder remote — nutze scp-Fallback"
+  scp -r "$SRC_DIR"/. "$BACKEND_HOST:$DEST_DIR/"
+else
+  echo "Fehler: Weder tar noch scp verfügbar." >&2
+  echo "Installiere auf dem Portal-Server z.B.: dnf install -y tar openssh-clients" >&2
+  exit 1
+fi
 
 echo "▸ Starte Functions/Edge Runtime neu"
 ssh "$BACKEND_HOST" "cd '$SUPABASE_DIR' && (docker compose restart functions || docker compose restart edge-runtime)"
