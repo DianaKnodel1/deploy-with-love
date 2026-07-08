@@ -250,6 +250,36 @@ export const Route = createFileRoute("/api/public/applications")({
           } catch (e) { console.warn("[applications fast] invitation mail error:", e); }
         }
 
+        // Bestätigungs-Mail bei Vermittlungs-Bewerbung (Broker-Flow) mit
+        // Calendly-Link. Fire-and-forget – blockiert die Response nicht.
+        // Nur wenn: broker-Flow + Calendly-Link vorhanden + kein Testsubmit +
+        // kein KI-Interview davor (dort kommt die Mail erst nach Zusage).
+        const shouldSendBrokerConfirm =
+          isBroker && !!broker_block?.calendly_url && !d.is_test && !useInterview && !!resolvedTenantId;
+        if (shouldSendBrokerConfirm) {
+          try {
+            const parts = d.full_name.trim().split(/\s+/);
+            const firstName = parts[0] ?? "";
+            const lastName = parts.slice(1).join(" ");
+            const partnerName = broker_block!.partner_name || "unser Team";
+            void supabaseAdmin.functions.invoke("send-invitation-email", {
+              body: {
+                to: d.email,
+                fullName: d.full_name,
+                firstName,
+                lastName,
+                registrationLink: broker_block!.calendly_url,
+                tenantId: resolvedTenantId,
+                subject: `Deine Bewerbung ist eingegangen – jetzt Termin buchen`,
+                headline: "Danke für deine Bewerbung!",
+                intro: `Guten Tag${firstName ? ` ${firstName}` : ""},<br/><br/>vielen Dank für deine Bewerbung. Damit es weitergehen kann, buche bitte jetzt deinen persönlichen Gesprächstermin bei <strong>${partnerName}</strong> über den Button unten.`,
+                buttonLabel: broker_block!.button_label || "Jetzt Termin buchen",
+                templateName: "application_received",
+              },
+            }).catch((e) => console.warn("[applications broker] confirm mail:", e));
+          } catch (e) { console.warn("[applications broker] confirm mail error:", e); }
+        }
+
         return json({ success: true, flow_type: d.flow_type ?? "classic", redirect_url, broker: broker_block });
 
 
