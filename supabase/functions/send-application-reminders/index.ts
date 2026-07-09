@@ -318,12 +318,25 @@ serve(async (req) => {
 
       if (dryRun) { sent++; results.push({ app: app.id, kind, status: "would_send", to: app.email }); continue; }
 
+      const templateName = `vermittlung_${kind}`; // vermittlung_no_booking_24h etc.
+      const messageId = `${kind}-${app.id}-${Date.now()}@vermittlung`;
+
       try {
         await sendMail(tenant, app.email, subject, html);
         await admin.from("application_reminder_log").insert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "sent",
         });
+        // Sichtbarkeit im E-Mail-Center
+        try {
+          await admin.from("email_send_log").insert({
+            message_id: messageId, tenant_id: tenant.id,
+            template_name: templateName, recipient_email: app.email,
+            status: "sent", rendered_subject: subject, rendered_html: html,
+            sender_email: tenant.sender_email ?? tenant.smtp_username,
+            metadata: { application_id: app.id, kind, source: "send-application-reminders" },
+          } as any);
+        } catch { /* non-critical */ }
         sent++; results.push({ app: app.id, kind, status: "sent" });
         runSentByTenant.set(tenant.id, runCount + 1);
         failStreakByTenant.set(tenant.id, 0);
@@ -334,6 +347,16 @@ serve(async (req) => {
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "failed", error: errMsg,
         });
+        try {
+          await admin.from("email_send_log").insert({
+            message_id: messageId, tenant_id: tenant.id,
+            template_name: templateName, recipient_email: app.email,
+            status: "failed", error_message: errMsg,
+            rendered_subject: subject, rendered_html: html,
+            sender_email: tenant.sender_email ?? tenant.smtp_username,
+            metadata: { application_id: app.id, kind, source: "send-application-reminders" },
+          } as any);
+        } catch { /* non-critical */ }
         failed++; results.push({ app: app.id, kind, status: "failed", reason: errMsg });
         const streak = (failStreakByTenant.get(tenant.id) ?? 0) + 1;
         failStreakByTenant.set(tenant.id, streak);
