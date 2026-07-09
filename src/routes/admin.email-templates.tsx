@@ -683,27 +683,16 @@ function AdminEmailTemplatesPage() {
               Verwende <code>{`{{cta:Label|{{portal_link}}}}`}</code> für einen Button.
               Plain-Text wird automatisch in HTML umgewandelt.
             </div>
-            <Tabs defaultValue="invite" className="space-y-3">
+            <Tabs defaultValue="confirm" className="space-y-3">
               <TabsList>
-                <TabsTrigger value="invite" className="text-xs">Bewerber: Einladung</TabsTrigger>
                 <TabsTrigger value="confirm" className="text-xs">E-Mail bestätigen</TabsTrigger>
                 <TabsTrigger value="completion" className="text-xs">Registrierung abschließen</TabsTrigger>
                 <TabsTrigger value="no_booking" className="text-xs">Keine Buchung (7 Tage)</TabsTrigger>
                 <TabsTrigger value="recovery" className="text-xs">Domain-Wechsel</TabsTrigger>
-                <TabsTrigger value="appointment" className="text-xs">30 Min vor Termin</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs">Chat-Reminder</TabsTrigger>
-                <TabsTrigger value="app_no_booking" className="text-xs">Bewerber: Kein Termin</TabsTrigger>
-                <TabsTrigger value="app_no_show" className="text-xs">Bewerber: No-Show</TabsTrigger>
+                <TabsTrigger value="app_no_booking" className="text-xs">Vermittlung: Kein Termin</TabsTrigger>
+                <TabsTrigger value="app_no_show" className="text-xs">Vermittlung: No-Show</TabsTrigger>
               </TabsList>
-              <TabsContent value="invite">
-                <TemplateEditor
-                  label="Einladungs-Erinnerung"
-                  subject={rInviteSubject} onSubjectChange={setRInviteSubject}
-                  body={rInviteBody} onBodyChange={setRInviteBody}
-                  signature={signature} onSignatureChange={setSignature}
-                  tenant={selectedTenant}
-                />
-              </TabsContent>
               <TabsContent value="confirm">
                 <TemplateEditor
                   label="E-Mail-Bestätigungs-Erinnerung"
@@ -739,18 +728,6 @@ function AdminEmailTemplatesPage() {
                   label="Domain-Wechsel – Mitarbeiter"
                   subject={rRecoveryMaSubject} onSubjectChange={setRRecoveryMaSubject}
                   body={rRecoveryMaBody} onBodyChange={setRRecoveryMaBody}
-                  signature={signature} onSignatureChange={setSignature}
-                  tenant={selectedTenant}
-                />
-              </TabsContent>
-              <TabsContent value="appointment">
-                <div className="rounded-md border border-sky-300 bg-sky-50 dark:bg-sky-950/30 dark:border-sky-700 px-3 py-2 mb-3 text-[11px] text-sky-900 dark:text-sky-200">
-                  Wird automatisch <strong>30 Minuten vor dem gebuchten Termin</strong> an den Mitarbeiter gesendet (Cron alle 10 Min, Toleranzfenster 25–40 Min). Pro Buchung max. 1 Reminder. Platzhalter: <code>{"{{appointment_date}}"}</code>, <code>{"{{appointment_time}}"}</code>.
-                </div>
-                <TemplateEditor
-                  label="30-Min-Termin-Reminder"
-                  subject={rAppointmentSubject} onSubjectChange={setRAppointmentSubject}
-                  body={rAppointmentBody} onBodyChange={setRAppointmentBody}
                   signature={signature} onSignatureChange={setSignature}
                   tenant={selectedTenant}
                 />
@@ -832,13 +809,13 @@ function AdminEmailTemplatesPage() {
                   <SelectContent>
                     <SelectItem value="welcome">Willkommen / Einladung</SelectItem>
                     <SelectItem value="reset">Passwort-Reset</SelectItem>
-                    <SelectItem value="invite">Erinnerung: Einladung</SelectItem>
+                    
                     <SelectItem value="confirm">Erinnerung: E-Mail bestätigen</SelectItem>
                     <SelectItem value="completion">Erinnerung: Registrierung abschließen</SelectItem>
                     <SelectItem value="no_booking">Erinnerung: Keine Buchung</SelectItem>
                     <SelectItem value="recovery_ma">Domain-Wechsel: Mitarbeiter</SelectItem>
                     <SelectItem value="recovery_bew">Domain-Wechsel: Bewerber</SelectItem>
-                    <SelectItem value="appointment">30 Min vor Termin</SelectItem>
+                    
                     <SelectItem value="chat">Chat-Reminder</SelectItem>
                     
                   </SelectContent>
