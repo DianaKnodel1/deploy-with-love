@@ -205,8 +205,14 @@ serve(async (req) => {
       const createdMs = new Date(a.created_at).getTime();
       const ageMin = (now - createdMs) / 60_000;
 
-      // 1) No-Show 24h nach Termin
-      if (a.scheduled_at && !a.interview_started_at) {
+      // 1) No-Show 24h nach Termin — nur wenn Termin nachweislich NICHT wahrgenommen wurde.
+      // Guard: kein "started", kein "completed", nicht als completed markiert.
+      const noShowEligible =
+        a.scheduled_at &&
+        !a.interview_started_at &&
+        !a.interview_completed_at &&
+        a.booking_status !== "completed";
+      if (noShowEligible) {
         const schedMs = new Date(a.scheduled_at).getTime();
         const sinceMin = (now - schedMs) / 60_000;
         // Fenster: 24h .. 48h nach Termin (Cron 30min → sicheres Fenster)
