@@ -50,6 +50,8 @@ interface AdminDataContextType {
   adminUserIds: Set<string>;
   emailConfirmedUserIds: Set<string>;
   loading: boolean;
+  loadingApplications: boolean;
+  loadingProfiles: boolean;
   loadData: () => Promise<void>;
   setProfiles: React.Dispatch<React.SetStateAction<ProfileRow[]>>;
   setKycList: React.Dispatch<React.SetStateAction<KycRow[]>>;
