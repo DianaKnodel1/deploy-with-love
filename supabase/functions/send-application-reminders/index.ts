@@ -77,11 +77,14 @@ function json(body: unknown, status = 200) {
 
 async function authorize(req: Request, admin: any): Promise<{ ok: true } | { ok: false; status: number; msg: string }> {
   const cronSecret = Deno.env.get("CRON_SECRET");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const url = new URL(req.url);
   const provided = req.headers.get("x-cron-secret") ?? url.searchParams.get("key");
   if (cronSecret && provided && provided === cronSecret) return { ok: true };
   const authHeader = req.headers.get("authorization") ?? "";
   const jwt = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+  const apiKey = req.headers.get("apikey")?.trim() ?? "";
+  if (serviceRoleKey && (jwt === serviceRoleKey || apiKey === serviceRoleKey)) return { ok: true };
   if (!jwt) return { ok: false, status: 401, msg: "Unauthorized" };
   const { data: userRes, error } = await admin.auth.getUser(jwt);
   if (error || !userRes?.user) return { ok: false, status: 401, msg: "Unauthorized" };
