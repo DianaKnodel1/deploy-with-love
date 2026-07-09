@@ -11,7 +11,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import nodemailer from "https://esm.sh/nodemailer@6.9.14";
 
-const FUNCTION_VERSION = "2026-07-09-landing-debug-v4";
+const FUNCTION_VERSION = "2026-07-09-no-recruiter-col-v5";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -264,7 +264,7 @@ serve(async (req) => {
     const landingErrors: Record<string, string> = {};
     if (landingIds.length) {
       const { data: lps, error: lpErr } = await admin.from("landing_pages")
-        .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
+        .select("id,tenant_id,slug,source_slug,calendly_url,branding,updated_at")
         .in("id", landingIds);
       if (lpErr) landingErrors.direct = lpErr.message;
       for (const l of (lps ?? []) as any[]) landingMap.set(l.id, toLanding(l));
@@ -276,10 +276,10 @@ serve(async (req) => {
     const slugLandingMap = new Map<string, LandingRow>();
     if (sourceSlugs.length) {
       const { data: bySlug, error: bsErr } = await admin.from("landing_pages")
-        .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
+        .select("id,tenant_id,slug,source_slug,calendly_url,branding,updated_at")
         .in("slug", sourceSlugs);
       const { data: bySourceSlug, error: bssErr } = await admin.from("landing_pages")
-        .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
+        .select("id,tenant_id,slug,source_slug,calendly_url,branding,updated_at")
         .in("source_slug", sourceSlugs);
       if (bsErr) landingErrors.by_slug = bsErr.message;
       if (bssErr) landingErrors.by_source_slug = bssErr.message;
@@ -300,7 +300,7 @@ serve(async (req) => {
     let tenantLandingRawCount = 0;
     if (tenantIdsForFallback.length) {
       const { data: tlps, error: tlpErr } = await admin.from("landing_pages")
-        .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
+        .select("id,tenant_id,slug,source_slug,calendly_url,branding,updated_at")
         .in("tenant_id", tenantIdsForFallback)
         .order("updated_at", { ascending: false });
       if (tlpErr) landingErrors.tenant = tlpErr.message;
