@@ -100,7 +100,7 @@ function computePhase(a: any, scheduledAt: Date | null, prof: ProfileInfo): Phas
 function phaseToStages(phase: Phase): Stage[] {
   // 1 Termin  2 Interview  3 Entscheidung  4 Registriert  5 Onboarding
   const order: Phase[] = [
-    "termin_offen","termin_gebucht","no_show",
+    "termin_offen","termin_gebucht","abgesagt","no_show",
     "interview_laeuft",
     "angenommen","abgelehnt",
     "registriert","email_bestaetigt",
@@ -108,7 +108,7 @@ function phaseToStages(phase: Phase): Stage[] {
   ];
 
   const idx = order.indexOf(phase);
-  const isFailed = phase === "abgelehnt" || phase === "no_show";
+  const isFailed = phase === "abgelehnt" || phase === "no_show" || phase === "abgesagt";
 
   // Progress-Level: 0=Termin, 1=Interview, 2=Entscheidung, 3=Registriert, 4=Onboarding
   let lvl = 0;
