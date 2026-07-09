@@ -33,29 +33,34 @@ export const Route = createFileRoute("/admin/mitarbeiter")({
 });
 
 function AdminMitarbeiterPage() {
-  const { profiles, adminUserIds, emailConfirmedUserIds, loadingProfiles: loading } = useAdminData();
+  const { applications, profiles, adminUserIds, emailConfirmedUserIds, loadingProfiles: loading } = useAdminData();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"alle" | "wartet" | "aktiv" | "abgelehnt">("alle");
   const [busy, setBusy] = useState<string | null>(null);
 
   const rows = useMemo(() => {
+    const appById = new Map((applications as any[]).map((a) => [a.id, a]));
+    const appByUserId = new Map((applications as any[]).filter((a) => a.user_id).map((a) => [a.user_id, a]));
     return (profiles as any[])
       .filter(p => !adminUserIds.has(p.user_id))
-      .map(p => ({
-        id: p.user_id,
-        name: p.full_name || p.email || "—",
-        email: p.email || "—",
-        phone: p.phone || "—",
-        status: p.status as EmployeeStatus,
-        onboarding: p.onboarding_status as keyof typeof ONBOARDING_STATUS_CONFIG,
-        createdAt: p.created_at,
-        contractSigned: !!p.contract_signed_at,
-        emailConfirmed: !!(p.user_id && emailConfirmedUserIds.has(p.user_id)),
-        idUploaded: !!(p.id_front_url || p.id_back_url || p.onboarding_status === "abgeschlossen"),
-      }))
+      .map(p => {
+        const app = (p.application_id ? appById.get(p.application_id) : null) || (p.user_id ? appByUserId.get(p.user_id) : null) || null;
+        return {
+          id: p.user_id,
+          name: p.full_name || app?.full_name || `${app?.first_name ?? ""} ${app?.last_name ?? ""}`.trim() || app?.email || "—",
+          email: p.email || app?.email || "—",
+          phone: p.phone || app?.phone || "—",
+          status: p.status as EmployeeStatus,
+          onboarding: p.onboarding_status as keyof typeof ONBOARDING_STATUS_CONFIG,
+          createdAt: p.created_at,
+          contractSigned: !!p.contract_signed_at,
+          emailConfirmed: !!(p.user_id && emailConfirmedUserIds.has(p.user_id)),
+          idUploaded: !!(p.id_front_url || p.id_back_url || p.onboarding_status === "abgeschlossen"),
+        };
+      })
       .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-  }, [profiles, adminUserIds, emailConfirmedUserIds]);
+  }, [applications, profiles, adminUserIds, emailConfirmedUserIds]);
 
   function stagesFor(r: typeof rows[number]): Stage[] {
     const s = (state: Stage["state"], label: string, key: string): Stage => ({ key, label, state });

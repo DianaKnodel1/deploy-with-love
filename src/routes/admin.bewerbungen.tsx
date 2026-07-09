@@ -155,11 +155,13 @@ function AdminBewerbungenPage() {
   const profileByKey = useMemo(() => {
     const byUid = new Map<string, any>();
     const byEmail = new Map<string, any>();
+    const byApplicationId = new Map<string, any>();
     for (const p of profiles as any[]) {
       if (p.user_id) byUid.set(p.user_id, p);
       if (p.email) byEmail.set(String(p.email).toLowerCase().trim(), p);
+      if (p.application_id) byApplicationId.set(p.application_id, p);
     }
-    return { byUid, byEmail };
+    return { byUid, byEmail, byApplicationId };
   }, [profiles]);
 
   const bookingByApp = useMemo(() => {
@@ -206,7 +208,8 @@ function AdminBewerbungenPage() {
   const rows = useMemo(() => {
     return (applications as any[]).map((a) => {
       const email = String(a.email ?? "").toLowerCase().trim();
-      const p = (a.user_id && profileByKey.byUid.get(a.user_id))
+      const p = profileByKey.byApplicationId.get(a.id)
+        || (a.user_id && profileByKey.byUid.get(a.user_id))
         || (email && profileByKey.byEmail.get(email))
         || null;
       const prof: ProfileInfo = p ? {
