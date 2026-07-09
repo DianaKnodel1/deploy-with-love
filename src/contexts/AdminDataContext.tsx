@@ -182,6 +182,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
           variant: "destructive",
         });
       } finally {
+        hasLoadedOnceRef.current = true;
         setLoading(false);
       }
     })();
