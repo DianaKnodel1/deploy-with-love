@@ -8,7 +8,7 @@ import { fetchAll } from "@/lib/fetch-all";
 
 export interface Application {
   id: string; full_name: string; first_name: string | null; last_name: string | null;
-  email: string; phone: string | null; message: string | null; status: string; created_at: string; tenant_id: string | null;
+  email: string; phone: string | null; message?: string | null; status: string; created_at: string; tenant_id: string | null;
   address: string | null; postal_code: string | null; city: string | null;
   birth_date: string | null; birth_place: string | null; nationality: string | null;
   user_id?: string | null; source_slug?: string | null; source_landing_id?: string | null; target_landing_id?: string | null;
@@ -70,7 +70,7 @@ interface AdminDataContextType {
 
 const AdminDataContext = createContext<AdminDataContextType | null>(null);
 
-const APPLICATION_OVERVIEW_COLUMNS = "id, full_name, first_name, last_name, email, phone, message, status, created_at, tenant_id, address, postal_code, city, birth_date, birth_place, nationality, user_id, source_slug, source_landing_id, target_landing_id, flow_type, booking_status, scheduled_at, interview_started_at, interview_completed_at, interview_recommendation, interview_score, interview_summary, interview_mode";
+const APPLICATION_OVERVIEW_COLUMNS = "id, full_name, first_name, last_name, email, phone, status, created_at, tenant_id, address, postal_code, city, birth_date, birth_place, nationality, user_id, source_slug, source_landing_id, target_landing_id, flow_type, booking_status, scheduled_at, interview_started_at, interview_completed_at, interview_recommendation";
 const PROFILE_OVERVIEW_COLUMNS = "id, user_id, full_name, application_id, phone, status, address, street, zip_code, city, birth_date, birth_place, nationality, living_since, previous_address, created_at, contract_signed_at, signature_url, onboarding_status, admin_notes, social_security_number, tax_number, iban, health_insurance, family_status, employment_type, employment_start_date, tenant_id, team_leader_id";
 const KYC_OVERVIEW_COLUMNS = "id, user_id, status, id_front_url, id_back_url, selfie_url, rejection_reason, risk_flag, reviewed_at, created_at";
 const TEMPLATE_OVERVIEW_COLUMNS = "id, title, description, instructions, compensation, is_active, is_published, image_url, created_at";
@@ -133,13 +133,20 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     const run = (async () => {
       // Kritische Listen zuerst und mit expliziten Spalten laden. Schwere
       // Nebentabellen laufen danach im Hintergrund, damit Navigation nicht wartet.
-      const criticalTasks: Promise<{ ok: boolean; label: string }>[] = [
-        track("Bewerbungen",
+      const applicationsTask = track("Bewerbungen",
           () => fetchAll<Application>(() => supabase.from("applications").select(APPLICATION_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
-          setApplications),
-        track("Mitarbeiter",
+          setApplications,
+          () => setLoadingApplications(false));
+      const profilesTask = track("Mitarbeiter",
           () => fetchAll<ProfileRow>(() => supabase.from("profiles").select(PROFILE_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
-          setProfiles),
+          setProfiles,
+          () => setLoadingProfiles(false));
+
+      Promise.allSettled([applicationsTask, profilesTask]).then(() => setLoading(false));
+
+      const criticalTasks: Promise<{ ok: boolean; label: string }>[] = [
+        applicationsTask,
+        profilesTask,
         track("Buchungen",
           () => fetchAll<BookingRow>(() => supabase.from("bookings").select(BOOKING_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
           setAllBookings),
