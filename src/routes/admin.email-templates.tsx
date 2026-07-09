@@ -732,18 +732,6 @@ function AdminEmailTemplatesPage() {
                   tenant={selectedTenant}
                 />
               </TabsContent>
-              <TabsContent value="appointment">
-                <div className="rounded-md border border-sky-300 bg-sky-50 dark:bg-sky-950/30 dark:border-sky-700 px-3 py-2 mb-3 text-[11px] text-sky-900 dark:text-sky-200">
-                  Wird automatisch <strong>30 Minuten vor dem gebuchten Termin</strong> an den Mitarbeiter gesendet (Cron alle 10 Min, Toleranzfenster 25–40 Min). Pro Buchung max. 1 Reminder. Platzhalter: <code>{"{{appointment_date}}"}</code>, <code>{"{{appointment_time}}"}</code>.
-                </div>
-                <TemplateEditor
-                  label="30-Min-Termin-Reminder"
-                  subject={rAppointmentSubject} onSubjectChange={setRAppointmentSubject}
-                  body={rAppointmentBody} onBodyChange={setRAppointmentBody}
-                  signature={signature} onSignatureChange={setSignature}
-                  tenant={selectedTenant}
-                />
-              </TabsContent>
               <TabsContent value="chat">
                 <div className="rounded-md border border-violet-300 bg-violet-50 dark:bg-violet-950/30 dark:border-violet-700 px-3 py-2 mb-3 text-[11px] text-violet-900 dark:text-violet-200">
                   Wird manuell aus dem <strong>Admin-Chat</strong> per Button „📨 Erinnerung senden" verschickt, wenn ein Mitarbeiter ungelesene Nachrichten hat. Rate-Limit: max. 1× pro 24 h pro Empfänger. Zusätzlicher Platzhalter: <code>{"{{unread_count}}"}</code>.
