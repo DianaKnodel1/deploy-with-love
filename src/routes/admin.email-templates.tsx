@@ -91,6 +91,10 @@ interface TenantEmail {
   reminder_appointment_body: string | null;
   reminder_chat_subject: string | null;
   reminder_chat_body: string | null;
+  reminder_app_no_booking_subject: string | null;
+  reminder_app_no_booking_body: string | null;
+  reminder_app_no_show_subject: string | null;
+  reminder_app_no_show_body: string | null;
   application_received_subject: string | null;
   application_received_body: string | null;
   application_received_button_label: string | null;
