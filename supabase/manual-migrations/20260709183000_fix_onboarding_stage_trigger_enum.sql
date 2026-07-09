@@ -1,7 +1,7 @@
--- Hotfix zu 20260706000000_application_stage_lifecycle.sql
--- profiles hat keine email-Spalte -> stattdessen auth.users.email via user_id joinen.
+-- Fix employee signup: _profiles_advance_application_stage referenced the
+-- removed/non-existent onboarding_status enum value 'gestartet'. PostgreSQL
+-- casts enum comparisons at runtime, so this broke auth signup profile inserts.
 
--- 1) Trigger-Funktion neu: email aus auth.users holen
 CREATE OR REPLACE FUNCTION public._profiles_advance_application_stage()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -41,23 +41,7 @@ BEGIN
 END;
 $$;
 
--- 2) Trigger neu binden (ohne OF email, da diese Spalte nicht existiert)
 DROP TRIGGER IF EXISTS trg_profiles_advance_stage ON public.profiles;
 CREATE TRIGGER trg_profiles_advance_stage
   AFTER INSERT OR UPDATE OF onboarding_status ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public._profiles_advance_application_stage();
-
--- 3) Backfill Stufe 2 über auth.users
-UPDATE public.applications a SET stage = 'fasttrack_registriert'
-  FROM public.profiles p
-  JOIN auth.users u ON u.id = p.user_id
- WHERE lower(a.email) = lower(u.email)
-   AND a.stage IN ('vermittlung_neu','vermittlung_zusage')
-   AND a.flow_type = 'fast';
-
-UPDATE public.applications a SET stage = 'fasttrack_abgeschlossen'
-  FROM public.profiles p
-  JOIN auth.users u ON u.id = p.user_id
- WHERE lower(a.email) = lower(u.email)
-   AND p.onboarding_status = 'abgeschlossen'
-   AND a.stage NOT IN ('fasttrack_angenommen','abgelehnt','cold');

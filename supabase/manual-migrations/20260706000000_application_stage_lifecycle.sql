@@ -175,7 +175,7 @@ BEGIN
 
   IF NEW.onboarding_status = 'abgeschlossen' THEN
     _target := 'fasttrack_abgeschlossen';
-  ELSIF NEW.onboarding_status IN ('in_bearbeitung', 'gestartet') THEN
+  ELSIF NEW.onboarding_status = 'in_bearbeitung' THEN
     _target := 'fasttrack_onboarding';
   ELSE
     _target := 'fasttrack_registriert';
