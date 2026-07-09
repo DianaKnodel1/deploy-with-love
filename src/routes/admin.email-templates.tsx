@@ -683,17 +683,15 @@ function AdminEmailTemplatesPage() {
               Verwende <code>{`{{cta:Label|{{portal_link}}}}`}</code> für einen Button.
               Plain-Text wird automatisch in HTML umgewandelt.
             </div>
-            <Tabs defaultValue="invite" className="space-y-3">
+            <Tabs defaultValue="confirm" className="space-y-3">
               <TabsList>
-                <TabsTrigger value="invite" className="text-xs">Bewerber: Einladung</TabsTrigger>
                 <TabsTrigger value="confirm" className="text-xs">E-Mail bestätigen</TabsTrigger>
                 <TabsTrigger value="completion" className="text-xs">Registrierung abschließen</TabsTrigger>
                 <TabsTrigger value="no_booking" className="text-xs">Keine Buchung (7 Tage)</TabsTrigger>
                 <TabsTrigger value="recovery" className="text-xs">Domain-Wechsel</TabsTrigger>
-                <TabsTrigger value="appointment" className="text-xs">30 Min vor Termin</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs">Chat-Reminder</TabsTrigger>
-                <TabsTrigger value="app_no_booking" className="text-xs">Bewerber: Kein Termin</TabsTrigger>
-                <TabsTrigger value="app_no_show" className="text-xs">Bewerber: No-Show</TabsTrigger>
+                <TabsTrigger value="app_no_booking" className="text-xs">Vermittlung: Kein Termin</TabsTrigger>
+                <TabsTrigger value="app_no_show" className="text-xs">Vermittlung: No-Show</TabsTrigger>
               </TabsList>
               <TabsContent value="invite">
                 <TemplateEditor
