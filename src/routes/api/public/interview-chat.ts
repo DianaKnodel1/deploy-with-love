@@ -385,16 +385,22 @@ export const Route = createFileRoute("/api/public/interview-chat")({
               .from("landing_pages").select(sel).eq("slug", app.source_slug).maybeSingle();
             lp = bySlug ?? null;
           }
+          let ft: any = null;
           if (lp?.linked_fasttrack_landing_id) {
-            const { data: ft } = await supabaseAdmin
+            const { data: ftData } = await supabaseAdmin
               .from("landing_pages").select(sel).eq("id", lp.linked_fasttrack_landing_id).maybeSingle();
-            if (ft) lp = ft;
+            ft = ftData ?? null;
           }
-          const custom = lp?.interview_system_prompt?.trim();
+          // Source-Landing hat Vorrang; Fasttrack nur Fallback.
+          const custom = lp?.interview_system_prompt?.trim?.() || ft?.interview_system_prompt?.trim?.();
           if (custom) systemPrompt = custom;
-          const fn = lp?.branding?.firmenname?.trim?.();
+          const fn = lp?.branding?.firmenname?.trim?.() || ft?.branding?.firmenname?.trim?.();
           if (fn) companyName = fn;
-          const rn = lp?.branding?.recruiter_name?.trim?.() || lp?.recruiter_name?.trim?.();
+          const rn =
+            lp?.branding?.recruiter_name?.trim?.() ||
+            lp?.recruiter_name?.trim?.() ||
+            ft?.branding?.recruiter_name?.trim?.() ||
+            ft?.recruiter_name?.trim?.();
           if (rn) recruiterName = rn;
         }
         // Platzhalter pro Landing personalisieren
