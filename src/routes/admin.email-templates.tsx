@@ -111,6 +111,9 @@ interface TenantEmail {
   application_received_subject: string | null;
   application_received_body: string | null;
   application_received_button_label: string | null;
+  bewerbung_magic_link_subject: string | null;
+  bewerbung_magic_link_body: string | null;
+  bewerbung_magic_link_button: string | null;
 }
 
 const PLACEHOLDERS = [
