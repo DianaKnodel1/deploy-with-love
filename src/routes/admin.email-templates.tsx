@@ -524,6 +524,7 @@ function AdminEmailTemplatesPage() {
       case "appointment": return { subject: rAppointmentSubject, body: rAppointmentBody };
       case "chat": return { subject: rChatSubject, body: rChatBody };
       case "app_received": return { subject: appRecvSubject, body: appRecvBody };
+      case "magic_link": return { subject: mlSubject, body: mlBody };
     }
   };
 
