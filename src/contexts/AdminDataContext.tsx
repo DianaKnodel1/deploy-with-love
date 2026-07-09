@@ -197,9 +197,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       setLoadingProfiles(false);
 
       if (failures.length > 0) {
+        const details = results.filter((r) => !r.ok).map((r) => `${r.label}: ${r.error ?? "unbekannt"}`).join(" | ");
         toast({
           title: "Admin-Daten nur teilweise geladen",
-          description: `Fehlende Bereiche: ${failures.join(", ")}`,
+          description: `Fehlende Bereiche: ${failures.join(", ")}. Details: ${details}`,
           variant: "destructive",
         });
       }
