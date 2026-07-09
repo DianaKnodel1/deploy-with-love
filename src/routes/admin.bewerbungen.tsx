@@ -29,7 +29,7 @@ import { PaginationBar } from "@/components/PaginationBar";
  */
 
 type Phase =
-  | "termin_offen" | "termin_gebucht" | "no_show"
+  | "termin_offen" | "termin_gebucht" | "abgesagt" | "no_show"
   | "interview_laeuft"
   | "angenommen" | "abgelehnt"
   | "registriert" | "email_bestaetigt" | "onboarding_komplett" | "mitarbeiter_aktiv";
@@ -38,6 +38,7 @@ const PHASES: { key: Phase | "alle"; label: string; emoji: string }[] = [
   { key: "alle", label: "Alle", emoji: "👥" },
   { key: "termin_offen", label: "Kein Termin", emoji: "📅" },
   { key: "termin_gebucht", label: "Termin gebucht", emoji: "⏰" },
+  { key: "abgesagt", label: "Termin abgesagt", emoji: "🚫" },
   { key: "no_show", label: "Nicht erschienen", emoji: "⚠️" },
   { key: "interview_laeuft", label: "Interview läuft", emoji: "🎙" },
   { key: "angenommen", label: "Zusage erteilt", emoji: "✅" },
@@ -51,6 +52,7 @@ const PHASES: { key: Phase | "alle"; label: string; emoji: string }[] = [
 const PHASE_COLOR: Record<Phase, string> = {
   termin_offen: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
   termin_gebucht: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+  abgesagt: "bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300",
   no_show: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
   interview_laeuft: "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
   angenommen: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
@@ -60,6 +62,7 @@ const PHASE_COLOR: Record<Phase, string> = {
   onboarding_komplett: "bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300",
   mitarbeiter_aktiv: "bg-emerald-500 text-white dark:bg-emerald-600 border-0",
 };
+
 
 
 type ProfileInfo = {
