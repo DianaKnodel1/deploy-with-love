@@ -117,14 +117,15 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       fetcher: () => Promise<T>,
       onSuccess: (value: T) => void,
       onSettled?: () => void,
-    ): Promise<{ ok: boolean; label: string }> => {
+    ): Promise<{ ok: boolean; label: string; error?: string }> => {
       try {
         const value = await fetcher();
         onSuccess(value);
         return { ok: true, label };
-      } catch (err) {
+      } catch (err: any) {
         console.error(`[AdminData] ${label} konnte nicht geladen werden`, err);
-        return { ok: false, label };
+        const msg = err?.message || err?.error_description || err?.details || String(err);
+        return { ok: false, label, error: msg };
       } finally {
         onSettled?.();
       }
