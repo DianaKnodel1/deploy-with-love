@@ -50,8 +50,8 @@ serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      (Deno.env.get("SUPABASE_URL") ?? Deno.env.get("API_EXTERNAL_URL"))!,
+      (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY"))!,
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
     const supabase = supabaseAdmin;
