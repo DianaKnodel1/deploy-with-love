@@ -77,7 +77,7 @@ function json(body: unknown, status = 200) {
 
 async function authorize(req: Request, admin: any): Promise<{ ok: true } | { ok: false; status: number; msg: string }> {
   const cronSecret = Deno.env.get("CRON_SECRET");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY");
   const url = new URL(req.url);
   const provided = req.headers.get("x-cron-secret") ?? url.searchParams.get("key");
   if (cronSecret && provided && provided === cronSecret) return { ok: true };
@@ -151,7 +151,8 @@ serve(async (req) => {
 
   try {
     const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      Deno.env.get("SUPABASE_URL") ?? Deno.env.get("API_EXTERNAL_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY")!,
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
 
