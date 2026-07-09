@@ -342,7 +342,9 @@ serve(async (req) => {
       const total12h = (sent12hByTenant.get(tenant.id) ?? 0) + runCount;
       if (total12h >= MAX_PER_12H_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_12h_cap" }); continue; }
 
-      const landing = app.source_landing_id ? landingMap.get(app.source_landing_id) : null;
+      const landing = (app.source_landing_id ? landingMap.get(app.source_landing_id) : null)
+        || tenantLandingFallback.get(app.tenant_id)
+        || null;
       const rawCalendly = (landing?.calendly_url || landing?.branding?.calendly_url || "").trim();
       if (!rawCalendly) {
         skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "no_calendly_link" });
