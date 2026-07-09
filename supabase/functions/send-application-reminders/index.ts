@@ -471,6 +471,8 @@ serve(async (req) => {
 
       try {
         await sendMail(tenant, app.email, subject, html);
+        // Throttle: 4s Pause zwischen Sends, um SMTP-Rate-Limit (554) zu vermeiden
+        await new Promise((r) => setTimeout(r, 4000));
         await admin.from("application_reminder_log").upsert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "sent", error: null,
