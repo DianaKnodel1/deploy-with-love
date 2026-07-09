@@ -72,6 +72,7 @@ function PersonDetailPage() {
   const navigate = useNavigate();
   const { applications, profiles, kycList, allBookings, assignments, loading, loadData } = useAdminData();
   const [kycDocUrls, setKycDocUrls] = useState<Record<string, string>>({});
+  const [fullApplication, setFullApplication] = useState<any | null>(null);
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
   const [empType, setEmpType] = useState<string>("");
   const [empStart, setEmpStart] = useState<string>("");
@@ -80,24 +81,50 @@ function PersonDetailPage() {
   const updateEmp = useServerFn(updateEmployeeEmployment);
 
   const resolved = useMemo(() => {
-    const app = (applications as any[]).find((a) => a.id === id);
+    const apps = applications as any[];
+    const profs = profiles as any[];
+    const appById = new Map(apps.map((a) => [a.id, a]));
+    const appByUserId = new Map(apps.filter((a) => a.user_id).map((a) => [a.user_id, a]));
+    const profById = new Map(profs.map((p) => [p.id, p]));
+    const profByUserId = new Map(profs.map((p) => [p.user_id, p]));
+    const profByApplicationId = new Map(profs.filter((p) => p.application_id).map((p) => [p.application_id, p]));
+
+    const app = appById.get(id);
     if (app) {
-      const emailLc = String(app.email ?? "").toLowerCase().trim();
-      const prof = (profiles as any[]).find(
-        (p) => String(p.email ?? "").toLowerCase().trim() === emailLc,
-      );
+      const prof = profByApplicationId.get(app.id) || (app.user_id ? profByUserId.get(app.user_id) : null) || null;
       return { app, prof };
     }
-    const prof = (profiles as any[]).find((p) => p.user_id === id);
+    const prof = profByUserId.get(id) || profById.get(id);
     if (prof) {
-      const emailLc = String(prof.email ?? "").toLowerCase().trim();
-      const app = (applications as any[]).find(
-        (a) => String(a.email ?? "").toLowerCase().trim() === emailLc,
-      );
+      const app = (prof.application_id ? appById.get(prof.application_id) : null) || (prof.user_id ? appByUserId.get(prof.user_id) : null) || null;
       return { app, prof };
     }
     return { app: null, prof: null };
   }, [id, applications, profiles]);
+
+  const resolvedAppId = resolved.app?.id ?? null;
+  useEffect(() => {
+    let cancelled = false;
+    setFullApplication(null);
+    if (!resolvedAppId) return () => { cancelled = true; };
+
+    async function loadFullApplication() {
+      const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("id", resolvedAppId)
+        .maybeSingle();
+      if (!cancelled && !error && data) setFullApplication(data);
+    }
+
+    loadFullApplication();
+    return () => { cancelled = true; };
+  }, [resolvedAppId]);
+
+  const appForDisplay = useMemo(() => {
+    if (!resolved.app) return null;
+    return fullApplication?.id === resolved.app.id ? { ...resolved.app, ...fullApplication } : resolved.app;
+  }, [resolved.app, fullApplication]);
 
   const booking = useMemo(() => {
     if (!resolved.app) return null;
@@ -182,7 +209,8 @@ function PersonDetailPage() {
     );
   }
 
-  const { app, prof } = resolved as { app: any | null; prof: any | null };
+  const { prof } = resolved as { app: any | null; prof: any | null };
+  const app = appForDisplay as any | null;
   const name =
     prof?.full_name ||
     app?.full_name ||

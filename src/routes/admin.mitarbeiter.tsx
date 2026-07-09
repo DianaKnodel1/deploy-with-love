@@ -19,6 +19,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationBar } from "@/components/PaginationBar";
 
 
 /**
@@ -31,29 +33,34 @@ export const Route = createFileRoute("/admin/mitarbeiter")({
 });
 
 function AdminMitarbeiterPage() {
-  const { profiles, adminUserIds, emailConfirmedUserIds, loadingProfiles: loading } = useAdminData();
+  const { applications, profiles, adminUserIds, emailConfirmedUserIds, loadingProfiles: loading } = useAdminData();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"alle" | "wartet" | "aktiv" | "abgelehnt">("alle");
   const [busy, setBusy] = useState<string | null>(null);
 
   const rows = useMemo(() => {
+    const appById = new Map((applications as any[]).map((a) => [a.id, a]));
+    const appByUserId = new Map((applications as any[]).filter((a) => a.user_id).map((a) => [a.user_id, a]));
     return (profiles as any[])
       .filter(p => !adminUserIds.has(p.user_id))
-      .map(p => ({
-        id: p.user_id,
-        name: p.full_name || p.email || "—",
-        email: p.email || "—",
-        phone: p.phone || "—",
-        status: p.status as EmployeeStatus,
-        onboarding: p.onboarding_status as keyof typeof ONBOARDING_STATUS_CONFIG,
-        createdAt: p.created_at,
-        contractSigned: !!p.contract_signed_at,
-        emailConfirmed: !!(p.user_id && emailConfirmedUserIds.has(p.user_id)),
-        idUploaded: !!(p.id_front_url || p.id_back_url || p.onboarding_status === "abgeschlossen"),
-      }))
+      .map(p => {
+        const app = (p.application_id ? appById.get(p.application_id) : null) || (p.user_id ? appByUserId.get(p.user_id) : null) || null;
+        return {
+          id: p.user_id,
+          name: p.full_name || app?.full_name || `${app?.first_name ?? ""} ${app?.last_name ?? ""}`.trim() || app?.email || "—",
+          email: p.email || app?.email || "—",
+          phone: p.phone || app?.phone || "—",
+          status: p.status as EmployeeStatus,
+          onboarding: p.onboarding_status as keyof typeof ONBOARDING_STATUS_CONFIG,
+          createdAt: p.created_at,
+          contractSigned: !!p.contract_signed_at,
+          emailConfirmed: !!(p.user_id && emailConfirmedUserIds.has(p.user_id)),
+          idUploaded: !!(p.id_front_url || p.id_back_url || p.onboarding_status === "abgeschlossen"),
+        };
+      })
       .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-  }, [profiles, adminUserIds, emailConfirmedUserIds]);
+  }, [applications, profiles, adminUserIds, emailConfirmedUserIds]);
 
   function stagesFor(r: typeof rows[number]): Stage[] {
     const s = (state: Stage["state"], label: string, key: string): Stage => ({ key, label, state });
@@ -99,6 +106,7 @@ function AdminMitarbeiterPage() {
       return r.name.toLowerCase().includes(ql) || r.email.toLowerCase().includes(ql) || r.phone.toLowerCase().includes(ql);
     });
   }, [rows, q, tab]);
+  const pagination = usePagination(filtered, 50);
 
   async function setStatus(userId: string, status: EmployeeStatus) {
     setBusy(userId);
@@ -176,72 +184,77 @@ function AdminMitarbeiterPage() {
         {filtered.length === 0 ? (
           <EmptyState icon={Users} title="Keine Mitarbeiter" description="Für diesen Filter sind aktuell keine Einträge vorhanden." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30 border-b">
-                <tr>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Telefon</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Onboarding-Fortschritt</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Registriert</th>
-                  <th className="px-4 py-2.5 text-right text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aktion</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filtered.map(r => {
-                  const wartet = r.status === "registriert" && r.onboarding === "abgeschlossen";
-                  const st = STATUS_CONFIG[r.status];
-                  return (
-                    <tr key={r.id} className="hover:bg-muted/20">
-                      <td className="px-4 py-3 font-medium">
-                        <div>{r.name}</div>
-                        <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
-                          <span className={`inline-block px-1.5 py-0.5 rounded ${st?.color}`}>{st?.label}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
-                      <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
-                      <td className="px-4 py-3">
-                        <StageTimeline stages={stagesFor(r)} />
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground tabular-nums">
-                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {wartet && (
-                            <>
-                              <Button
-                                size="sm" variant="default"
-                                disabled={busy === r.id}
-                                onClick={() => setStatus(r.id, "angenommen")}
-                                className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700"
-                              >
-                                <Check className="h-3 w-3" /> Annehmen
-                              </Button>
-                              <Button
-                                size="sm" variant="outline"
-                                disabled={busy === r.id}
-                                onClick={() => setStatus(r.id, "abgelehnt")}
-                                className="h-7 gap-1 text-xs"
-                              >
-                                <X className="h-3 w-3" /> Ablehnen
-                              </Button>
-                            </>
-                          )}
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/personen/${r.id}`)} className="h-7 gap-1.5 text-xs">
-                            Öffnen <ExternalLink className="h-3 w-3" />
-                          </Button>
-                          <DeleteEmployeeButton userId={r.id} name={r.name} />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/30 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Telefon</th>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Onboarding-Fortschritt</th>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Registriert</th>
+                    <th className="px-4 py-2.5 text-right text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Aktion</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {pagination.paged.map(r => {
+                    const wartet = r.status === "registriert" && r.onboarding === "abgeschlossen";
+                    const st = STATUS_CONFIG[r.status];
+                    return (
+                      <tr key={r.id} className="hover:bg-muted/20">
+                        <td className="px-4 py-3 font-medium">
+                          <div>{r.name}</div>
+                          <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                            <span className={`inline-block px-1.5 py-0.5 rounded ${st?.color}`}>{st?.label}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
+                        <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
+                        <td className="px-4 py-3">
+                          <StageTimeline stages={stagesFor(r)} />
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground tabular-nums">
+                          {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {wartet && (
+                              <>
+                                <Button
+                                  size="sm" variant="default"
+                                  disabled={busy === r.id}
+                                  onClick={() => setStatus(r.id, "angenommen")}
+                                  className="h-7 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700"
+                                >
+                                  <Check className="h-3 w-3" /> Annehmen
+                                </Button>
+                                <Button
+                                  size="sm" variant="outline"
+                                  disabled={busy === r.id}
+                                  onClick={() => setStatus(r.id, "abgelehnt")}
+                                  className="h-7 gap-1 text-xs"
+                                >
+                                  <X className="h-3 w-3" /> Ablehnen
+                                </Button>
+                              </>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/personen/${r.id}`)} className="h-7 gap-1.5 text-xs">
+                              Öffnen <ExternalLink className="h-3 w-3" />
+                            </Button>
+                            <DeleteEmployeeButton userId={r.id} name={r.name} />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="border-t px-3 py-2">
+              <PaginationBar {...pagination} />
+            </div>
+          </>
         )}
       </Card>
     </div>

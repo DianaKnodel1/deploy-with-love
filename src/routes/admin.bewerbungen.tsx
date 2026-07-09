@@ -20,6 +20,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
   AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationBar } from "@/components/PaginationBar";
 
 /**
  * Bewerbungen — nur applications (Funnel bis Registrierung).
@@ -153,11 +155,13 @@ function AdminBewerbungenPage() {
   const profileByKey = useMemo(() => {
     const byUid = new Map<string, any>();
     const byEmail = new Map<string, any>();
+    const byApplicationId = new Map<string, any>();
     for (const p of profiles as any[]) {
       if (p.user_id) byUid.set(p.user_id, p);
       if (p.email) byEmail.set(String(p.email).toLowerCase().trim(), p);
+      if (p.application_id) byApplicationId.set(p.application_id, p);
     }
-    return { byUid, byEmail };
+    return { byUid, byEmail, byApplicationId };
   }, [profiles]);
 
   const bookingByApp = useMemo(() => {
@@ -204,7 +208,8 @@ function AdminBewerbungenPage() {
   const rows = useMemo(() => {
     return (applications as any[]).map((a) => {
       const email = String(a.email ?? "").toLowerCase().trim();
-      const p = (a.user_id && profileByKey.byUid.get(a.user_id))
+      const p = profileByKey.byApplicationId.get(a.id)
+        || (a.user_id && profileByKey.byUid.get(a.user_id))
         || (email && profileByKey.byEmail.get(email))
         || null;
       const prof: ProfileInfo = p ? {
@@ -263,6 +268,7 @@ function AdminBewerbungenPage() {
       );
     });
   }, [rows, tab, q]);
+  const pagination = usePagination(filtered, 50);
 
   const orphanCandidates = useMemo(() => {
     const cutoff = Date.now() - cleanupDays * 86_400_000;
@@ -362,64 +368,69 @@ function AdminBewerbungenPage() {
         {filtered.length === 0 ? (
           <EmptyState icon={Users} title="Keine Bewerbungen" description="Für diesen Filter sind aktuell keine Einträge vorhanden." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/30 border-b">
-                <tr>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vermittlung → Fasttrack</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Fortschritt</th>
-                  <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Eingegangen</th>
-                  <th className="px-4 py-2.5"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filtered.map(r => {
-                  const meta = PHASES.find(x => x.key === r.phase);
-                  return (
-                    <tr key={r.id} className="hover:bg-muted/20">
-                      <td className="px-4 py-3 font-medium">
-                        <div>{r.name}</div>
-                        <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
-                          <span className={`inline-block px-1.5 py-0.5 rounded ${PHASE_COLOR[r.phase]}`}>
-                            {meta?.emoji} {meta?.label}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {r.source?.from || r.source?.to ? (
-                          <div className="flex flex-col gap-0.5">
-                            <span>{r.source.from ?? "—"}</span>
-                            {r.source.to && (
-                              <span className="text-[10px] opacity-70">→ {r.source.to}</span>
-                            )}
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/30 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Vermittlung → Fasttrack</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Fortschritt</th>
+                    <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Eingegangen</th>
+                    <th className="px-4 py-2.5"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {pagination.paged.map(r => {
+                    const meta = PHASES.find(x => x.key === r.phase);
+                    return (
+                      <tr key={r.id} className="hover:bg-muted/20">
+                        <td className="px-4 py-3 font-medium">
+                          <div>{r.name}</div>
+                          <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                            <span className={`inline-block px-1.5 py-0.5 rounded ${PHASE_COLOR[r.phase]}`}>
+                              {meta?.emoji} {meta?.label}
+                            </span>
                           </div>
-                        ) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StageTimeline stages={phaseToStages(r.phase)} />
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
-                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
-                      </td>
-                      <td className="px-4 py-2.5 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/personen/${r.id}`)} className="h-7 gap-1.5 text-xs">
-                            Öffnen <ExternalLink className="h-3 w-3" />
-                          </Button>
-                          <DeleteAppButton appId={r.id} name={r.name} />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {r.source?.from || r.source?.to ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span>{r.source.from ?? "—"}</span>
+                              {r.source.to && (
+                                <span className="text-[10px] opacity-70">→ {r.source.to}</span>
+                              )}
+                            </div>
+                          ) : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <StageTimeline stages={phaseToStages(r.phase)} />
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-muted-foreground tabular-nums">
+                          {r.createdAt ? new Date(r.createdAt).toLocaleDateString("de-DE") : "—"}
+                        </td>
+                        <td className="px-4 py-2.5 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/personen/${r.id}`)} className="h-7 gap-1.5 text-xs">
+                              Öffnen <ExternalLink className="h-3 w-3" />
+                            </Button>
+                            <DeleteAppButton appId={r.id} name={r.name} />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="border-t px-3 py-2">
+              <PaginationBar {...pagination} />
+            </div>
+          </>
         )}
       </Card>
     </div>

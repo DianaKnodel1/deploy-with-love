@@ -8,14 +8,23 @@ import { fetchAll } from "@/lib/fetch-all";
 
 export interface Application {
   id: string; full_name: string; first_name: string | null; last_name: string | null;
-  email: string; phone: string | null; message: string | null; status: string; created_at: string; tenant_id: string | null;
+  email: string; phone: string | null; message?: string | null; status: string; created_at: string; tenant_id: string | null;
   address: string | null; postal_code: string | null; city: string | null;
   birth_date: string | null; birth_place: string | null; nationality: string | null;
+  user_id?: string | null; source_slug?: string | null; source_landing_id?: string | null; target_landing_id?: string | null;
+  flow_type?: string | null; booking_status?: string | null; scheduled_at?: string | null;
+  interview_started_at?: string | null; interview_completed_at?: string | null; interview_recommendation?: string | null;
+  interview_score?: number | null; interview_summary?: string | null; interview_messages?: unknown; interview_mode?: string | null;
 }
 export interface ProfileRow {
   id: string; user_id: string; full_name: string; status: EmployeeStatus; address: string | null; birth_date: string | null;
   living_since: string | null; created_at: string; contract_signed_at: string | null; onboarding_status: OnboardingStatus;
   admin_notes: string | null;
+  application_id?: string | null; email?: string | null; phone?: string | null; first_name?: string | null; last_name?: string | null; street?: string | null;
+  zip_code?: string | null; city?: string | null; birth_place?: string | null; nationality?: string | null; previous_address?: string | null;
+  id_front_url?: string | null; id_back_url?: string | null; contract_pdf_url?: string | null; signature_url?: string | null;
+  social_security_number?: string | null; tax_number?: string | null; iban?: string | null; health_insurance?: string | null;
+  family_status?: string | null; employment_type?: string | null; employment_start_date?: string | null; tenant_id?: string | null; team_leader_id?: string | null;
 }
 export interface KycRow {
   id: string; user_id: string; status: KycStatus; id_front_url: string | null; id_back_url: string | null; selfie_url: string | null;
@@ -33,7 +42,7 @@ export interface SubmissionRow {
 }
 export interface SubmissionAnswerRow { id: string; question_id: string; answer: string; }
 export interface TimeSlotRow { id: string; slot_date: string; start_time: string; end_time: string; max_participants: number; created_at: string; }
-export interface BookingRow { id: string; user_id: string; time_slot_id: string | null; assignment_id: string | null; status: string; created_at: string; booking_date: string | null; booking_time: string | null; }
+export interface BookingRow { id: string; user_id: string; time_slot_id: string | null; assignment_id: string | null; status: string; created_at: string; booking_date: string | null; booking_time: string | null; application_id?: string | null; app_id?: string | null; scheduled_at?: string | null; admin_override?: boolean | null; }
 export interface TransactionRow { id: string; user_id: string; assignment_id: string; amount: number; status: string; created_at: string; }
 export interface ChatConversationRow { id: string; user_id: string; status: string; escalated_at: string | null; created_at: string; updated_at: string; }
 
@@ -60,6 +69,13 @@ interface AdminDataContextType {
 }
 
 const AdminDataContext = createContext<AdminDataContextType | null>(null);
+
+const APPLICATION_OVERVIEW_COLUMNS = "id, full_name, first_name, last_name, email, phone, status, created_at, tenant_id, address, postal_code, city, birth_date, birth_place, nationality, user_id, source_slug, source_landing_id, target_landing_id, flow_type, booking_status, scheduled_at, interview_started_at, interview_completed_at, interview_recommendation";
+const PROFILE_OVERVIEW_COLUMNS = "id, user_id, full_name, application_id, phone, status, address, street, zip_code, city, birth_date, birth_place, nationality, living_since, previous_address, created_at, contract_signed_at, signature_url, onboarding_status, admin_notes, social_security_number, tax_number, iban, health_insurance, family_status, employment_type, employment_start_date, tenant_id, team_leader_id";
+const KYC_OVERVIEW_COLUMNS = "id, user_id, status, id_front_url, id_back_url, selfie_url, rejection_reason, risk_flag, reviewed_at, created_at";
+const TEMPLATE_OVERVIEW_COLUMNS = "id, title, description, instructions, compensation, is_active, is_published, image_url, created_at";
+const ASSIGNMENT_OVERVIEW_COLUMNS = "id, task_template_id, user_id, status, admin_comment, created_at, sms_channel_id, release_at, individual_instructions, individual_phone, individual_hint, post_ident_pdf_url, post_ident_pdf_name";
+const BOOKING_OVERVIEW_COLUMNS = "id, user_id, time_slot_id, assignment_id, status, created_at, booking_date, booking_time, application_id, app_id, scheduled_at, admin_override";
 
 export function useAdminData() {
   const ctx = useContext(AdminDataContext);
@@ -115,51 +131,64 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     };
 
     const run = (async () => {
-      // Alle Slices unabhängig laden — jede Tabelle wird sofort gesetzt, sobald
-      // sie da ist. Pages warten nur auf ihre eigene Slice, nicht auf alle 11.
-      const tasks: Promise<{ ok: boolean; label: string }>[] = [
-        track("Bewerbungen",
-          () => fetchAll<Application>(() => supabase.from("applications").select("*").order("created_at", { ascending: false })),
+      // Kritische Listen zuerst und mit expliziten Spalten laden. Schwere
+      // Nebentabellen laufen danach im Hintergrund, damit Navigation nicht wartet.
+      const applicationsTask = track("Bewerbungen",
+          () => fetchAll<Application>(() => supabase.from("applications").select(APPLICATION_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
           setApplications,
-          () => setLoadingApplications(false)),
-        track("Mitarbeiter",
-          () => fetchAll<ProfileRow>(() => supabase.from("profiles").select("*").order("created_at", { ascending: false })),
+          () => setLoadingApplications(false));
+      const profilesTask = track("Mitarbeiter",
+          () => fetchAll<ProfileRow>(() => supabase.from("profiles").select(PROFILE_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
           setProfiles,
-          () => setLoadingProfiles(false)),
-        track("KYC",
-          () => fetchAll<KycRow>(() => supabase.from("kyc_verifications").select("*").order("created_at", { ascending: false })),
-          setKycList),
-        track("Aufgaben-Vorlagen",
-          () => fetchAll<TaskTemplate>(() => supabase.from("task_templates").select("*").order("created_at", { ascending: false })),
-          setTemplates),
-        track("Aufgaben",
-          () => fetchAll<AssignmentRow>(() => supabase.from("task_assignments").select("*").order("created_at", { ascending: false })),
-          setAssignments),
-        track("Terminslots",
-          () => fetchAll<TimeSlotRow>(() => supabase.from("time_slots").select("*").order("slot_date", { ascending: false })),
-          setTimeSlots),
+          () => setLoadingProfiles(false));
+
+      Promise.allSettled([applicationsTask, profilesTask]).then(() => setLoading(false));
+
+      const criticalTasks: Promise<{ ok: boolean; label: string }>[] = [
+        applicationsTask,
+        profilesTask,
         track("Buchungen",
-          () => fetchAll<BookingRow>(() => supabase.from("bookings").select("*").order("created_at", { ascending: false })),
+          () => fetchAll<BookingRow>(() => supabase.from("bookings").select(BOOKING_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
           setAllBookings),
-        track("Transaktionen",
-          () => fetchAll<TransactionRow>(() => supabase.from("user_transactions").select("*").order("created_at", { ascending: false })),
-          setAllTransactions),
-        track("Chats",
-          () => fetchAll<ChatConversationRow>(() => supabase.from("chat_conversations").select("*").order("created_at", { ascending: false })),
-          setChatConversations),
         track("Admin-Rollen",
           () => fetchAll<{ user_id: string; role: string }>(() => supabase.from("user_roles").select("user_id, role").eq("role", "admin")),
           (rows) => setAdminUserIds(new Set(rows.map((r) => r.user_id)))),
+      ];
+
+      Promise.allSettled(criticalTasks).then(() => {
+        setLoading(false);
+        setLoadingApplications(false);
+        setLoadingProfiles(false);
+      });
+
+      const criticalResults = await Promise.all(criticalTasks);
+
+      const backgroundTasks: Promise<{ ok: boolean; label: string }>[] = [
         track<{ user_id: string; email_confirmed: boolean }[]>("E-Mail-Bestätigungen",
           () => (supabase as any).rpc("admin_get_email_confirmations").then((r: any) => (r.data ?? []) as { user_id: string; email_confirmed: boolean }[]),
           (confs) => setEmailConfirmedUserIds(new Set(confs.filter((c) => c.email_confirmed).map((c) => c.user_id)))),
+        track("KYC",
+          () => fetchAll<KycRow>(() => supabase.from("kyc_verifications").select(KYC_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
+          setKycList),
+        track("Aufgaben-Vorlagen",
+          () => fetchAll<TaskTemplate>(() => supabase.from("task_templates").select(TEMPLATE_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
+          setTemplates),
+        track("Aufgaben",
+          () => fetchAll<AssignmentRow>(() => supabase.from("task_assignments").select(ASSIGNMENT_OVERVIEW_COLUMNS).order("created_at", { ascending: false })),
+          setAssignments),
+        track("Terminslots",
+          () => fetchAll<TimeSlotRow>(() => supabase.from("time_slots").select("id, slot_date, start_time, end_time, max_participants, created_at").order("slot_date", { ascending: false })),
+          setTimeSlots),
+        track("Transaktionen",
+          () => fetchAll<TransactionRow>(() => supabase.from("user_transactions").select("id, user_id, assignment_id, amount, status, created_at").order("created_at", { ascending: false })),
+          setAllTransactions),
+        track("Chats",
+          () => fetchAll<ChatConversationRow>(() => supabase.from("chat_conversations").select("id, user_id, status, escalated_at, created_at, updated_at").order("created_at", { ascending: false })),
+          setChatConversations),
       ];
 
-      // Sobald die schnellste Slice da ist, globales `loading` freischalten.
-      // So blockiert kein Admin-Screen mehr auf ALLE 11 Tabellen.
-      Promise.race(tasks).then(() => setLoading(false)).catch(() => setLoading(false));
-
-      const results = await Promise.all(tasks);
+      const backgroundResults = await Promise.all(backgroundTasks);
+      const results = [...criticalResults, ...backgroundResults];
       const failures = results.filter((r) => !r.ok).map((r) => r.label);
       hasLoadedOnceRef.current = true;
       setLoading(false);
