@@ -74,6 +74,8 @@ export type ApplicationRow = {
   tenant_id?: string | null;
   status?: string | null;
   source_slug?: string | null;
+  source_landing_id?: string | null;
+  target_landing_id?: string | null;
   interview_messages?: unknown;
   interview_status?: string | null;
   interview_mode?: string | null;
@@ -196,9 +198,15 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
   let landingSlug: string | null = app.source_slug ?? null;
   let recruiterAvatarUrl: string | null = null;
 
-  if (app.source_slug) {
+  const sel = "id, slug, source_slug, interview_system_prompt, recruiter_avatar_url, recruiter_name, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id";
+  let landing: any = null;
+  if (app.source_landing_id) {
+    const { data: byId } = await supabaseAdmin
+      .from("landing_pages").select(sel).eq("id", app.source_landing_id).maybeSingle();
+    landing = byId ?? null;
+  }
+  if (!landing && app.source_slug) {
     const sel = "slug, source_slug, interview_system_prompt, recruiter_avatar_url, recruiter_name, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id";
-    let landing: any = null;
     const { data: bySource } = await supabaseAdmin
       .from("landing_pages").select(sel).eq("source_slug", app.source_slug).maybeSingle();
     landing = bySource ?? null;
@@ -207,12 +215,19 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
         .from("landing_pages").select(sel).eq("slug", app.source_slug).maybeSingle();
       landing = bySlug ?? null;
     }
-    let fasttrack: any = null;
-    if (landing?.linked_fasttrack_landing_id) {
+  }
+
+  let fasttrack: any = null;
+  if (landing?.linked_fasttrack_landing_id) {
+    const { data: ft } = await supabaseAdmin
+      .from("landing_pages").select(sel).eq("id", landing.linked_fasttrack_landing_id).maybeSingle();
+    fasttrack = ft ?? null;
+  }
+  if (!landing && app.target_landing_id) {
       const { data: ft } = await supabaseAdmin
-        .from("landing_pages").select(sel).eq("id", landing.linked_fasttrack_landing_id).maybeSingle();
+        .from("landing_pages").select(sel).eq("id", app.target_landing_id).maybeSingle();
       fasttrack = ft ?? null;
-    }
+  }
     // Source-Landing hat Vorrang (dort pflegt der Admin Recruiter-Name etc.);
     // Fasttrack-Landing dient nur als Fallback für fehlende Felder.
     if (landing || fasttrack) {
@@ -232,7 +247,6 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
       if (mode === "voice" || mode === "both" || mode === "chat") interviewMode = mode;
       landingSlug = landing?.slug || landing?.source_slug || fasttrack?.slug || fasttrack?.source_slug || landingSlug;
     }
-  }
 
   systemPrompt = systemPrompt.replace(/\{company\}/g, companyName).replace(/\{recruiter\}/g, recruiterName);
 
