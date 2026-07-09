@@ -65,7 +65,7 @@ type LandingRow = {
   slots: Record<string, string>;
   logo_url: string | null;
   favicon_url: string | null;
-  flow_type: "classic" | "fast";
+  flow_type: "classic" | "fast" | "broker";
   source_slug: string | null;
   is_published: boolean;
 };
