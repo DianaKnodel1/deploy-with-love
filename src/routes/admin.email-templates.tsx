@@ -809,7 +809,7 @@ function AdminEmailTemplatesPage() {
                   <SelectContent>
                     <SelectItem value="welcome">Willkommen / Einladung</SelectItem>
                     <SelectItem value="reset">Passwort-Reset</SelectItem>
-                    <SelectItem value="invite">Erinnerung: Einladung</SelectItem>
+                    
                     <SelectItem value="confirm">Erinnerung: E-Mail bestätigen</SelectItem>
                     <SelectItem value="completion">Erinnerung: Registrierung abschließen</SelectItem>
                     <SelectItem value="no_booking">Erinnerung: Keine Buchung</SelectItem>
