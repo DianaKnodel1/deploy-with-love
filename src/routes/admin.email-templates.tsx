@@ -710,6 +710,7 @@ function AdminEmailTemplatesPage() {
                 <TabsTrigger value="chat" className="text-xs">Chat-Reminder</TabsTrigger>
                 <TabsTrigger value="app_no_booking" className="text-xs">Vermittlung: Kein Termin</TabsTrigger>
                 <TabsTrigger value="app_no_show" className="text-xs">Vermittlung: No-Show</TabsTrigger>
+                <TabsTrigger value="magic_link" className="text-xs">Vermittlung: Interview-Einladung</TabsTrigger>
               </TabsList>
               <TabsContent value="confirm">
                 <TemplateEditor
