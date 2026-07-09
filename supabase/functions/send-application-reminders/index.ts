@@ -475,10 +475,11 @@ serve(async (req) => {
         await jitter();
       } catch (e: any) {
         const errMsg = String(e?.message ?? e).slice(0, 500);
-        await admin.from("application_reminder_log").insert({
+        await admin.from("application_reminder_log").upsert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "failed", error: errMsg,
-        });
+          sent_at: new Date().toISOString(),
+        }, { onConflict: "application_id,reminder_kind" });
         try {
           await admin.from("email_send_log").insert({
             message_id: messageId, tenant_id: tenant.id,
