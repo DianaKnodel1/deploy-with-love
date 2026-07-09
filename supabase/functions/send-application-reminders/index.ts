@@ -173,7 +173,7 @@ serve(async (req) => {
     const since = new Date(now - 10 * 86400_000).toISOString();
     const { data: apps, error: aErr } = await admin
       .from("applications")
-      .select("id,tenant_id,source_landing_id,full_name,email,created_at,booking_status,scheduled_at,interview_started_at,flow_type")
+      .select("id,tenant_id,source_landing_id,full_name,email,created_at,booking_status,scheduled_at,interview_started_at,interview_completed_at,flow_type")
       .gte("created_at", since);
     if (aErr) return json({ error: aErr.message }, 500);
 
