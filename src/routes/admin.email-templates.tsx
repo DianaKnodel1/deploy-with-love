@@ -497,6 +497,9 @@ function AdminEmailTemplatesPage() {
         application_received_subject: appRecvSubject,
         application_received_body: appRecvBody,
         application_received_button_label: appRecvButton || null,
+        bewerbung_magic_link_subject: mlSubject,
+        bewerbung_magic_link_body: mlBody,
+        bewerbung_magic_link_button: mlButton || null,
       } as any)
       .eq("id", selectedTenantId);
     setSaving(false);
