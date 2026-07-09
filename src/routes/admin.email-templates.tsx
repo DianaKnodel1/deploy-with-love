@@ -768,6 +768,30 @@ function AdminEmailTemplatesPage() {
                   tenant={selectedTenant}
                 />
               </TabsContent>
+              <TabsContent value="app_no_booking">
+                <div className="rounded-md border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-700 px-3 py-2 mb-3 text-[11px] text-orange-900 dark:text-orange-200">
+                  Wird automatisch an Vermittlungs-Bewerber gesendet, die sich beworben, aber noch <strong>keinen Termin gebucht</strong> haben (24h + 72h nach Bewerbung, Cron alle 30 Min). Enthält den Calendly-Link mit vor-ausgefüllter Bewerber-ID. Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{calendly_link}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>, <code>{"{{partner_name}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Bewerber ohne Terminbuchung"
+                  subject={rAppNoBookingSubject} onSubjectChange={setRAppNoBookingSubject}
+                  body={rAppNoBookingBody} onBodyChange={setRAppNoBookingBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+              </TabsContent>
+              <TabsContent value="app_no_show">
+                <div className="rounded-md border border-rose-300 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-700 px-3 py-2 mb-3 text-[11px] text-rose-900 dark:text-rose-200">
+                  Wird <strong>24 Stunden nach einem verpassten Termin</strong> an den Bewerber gesendet mit einem neuen Calendly-Link (Cron alle 30 Min, max. 1× pro Buchung). Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{appointment_date}}"}</code>, <code>{"{{appointment_time}}"}</code>, <code>{"{{calendly_link}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Bewerber No-Show (24h)"
+                  subject={rAppNoShowSubject} onSubjectChange={setRAppNoShowSubject}
+                  body={rAppNoShowBody} onBodyChange={setRAppNoShowBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+              </TabsContent>
             </Tabs>
           </TabsContent>
 
