@@ -454,10 +454,11 @@ serve(async (req) => {
 
       try {
         await sendMail(tenant, app.email, subject, html);
-        await admin.from("application_reminder_log").insert({
+        await admin.from("application_reminder_log").upsert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
-          recipient_email: app.email, status: "sent",
-        });
+          recipient_email: app.email, status: "sent", error: null,
+          sent_at: new Date().toISOString(),
+        }, { onConflict: "application_id,reminder_kind" });
         // Sichtbarkeit im E-Mail-Center
         try {
           await admin.from("email_send_log").insert({
