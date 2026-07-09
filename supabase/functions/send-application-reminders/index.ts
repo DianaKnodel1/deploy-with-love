@@ -173,7 +173,7 @@ serve(async (req) => {
     const since = new Date(now - 10 * 86400_000).toISOString();
     const { data: apps, error: aErr } = await admin
       .from("applications")
-      .select("id,tenant_id,source_landing_id,full_name,email,created_at,booking_status,scheduled_at,interview_started_at,flow_type")
+      .select("id,tenant_id,source_landing_id,full_name,email,created_at,booking_status,scheduled_at,interview_started_at,interview_completed_at,flow_type")
       .gte("created_at", since);
     if (aErr) return json({ error: aErr.message }, 500);
 
@@ -205,8 +205,14 @@ serve(async (req) => {
       const createdMs = new Date(a.created_at).getTime();
       const ageMin = (now - createdMs) / 60_000;
 
-      // 1) No-Show 24h nach Termin
-      if (a.scheduled_at && !a.interview_started_at) {
+      // 1) No-Show 24h nach Termin — nur wenn Termin nachweislich NICHT wahrgenommen wurde.
+      // Guard: kein "started", kein "completed", nicht als completed markiert.
+      const noShowEligible =
+        a.scheduled_at &&
+        !a.interview_started_at &&
+        !a.interview_completed_at &&
+        a.booking_status !== "completed";
+      if (noShowEligible) {
         const schedMs = new Date(a.scheduled_at).getTime();
         const sinceMin = (now - schedMs) / 60_000;
         // Fenster: 24h .. 48h nach Termin (Cron 30min → sicheres Fenster)
@@ -312,12 +318,25 @@ serve(async (req) => {
 
       if (dryRun) { sent++; results.push({ app: app.id, kind, status: "would_send", to: app.email }); continue; }
 
+      const templateName = `vermittlung_${kind}`; // vermittlung_no_booking_24h etc.
+      const messageId = `${kind}-${app.id}-${Date.now()}@vermittlung`;
+
       try {
         await sendMail(tenant, app.email, subject, html);
         await admin.from("application_reminder_log").insert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "sent",
         });
+        // Sichtbarkeit im E-Mail-Center
+        try {
+          await admin.from("email_send_log").insert({
+            message_id: messageId, tenant_id: tenant.id,
+            template_name: templateName, recipient_email: app.email,
+            status: "sent", rendered_subject: subject, rendered_html: html,
+            sender_email: tenant.sender_email ?? tenant.smtp_username,
+            metadata: { application_id: app.id, kind, source: "send-application-reminders" },
+          } as any);
+        } catch { /* non-critical */ }
         sent++; results.push({ app: app.id, kind, status: "sent" });
         runSentByTenant.set(tenant.id, runCount + 1);
         failStreakByTenant.set(tenant.id, 0);
@@ -328,6 +347,16 @@ serve(async (req) => {
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "failed", error: errMsg,
         });
+        try {
+          await admin.from("email_send_log").insert({
+            message_id: messageId, tenant_id: tenant.id,
+            template_name: templateName, recipient_email: app.email,
+            status: "failed", error_message: errMsg,
+            rendered_subject: subject, rendered_html: html,
+            sender_email: tenant.sender_email ?? tenant.smtp_username,
+            metadata: { application_id: app.id, kind, source: "send-application-reminders" },
+          } as any);
+        } catch { /* non-critical */ }
         failed++; results.push({ app: app.id, kind, status: "failed", reason: errMsg });
         const streak = (failStreakByTenant.get(tenant.id) ?? 0) + 1;
         failStreakByTenant.set(tenant.id, streak);

@@ -21,6 +21,12 @@ export const Route = createFileRoute("/admin/email-center")({
 
 // Aktive Templates im neuen Flow (Bewerbung -> Interview -> Onboarding).
 const ACTIVE_TEMPLATES: { key: string; label: string; group: string; trigger: string }[] = [
+  // Vermittlungs-Flow (Broker) — Bewerber-Reminder aus send-application-reminders
+  { key: "vermittlung_no_booking_24h", label: "Vermittlung: Kein Termin (24h)",  group: "Vermittlung", trigger: "24h nach Bewerbung ohne Calendly-Buchung" },
+  { key: "vermittlung_no_booking_72h", label: "Vermittlung: Kein Termin (72h)",  group: "Vermittlung", trigger: "72h nach Bewerbung ohne Calendly-Buchung" },
+  { key: "vermittlung_no_show_24h",    label: "Vermittlung: No-Show (24h)",      group: "Vermittlung", trigger: "24h nach verpasstem Termin" },
+  { key: "bewerbung_magic_link",       label: "Vermittlung: Interview-Einladung", group: "Vermittlung", trigger: "Sofort nach Calendly-Buchung" },
+  // Fast-Track / Onboarding
   { key: "invitation",                       label: "Zusage / Herzlichen Glückwunsch", group: "Onboarding", trigger: "Sofort nach positivem KI-Interview" },
   { key: "reminder_complete_registration",   label: "Registrierung abschließen",    group: "Reminder",   trigger: "3 Reminder – 24h / 48h / 72h nach Zusage" },
   { key: "reminder_onboarding_incomplete",   label: "Onboarding (Perso/Vertrag)",   group: "Reminder",   trigger: "3 Reminder – nach Registrierung ohne KYC/Vertrag" },
