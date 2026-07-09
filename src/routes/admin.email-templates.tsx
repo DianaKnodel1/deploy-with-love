@@ -52,6 +52,14 @@ const REMINDER_DEFAULTS = {
     subject: "Neue Nachricht von {{team_leader_name}} – {{tenant_name}}",
     body: `Hi {{first_name}},\n\ndu hast {{unread_count}} ungelesene Nachricht(en) von {{team_leader_name}} im Mitarbeiter-Portal.\n\nBitte logge dich kurz ein und antworte – so geht's für dich am schnellsten weiter.\n\n{{cta:Jetzt einloggen|{{login_link}}}}\n\nFalls der Button nicht funktioniert: {{login_link}}`,
   },
+  app_no_booking: {
+    subject: "Erinnerung: Dein Termin bei {{tenant_name}} steht noch aus",
+    body: `Hallo {{first_name}},\n\nvielen Dank für deine Bewerbung bei {{tenant_name}}. Damit wir dich kennenlernen können, fehlt nur noch dein Wunschtermin für das kurze Erstgespräch.\n\n{{cta:Jetzt Termin auswählen|{{calendly_link}}}}\n\nFalls der Button nicht funktioniert, kopiere diesen Link:\n{{calendly_link}}\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+  },
+  app_no_show: {
+    subject: "Schade, dass es nicht geklappt hat – buche einen neuen Termin",
+    body: `Hallo {{first_name}},\n\nleider konnten wir dich zu deinem Termin am {{appointment_date}} um {{appointment_time}} Uhr nicht erreichen. Kein Problem – wir hätten dich gern trotzdem kennengelernt.\n\nBitte wähle einen neuen Wunschtermin, der besser passt:\n\n{{cta:Neuen Termin auswählen|{{calendly_link}}}}\n\nFalls du Fragen hast oder Unterstützung brauchst, antworte einfach auf diese E-Mail.\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+  },
 
 };
 
