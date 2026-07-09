@@ -154,8 +154,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         setLoadingProfiles(false);
       });
 
+      const criticalResults = await Promise.all(criticalTasks);
+
       const backgroundTasks: Promise<{ ok: boolean; label: string }>[] = [
-        track("E-Mail-Bestätigungen",
+        track<{ user_id: string; email_confirmed: boolean }[]>("E-Mail-Bestätigungen",
           () => (supabase as any).rpc("admin_get_email_confirmations").then((r: any) => (r.data ?? []) as { user_id: string; email_confirmed: boolean }[]),
           (confs) => setEmailConfirmedUserIds(new Set(confs.filter((c) => c.email_confirmed).map((c) => c.user_id)))),
         track("KYC",
@@ -178,7 +180,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
           setChatConversations),
       ];
 
-      const results = await Promise.all([...criticalTasks, ...backgroundTasks]);
+      const backgroundResults = await Promise.all(backgroundTasks);
+      const results = [...criticalResults, ...backgroundResults];
       const failures = results.filter((r) => !r.ok).map((r) => r.label);
       hasLoadedOnceRef.current = true;
       setLoading(false);
