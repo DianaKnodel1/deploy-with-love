@@ -40,7 +40,6 @@ export const getCronHealth = createServerFn({ method: "POST" })
 
     const remLast = await latest("reminder_log", "sent_at");
     const dripLast = await latest("invite_resend_queue", "updated_at");
-    const apptLast = await latest("appointment_reminder_log", "sent_at");
 
     const now = Date.now();
     const ageMin = (iso: string | null) => iso ? Math.floor((now - new Date(iso).getTime()) / 60_000) : null;
@@ -73,17 +72,6 @@ export const getCronHealth = createServerFn({ method: "POST" })
         age_min: ageMin(dripLast),
         severity: sev(ageMin(dripLast), 30),
         hint: "Aktivität gemessen am letzten invite_resend_queue.updated_at. Nachts erwartet kein Update.",
-      },
-      {
-        key: "send-appointment-reminders",
-        label: "Termin-Erinnerung (30 Min vorher)",
-        description: "Alle 10 Min. Sendet je Booking genau 1× eine 30-Min-Erinnerung.",
-        schedule: "*/10 * * * *",
-        expected_max_age_min: 60 * 24, // ein Tag — kein Booking ≠ Cron tot
-        last_activity_at: apptLast,
-        age_min: ageMin(apptLast),
-        severity: apptLast ? sev(ageMin(apptLast), 60 * 24) : "unknown",
-        hint: "Aktivität gemessen am letzten appointment_reminder_log. Wenn keine Termine anstanden, bleibt unbekannt.",
       },
     ];
 
