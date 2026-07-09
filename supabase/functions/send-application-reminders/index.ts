@@ -224,7 +224,7 @@ serve(async (req) => {
 
     if (!apps?.length) return json({ success: true, dry_run: dryRun, candidates: 0, sent: 0, skipped: 0, failed: 0 });
 
-    // Landing-Pages mit Calendly-Link
+    // Landing-Pages mit Calendly-Link (direkte Zuordnung via source_landing_id)
     const landingIds = Array.from(new Set(apps.map((a: any) => a.source_landing_id).filter(Boolean)));
     const landingMap = new Map<string, { calendly_url: string | null; branding: any; recruiter_name: string | null }>();
     if (landingIds.length) {
@@ -232,6 +232,23 @@ serve(async (req) => {
         .select("id,calendly_url,branding,recruiter_name")
         .in("id", landingIds);
       for (const l of (lps ?? []) as any[]) landingMap.set(l.id, { calendly_url: l.calendly_url, branding: l.branding, recruiter_name: l.recruiter_name });
+    }
+
+    // Fallback: pro Tenant erste Landing-Page mit Calendly-Link (für Apps ohne source_landing_id
+    // oder wenn deren Landing keinen Calendly-Link hat — z.B. Legacy-/Direktbewerbungen).
+    const tenantIdsForFallback = Array.from(new Set(apps.map((a: any) => a.tenant_id).filter(Boolean)));
+    const tenantLandingFallback = new Map<string, { calendly_url: string | null; branding: any; recruiter_name: string | null }>();
+    if (tenantIdsForFallback.length) {
+      const { data: tlps } = await admin.from("landing_pages")
+        .select("tenant_id,calendly_url,branding,recruiter_name,updated_at")
+        .in("tenant_id", tenantIdsForFallback)
+        .not("calendly_url", "is", null)
+        .order("updated_at", { ascending: false });
+      for (const l of (tlps ?? []) as any[]) {
+        if (!tenantLandingFallback.has(l.tenant_id) && (l.calendly_url || "").trim()) {
+          tenantLandingFallback.set(l.tenant_id, { calendly_url: l.calendly_url, branding: l.branding, recruiter_name: l.recruiter_name });
+        }
+      }
     }
 
     // Bereits versendete Reminder pro (application_id, kind)
