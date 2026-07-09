@@ -1,103 +1,79 @@
+
 ## Ziel
 
-Ein durchgängiger, sauber getrackter Bewerber-Lifecycle über zwei Landing-Typen (Vermittlung + Fasttrack), damit jeder Bewerber genau **einen aktuellen Status** hat und jede Stufe messbar wird.
+Vier zusammenhängende Änderungen sauber umsetzen — plus zwei konkrete Fehler aus deinem Log fixen.
 
-## Der Lifecycle (Single Source of Truth)
+---
 
-Ein Bewerber durchläuft immer die gleiche Kette. Jede Stufe hat einen eindeutigen Status-Wert in `applications.stage`:
+## 1. Bewerbungseingang-Mail entfernen
 
-```text
-Stufe 1 — VERMITTLUNG (Werbung, Erstkontakt)
-  vermittlung_neu            Bewerbung eingegangen
-  vermittlung_termin_gebucht Calendly-Webhook: scheduled
-  vermittlung_no_show        Termin nicht wahrgenommen
-  vermittlung_absage         Absage (durch Recruiter oder Bewerber)
-  vermittlung_zusage         Zusage erteilt → triggert Übergabe
+Aktuell versucht `src/routes/api/public/applications.ts` nach jeder Bewerbung `send-signup-confirmation` mit `templateName: "application_received"` aufzurufen. Diese Function erwartet aber `email + password + tenant_id` (Auth-Signup) und antwortet deshalb konsequent mit **400 "Missing required fields: email, password, tenant_id"** (siehe Log).
 
-Stufe 2 — FASTTRACK (eigentliche Einstellung)
-  fasttrack_weitergeleitet   Redirect-Link generiert, noch nicht registriert
-  fasttrack_registriert      Profil in profiles angelegt (email match)
-  fasttrack_onboarding       Onboarding läuft
-  fasttrack_abgeschlossen    Onboarding abgeschlossen
-  fasttrack_angenommen       Fester Mitarbeiter (Vertrag signiert / aktiv)
+**Fix:** Den ganzen `application_received`-Aufruf in `applications.ts` löschen (Zeilen ~260–295). Die Vermittlungs-Landing versendet dann nur noch:
+- „Bewerber: Kein Termin" (24h/72h)
+- „Bewerber: No-Show" (24h nach Termin)
+- akzeptiert / abgelehnt (Admin-Aktion)
 
-Endzustände (jederzeit möglich)
-  abgelehnt                  Admin-Ablehnung
-  cold                       Anti-Spam-Hard-Cap erreicht
-```
+Der Tab **„Bewerbungseingang"** in `src/routes/admin.email-templates.tsx` wird entfernt, damit das UI keine tote Vorlage mehr anzeigt.
 
-Regel: **Der Status geht nur vorwärts** (außer manuelle Admin-Korrektur). Jede Änderung wird in `application_stage_history` geloggt (from → to, actor, reason, timestamp).
+Die tenant-Spalten `application_received_*` können bleiben (später löschbar, brechen nichts).
 
-## Datenmodell (Minimal-Änderungen)
+---
 
-`applications` bekommt:
-- `stage text` (default `vermittlung_neu`, CHECK-Liste wie oben)
-- `stage_changed_at timestamptz`
-- `stage_changed_by uuid` (nullable = System)
-- `linked_application_id uuid` → verknüpft Vermittlung-Bewerbung mit ihrer Fasttrack-Bewerbung (1:1)
+## 2. Fix: `column applications.updated_at does not exist`
 
-Neue Tabelle `application_stage_history` (id, application_id, from_stage, to_stage, actor_id, reason, created_at) — reine Audit-Spur, RLS: Admin read.
+Der Fehler kommt aus einer der Reminder-/Bounce-Queries. Ich lokalisiere die genaue Zeile über die Log-Label-Suche (`invite query`) und entweder
+- (a) füge die Spalte per Migration hinzu, falls sie fachlich gewollt ist, oder
+- (b) entferne den Verweis (order/update) aus der Query.
 
-`source_landing_id` / `target_landing_id` existieren bereits (Migration `20260625000000`) — die nutzen wir.
+Wahrscheinlich (b) — `applications` hat historisch nur `created_at`.
 
-## Automatische Übergänge (wer setzt was)
+---
 
-| Trigger | Neuer Status |
-|---|---|
-| Bewerbungs-Submit auf Vermittlungs-Landing | `vermittlung_neu` |
-| Calendly-Webhook `invitee.created` | `vermittlung_termin_gebucht` |
-| Calendly-Webhook `invitee.canceled` / no_show job | `vermittlung_no_show` |
-| Admin klickt "Absage" | `vermittlung_absage` |
-| Admin klickt "Zusage" | `vermittlung_zusage` + generiert Fasttrack-Link + Email/SMS an Bewerber |
-| Bewerber öffnet Fasttrack-Link | `fasttrack_weitergeleitet` |
-| Bewerber registriert sich (profile insert, email match) | `fasttrack_registriert` |
-| Bewerber startet Onboarding | `fasttrack_onboarding` |
-| `profiles.onboarding_status = 'abgeschlossen'` | `fasttrack_abgeschlossen` |
-| Vertrag signiert / Admin bestätigt | `fasttrack_angenommen` |
+## 3. No-Show-Badge + Reminder-Status in `admin.bewerbungen.tsx`
 
-Umsetzung: eine zentrale Server-Function `advanceApplicationStage(applicationId, toStage, reason?)` — validiert erlaubte Übergänge, schreibt History, aktualisiert `applications`. Alle Trigger (Webhook, Admin-UI, Profile-Trigger) rufen NUR diese eine Funktion. Keine Status-Updates verstreut im Code.
+**Neue Anzeige pro Bewerbung** (Detail-View + optional als Icons in der Liste):
+- Badge **„No-Show"** wenn `scheduled_at < now` UND kein `interview_started_at` UND kein `interview_completed_at`
+- Reminder-Chips: **„Kein-Termin 24h ✉ 08.07."**, **„Kein-Termin 72h ✉ 10.07."**, **„No-Show ✉ 11.07."** — nur die tatsächlich versendeten, mit Datum
+- Fehl-Status („✉ failed") in Rot mit Fehlermeldung im Tooltip
 
-Für die Auto-Übergänge Stufe 2 (registriert / onboarding / abgeschlossen): DB-Trigger auf `profiles`, der die passende `applications`-Zeile (per email + tenant) findet und `stage` fortschreibt.
+**Datenquelle:** `application_reminder_log` (bereits vorhanden) — eine Query pro Detail-Öffnung, in der Liste nur ein aggregierter Count (`sent_reminders: 2`) damit die Bewerbungen-Liste schnell bleibt.
 
-## Admin-UI
+**Manuelle Aktion:** Button „No-Show markieren" der `applications.status = 'no_show'` setzt (neuer Status im Enum, migration).
 
-**Bewerberliste** (`admin.bewerbungen.tsx`)
-- Neuer Filter oben: `Vermittlung` / `Fasttrack` / `Alle` / einzelner Status.
-- Statusbadge zeigt den `stage`-Wert farbcodiert (grau → gelb → grün → blau).
+---
 
-**Bewerberdetail** (`admin.personen.$id.tsx`)
-- Karte "Funnel-Verlauf" mit Timeline aus `application_stage_history`.
-- Aktions-Buttons abhängig vom aktuellen Status:
-  - bei `vermittlung_termin_gebucht`: `[Zusage]` `[Absage]` `[No-Show]`
-  - bei `vermittlung_zusage`: `[Fasttrack-Link neu senden]`
-- Wenn `linked_application_id` gesetzt → Link zur Fasttrack-Bewerbung anzeigen.
+## 4. SMTP-Rate-Limit für Reputationsschutz
 
-**Funnel-Dashboard** (erweitert `landing-funnel.functions.ts`)
-- Neue Sicht: 2 Spalten (Vermittlung + Fasttrack) mit Conversion-Raten je Stufe.
-- Pro Vermittlungs-Landing sichtbar: wie viele endeten in `vermittlung_zusage`, davon wie viele in `fasttrack_angenommen`.
+Aktuell fährt `send-application-reminders` alle fälligen Reminder in einem Cron-Lauf raus — bei einem Peak können das je Tenant 100+ Mails auf einmal sein → Provider drosselt / markiert als Spam.
 
-## Übergabe Vermittlung → Fasttrack
+**Umsetzung, konservativ:**
+- Pro Tenant hartes Limit **max. 40 Reminder-Mails pro Cron-Lauf** (vorhandene `capReached`-Logik in `send-reminders` als Vorbild).
+- Pro Tenant **max. 200 Mails / 12h** (Log-Tabelle `email_log` bereits vorhanden — Count-Query vor jedem Send).
+- **Jitter 400–1200 ms** zwischen zwei Sendungen (existiert bereits in `send-reminders`, in `send-application-reminders` einbauen).
+- Bei drei aufeinanderfolgenden SMTP-Fehlern: Tenant auf `emails_paused = true` setzen mit Grund (Auto-Pause, existiert schon für `send-invitation-email`).
 
-Bei `vermittlung_zusage`:
-1. `linked_fasttrack_landing_id` der Vermittlungs-Landing lesen.
-2. Signierten Redirect-Link bauen: `https://<fasttrack-domain>/?ref=<vermittlung_app_id>&token=<hmac>`.
-3. Email + SMS an Bewerber (bestehende Templates, neues Kürzel).
-4. Beim Öffnen: Fasttrack-Landing prüft `ref+token`, erstellt neue `applications`-Zeile (`flow_type=fast`, `stage=fasttrack_weitergeleitet`), setzt `linked_application_id` auf beiden Zeilen.
+Keine neue Queue nötig — der 30-Min-Cron holt beim nächsten Lauf einfach die restlichen Kandidaten nach.
 
-## Umsetzungs-Reihenfolge
+---
 
-1. **Migration**: `stage`-Enum-Liste, `stage_changed_at/by`, `linked_application_id`, `application_stage_history` + Backfill (bestehende Bewerbungen bekommen `stage` aus altem `status`/`booking_status`).
-2. **Kern**: `advanceApplicationStage` server-fn + DB-Trigger auf `profiles`.
-3. **Webhooks anpassen**: Calendly-Webhook ruft `advanceApplicationStage` statt eigenem Update.
-4. **Admin-UI**: Filter + Aktionsbuttons + Timeline.
-5. **Zusage-Flow**: Redirect-Link-Generator + Email/SMS-Versand.
-6. **Fasttrack-Landing**: `ref+token`-Handling, Link zurück auf Vermittlungs-Bewerbung.
-7. **Dashboard**: 2-Spalten-Funnel.
+## Technische Details (nur für dich)
 
-## Entscheidungen (bestätigt)
+**Dateien:**
+- `src/routes/api/public/applications.ts` — Bewerbungseingang-Block entfernen
+- `src/routes/admin.email-templates.tsx` — Tab „Bewerbungseingang" entfernen
+- `src/routes/admin.bewerbungen.tsx` — No-Show-Badge, Reminder-Chips, Query auf `application_reminder_log`, Button „No-Show markieren"
+- `supabase/functions/send-application-reminders/index.ts` — Cap (40/run), 12h-Cap (200), Jitter, Auto-Pause
+- `supabase/functions/send-reminders/index.ts` — `updated_at`-Referenz suchen und entfernen
+- ggf. `supabase/manual-migrations/20260710_no_show_status.sql` — Status `no_show` in enum
 
-1. Bei `vermittlung_zusage` (KI-Interview → invite) geht die Registrierungs-Email **automatisch** raus. Bereits umgesetzt via `sendRegistrationInviteAfterAiAccept` in `interview-engine.server.ts`.
-2. Fasttrack-Bewerbung = **eigene neue Zeile** in `applications` (`flow_type='fast'`), verknüpft via `linked_application_id`.
-3. `fasttrack_angenommen` wird durch **manuelle Admin-Bestätigung** gesetzt (Button "Als Mitarbeiter übernehmen" im Bewerberdetail).
+**Nach Deploy:**
+- Frontend: Publish → Update
+- Edge Functions: `scripts/deploy-edge-function.sh send-application-reminders` + `send-reminders`
 
-Sobald geklärt, fange ich mit Schritt 1 (Migration) an.
+---
+
+## Nicht Teil dieses Plans
+
+- Umgang mit älteren No-Shows (Auto-Ablehnung nach X Tagen) — separater Wunsch, bei Bedarf danach.
+- Löschen der `application_received_*` Tenant-Spalten — kann später sauber aufgeräumt werden.

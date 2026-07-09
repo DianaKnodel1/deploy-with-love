@@ -647,9 +647,8 @@ function AdminEmailTemplatesPage() {
             <TabsTrigger value="reminders" className="text-xs gap-1.5">
               <Mail className="h-3.5 w-3.5" /> Erinnerungen
             </TabsTrigger>
-            <TabsTrigger value="app_received" className="text-xs gap-1.5">
-              <Mail className="h-3.5 w-3.5" /> Bewerbungseingang
-            </TabsTrigger>
+
+
           </TabsList>
 
           <TabsContent value="welcome">
@@ -795,28 +794,8 @@ function AdminEmailTemplatesPage() {
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="app_received">
-            <div className="rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-700 px-3 py-2 mb-3 text-[11px] text-emerald-900 dark:text-emerald-200">
-              Wird <strong>sofort nach Bewerbungseingang</strong> an Vermittlungs-Bewerber gesendet (Broker-Flow mit Calendly-Link). Enthält den Termin-Buchungslink. Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{partner_name}}"}</code>, <code>{"{{booking_link}}"}</code>, <code>{"{{tenant_name}}"}</code>.
-            </div>
-            <TemplateEditor
-              label="Bewerbungseingang (Vermittlung)"
-              subject={appRecvSubject} onSubjectChange={setAppRecvSubject}
-              body={appRecvBody} onBodyChange={setAppRecvBody}
-              signature={signature} onSignatureChange={setSignature}
-              tenant={selectedTenant}
-            />
-            <div className="mt-4">
-              <Label className="text-xs font-medium">Button-Beschriftung</Label>
-              <Input
-                value={appRecvButton}
-                onChange={(e) => setAppRecvButton(e.target.value)}
-                placeholder="Jetzt Termin buchen"
-                className="mt-1 max-w-md"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1">Fällt zurück auf den Wert im Broker-Block, falls leer.</p>
-            </div>
-          </TabsContent>
+
+
         </Tabs>
       )}
 
@@ -861,7 +840,7 @@ function AdminEmailTemplatesPage() {
                     <SelectItem value="recovery_bew">Domain-Wechsel: Bewerber</SelectItem>
                     <SelectItem value="appointment">30 Min vor Termin</SelectItem>
                     <SelectItem value="chat">Chat-Reminder</SelectItem>
-                    <SelectItem value="app_received">Bewerbungseingang</SelectItem>
+                    
                   </SelectContent>
                 </Select>
               </div>

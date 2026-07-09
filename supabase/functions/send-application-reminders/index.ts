@@ -230,11 +230,49 @@ serve(async (req) => {
     let sent = 0, skipped = 0, failed = 0;
     const results: any[] = [];
 
+    // ─── Rate-Limits (SMTP-Reputationsschutz) ───
+    // Pro Tenant hartes Limit pro Cron-Lauf und pro 12h — verhindert Spam-Flags.
+    const MAX_PER_RUN_PER_TENANT = 40;
+    const MAX_PER_12H_PER_TENANT = 200;
+    const JITTER_MIN_MS = 400;
+    const JITTER_MAX_MS = 1200;
+    const AUTO_PAUSE_AFTER_FAILS = 3;
+
+    const runSentByTenant = new Map<string, number>();
+    const failStreakByTenant = new Map<string, number>();
+    const pausedInThisRun = new Set<string>();
+
+    // 12h-Zählstand aus email_log (falls Tabelle existiert; ansonsten silent 0)
+    const sent12hByTenant = new Map<string, number>();
+    try {
+      const cutoff = new Date(Date.now() - 12 * 3600_000).toISOString();
+      const tenantIds = Array.from(tenants.keys());
+      if (tenantIds.length) {
+        const { data: recent } = await admin
+          .from("email_log")
+          .select("tenant_id")
+          .in("tenant_id", tenantIds)
+          .gte("sent_at", cutoff);
+        for (const r of (recent ?? []) as any[]) {
+          const c = sent12hByTenant.get(r.tenant_id) ?? 0;
+          sent12hByTenant.set(r.tenant_id, c + 1);
+        }
+      }
+    } catch { /* email_log optional */ }
+
+    const jitter = () => new Promise(res => setTimeout(res, JITTER_MIN_MS + Math.random() * (JITTER_MAX_MS - JITTER_MIN_MS)));
+
     for (const { app, kind } of todo) {
       const tenant = tenants.get(app.tenant_id);
       if (!tenant) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_missing" }); continue; }
-      if (tenant.emails_paused) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_paused" }); continue; }
+      if (tenant.emails_paused || pausedInThisRun.has(tenant.id)) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_paused" }); continue; }
       if (!hasValidSmtp(tenant)) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "smtp_incomplete" }); continue; }
+
+      // Rate-Limits
+      const runCount = runSentByTenant.get(tenant.id) ?? 0;
+      if (runCount >= MAX_PER_RUN_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_run_cap" }); continue; }
+      const total12h = (sent12hByTenant.get(tenant.id) ?? 0) + runCount;
+      if (total12h >= MAX_PER_12H_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_12h_cap" }); continue; }
 
       const landing = app.source_landing_id ? landingMap.get(app.source_landing_id) : null;
       const rawCalendly = (landing?.calendly_url || landing?.branding?.calendly_url || "").trim();
@@ -281,6 +319,9 @@ serve(async (req) => {
           recipient_email: app.email, status: "sent",
         });
         sent++; results.push({ app: app.id, kind, status: "sent" });
+        runSentByTenant.set(tenant.id, runCount + 1);
+        failStreakByTenant.set(tenant.id, 0);
+        await jitter();
       } catch (e: any) {
         const errMsg = String(e?.message ?? e).slice(0, 500);
         await admin.from("application_reminder_log").insert({
@@ -288,8 +329,21 @@ serve(async (req) => {
           recipient_email: app.email, status: "failed", error: errMsg,
         });
         failed++; results.push({ app: app.id, kind, status: "failed", reason: errMsg });
+        const streak = (failStreakByTenant.get(tenant.id) ?? 0) + 1;
+        failStreakByTenant.set(tenant.id, streak);
+        if (streak >= AUTO_PAUSE_AFTER_FAILS) {
+          pausedInThisRun.add(tenant.id);
+          try {
+            await admin.from("tenants").update({
+              emails_paused: true,
+              emails_paused_reason: `auto: ${AUTO_PAUSE_AFTER_FAILS} SMTP-Fehler in Reminder-Cron`,
+              emails_paused_at: new Date().toISOString(),
+            } as any).eq("id", tenant.id);
+          } catch { /* best-effort */ }
+        }
       }
     }
+
 
     return json({
       success: true, dry_run: dryRun,
