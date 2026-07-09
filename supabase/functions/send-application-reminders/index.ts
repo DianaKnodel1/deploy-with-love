@@ -531,6 +531,8 @@ serve(async (req) => {
         direct_landing_ids: landingMap.size,
         source_slugs: slugLandingMap.size,
         tenant_landing_fallbacks: tenantLandingFallback.size,
+        tenant_landing_raw_rows: tenantLandingRawCount,
+        landing_errors: landingErrors,
       },
       results: dryRun || todo.length < 100 ? results : undefined,
     });
