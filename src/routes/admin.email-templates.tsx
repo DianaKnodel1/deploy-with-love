@@ -647,9 +647,8 @@ function AdminEmailTemplatesPage() {
             <TabsTrigger value="reminders" className="text-xs gap-1.5">
               <Mail className="h-3.5 w-3.5" /> Erinnerungen
             </TabsTrigger>
-            <TabsTrigger value="app_received" className="text-xs gap-1.5">
-              <Mail className="h-3.5 w-3.5" /> Bewerbungseingang
-            </TabsTrigger>
+
+
           </TabsList>
 
           <TabsContent value="welcome">
