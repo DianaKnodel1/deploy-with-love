@@ -414,10 +414,11 @@ serve(async (req) => {
           source_slug: app.source_slug ?? null,
           tenant_has_landing_fallback: tenantLandingFallback.has(app.tenant_id),
         });
-        if (!dryRun) await admin.from("application_reminder_log").insert({
+        if (!dryRun) await admin.from("application_reminder_log").upsert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "skipped", error: "no_calendly_link",
-        });
+          sent_at: new Date().toISOString(),
+        }, { onConflict: "application_id,reminder_kind" });
         continue;
       }
       const calendlyLink = appendUtm(rawCalendly, app.id);
