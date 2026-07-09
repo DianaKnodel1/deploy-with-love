@@ -342,6 +342,10 @@ function AdminEmailTemplatesPage() {
   const [rAppointmentBody, setRAppointmentBody] = useState("");
   const [rChatSubject, setRChatSubject] = useState("");
   const [rChatBody, setRChatBody] = useState("");
+  const [rAppNoBookingSubject, setRAppNoBookingSubject] = useState("");
+  const [rAppNoBookingBody, setRAppNoBookingBody] = useState("");
+  const [rAppNoShowSubject, setRAppNoShowSubject] = useState("");
+  const [rAppNoShowBody, setRAppNoShowBody] = useState("");
   const [appRecvSubject, setAppRecvSubject] = useState("");
   const [appRecvBody, setAppRecvBody] = useState("");
   const [appRecvButton, setAppRecvButton] = useState("");
