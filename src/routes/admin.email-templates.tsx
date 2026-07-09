@@ -852,6 +852,7 @@ function AdminEmailTemplatesPage() {
                     <SelectItem value="recovery_bew">Domain-Wechsel: Bewerber</SelectItem>
                     
                     <SelectItem value="chat">Chat-Reminder</SelectItem>
+                    <SelectItem value="magic_link">Vermittlung: Interview-Einladung</SelectItem>
                     
                   </SelectContent>
                 </Select>
