@@ -150,6 +150,10 @@ async function sendMail(tenant: TenantRow, to: string, subject: string, html: st
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Deaktiviert: "30 Min vor Termin" wurde aus dem aktiven Mail-Flow entfernt.
+  // Cron zusätzlich per 20260709224000_disable_appointment_reminders_cron.sql unschedulen.
+  return json({ success: true, disabled: true, reason: "appointment_30min_removed" });
+
   try {
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,

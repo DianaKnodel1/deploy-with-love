@@ -20,9 +20,9 @@ import { Mail, Save, Send, Eye, AlertTriangle, CheckCircle2, Copy, Loader2 } fro
 
 // Defaults für Reminder-Templates (gespiegelt zur Edge Function).
 const REMINDER_DEFAULTS = {
-  invite: {
-    subject: "Erinnerung: Registrierung bei {{tenant_name}} abschließen",
-    body: `Hallo {{first_name}},\n\ndeine Bewerbung bei {{tenant_name}} wurde bereits angenommen, aber du hast deinen Account noch nicht angelegt. Bitte schließe die Registrierung ab, damit es weitergehen kann.\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nOder kopiere diesen Link: {{portal_link}}`,
+  employee_signup: {
+    subject: "Mitarbeiter registriert sich – {{tenant_name}}",
+    body: `Hallo {{first_name}},\n\ndein Zugang für {{tenant_name}} ist bereit. Bitte registriere dich im Mitarbeiterportal und schließe anschließend dein Profil ab.\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nOder kopiere diesen Link: {{portal_link}}`,
   },
   confirm: {
     subject: "Bitte bestätige deine E-Mail – {{tenant_name}}",
@@ -39,14 +39,6 @@ const REMINDER_DEFAULTS = {
   recovery_mitarbeiter: {
     subject: "Wir sind umgezogen – dein neuer Portal-Link für {{tenant_name}}",
     body: `Hallo {{first_name}},\n\nwir haben eine neue Online-Adresse! Dein Mitarbeiter-Portal von {{tenant_name}} findest du ab sofort unter einer neuen URL.\n\nDeine Zugangsdaten bleiben unverändert – einfach mit der neuen Adresse einloggen, weitermachen mit Aufträgen, Onboarding-Schritten und Vertragsunterlagen wie gewohnt.\n\n{{cta:Zum neuen Portal|{{portal_link}}}}\n\nFalls der Button nicht funktioniert, kopiere diesen Link:\n{{portal_link}}\n\nViele Grüße\nDein {{tenant_name}}-Team`,
-  },
-  recovery_bewerber: {
-    subject: "Wir sind umgezogen – schließe deine Registrierung bei {{tenant_name}} ab",
-    body: `Hallo {{first_name}},\n\nschön, dass du dabei bist! Unser Portal hat eine neue Adresse – bitte schließe deine Registrierung bei {{tenant_name}} ab sofort über den folgenden Link ab:\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nFalls der Button nicht funktioniert, kopiere diesen Link:\n{{portal_link}}\n\nWir freuen uns auf dich!\nDein {{tenant_name}}-Team`,
-  },
-  appointment_30min: {
-    subject: "Erinnerung: Dein Termin in 30 Minuten",
-    body: `Hallo {{first_name}},\n\nkurze Erinnerung: dein Termin startet in 30 Minuten ({{appointment_time}} Uhr am {{appointment_date}}).\n\nBitte sei rechtzeitig bereit.\n\n{{cta:Zum Portal|{{portal_link}}}}\n\nViele Grüße\n{{tenant_name}}`,
   },
   chat: {
     subject: "Neue Nachricht von {{team_leader_name}} – {{tenant_name}}",
@@ -88,8 +80,6 @@ interface TenantEmail {
   email_signature: string | null;
   team_leader_name: string;
   company_email?: string | null;
-  reminder_invite_subject: string | null;
-  reminder_invite_body: string | null;
   reminder_confirm_subject: string | null;
   reminder_confirm_body: string | null;
   reminder_completion_subject: string | null;
@@ -98,19 +88,12 @@ interface TenantEmail {
   reminder_no_booking_body: string | null;
   reminder_recovery_subject: string | null;
   reminder_recovery_body: string | null;
-  reminder_recovery_bewerber_subject: string | null;
-  reminder_recovery_bewerber_body: string | null;
-  reminder_appointment_subject: string | null;
-  reminder_appointment_body: string | null;
   reminder_chat_subject: string | null;
   reminder_chat_body: string | null;
   reminder_app_no_booking_subject: string | null;
   reminder_app_no_booking_body: string | null;
   reminder_app_no_show_subject: string | null;
   reminder_app_no_show_body: string | null;
-  application_received_subject: string | null;
-  application_received_body: string | null;
-  application_received_button_label: string | null;
   bewerbung_magic_link_subject: string | null;
   bewerbung_magic_link_body: string | null;
   bewerbung_magic_link_button: string | null;
@@ -320,13 +303,14 @@ function AdminEmailTemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
-  type TestTemplateKey = "welcome" | "reset" | "invite" | "confirm" | "completion" | "no_booking" | "recovery_ma" | "recovery_bew" | "appointment" | "chat" | "app_received" | "magic_link";
-  const [testType, setTestType] = useState<TestTemplateKey>("welcome");
+  const [limitedTemplateMode, setLimitedTemplateMode] = useState(false);
+  type TestTemplateKey = "employee_signup" | "reset" | "confirm" | "completion" | "no_booking" | "recovery_ma" | "chat" | "magic_link";
+  const [testType, setTestType] = useState<TestTemplateKey>("employee_signup");
   const { toast } = useToast();
 
   // Template state
-  const [welcomeSubject, setWelcomeSubject] = useState("");
-  const [welcomeBody, setWelcomeBody] = useState("");
+  const [employeeSignupSubject, setEmployeeSignupSubject] = useState("");
+  const [employeeSignupBody, setEmployeeSignupBody] = useState("");
   const [resetSubject, setResetSubject] = useState("");
   const [resetBody, setResetBody] = useState("");
   const [signature, setSignature] = useState("");
@@ -334,8 +318,6 @@ function AdminEmailTemplatesPage() {
   const [replyTo, setReplyTo] = useState("");
 
   // Reminder-Templates
-  const [rInviteSubject, setRInviteSubject] = useState("");
-  const [rInviteBody, setRInviteBody] = useState("");
   const [rConfirmSubject, setRConfirmSubject] = useState("");
   const [rConfirmBody, setRConfirmBody] = useState("");
   const [rCompletionSubject, setRCompletionSubject] = useState("");
@@ -344,29 +326,22 @@ function AdminEmailTemplatesPage() {
   const [rNoBookingBody, setRNoBookingBody] = useState("");
   const [rRecoveryMaSubject, setRRecoveryMaSubject] = useState("");
   const [rRecoveryMaBody, setRRecoveryMaBody] = useState("");
-  const [rRecoveryBewSubject, setRRecoveryBewSubject] = useState("");
-  const [rRecoveryBewBody, setRRecoveryBewBody] = useState("");
-  const [rAppointmentSubject, setRAppointmentSubject] = useState("");
-  const [rAppointmentBody, setRAppointmentBody] = useState("");
   const [rChatSubject, setRChatSubject] = useState("");
   const [rChatBody, setRChatBody] = useState("");
   const [rAppNoBookingSubject, setRAppNoBookingSubject] = useState("");
   const [rAppNoBookingBody, setRAppNoBookingBody] = useState("");
   const [rAppNoShowSubject, setRAppNoShowSubject] = useState("");
   const [rAppNoShowBody, setRAppNoShowBody] = useState("");
-  const [appRecvSubject, setAppRecvSubject] = useState("");
-  const [appRecvBody, setAppRecvBody] = useState("");
-  const [appRecvButton, setAppRecvButton] = useState("");
   const [mlSubject, setMlSubject] = useState("");
   const [mlBody, setMlBody] = useState("");
   const [mlButton, setMlButton] = useState("");
 
   const loadTenants = async () => {
     setLoading(true);
-    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_recovery_bewerber_subject, reminder_recovery_bewerber_body, reminder_appointment_subject, reminder_appointment_body, reminder_chat_subject, reminder_chat_body, application_received_subject, application_received_body, application_received_button_label, bewerbung_magic_link_subject, bewerbung_magic_link_body, bewerbung_magic_link_button";
-    // Fallback: ohne neue Reminder-Spalten (Migrationen 20260606200000 + 20260608120000), falls noch nicht angewandt.
-    const FALLBACK_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body";
+    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_chat_subject, reminder_chat_body, reminder_app_no_booking_subject, reminder_app_no_booking_body, reminder_app_no_show_subject, reminder_app_no_show_body, bewerbung_magic_link_subject, bewerbung_magic_link_body, bewerbung_magic_link_button";
+    const FALLBACK_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_chat_subject, reminder_chat_body";
 
+    setLimitedTemplateMode(false);
     let { data, error } = await (supabase as any).from("tenants").select(FULL_COLS).order("name");
 
     if (error) {
@@ -383,10 +358,10 @@ function AdminEmailTemplatesPage() {
         setLoading(false);
         return;
       }
+      setLimitedTemplateMode(true);
       toast({
-        title: "Einige neue Template-Felder fehlen",
-        description: "Bitte Migrationen anwenden: 20260606200000_recovery_template_split.sql und 20260608120000_appointment_reminder.sql",
-        variant: "destructive",
+        title: "Vermittlungs-Template-Felder fehlen",
+        description: "Bitte die neuen Tenant-Spalten migrieren; die Seite läuft bis dahin ohne Speichern der Vermittlungs-Vorlagen.",
       });
     }
 
@@ -400,10 +375,10 @@ function AdminEmailTemplatesPage() {
   };
 
   const loadTenantData = (t: TenantEmail) => {
-    setWelcomeSubject(t.welcome_email_subject || "Willkommen im Team!");
-    setWelcomeBody(
+    setEmployeeSignupSubject(t.welcome_email_subject || REMINDER_DEFAULTS.employee_signup.subject);
+    setEmployeeSignupBody(
       t.welcome_email_body ||
-        "Hallo {{first_name}},\n\nherzlich willkommen! Deine Bewerbung wurde angenommen.\n\nBitte registriere dich über folgenden Link:\n{{portal_link}}\n\nBei Fragen steht dir {{team_leader_name}} zur Verfügung.\n\nViele Grüße,\n{{company_name}}"
+        REMINDER_DEFAULTS.employee_signup.body
     );
     setResetSubject(t.reset_email_subject || "Passwort zurücksetzen");
     setResetBody(
@@ -413,8 +388,6 @@ function AdminEmailTemplatesPage() {
     setSignature(t.email_signature || "");
     setSenderName(t.sender_name || "");
     setReplyTo(t.reply_to_email || "");
-    setRInviteSubject(t.reminder_invite_subject || REMINDER_DEFAULTS.invite.subject);
-    setRInviteBody(t.reminder_invite_body || REMINDER_DEFAULTS.invite.body);
     setRConfirmSubject(t.reminder_confirm_subject || REMINDER_DEFAULTS.confirm.subject);
     setRConfirmBody(t.reminder_confirm_body || REMINDER_DEFAULTS.confirm.body);
     setRCompletionSubject(t.reminder_completion_subject || REMINDER_DEFAULTS.completion.subject);
@@ -423,22 +396,12 @@ function AdminEmailTemplatesPage() {
     setRNoBookingBody(t.reminder_no_booking_body || REMINDER_DEFAULTS.no_booking.body);
     setRRecoveryMaSubject(t.reminder_recovery_subject || REMINDER_DEFAULTS.recovery_mitarbeiter.subject);
     setRRecoveryMaBody(t.reminder_recovery_body || REMINDER_DEFAULTS.recovery_mitarbeiter.body);
-    setRRecoveryBewSubject(t.reminder_recovery_bewerber_subject || REMINDER_DEFAULTS.recovery_bewerber.subject);
-    setRRecoveryBewBody(t.reminder_recovery_bewerber_body || REMINDER_DEFAULTS.recovery_bewerber.body);
-    setRAppointmentSubject(t.reminder_appointment_subject || REMINDER_DEFAULTS.appointment_30min.subject);
-    setRAppointmentBody(t.reminder_appointment_body || REMINDER_DEFAULTS.appointment_30min.body);
     setRChatSubject(t.reminder_chat_subject || REMINDER_DEFAULTS.chat.subject);
     setRChatBody(t.reminder_chat_body || REMINDER_DEFAULTS.chat.body);
     setRAppNoBookingSubject((t as any).reminder_app_no_booking_subject || REMINDER_DEFAULTS.app_no_booking.subject);
     setRAppNoBookingBody((t as any).reminder_app_no_booking_body || REMINDER_DEFAULTS.app_no_booking.body);
     setRAppNoShowSubject((t as any).reminder_app_no_show_subject || REMINDER_DEFAULTS.app_no_show.subject);
     setRAppNoShowBody((t as any).reminder_app_no_show_body || REMINDER_DEFAULTS.app_no_show.body);
-    setAppRecvSubject(t.application_received_subject || "Deine Bewerbung ist eingegangen – jetzt Termin buchen");
-    setAppRecvBody(
-      t.application_received_body ||
-        "Guten Tag {{first_name}},\n\nvielen Dank für deine Bewerbung. Damit es weitergehen kann, buche bitte jetzt deinen persönlichen Gesprächstermin bei {{partner_name}} über den Button unten.\n\n{{cta:Jetzt Termin buchen|{{booking_link}}}}"
-    );
-    setAppRecvButton(t.application_received_button_label || "Jetzt Termin buchen");
     setMlSubject((t as any).bewerbung_magic_link_subject || REMINDER_DEFAULTS.bewerbung_magic_link.subject);
     setMlBody((t as any).bewerbung_magic_link_body || REMINDER_DEFAULTS.bewerbung_magic_link.body);
     setMlButton((t as any).bewerbung_magic_link_button || REMINDER_DEFAULTS.bewerbung_magic_link.button);
@@ -464,18 +427,14 @@ function AdminEmailTemplatesPage() {
   const handleSave = async () => {
     if (!selectedTenantId) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("tenants")
-      .update({
-        welcome_email_subject: welcomeSubject,
-        welcome_email_body: welcomeBody,
+    const updatePayload: Record<string, any> = {
+        welcome_email_subject: employeeSignupSubject,
+        welcome_email_body: employeeSignupBody,
         reset_email_subject: resetSubject,
         reset_email_body: resetBody,
         email_signature: signature,
         sender_name: senderName || null,
         reply_to_email: replyTo || null,
-        reminder_invite_subject: rInviteSubject,
-        reminder_invite_body: rInviteBody,
         reminder_confirm_subject: rConfirmSubject,
         reminder_confirm_body: rConfirmBody,
         reminder_completion_subject: rCompletionSubject,
@@ -484,23 +443,23 @@ function AdminEmailTemplatesPage() {
         reminder_no_booking_body: rNoBookingBody,
         reminder_recovery_subject: rRecoveryMaSubject,
         reminder_recovery_body: rRecoveryMaBody,
-        reminder_recovery_bewerber_subject: rRecoveryBewSubject,
-        reminder_recovery_bewerber_body: rRecoveryBewBody,
-        reminder_appointment_subject: rAppointmentSubject,
-        reminder_appointment_body: rAppointmentBody,
         reminder_chat_subject: rChatSubject,
         reminder_chat_body: rChatBody,
+      };
+    if (!limitedTemplateMode) {
+      Object.assign(updatePayload, {
         reminder_app_no_booking_subject: rAppNoBookingSubject,
         reminder_app_no_booking_body: rAppNoBookingBody,
         reminder_app_no_show_subject: rAppNoShowSubject,
         reminder_app_no_show_body: rAppNoShowBody,
-        application_received_subject: appRecvSubject,
-        application_received_body: appRecvBody,
-        application_received_button_label: appRecvButton || null,
         bewerbung_magic_link_subject: mlSubject,
         bewerbung_magic_link_body: mlBody,
         bewerbung_magic_link_button: mlButton || null,
-      } as any)
+      });
+    }
+    const { error } = await supabase
+      .from("tenants")
+      .update(updatePayload as any)
       .eq("id", selectedTenantId);
     setSaving(false);
     if (error) {
@@ -513,17 +472,13 @@ function AdminEmailTemplatesPage() {
 
   const getTestTemplate = (key: TestTemplateKey): { subject: string; body: string } => {
     switch (key) {
-      case "welcome": return { subject: welcomeSubject, body: welcomeBody };
+      case "employee_signup": return { subject: employeeSignupSubject, body: employeeSignupBody };
       case "reset": return { subject: resetSubject, body: resetBody };
-      case "invite": return { subject: rInviteSubject, body: rInviteBody };
       case "confirm": return { subject: rConfirmSubject, body: rConfirmBody };
       case "completion": return { subject: rCompletionSubject, body: rCompletionBody };
       case "no_booking": return { subject: rNoBookingSubject, body: rNoBookingBody };
       case "recovery_ma": return { subject: rRecoveryMaSubject, body: rRecoveryMaBody };
-      case "recovery_bew": return { subject: rRecoveryBewSubject, body: rRecoveryBewBody };
-      case "appointment": return { subject: rAppointmentSubject, body: rAppointmentBody };
       case "chat": return { subject: rChatSubject, body: rChatBody };
-      case "app_received": return { subject: appRecvSubject, body: appRecvBody };
       case "magic_link": return { subject: mlSubject, body: mlBody };
     }
   };
@@ -549,9 +504,10 @@ function AdminEmailTemplatesPage() {
           lastName: "Benutzer",
           registrationLink: `https://${selectedTenant.domain}/register?token=test`,
           tenantId: selectedTenantId,
-          isTestEmail: true,
-          customSubject: `[TEST] ${replacePlaceholders(subject, selectedTenant)}`,
-          customHtml: html,
+          subject: `[TEST] ${replacePlaceholders(subject, selectedTenant)}`,
+          intro: replacePlaceholders(body, selectedTenant).replace(/\n/g, "<br/>"),
+          buttonLabel: testType === "magic_link" ? mlButton : undefined,
+          templateName: testType === "magic_link" ? "bewerbung_magic_link" : testType,
         },
       });
       if (error) throw new Error(error.message);
@@ -654,10 +610,10 @@ function AdminEmailTemplatesPage() {
 
       {/* Template Tabs */}
       {selectedTenant && (
-        <Tabs defaultValue="welcome" className="space-y-4">
+        <Tabs defaultValue="employee_signup" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="welcome" className="text-xs gap-1.5">
-              <Mail className="h-3.5 w-3.5" /> Willkommen / Einladung
+            <TabsTrigger value="employee_signup" className="text-xs gap-1.5">
+              <Mail className="h-3.5 w-3.5" /> Mitarbeiter registriert sich
             </TabsTrigger>
             <TabsTrigger value="reset" className="text-xs gap-1.5">
               <Mail className="h-3.5 w-3.5" /> Passwort zurücksetzen
@@ -669,13 +625,13 @@ function AdminEmailTemplatesPage() {
 
           </TabsList>
 
-          <TabsContent value="welcome">
+          <TabsContent value="employee_signup">
             <TemplateEditor
-              label="Willkommensmail"
-              subject={welcomeSubject}
-              onSubjectChange={setWelcomeSubject}
-              body={welcomeBody}
-              onBodyChange={setWelcomeBody}
+              label="Mitarbeiter registriert sich"
+              subject={employeeSignupSubject}
+              onSubjectChange={setEmployeeSignupSubject}
+              body={employeeSignupBody}
+              onBodyChange={setEmployeeSignupBody}
               signature={signature}
               onSignatureChange={setSignature}
               tenant={selectedTenant}
@@ -697,7 +653,7 @@ function AdminEmailTemplatesPage() {
 
           <TabsContent value="reminders">
             <div className="rounded-lg border bg-muted/30 px-3 py-2 mb-3 text-[12px] text-muted-foreground">
-              Diese Mails verschickt das System automatisch (max. 5×, mindestens 3 Tage Abstand).
+              Diese Mails verschickt das System automatisch abhängig vom jeweiligen Flow.
               Verwende <code>{`{{cta:Label|{{portal_link}}}}`}</code> für einen Button.
               Plain-Text wird automatisch in HTML umgewandelt.
             </div>
@@ -842,15 +798,13 @@ function AdminEmailTemplatesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="welcome">Willkommen / Einladung</SelectItem>
+                    <SelectItem value="employee_signup">Mitarbeiter registriert sich</SelectItem>
                     <SelectItem value="reset">Passwort-Reset</SelectItem>
                     
                     <SelectItem value="confirm">Erinnerung: E-Mail bestätigen</SelectItem>
                     <SelectItem value="completion">Erinnerung: Registrierung abschließen</SelectItem>
                     <SelectItem value="no_booking">Erinnerung: Keine Buchung</SelectItem>
                     <SelectItem value="recovery_ma">Domain-Wechsel: Mitarbeiter</SelectItem>
-                    <SelectItem value="recovery_bew">Domain-Wechsel: Bewerber</SelectItem>
-                    
                     <SelectItem value="chat">Chat-Reminder</SelectItem>
                     <SelectItem value="magic_link">Vermittlung: Interview-Einladung</SelectItem>
                     

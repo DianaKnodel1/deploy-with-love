@@ -50,15 +50,15 @@ serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      (Deno.env.get("SUPABASE_URL") ?? Deno.env.get("API_EXTERNAL_URL"))!,
+      (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY"))!,
       { auth: { autoRefreshToken: false, persistSession: false } },
     );
     const supabase = supabaseAdmin;
 
     const { data: tenant, error: tErr } = await supabaseAdmin
       .from("tenants")
-      .select("id, name, domain, logo_url, primary_color, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, is_active, emails_paused, emails_paused_reason, application_received_subject, application_received_body, application_received_button_label")
+      .select("id, name, domain, logo_url, primary_color, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, is_active, emails_paused, emails_paused_reason, welcome_email_subject, welcome_email_body, application_received_subject, application_received_body, application_received_button_label")
       .eq("id", tenantId)
       .maybeSingle();
     if (tErr || !tenant) return json({ error: "Tenant nicht gefunden" }, 404);
@@ -80,7 +80,7 @@ serve(async (req) => {
     const brand = tenant.primary_color ?? "#0f172a";
     const greetingName = firstName || (fullName ? fullName.split(" ")[0] : "");
 
-    // Placeholder-Map für DB-Templates (application_received etc.).
+    // Placeholder-Map für DB-Templates.
     const phMap: Record<string, string> = {
       first_name: greetingName,
       last_name: lastName || "",
@@ -95,10 +95,14 @@ serve(async (req) => {
     };
     const applyPh = (s: string) => s.replace(/\{\{(\w+)\}\}/g, (_m, k) => phMap[k] ?? "");
 
-    // Template-Defaults aus tenant-Spalten laden (aktuell nur application_received).
+    // Template-Defaults aus tenant-Spalten laden.
     let dbSubject: string | null = null;
     let dbBody: string | null = null;
     let dbButton: string | null = null;
+    if (!templateNameOverride || templateNameOverride === "invitation") {
+      dbSubject = tenant.welcome_email_subject || null;
+      dbBody = tenant.welcome_email_body || null;
+    }
     if (templateNameOverride === "application_received") {
       dbSubject = tenant.application_received_subject || null;
       dbBody = tenant.application_received_body || null;
@@ -107,15 +111,15 @@ serve(async (req) => {
 
     const subject = subjectOverride && subjectOverride.trim()
       ? subjectOverride.trim()
-      : (dbSubject ? applyPh(dbSubject) : `Willkommen im Team – ${tenant.name}`);
+      : (dbSubject ? applyPh(dbSubject) : `Mitarbeiter registriert sich – ${tenant.name}`);
     const headline = headlineOverride && headlineOverride.trim()
       ? headlineOverride.trim()
-      : (dbSubject ? applyPh(dbSubject) : "Willkommen im Team!");
+      : (dbSubject ? applyPh(dbSubject) : "Mitarbeiter registriert sich");
     const intro = introOverride && introOverride.trim()
       ? introOverride.trim()
       : (dbBody
           ? applyPh(dbBody).replace(/\n/g, "<br/>")
-          : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""}, mein Name ist Sabine Schneider von <strong>${escapeHtml(tenant.name)}</strong>, wir hatten gemeinsam das Bewerbungsgespräch.<br/><br/>Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!`);
+          : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""},<br/><br/>dein Zugang bei <strong>${escapeHtml(tenant.name)}</strong> ist bereit. Bitte registriere dich im Mitarbeiterportal und schließe anschließend dein Profil ab.`);
     const buttonLabel = buttonLabelOverride && buttonLabelOverride.trim()
       ? buttonLabelOverride.trim()
       : (dbButton ? applyPh(dbButton) : "Jetzt registrieren");
