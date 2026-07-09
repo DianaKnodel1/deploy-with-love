@@ -308,10 +308,13 @@ serve(async (req) => {
 
     // Bereits versendete Reminder pro (application_id, kind)
     const appIds = apps.map((a: any) => a.id);
+    // Nur 'sent' blockiert weitere Zustellversuche. 'skipped'/'failed' dürfen erneut
+    // versucht werden (z.B. wenn inzwischen ein Calendly-Link hinterlegt wurde).
     const { data: existing } = await admin
       .from("application_reminder_log")
-      .select("application_id,reminder_kind")
-      .in("application_id", appIds);
+      .select("application_id,reminder_kind,status")
+      .in("application_id", appIds)
+      .eq("status", "sent");
     const already = new Set<string>((existing ?? []).map((r: any) => `${r.application_id}|${r.reminder_kind}`));
 
     type Todo = { app: any; kind: "no_booking_24h" | "no_booking_72h" | "no_show_24h" };
