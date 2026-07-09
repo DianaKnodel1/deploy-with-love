@@ -190,6 +190,30 @@ function AdminBewerbungenPage() {
     return () => { cancelled = true; };
   }, []);
 
+  // Reminder-Log (letzter Eintrag pro application_id)
+  type ReminderInfo = { kind: string; status: string; sent_at: string };
+  const [reminderByApp, setReminderByApp] = useState<Map<string, ReminderInfo>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("application_reminder_log")
+        .select("application_id, reminder_kind, status, sent_at")
+        .order("sent_at", { ascending: false })
+        .limit(1000);
+      if (cancelled || !data) return;
+      const m = new Map<string, ReminderInfo>();
+      for (const r of data as any[]) {
+        if (!m.has(r.application_id)) {
+          m.set(r.application_id, { kind: r.reminder_kind, status: r.status, sent_at: r.sent_at });
+        }
+      }
+      setReminderByApp(m);
+    })();
+    return () => { cancelled = true; };
+  }, [applications]);
+
+
   const nameOf = (id: string | null | undefined): string | null => {
     if (!id) return null;
     const l = landingById.get(id);
@@ -389,12 +413,34 @@ function AdminBewerbungenPage() {
                       <tr key={r.id} className="hover:bg-muted/20">
                         <td className="px-4 py-3 font-medium">
                           <div>{r.name}</div>
-                          <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
+                          <div className="text-[10px] text-muted-foreground font-normal mt-0.5 flex flex-wrap items-center gap-1">
                             <span className={`inline-block px-1.5 py-0.5 rounded ${PHASE_COLOR[r.phase]}`}>
                               {meta?.emoji} {meta?.label}
                             </span>
+                            {(() => {
+                              const rem = reminderByApp.get(r.id);
+                              if (!rem) return null;
+                              const label =
+                                rem.kind === "no_booking_24h" ? "24 h Erinnerung" :
+                                rem.kind === "no_booking_72h" ? "72 h Erinnerung" :
+                                rem.kind === "no_show_24h"   ? "No-Show Follow-up" :
+                                rem.kind;
+                              const when = new Date(rem.sent_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+                              const cls = rem.status === "sent"
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                : rem.status === "failed"
+                                  ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
+                              const icon = rem.status === "sent" ? "✉️" : rem.status === "failed" ? "⚠️" : "⏭";
+                              return (
+                                <span className={`inline-block px-1.5 py-0.5 rounded ${cls}`} title={`Status: ${rem.status}`}>
+                                  {icon} {label} · {when}
+                                </span>
+                              );
+                            })()}
                           </div>
                         </td>
+
                         <td className="px-4 py-3 text-muted-foreground tabular-nums">{r.phone}</td>
                         <td className="px-4 py-3 text-muted-foreground">{r.email}</td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">
