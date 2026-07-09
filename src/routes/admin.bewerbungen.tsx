@@ -120,6 +120,7 @@ function phaseToStages(phase: Phase): Stage[] {
 
   const cur = phase === "termin_offen" ? 0
     : phase === "termin_gebucht" ? 0
+    : phase === "abgesagt" ? 0
     : phase === "no_show" ? 1
     : phase === "interview_laeuft" ? 1
     : phase === "angenommen" || phase === "abgelehnt" ? 2
