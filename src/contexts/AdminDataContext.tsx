@@ -117,14 +117,15 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       fetcher: () => Promise<T>,
       onSuccess: (value: T) => void,
       onSettled?: () => void,
-    ): Promise<{ ok: boolean; label: string }> => {
+    ): Promise<{ ok: boolean; label: string; error?: string }> => {
       try {
         const value = await fetcher();
         onSuccess(value);
         return { ok: true, label };
-      } catch (err) {
+      } catch (err: any) {
         console.error(`[AdminData] ${label} konnte nicht geladen werden`, err);
-        return { ok: false, label };
+        const msg = err?.message || err?.error_description || err?.details || String(err);
+        return { ok: false, label, error: msg };
       } finally {
         onSettled?.();
       }
@@ -144,7 +145,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       Promise.allSettled([applicationsTask, profilesTask]).then(() => setLoading(false));
 
-      const criticalTasks: Promise<{ ok: boolean; label: string }>[] = [
+      const criticalTasks: Promise<{ ok: boolean; label: string; error?: string }>[] = [
         applicationsTask,
         profilesTask,
         track("Buchungen",
@@ -163,7 +164,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       const criticalResults = await Promise.all(criticalTasks);
 
-      const backgroundTasks: Promise<{ ok: boolean; label: string }>[] = [
+      const backgroundTasks: Promise<{ ok: boolean; label: string; error?: string }>[] = [
         track<{ user_id: string; email_confirmed: boolean }[]>("E-Mail-Bestätigungen",
           () => (supabase as any).rpc("admin_get_email_confirmations").then((r: any) => (r.data ?? []) as { user_id: string; email_confirmed: boolean }[]),
           (confs) => setEmailConfirmedUserIds(new Set(confs.filter((c) => c.email_confirmed).map((c) => c.user_id)))),
@@ -196,9 +197,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       setLoadingProfiles(false);
 
       if (failures.length > 0) {
+        const details = results.filter((r) => !r.ok).map((r) => `${r.label}: ${r.error ?? "unbekannt"}`).join(" | ");
         toast({
           title: "Admin-Daten nur teilweise geladen",
-          description: `Fehlende Bereiche: ${failures.join(", ")}`,
+          description: `Fehlende Bereiche: ${failures.join(", ")}. Details: ${details}`,
           variant: "destructive",
         });
       }
