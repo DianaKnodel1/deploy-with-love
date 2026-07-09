@@ -439,6 +439,9 @@ function AdminEmailTemplatesPage() {
         "Guten Tag {{first_name}},\n\nvielen Dank für deine Bewerbung. Damit es weitergehen kann, buche bitte jetzt deinen persönlichen Gesprächstermin bei {{partner_name}} über den Button unten.\n\n{{cta:Jetzt Termin buchen|{{booking_link}}}}"
     );
     setAppRecvButton(t.application_received_button_label || "Jetzt Termin buchen");
+    setMlSubject((t as any).bewerbung_magic_link_subject || REMINDER_DEFAULTS.bewerbung_magic_link.subject);
+    setMlBody((t as any).bewerbung_magic_link_body || REMINDER_DEFAULTS.bewerbung_magic_link.body);
+    setMlButton((t as any).bewerbung_magic_link_button || REMINDER_DEFAULTS.bewerbung_magic_link.button);
   };
 
   useEffect(() => {
