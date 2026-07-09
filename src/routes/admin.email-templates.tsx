@@ -357,6 +357,9 @@ function AdminEmailTemplatesPage() {
   const [appRecvSubject, setAppRecvSubject] = useState("");
   const [appRecvBody, setAppRecvBody] = useState("");
   const [appRecvButton, setAppRecvButton] = useState("");
+  const [mlSubject, setMlSubject] = useState("");
+  const [mlBody, setMlBody] = useState("");
+  const [mlButton, setMlButton] = useState("");
 
   const loadTenants = async () => {
     setLoading(true);
