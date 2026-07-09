@@ -1,20 +1,24 @@
 // Deno Edge Function: send-appointment-reminders
+// FUNCTION_VERSION: 2026-07-09-interview-invite-30min-v1
 //
-// Sendet 30 Minuten vor einem gebuchten Termin (bookings.booking_date +
-// booking_time) eine Erinnerungs-Mail an den Mitarbeiter.
+// Sendet ~30 Minuten VOR dem gebuchten Interview-Termin (applications.scheduled_at)
+// die "Interview-Einladung" (Template bewerbung_magic_link_*) mit Magic-Link
+// zum AI-Bewerbungsgespräch.
 //
-// Trigger: pg_cron / externer Cron alle 10 Min, POST mit { dry_run?: bool }
-//   - Auth: x-cron-secret Header ODER ?key=<CRON_SECRET>
+// Trigger: pg_cron alle 10 Min, POST { dry_run?: bool }
+//   - Auth: x-cron-secret Header ODER ?key=<CRON_SECRET> ODER Admin JWT
 //
-// Toleranzfenster: now+25min .. now+40min (deckt 10-Min-Cron sauber ab).
-// Idempotenz: appointment_reminder_log.booking_id PRIMARY KEY.
-//
-// Tenant-Isolation: SMTP wird strikt aus profiles.tenant_id → tenants gezogen.
-// Pausierte Tenants (emails_paused = true) werden komplett übersprungen.
+// Toleranzfenster: now+25min .. now+40min
+// Idempotenz: application_reminder_log (application_id, reminder_kind='interview_invite_30min')
+// Tenant-Isolation: SMTP strikt aus applications.tenant_id → tenants.
+// Pausierte Tenants (emails_paused = true) werden übersprungen.
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import nodemailer from "https://esm.sh/nodemailer@6.9.14";
+
+const FUNCTION_VERSION = "2026-07-09-interview-invite-30min-v1";
+const REMINDER_KIND = "interview_invite_30min";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,21 +26,21 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Toleranzfenster um die 30-Min-Marke (Cron läuft alle 10 Min).
 const WINDOW_LOW_MIN = 25;
 const WINDOW_HIGH_MIN = 40;
 
-const DEFAULT_SUBJECT = "Erinnerung: Dein Termin in 30 Minuten";
+const DEFAULT_SUBJECT = "In 30 Minuten startet Ihr Bewerbungsgespräch";
 const DEFAULT_BODY = `Hallo {{first_name}},
 
-kurze Erinnerung: dein Termin startet in 30 Minuten ({{appointment_time}} Uhr am {{appointment_date}}).
+kurze Erinnerung: In etwa 30 Minuten ({{appointment_time}} Uhr) startet Ihr Bewerbungsgespräch.
 
-Bitte sei rechtzeitig bereit.
+Bitte starten Sie das kurze KI-Vorgespräch direkt über den folgenden Link – so sind wir bestens vorbereitet:
 
-{{cta:Zum Portal|{{portal_link}}}}
+{{cta:{{button_label}}|{{magic_link}}}}
 
 Viele Grüße
 {{tenant_name}}`;
+const DEFAULT_BUTTON = "Bewerbungsgespräch starten";
 
 interface TenantRow {
   id: string;
@@ -54,16 +58,13 @@ interface TenantRow {
   smtp_password: string | null;
   email_signature: string | null;
   emails_paused: boolean | null;
-  reminder_appointment_subject: string | null;
-  reminder_appointment_body: string | null;
+  bewerbung_magic_link_subject: string | null;
+  bewerbung_magic_link_body: string | null;
+  bewerbung_magic_link_button: string | null;
 }
 
 function hasValidSmtp(t: TenantRow | null | undefined): t is TenantRow {
   return !!(t && t.smtp_host && t.smtp_port && t.smtp_username && t.smtp_password && t.sender_email);
-}
-
-function portalHost(t: TenantRow): string {
-  return `portal.${t.primary_domain ?? t.domain}`;
 }
 
 function json(body: unknown, status = 200) {
@@ -73,22 +74,20 @@ function json(body: unknown, status = 200) {
   });
 }
 
-async function authorize(req: Request, admin: any): Promise<{ ok: true } | { ok: false; status: number; msg: string }> {
+async function authorize(req: Request, admin: any) {
   const cronSecret = Deno.env.get("CRON_SECRET");
   const url = new URL(req.url);
   const provided = req.headers.get("x-cron-secret") ?? url.searchParams.get("key");
-  if (cronSecret && provided && provided === cronSecret) return { ok: true };
-
+  if (cronSecret && provided && provided === cronSecret) return { ok: true as const };
   const authHeader = req.headers.get("authorization") ?? "";
   const jwt = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
-  if (!jwt) return { ok: false, status: 401, msg: "Unauthorized" };
+  if (!jwt) return { ok: false as const, status: 401, msg: "Unauthorized" };
   const { data: userRes, error: uErr } = await admin.auth.getUser(jwt);
-  if (uErr || !userRes?.user) return { ok: false, status: 401, msg: "Unauthorized" };
-  const { data: role } = await admin
-    .from("user_roles").select("role")
+  if (uErr || !userRes?.user) return { ok: false as const, status: 401, msg: "Unauthorized" };
+  const { data: role } = await admin.from("user_roles").select("role")
     .eq("user_id", userRes.user.id).eq("role", "admin").maybeSingle();
-  if (!role) return { ok: false, status: 403, msg: "Forbidden" };
-  return { ok: true };
+  if (!role) return { ok: false as const, status: 403, msg: "Forbidden" };
+  return { ok: true as const };
 }
 
 function renderTemplate(text: string, vars: Record<string, string>): string {
@@ -102,19 +101,16 @@ function renderTemplate(text: string, vars: Record<string, string>): string {
 function buildHtml(subject: string, body: string, signature: string, tenant: TenantRow, vars: Record<string, string>): string {
   const color = tenant.primary_color || "#0f172a";
   const resolvedBody = renderTemplate(body, vars)
-    .replace(/\{\{cta:([^|}]+)\|([^}]+)\}\}/g, (_m, label, href) => {
-      return `<table cellpadding="0" cellspacing="0" style="margin:16px 0"><tr><td style="background:${color};border-radius:8px"><a href="${String(href).trim()}" style="display:inline-block;padding:14px 28px;color:#fff;text-decoration:none;font-weight:600;font-size:15px">${String(label).trim()}</a></td></tr></table>`;
-    });
-  const bodyHtml = resolvedBody
-    .replace(/\n/g, "<br>")
+    .replace(/\{\{cta:([^|}]+)\|([^}]+)\}\}/g, (_m, label, href) =>
+      `<table cellpadding="0" cellspacing="0" style="margin:16px 0"><tr><td style="background:${color};border-radius:8px"><a href="${String(href).trim()}" style="display:inline-block;padding:14px 28px;color:#fff;text-decoration:none;font-weight:600;font-size:15px">${String(label).trim()}</a></td></tr></table>`
+    );
+  const bodyHtml = resolvedBody.replace(/\n/g, "<br>")
     .replace(/(https?:\/\/[^\s<]+)/g, `<a href="$1" style="color:${color};text-decoration:underline;">$1</a>`);
   const logoHtml = tenant.logo_url
-    ? `<div style="text-align:center;margin-bottom:24px;"><img src="${tenant.logo_url}" alt="${tenant.name}" style="max-height:48px;max-width:200px;" /></div>`
-    : "";
+    ? `<div style="text-align:center;margin-bottom:24px;"><img src="${tenant.logo_url}" alt="${tenant.name}" style="max-height:48px;max-width:200px;" /></div>` : "";
   const sigText = signature ? renderTemplate(signature, vars).replace(/\n/g, "<br>") : "";
   const sigHtml = sigText
-    ? `<div style="border-top:1px solid #e5e7eb;margin-top:24px;padding-top:16px;color:#9ca3af;font-size:13px;line-height:20px;">${sigText}</div>`
-    : "";
+    ? `<div style="border-top:1px solid #e5e7eb;margin-top:24px;padding-top:16px;color:#9ca3af;font-size:13px;line-height:20px;">${sigText}</div>` : "";
   const subj = renderTemplate(subject, vars);
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
@@ -131,28 +127,19 @@ ${sigHtml}
 
 async function sendMail(tenant: TenantRow, to: string, subject: string, html: string) {
   const transporter = nodemailer.createTransport({
-    host: tenant.smtp_host!,
-    port: tenant.smtp_port!,
-    secure: tenant.smtp_port === 465,
+    host: tenant.smtp_host!, port: tenant.smtp_port!, secure: tenant.smtp_port === 465,
     auth: { user: tenant.smtp_username!, pass: tenant.smtp_password! },
   });
   const senderName = tenant.sender_name ?? tenant.name;
   const senderEmail = tenant.sender_email ?? tenant.smtp_username!;
   await transporter.sendMail({
     from: `"${senderName}" <${senderEmail}>`,
-    to,
-    replyTo: tenant.reply_to_email ?? senderEmail,
-    subject,
-    html,
+    to, replyTo: tenant.reply_to_email ?? senderEmail, subject, html,
   });
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  // Deaktiviert: "30 Min vor Termin" wurde aus dem aktiven Mail-Flow entfernt.
-  // Cron zusätzlich per 20260709224000_disable_appointment_reminders_cron.sql unschedulen.
-  return json({ success: true, disabled: true, reason: "appointment_30min_removed" });
 
   try {
     const admin = createClient(
@@ -162,7 +149,7 @@ serve(async (req) => {
     );
 
     const authz = await authorize(req, admin);
-    if (!authz.ok) return json({ error: authz.msg }, authz.status);
+    if (!authz.ok) return json({ error: authz.msg, version: FUNCTION_VERSION }, authz.status);
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const dryRun = body?.dry_run === true;
@@ -171,123 +158,110 @@ serve(async (req) => {
     const low = new Date(now.getTime() + WINDOW_LOW_MIN * 60_000);
     const high = new Date(now.getTime() + WINDOW_HIGH_MIN * 60_000);
 
-    // Tenants vorladen
-    const { data: tList, error: tErr } = await admin
-      .from("tenants")
-      .select("id,name,domain,primary_domain,logo_url,primary_color,sender_email,sender_name,reply_to_email,smtp_host,smtp_port,smtp_username,smtp_password,email_signature,is_active,emails_paused,reminder_appointment_subject,reminder_appointment_body")
+    // Tenants
+    const { data: tList, error: tErr } = await admin.from("tenants")
+      .select("id,name,domain,primary_domain,logo_url,primary_color,sender_email,sender_name,reply_to_email,smtp_host,smtp_port,smtp_username,smtp_password,email_signature,is_active,emails_paused,bewerbung_magic_link_subject,bewerbung_magic_link_body,bewerbung_magic_link_button")
       .eq("is_active", true);
-    if (tErr) return json({ error: tErr.message }, 500);
+    if (tErr) return json({ error: tErr.message, version: FUNCTION_VERSION }, 500);
     const tenants = new Map<string, TenantRow>();
     (tList ?? []).forEach((t: any) => tenants.set(t.id, t as TenantRow));
 
-    // Kandidaten-Bookings im Fenster
-    const lowDate = low.toISOString().slice(0, 10);
-    const highDate = high.toISOString().slice(0, 10);
-    const dateList = lowDate === highDate ? [lowDate] : [lowDate, highDate];
+    // Applications im Fenster (scheduled_at zwischen +25 und +40 Min)
+    const { data: apps, error: aErr } = await admin.from("applications")
+      .select("id,email,first_name,last_name,full_name,tenant_id,scheduled_at,magic_token,magic_token_expires_at,target_landing_id,booking_status")
+      .eq("booking_status", "scheduled")
+      .gte("scheduled_at", low.toISOString())
+      .lt("scheduled_at", high.toISOString());
+    if (aErr) return json({ error: aErr.message, version: FUNCTION_VERSION }, 500);
 
-    const { data: bookings, error: bErr } = await admin
-      .from("bookings")
-      .select("id,user_id,booking_date,booking_time,status")
-      .in("booking_date", dateList)
-      .in("status", ["booked", "confirmed", "scheduled", "accepted"]);
-    if (bErr) return json({ error: bErr.message }, 500);
-
-    const candidates: Array<{
-      id: string;
-      user_id: string;
-      starts_at: Date;
-      booking_date: string;
-      booking_time: string;
-    }> = [];
-    for (const b of (bookings ?? []) as any[]) {
-      if (!b.booking_date || !b.booking_time) continue;
-      const starts = new Date(`${b.booking_date}T${b.booking_time}`);
-      if (isNaN(starts.getTime())) continue;
-      if (starts >= low && starts < high) {
-        candidates.push({ id: b.id, user_id: b.user_id, starts_at: starts, booking_date: b.booking_date, booking_time: b.booking_time });
-      }
+    if (!apps || apps.length === 0) {
+      return json({ success: true, version: FUNCTION_VERSION, dry_run: dryRun,
+        window: { from: low.toISOString(), to: high.toISOString() }, candidates: 0, sent: 0, skipped: 0, failed: 0 });
     }
 
-    if (candidates.length === 0) {
-      return json({ success: true, dry_run: dryRun, window: { from: low.toISOString(), to: high.toISOString() }, candidates: 0, sent: 0, skipped: 0, failed: 0 });
-    }
+    // Idempotenz: nur solche, die noch nicht als 'sent' geloggt sind
+    const appIds = apps.map((a: any) => a.id);
+    const { data: logged } = await admin.from("application_reminder_log")
+      .select("application_id,status").eq("reminder_kind", REMINDER_KIND).in("application_id", appIds);
+    const sentSet = new Set((logged ?? []).filter((r: any) => r.status === "sent").map((r: any) => r.application_id));
+    const todo = apps.filter((a: any) => !sentSet.has(a.id));
 
-    // Bereits geloggte Bookings rausfiltern (Idempotenz)
-    const ids = candidates.map(c => c.id);
-    const { data: logged } = await admin
-      .from("appointment_reminder_log")
-      .select("booking_id")
-      .in("booking_id", ids);
-    const loggedSet = new Set((logged ?? []).map((r: any) => r.booking_id));
-    const todo = candidates.filter(c => !loggedSet.has(c.id));
-
-    // Profile laden
-    const userIds = Array.from(new Set(todo.map(c => c.user_id))).filter(Boolean);
-    const profileMap = new Map<string, { email: string | null; first_name: string | null; last_name: string | null; full_name: string | null; tenant_id: string | null }>();
-    if (userIds.length > 0) {
-      const { data: profs } = await admin
-        .from("profiles")
-        .select("user_id,email,first_name,last_name,full_name,tenant_id")
-        .in("user_id", userIds);
-      for (const p of (profs ?? []) as any[]) profileMap.set(p.user_id, p);
+    // Landing-Pages (für Domain → Magic-Link)
+    const landingIds = Array.from(new Set(todo.map((a: any) => a.target_landing_id).filter(Boolean)));
+    const landingMap = new Map<string, { domain: string | null }>();
+    if (landingIds.length) {
+      const { data: lp } = await admin.from("landing_pages").select("id,domain").in("id", landingIds);
+      (lp ?? []).forEach((l: any) => landingMap.set(l.id, { domain: l.domain }));
     }
 
     let sent = 0, skipped = 0, failed = 0;
-    const results: Array<{ booking_id: string; status: string; reason?: string }> = [];
+    const results: any[] = [];
 
-    for (const c of todo) {
-      const prof = profileMap.get(c.user_id);
-      if (!prof?.email || !prof?.tenant_id) {
-        skipped++; results.push({ booking_id: c.id, status: "skipped", reason: "no_profile_or_email" }); continue;
-      }
-      const tenant = tenants.get(prof.tenant_id);
-      if (!tenant) { skipped++; results.push({ booking_id: c.id, status: "skipped", reason: "tenant_missing" }); continue; }
-      if (tenant.emails_paused) { skipped++; results.push({ booking_id: c.id, status: "skipped", reason: "tenant_paused" }); continue; }
-      if (!hasValidSmtp(tenant)) { skipped++; results.push({ booking_id: c.id, status: "skipped", reason: "smtp_incomplete" }); continue; }
+    for (const a of todo as any[]) {
+      if (!a.email || !a.tenant_id) { skipped++; results.push({ application_id: a.id, status: "skipped", reason: "no_email_or_tenant" }); continue; }
+      if (!a.magic_token) { skipped++; results.push({ application_id: a.id, status: "skipped", reason: "no_magic_token" }); continue; }
+      const tenant = tenants.get(a.tenant_id);
+      if (!tenant) { skipped++; results.push({ application_id: a.id, status: "skipped", reason: "tenant_missing" }); continue; }
+      if (tenant.emails_paused) { skipped++; results.push({ application_id: a.id, status: "skipped", reason: "tenant_paused" }); continue; }
+      if (!hasValidSmtp(tenant)) { skipped++; results.push({ application_id: a.id, status: "skipped", reason: "smtp_incomplete" }); continue; }
 
-      if (dryRun) { sent++; results.push({ booking_id: c.id, status: "would_send" }); continue; }
+      const landing = a.target_landing_id ? landingMap.get(a.target_landing_id) : null;
+      const domain = landing?.domain || tenant.primary_domain || tenant.domain;
+      if (!domain) { skipped++; results.push({ application_id: a.id, status: "skipped", reason: "no_domain" }); continue; }
 
-      const subject = tenant.reminder_appointment_subject || DEFAULT_SUBJECT;
-      const bodyT = tenant.reminder_appointment_body || DEFAULT_BODY;
+      const magicLink = `https://${domain}/bewerbung?token=${a.magic_token}`;
+      const startsAt = new Date(a.scheduled_at);
+      const firstName = a.first_name || (a.full_name?.split(" ")[0] ?? "");
+
+      const subject = tenant.bewerbung_magic_link_subject || DEFAULT_SUBJECT;
+      const bodyT = tenant.bewerbung_magic_link_body || DEFAULT_BODY;
+      const buttonLabel = tenant.bewerbung_magic_link_button || DEFAULT_BUTTON;
+
       const vars: Record<string, string> = {
-        first_name: prof.first_name || prof.full_name?.split(" ")[0] || "",
-        last_name: prof.last_name || "",
-        email: prof.email,
+        first_name: firstName,
+        last_name: a.last_name || "",
+        full_name: a.full_name || `${firstName} ${a.last_name || ""}`.trim(),
+        email: a.email,
         tenant_name: tenant.name,
-        appointment_date: new Date(`${c.booking_date}T00:00:00`).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }),
-        appointment_time: c.booking_time.slice(0, 5),
-        portal_link: `https://${portalHost(tenant)}/appointments`,
+        appointment_date: startsAt.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }),
+        appointment_time: startsAt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
+        magic_link: magicLink,
+        button_label: buttonLabel,
       };
+
+      if (dryRun) { sent++; results.push({ application_id: a.id, status: "would_send", to: a.email, magic_link: magicLink }); continue; }
+
       const renderedSubject = renderTemplate(subject, vars);
       const html = buildHtml(subject, bodyT, tenant.email_signature ?? "", tenant, vars);
-
       try {
-        await sendMail(tenant, prof.email, renderedSubject, html);
-        await admin.from("appointment_reminder_log").insert({
-          booking_id: c.id, tenant_id: tenant.id, recipient_email: prof.email, status: "sent",
-        });
-        sent++; results.push({ booking_id: c.id, status: "sent" });
+        await sendMail(tenant, a.email, renderedSubject, html);
+        await admin.from("application_reminder_log").upsert({
+          application_id: a.id, tenant_id: tenant.id, reminder_kind: REMINDER_KIND,
+          recipient_email: a.email, status: "sent",
+        }, { onConflict: "application_id,reminder_kind" });
+        sent++; results.push({ application_id: a.id, status: "sent" });
+        // SMTP-Throttle gegen Rate-Limit
+        await new Promise((r) => setTimeout(r, 4000));
       } catch (e: any) {
         failed++;
         const errMsg = String(e?.message ?? e).slice(0, 500);
-        await admin.from("appointment_reminder_log").insert({
-          booking_id: c.id, tenant_id: tenant.id, recipient_email: prof.email, status: "failed", error: errMsg,
-        });
-        results.push({ booking_id: c.id, status: "failed", reason: errMsg });
+        await admin.from("application_reminder_log").upsert({
+          application_id: a.id, tenant_id: tenant.id, reminder_kind: REMINDER_KIND,
+          recipient_email: a.email, status: "failed", error: errMsg,
+        }, { onConflict: "application_id,reminder_kind" });
+        results.push({ application_id: a.id, status: "failed", reason: errMsg });
       }
     }
 
     return json({
-      success: true,
-      dry_run: dryRun,
+      success: true, version: FUNCTION_VERSION, dry_run: dryRun,
       window: { from: low.toISOString(), to: high.toISOString() },
-      candidates: candidates.length,
-      already_sent: candidates.length - todo.length,
+      candidates: apps.length, already_sent: apps.length - todo.length,
       sent, skipped, failed,
       results: dryRun ? results : undefined,
     });
   } catch (err: any) {
     console.error(err);
-    return json({ error: err?.message ?? "Unknown error" }, 500);
+    return json({ error: err?.message ?? "Unknown error", version: FUNCTION_VERSION }, 500);
   }
 });
