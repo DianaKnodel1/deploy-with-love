@@ -215,6 +215,18 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
             const lastName = parts.slice(1).join(" ");
             const tenantId = appRow.tenant_id ?? targetLanding.tenant_id;
             if (tenantId) {
+              // Tenant-spezifisches Template laden (falls hinterlegt)
+              const { data: tRow } = await supabaseAdmin
+                .from("tenants")
+                .select("bewerbung_magic_link_subject, bewerbung_magic_link_body, bewerbung_magic_link_button")
+                .eq("id", tenantId)
+                .maybeSingle();
+              const subject = (tRow as any)?.bewerbung_magic_link_subject
+                || "Ihr Bewerbungsgespräch ist bereit";
+              const intro = (tRow as any)?.bewerbung_magic_link_body
+                || "vielen Dank für Ihre Terminbuchung. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch über den folgenden Link:";
+              const buttonLabel = (tRow as any)?.bewerbung_magic_link_button
+                || "Bewerbungsgespräch starten";
               const { error: mailErr } = await supabaseAdmin.functions.invoke(
                 "send-invitation-email",
                 {
@@ -224,10 +236,10 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
                     firstName, lastName,
                     registrationLink: magicLink,
                     tenantId,
-                    subject: "Ihr Bewerbungsgespräch ist bereit",
+                    subject,
                     headline: "Termin bestätigt",
-                    intro: "vielen Dank für Ihre Terminbuchung. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch über den folgenden Link:",
-                    buttonLabel: "Bewerbungsgespräch starten",
+                    intro,
+                    buttonLabel,
                     templateName: "bewerbung_magic_link",
                   },
                 },
