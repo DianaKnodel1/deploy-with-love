@@ -60,6 +60,11 @@ const REMINDER_DEFAULTS = {
     subject: "Schade, dass es nicht geklappt hat – buche einen neuen Termin",
     body: `Hallo {{first_name}},\n\nleider konnten wir dich zu deinem Termin am {{appointment_date}} um {{appointment_time}} Uhr nicht erreichen. Kein Problem – wir hätten dich gern trotzdem kennengelernt.\n\nBitte wähle einen neuen Wunschtermin, der besser passt:\n\n{{cta:Neuen Termin auswählen|{{calendly_link}}}}\n\nFalls du Fragen hast oder Unterstützung brauchst, antworte einfach auf diese E-Mail.\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
   },
+  bewerbung_magic_link: {
+    subject: "Ihr Bewerbungsgespräch ist bereit",
+    body: `Guten Tag {{first_name}},\n\nvielen Dank für Ihre Terminbuchung. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch über den folgenden Link:\n\n{{cta:Bewerbungsgespräch starten|{{portal_link}}}}\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+    button: "Bewerbungsgespräch starten",
+  },
 
 };
 
@@ -106,6 +111,9 @@ interface TenantEmail {
   application_received_subject: string | null;
   application_received_body: string | null;
   application_received_button_label: string | null;
+  bewerbung_magic_link_subject: string | null;
+  bewerbung_magic_link_body: string | null;
+  bewerbung_magic_link_button: string | null;
 }
 
 const PLACEHOLDERS = [
@@ -312,7 +320,7 @@ function AdminEmailTemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
-  type TestTemplateKey = "welcome" | "reset" | "invite" | "confirm" | "completion" | "no_booking" | "recovery_ma" | "recovery_bew" | "appointment" | "chat" | "app_received";
+  type TestTemplateKey = "welcome" | "reset" | "invite" | "confirm" | "completion" | "no_booking" | "recovery_ma" | "recovery_bew" | "appointment" | "chat" | "app_received" | "magic_link";
   const [testType, setTestType] = useState<TestTemplateKey>("welcome");
   const { toast } = useToast();
 
@@ -349,10 +357,13 @@ function AdminEmailTemplatesPage() {
   const [appRecvSubject, setAppRecvSubject] = useState("");
   const [appRecvBody, setAppRecvBody] = useState("");
   const [appRecvButton, setAppRecvButton] = useState("");
+  const [mlSubject, setMlSubject] = useState("");
+  const [mlBody, setMlBody] = useState("");
+  const [mlButton, setMlButton] = useState("");
 
   const loadTenants = async () => {
     setLoading(true);
-    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_recovery_bewerber_subject, reminder_recovery_bewerber_body, reminder_appointment_subject, reminder_appointment_body, reminder_chat_subject, reminder_chat_body, application_received_subject, application_received_body, application_received_button_label";
+    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_recovery_bewerber_subject, reminder_recovery_bewerber_body, reminder_appointment_subject, reminder_appointment_body, reminder_chat_subject, reminder_chat_body, application_received_subject, application_received_body, application_received_button_label, bewerbung_magic_link_subject, bewerbung_magic_link_body, bewerbung_magic_link_button";
     // Fallback: ohne neue Reminder-Spalten (Migrationen 20260606200000 + 20260608120000), falls noch nicht angewandt.
     const FALLBACK_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_invite_subject, reminder_invite_body, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body";
 
@@ -428,6 +439,9 @@ function AdminEmailTemplatesPage() {
         "Guten Tag {{first_name}},\n\nvielen Dank für deine Bewerbung. Damit es weitergehen kann, buche bitte jetzt deinen persönlichen Gesprächstermin bei {{partner_name}} über den Button unten.\n\n{{cta:Jetzt Termin buchen|{{booking_link}}}}"
     );
     setAppRecvButton(t.application_received_button_label || "Jetzt Termin buchen");
+    setMlSubject((t as any).bewerbung_magic_link_subject || REMINDER_DEFAULTS.bewerbung_magic_link.subject);
+    setMlBody((t as any).bewerbung_magic_link_body || REMINDER_DEFAULTS.bewerbung_magic_link.body);
+    setMlButton((t as any).bewerbung_magic_link_button || REMINDER_DEFAULTS.bewerbung_magic_link.button);
   };
 
   useEffect(() => {
@@ -483,6 +497,9 @@ function AdminEmailTemplatesPage() {
         application_received_subject: appRecvSubject,
         application_received_body: appRecvBody,
         application_received_button_label: appRecvButton || null,
+        bewerbung_magic_link_subject: mlSubject,
+        bewerbung_magic_link_body: mlBody,
+        bewerbung_magic_link_button: mlButton || null,
       } as any)
       .eq("id", selectedTenantId);
     setSaving(false);
@@ -507,6 +524,7 @@ function AdminEmailTemplatesPage() {
       case "appointment": return { subject: rAppointmentSubject, body: rAppointmentBody };
       case "chat": return { subject: rChatSubject, body: rChatBody };
       case "app_received": return { subject: appRecvSubject, body: appRecvBody };
+      case "magic_link": return { subject: mlSubject, body: mlBody };
     }
   };
 
@@ -692,6 +710,7 @@ function AdminEmailTemplatesPage() {
                 <TabsTrigger value="chat" className="text-xs">Chat-Reminder</TabsTrigger>
                 <TabsTrigger value="app_no_booking" className="text-xs">Vermittlung: Kein Termin</TabsTrigger>
                 <TabsTrigger value="app_no_show" className="text-xs">Vermittlung: No-Show</TabsTrigger>
+                <TabsTrigger value="magic_link" className="text-xs">Vermittlung: Interview-Einladung</TabsTrigger>
               </TabsList>
               <TabsContent value="confirm">
                 <TemplateEditor
@@ -768,6 +787,22 @@ function AdminEmailTemplatesPage() {
                   tenant={selectedTenant}
                 />
               </TabsContent>
+              <TabsContent value="magic_link">
+                <div className="rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-700 px-3 py-2 mb-3 text-[11px] text-emerald-900 dark:text-emerald-200">
+                  Wird <strong>direkt nach Terminbuchung</strong> (Calendly-Webhook) an den Bewerber gesendet – enthält den Magic-Link zum KI-Bewerbungsgespräch. Der Link steht in <code>{"{{portal_link}}"}</code>. Weitere Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Interview-Einladung (Magic-Link)"
+                  subject={mlSubject} onSubjectChange={setMlSubject}
+                  body={mlBody} onBodyChange={setMlBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+                <div className="mt-4">
+                  <Label className="text-xs font-medium">Button-Beschriftung</Label>
+                  <Input value={mlButton} onChange={(e) => setMlButton(e.target.value)} placeholder="Bewerbungsgespräch starten" className="mt-1 max-w-sm" />
+                </div>
+              </TabsContent>
             </Tabs>
           </TabsContent>
 
@@ -817,6 +852,7 @@ function AdminEmailTemplatesPage() {
                     <SelectItem value="recovery_bew">Domain-Wechsel: Bewerber</SelectItem>
                     
                     <SelectItem value="chat">Chat-Reminder</SelectItem>
+                    <SelectItem value="magic_link">Vermittlung: Interview-Einladung</SelectItem>
                     
                   </SelectContent>
                 </Select>
