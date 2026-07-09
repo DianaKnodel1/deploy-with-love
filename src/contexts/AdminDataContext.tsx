@@ -145,7 +145,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       Promise.allSettled([applicationsTask, profilesTask]).then(() => setLoading(false));
 
-      const criticalTasks: Promise<{ ok: boolean; label: string }>[] = [
+      const criticalTasks: Promise<{ ok: boolean; label: string; error?: string }>[] = [
         applicationsTask,
         profilesTask,
         track("Buchungen",
