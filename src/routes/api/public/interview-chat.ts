@@ -420,7 +420,9 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Platzhalter pro Landing personalisieren
         systemPrompt = systemPrompt
           .replace(/\{company\}/g, companyName)
-          .replace(/\{recruiter\}/g, recruiterName);
+          .replace(/\{recruiter\}/g, recruiterName)
+          // Alte/custom Landing-Prompts enthielten Sabine teils hartcodiert statt als {recruiter}.
+          .replace(/Sabine Schneider/g, recruiterName);
 
         const history: Msg[] = Array.isArray(app.interview_messages) ? (app.interview_messages as any) : [];
 
