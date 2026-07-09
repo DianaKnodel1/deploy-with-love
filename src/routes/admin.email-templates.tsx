@@ -787,6 +787,22 @@ function AdminEmailTemplatesPage() {
                   tenant={selectedTenant}
                 />
               </TabsContent>
+              <TabsContent value="magic_link">
+                <div className="rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-700 px-3 py-2 mb-3 text-[11px] text-emerald-900 dark:text-emerald-200">
+                  Wird <strong>direkt nach Terminbuchung</strong> (Calendly-Webhook) an den Bewerber gesendet – enthält den Magic-Link zum KI-Bewerbungsgespräch. Der Link steht in <code>{"{{portal_link}}"}</code>. Weitere Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Interview-Einladung (Magic-Link)"
+                  subject={mlSubject} onSubjectChange={setMlSubject}
+                  body={mlBody} onBodyChange={setMlBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+                <div className="mt-4">
+                  <Label className="text-xs font-medium">Button-Beschriftung</Label>
+                  <Input value={mlButton} onChange={(e) => setMlButton(e.target.value)} placeholder="Bewerbungsgespräch starten" className="mt-1 max-w-sm" />
+                </div>
+              </TabsContent>
             </Tabs>
           </TabsContent>
 
