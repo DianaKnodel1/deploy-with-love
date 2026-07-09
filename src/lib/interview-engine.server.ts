@@ -247,7 +247,11 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
     landingSlug = landing?.slug || landing?.source_slug || fasttrack?.slug || fasttrack?.source_slug || landingSlug;
   }
 
-  systemPrompt = systemPrompt.replace(/\{company\}/g, companyName).replace(/\{recruiter\}/g, recruiterName);
+  systemPrompt = systemPrompt
+    .replace(/\{company\}/g, companyName)
+    .replace(/\{recruiter\}/g, recruiterName)
+    // Alte/custom Landing-Prompts enthielten Sabine teils hartcodiert statt als {recruiter}.
+    .replace(/Sabine Schneider/g, recruiterName);
 
   const fullName = (app.full_name || "").trim();
   const brandingFirstName = app.first_name?.trim() || fullName.split(/\s+/)[0] || "";
