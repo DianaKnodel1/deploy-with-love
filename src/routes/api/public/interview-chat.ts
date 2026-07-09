@@ -93,6 +93,8 @@ type ApplicationRow = {
   tenant_id?: string | null;
   status?: string | null;
   source_slug?: string | null;
+  source_landing_id?: string | null;
+  target_landing_id?: string | null;
   interview_messages?: unknown;
   interview_status?: string | null;
   interview_mode?: string | null;
@@ -347,7 +349,7 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Lade Bewerbung + Landing-Prompt
         const { data: app, error: appErr } = await supabaseAdmin
           .from("applications")
-          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at, scheduled_at, is_test")
+          .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, source_landing_id, target_landing_id, interview_messages, interview_status, interview_mode, interview_started_at, scheduled_at, is_test")
           .eq("id", applicationId)
           .maybeSingle();
         if (appErr || !app) return json({ error: "Bewerbung nicht gefunden" }, 404);
@@ -374,9 +376,15 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         let systemPrompt = DEFAULT_SYSTEM_PROMPT;
         let companyName = "unserem Unternehmen";
         let recruiterName = "Sabine Schneider";
-        if (app.source_slug) {
-          const sel = "interview_system_prompt, branding, recruiter_name, linked_fasttrack_landing_id";
+        {
+          const sel = "id, slug, source_slug, interview_system_prompt, branding, recruiter_name, linked_fasttrack_landing_id";
           let lp: any = null;
+          if ((app as any).source_landing_id) {
+            const { data: byId } = await supabaseAdmin
+              .from("landing_pages").select(sel).eq("id", (app as any).source_landing_id).maybeSingle();
+            lp = byId ?? null;
+          }
+          if (!lp && app.source_slug) {
           const { data: bySource } = await supabaseAdmin
             .from("landing_pages").select(sel).eq("source_slug", app.source_slug).maybeSingle();
           lp = bySource ?? null;
@@ -385,10 +393,16 @@ export const Route = createFileRoute("/api/public/interview-chat")({
               .from("landing_pages").select(sel).eq("slug", app.source_slug).maybeSingle();
             lp = bySlug ?? null;
           }
+          }
           let ft: any = null;
           if (lp?.linked_fasttrack_landing_id) {
             const { data: ftData } = await supabaseAdmin
               .from("landing_pages").select(sel).eq("id", lp.linked_fasttrack_landing_id).maybeSingle();
+            ft = ftData ?? null;
+          }
+          if (!lp && (app as any).target_landing_id) {
+            const { data: ftData } = await supabaseAdmin
+              .from("landing_pages").select(sel).eq("id", (app as any).target_landing_id).maybeSingle();
             ft = ftData ?? null;
           }
           // Source-Landing hat Vorrang; Fasttrack nur Fallback.
@@ -406,7 +420,9 @@ export const Route = createFileRoute("/api/public/interview-chat")({
         // Platzhalter pro Landing personalisieren
         systemPrompt = systemPrompt
           .replace(/\{company\}/g, companyName)
-          .replace(/\{recruiter\}/g, recruiterName);
+          .replace(/\{recruiter\}/g, recruiterName)
+          // Alte/custom Landing-Prompts enthielten Sabine teils hartcodiert statt als {recruiter}.
+          .replace(/Sabine Schneider/g, recruiterName);
 
         const history: Msg[] = Array.isArray(app.interview_messages) ? (app.interview_messages as any) : [];
 

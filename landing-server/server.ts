@@ -65,7 +65,7 @@ type LandingRow = {
   slots: Record<string, string>;
   logo_url: string | null;
   favicon_url: string | null;
-  flow_type: "classic" | "fast";
+  flow_type: "classic" | "fast" | "broker";
   source_slug: string | null;
   is_published: boolean;
 };
@@ -152,7 +152,40 @@ window.PORTAL_URL = "${esc(portalUrl)}";
 window.TENANT_ID = "${esc(row.tenant_id ?? "")}";
 window.FLOW_TYPE = "${esc(row.flow_type)}";
 window.SOURCE_SLUG = "${esc(row.source_slug ?? row.slug)}";
+window.LANDING_ID = "${esc(row.id ?? "")}";
 window.WHATSAPP_NUMBER = "${esc(wa)}";
+
+(function(){
+  // Fasttrack-Empfang: ?ref=<broker_landing_id> aus URL nach window.SOURCE_LANDING_ID übernehmen
+  // und in jeden POST an PORTAL_API (Bewerbungs-Endpoint) source_landing_id + target_landing_id injizieren.
+  try {
+    var u = new URL(location.href);
+    var ref = u.searchParams.get("ref");
+    if (ref && /^[0-9a-f-]{36}$/i.test(ref)) {
+      window.SOURCE_LANDING_ID = ref;
+      try { sessionStorage.setItem("vermittlung_ref", ref); } catch(_){}
+    } else {
+      try { var s = sessionStorage.getItem("vermittlung_ref"); if (s) window.SOURCE_LANDING_ID = s; } catch(_){}
+    }
+  } catch(_){}
+  var origFetch = window.fetch;
+  if (typeof origFetch !== "function") return;
+  window.fetch = function(input, init){
+    try {
+      var url = typeof input === "string" ? input : (input && input.url) || "";
+      var api = window.PORTAL_API || "";
+      if (api && url && url.indexOf(api) === 0 && init && init.body && typeof init.body === "string") {
+        var b = JSON.parse(init.body);
+        if (typeof b === "object" && b !== null) {
+          if (window.SOURCE_LANDING_ID && !b.source_landing_id) b.source_landing_id = window.SOURCE_LANDING_ID;
+          if (window.LANDING_ID && !b.target_landing_id) b.target_landing_id = window.LANDING_ID;
+          init = Object.assign({}, init, { body: JSON.stringify(b) });
+        }
+      }
+    } catch(_){}
+    return origFetch.call(this, input, init);
+  };
+})();
 </script>`;
   return /<\/head>/i.test(cleanHtml) ? cleanHtml.replace(/<\/head>/i, block + "</head>") : block + cleanHtml;
 }
