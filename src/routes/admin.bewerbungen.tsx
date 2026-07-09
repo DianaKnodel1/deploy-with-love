@@ -190,6 +190,30 @@ function AdminBewerbungenPage() {
     return () => { cancelled = true; };
   }, []);
 
+  // Reminder-Log (letzter Eintrag pro application_id)
+  type ReminderInfo = { kind: string; status: string; sent_at: string };
+  const [reminderByApp, setReminderByApp] = useState<Map<string, ReminderInfo>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("application_reminder_log")
+        .select("application_id, reminder_kind, status, sent_at")
+        .order("sent_at", { ascending: false })
+        .limit(1000);
+      if (cancelled || !data) return;
+      const m = new Map<string, ReminderInfo>();
+      for (const r of data as any[]) {
+        if (!m.has(r.application_id)) {
+          m.set(r.application_id, { kind: r.reminder_kind, status: r.status, sent_at: r.sent_at });
+        }
+      }
+      setReminderByApp(m);
+    })();
+    return () => { cancelled = true; };
+  }, [applications]);
+
+
   const nameOf = (id: string | null | undefined): string | null => {
     if (!id) return null;
     const l = landingById.get(id);
