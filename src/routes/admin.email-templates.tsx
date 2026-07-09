@@ -52,6 +52,14 @@ const REMINDER_DEFAULTS = {
     subject: "Neue Nachricht von {{team_leader_name}} – {{tenant_name}}",
     body: `Hi {{first_name}},\n\ndu hast {{unread_count}} ungelesene Nachricht(en) von {{team_leader_name}} im Mitarbeiter-Portal.\n\nBitte logge dich kurz ein und antworte – so geht's für dich am schnellsten weiter.\n\n{{cta:Jetzt einloggen|{{login_link}}}}\n\nFalls der Button nicht funktioniert: {{login_link}}`,
   },
+  app_no_booking: {
+    subject: "Erinnerung: Dein Termin bei {{tenant_name}} steht noch aus",
+    body: `Hallo {{first_name}},\n\nvielen Dank für deine Bewerbung bei {{tenant_name}}. Damit wir dich kennenlernen können, fehlt nur noch dein Wunschtermin für das kurze Erstgespräch.\n\n{{cta:Jetzt Termin auswählen|{{calendly_link}}}}\n\nFalls der Button nicht funktioniert, kopiere diesen Link:\n{{calendly_link}}\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+  },
+  app_no_show: {
+    subject: "Schade, dass es nicht geklappt hat – buche einen neuen Termin",
+    body: `Hallo {{first_name}},\n\nleider konnten wir dich zu deinem Termin am {{appointment_date}} um {{appointment_time}} Uhr nicht erreichen. Kein Problem – wir hätten dich gern trotzdem kennengelernt.\n\nBitte wähle einen neuen Wunschtermin, der besser passt:\n\n{{cta:Neuen Termin auswählen|{{calendly_link}}}}\n\nFalls du Fragen hast oder Unterstützung brauchst, antworte einfach auf diese E-Mail.\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+  },
 
 };
 
@@ -91,6 +99,10 @@ interface TenantEmail {
   reminder_appointment_body: string | null;
   reminder_chat_subject: string | null;
   reminder_chat_body: string | null;
+  reminder_app_no_booking_subject: string | null;
+  reminder_app_no_booking_body: string | null;
+  reminder_app_no_show_subject: string | null;
+  reminder_app_no_show_body: string | null;
   application_received_subject: string | null;
   application_received_body: string | null;
   application_received_button_label: string | null;
@@ -330,6 +342,10 @@ function AdminEmailTemplatesPage() {
   const [rAppointmentBody, setRAppointmentBody] = useState("");
   const [rChatSubject, setRChatSubject] = useState("");
   const [rChatBody, setRChatBody] = useState("");
+  const [rAppNoBookingSubject, setRAppNoBookingSubject] = useState("");
+  const [rAppNoBookingBody, setRAppNoBookingBody] = useState("");
+  const [rAppNoShowSubject, setRAppNoShowSubject] = useState("");
+  const [rAppNoShowBody, setRAppNoShowBody] = useState("");
   const [appRecvSubject, setAppRecvSubject] = useState("");
   const [appRecvBody, setAppRecvBody] = useState("");
   const [appRecvButton, setAppRecvButton] = useState("");
@@ -402,6 +418,10 @@ function AdminEmailTemplatesPage() {
     setRAppointmentBody(t.reminder_appointment_body || REMINDER_DEFAULTS.appointment_30min.body);
     setRChatSubject(t.reminder_chat_subject || REMINDER_DEFAULTS.chat.subject);
     setRChatBody(t.reminder_chat_body || REMINDER_DEFAULTS.chat.body);
+    setRAppNoBookingSubject((t as any).reminder_app_no_booking_subject || REMINDER_DEFAULTS.app_no_booking.subject);
+    setRAppNoBookingBody((t as any).reminder_app_no_booking_body || REMINDER_DEFAULTS.app_no_booking.body);
+    setRAppNoShowSubject((t as any).reminder_app_no_show_subject || REMINDER_DEFAULTS.app_no_show.subject);
+    setRAppNoShowBody((t as any).reminder_app_no_show_body || REMINDER_DEFAULTS.app_no_show.body);
     setAppRecvSubject(t.application_received_subject || "Deine Bewerbung ist eingegangen – jetzt Termin buchen");
     setAppRecvBody(
       t.application_received_body ||
@@ -456,6 +476,10 @@ function AdminEmailTemplatesPage() {
         reminder_appointment_body: rAppointmentBody,
         reminder_chat_subject: rChatSubject,
         reminder_chat_body: rChatBody,
+        reminder_app_no_booking_subject: rAppNoBookingSubject,
+        reminder_app_no_booking_body: rAppNoBookingBody,
+        reminder_app_no_show_subject: rAppNoShowSubject,
+        reminder_app_no_show_body: rAppNoShowBody,
         application_received_subject: appRecvSubject,
         application_received_body: appRecvBody,
         application_received_button_label: appRecvButton || null,
@@ -669,6 +693,8 @@ function AdminEmailTemplatesPage() {
                 <TabsTrigger value="recovery" className="text-xs">Domain-Wechsel</TabsTrigger>
                 <TabsTrigger value="appointment" className="text-xs">30 Min vor Termin</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs">Chat-Reminder</TabsTrigger>
+                <TabsTrigger value="app_no_booking" className="text-xs">Bewerber: Kein Termin</TabsTrigger>
+                <TabsTrigger value="app_no_show" className="text-xs">Bewerber: No-Show</TabsTrigger>
               </TabsList>
               <TabsContent value="invite">
                 <TemplateEditor
@@ -738,6 +764,30 @@ function AdminEmailTemplatesPage() {
                   label="Chat-Reminder"
                   subject={rChatSubject} onSubjectChange={setRChatSubject}
                   body={rChatBody} onBodyChange={setRChatBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+              </TabsContent>
+              <TabsContent value="app_no_booking">
+                <div className="rounded-md border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-700 px-3 py-2 mb-3 text-[11px] text-orange-900 dark:text-orange-200">
+                  Wird automatisch an Vermittlungs-Bewerber gesendet, die sich beworben, aber noch <strong>keinen Termin gebucht</strong> haben (24h + 72h nach Bewerbung, Cron alle 30 Min). Enthält den Calendly-Link mit vor-ausgefüllter Bewerber-ID. Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{calendly_link}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>, <code>{"{{partner_name}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Bewerber ohne Terminbuchung"
+                  subject={rAppNoBookingSubject} onSubjectChange={setRAppNoBookingSubject}
+                  body={rAppNoBookingBody} onBodyChange={setRAppNoBookingBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+              </TabsContent>
+              <TabsContent value="app_no_show">
+                <div className="rounded-md border border-rose-300 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-700 px-3 py-2 mb-3 text-[11px] text-rose-900 dark:text-rose-200">
+                  Wird <strong>24 Stunden nach einem verpassten Termin</strong> an den Bewerber gesendet mit einem neuen Calendly-Link (Cron alle 30 Min, max. 1× pro Buchung). Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{appointment_date}}"}</code>, <code>{"{{appointment_time}}"}</code>, <code>{"{{calendly_link}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Bewerber No-Show (24h)"
+                  subject={rAppNoShowSubject} onSubjectChange={setRAppNoShowSubject}
+                  body={rAppNoShowBody} onBodyChange={setRAppNoShowBody}
                   signature={signature} onSignatureChange={setSignature}
                   tenant={selectedTenant}
                 />
