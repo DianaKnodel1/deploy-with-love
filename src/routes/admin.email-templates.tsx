@@ -418,6 +418,10 @@ function AdminEmailTemplatesPage() {
     setRAppointmentBody(t.reminder_appointment_body || REMINDER_DEFAULTS.appointment_30min.body);
     setRChatSubject(t.reminder_chat_subject || REMINDER_DEFAULTS.chat.subject);
     setRChatBody(t.reminder_chat_body || REMINDER_DEFAULTS.chat.body);
+    setRAppNoBookingSubject((t as any).reminder_app_no_booking_subject || REMINDER_DEFAULTS.app_no_booking.subject);
+    setRAppNoBookingBody((t as any).reminder_app_no_booking_body || REMINDER_DEFAULTS.app_no_booking.body);
+    setRAppNoShowSubject((t as any).reminder_app_no_show_subject || REMINDER_DEFAULTS.app_no_show.subject);
+    setRAppNoShowBody((t as any).reminder_app_no_show_body || REMINDER_DEFAULTS.app_no_show.body);
     setAppRecvSubject(t.application_received_subject || "Deine Bewerbung ist eingegangen – jetzt Termin buchen");
     setAppRecvBody(
       t.application_received_body ||
