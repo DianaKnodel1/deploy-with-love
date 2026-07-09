@@ -693,6 +693,8 @@ function AdminEmailTemplatesPage() {
                 <TabsTrigger value="recovery" className="text-xs">Domain-Wechsel</TabsTrigger>
                 <TabsTrigger value="appointment" className="text-xs">30 Min vor Termin</TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs">Chat-Reminder</TabsTrigger>
+                <TabsTrigger value="app_no_booking" className="text-xs">Bewerber: Kein Termin</TabsTrigger>
+                <TabsTrigger value="app_no_show" className="text-xs">Bewerber: No-Show</TabsTrigger>
               </TabsList>
               <TabsContent value="invite">
                 <TemplateEditor
