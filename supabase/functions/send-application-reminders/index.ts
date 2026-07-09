@@ -85,12 +85,53 @@ async function authorize(req: Request, admin: any): Promise<{ ok: true } | { ok:
   const jwt = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
   const apiKey = req.headers.get("apikey")?.trim() ?? "";
   if (serviceRoleKey && (jwt === serviceRoleKey || apiKey === serviceRoleKey)) return { ok: true };
+  if (jwt && await verifyServiceRoleJwt(jwt)) return { ok: true };
+  if (apiKey && await verifyServiceRoleJwt(apiKey)) return { ok: true };
   if (!jwt) return { ok: false, status: 401, msg: "Unauthorized" };
   const { data: userRes, error } = await admin.auth.getUser(jwt);
   if (error || !userRes?.user) return { ok: false, status: 401, msg: "Unauthorized" };
   const { data: role } = await admin.from("user_roles").select("role").eq("user_id", userRes.user.id).eq("role", "admin").maybeSingle();
   if (!role) return { ok: false, status: 403, msg: "Forbidden" };
   return { ok: true };
+}
+
+function b64UrlToBytes(input: string): Uint8Array {
+  const padded = input.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(input.length / 4) * 4, "=");
+  const raw = atob(padded);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
+}
+
+async function verifyServiceRoleJwt(token: string): Promise<boolean> {
+  const jwtSecret = Deno.env.get("JWT_SECRET");
+  if (!jwtSecret) return false;
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+  try {
+    const [headerB64, payloadB64, signatureB64] = parts;
+    const header = JSON.parse(new TextDecoder().decode(b64UrlToBytes(headerB64)));
+    if (header?.alg !== "HS256") return false;
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(jwtSecret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+    const valid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      b64UrlToBytes(signatureB64),
+      new TextEncoder().encode(`${headerB64}.${payloadB64}`),
+    );
+    if (!valid) return false;
+    const claims = JSON.parse(new TextDecoder().decode(b64UrlToBytes(payloadB64)));
+    if (claims?.exp && Date.now() / 1000 >= Number(claims.exp)) return false;
+    return claims?.role === "service_role";
+  } catch {
+    return false;
+  }
 }
 
 function render(text: string, vars: Record<string, string>): string {
