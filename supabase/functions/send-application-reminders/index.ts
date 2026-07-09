@@ -11,7 +11,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import nodemailer from "https://esm.sh/nodemailer@6.9.14";
 
-const FUNCTION_VERSION = "2026-07-09-calendly-fallback-v2";
+const FUNCTION_VERSION = "2026-07-09-retry-skipped-v3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -308,10 +308,13 @@ serve(async (req) => {
 
     // Bereits versendete Reminder pro (application_id, kind)
     const appIds = apps.map((a: any) => a.id);
+    // Nur 'sent' blockiert weitere Zustellversuche. 'skipped'/'failed' dürfen erneut
+    // versucht werden (z.B. wenn inzwischen ein Calendly-Link hinterlegt wurde).
     const { data: existing } = await admin
       .from("application_reminder_log")
-      .select("application_id,reminder_kind")
-      .in("application_id", appIds);
+      .select("application_id,reminder_kind,status")
+      .in("application_id", appIds)
+      .eq("status", "sent");
     const already = new Set<string>((existing ?? []).map((r: any) => `${r.application_id}|${r.reminder_kind}`));
 
     type Todo = { app: any; kind: "no_booking_24h" | "no_booking_72h" | "no_show_24h" };
@@ -411,10 +414,11 @@ serve(async (req) => {
           source_slug: app.source_slug ?? null,
           tenant_has_landing_fallback: tenantLandingFallback.has(app.tenant_id),
         });
-        if (!dryRun) await admin.from("application_reminder_log").insert({
+        if (!dryRun) await admin.from("application_reminder_log").upsert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "skipped", error: "no_calendly_link",
-        });
+          sent_at: new Date().toISOString(),
+        }, { onConflict: "application_id,reminder_kind" });
         continue;
       }
       const calendlyLink = appendUtm(rawCalendly, app.id);
@@ -450,10 +454,11 @@ serve(async (req) => {
 
       try {
         await sendMail(tenant, app.email, subject, html);
-        await admin.from("application_reminder_log").insert({
+        await admin.from("application_reminder_log").upsert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
-          recipient_email: app.email, status: "sent",
-        });
+          recipient_email: app.email, status: "sent", error: null,
+          sent_at: new Date().toISOString(),
+        }, { onConflict: "application_id,reminder_kind" });
         // Sichtbarkeit im E-Mail-Center
         try {
           await admin.from("email_send_log").insert({
@@ -470,10 +475,11 @@ serve(async (req) => {
         await jitter();
       } catch (e: any) {
         const errMsg = String(e?.message ?? e).slice(0, 500);
-        await admin.from("application_reminder_log").insert({
+        await admin.from("application_reminder_log").upsert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "failed", error: errMsg,
-        });
+          sent_at: new Date().toISOString(),
+        }, { onConflict: "application_id,reminder_kind" });
         try {
           await admin.from("email_send_log").insert({
             message_id: messageId, tenant_id: tenant.id,
