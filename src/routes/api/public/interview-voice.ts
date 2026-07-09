@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/public/interview-voice")({
 
           const { data: appRaw, error: appErr } = await supabaseAdmin
             .from("applications")
-            .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, interview_messages, interview_status, interview_mode, interview_started_at")
+            .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, source_landing_id, target_landing_id, interview_messages, interview_status, interview_mode, interview_started_at")
             .eq("id", parsed.data.applicationId)
             .maybeSingle();
           if (appErr || !appRaw) return json({ error: "Bewerbung nicht gefunden" }, 404);
