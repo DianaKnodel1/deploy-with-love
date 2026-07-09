@@ -207,24 +207,30 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
         .from("landing_pages").select(sel).eq("slug", app.source_slug).maybeSingle();
       landing = bySlug ?? null;
     }
+    let fasttrack: any = null;
     if (landing?.linked_fasttrack_landing_id) {
       const { data: ft } = await supabaseAdmin
         .from("landing_pages").select(sel).eq("id", landing.linked_fasttrack_landing_id).maybeSingle();
-      if (ft) landing = ft;
+      fasttrack = ft ?? null;
     }
-    if (landing) {
-      const custom = landing.interview_system_prompt?.trim?.();
+    // Source-Landing hat Vorrang (dort pflegt der Admin Recruiter-Name etc.);
+    // Fasttrack-Landing dient nur als Fallback für fehlende Felder.
+    if (landing || fasttrack) {
+      const custom = landing?.interview_system_prompt?.trim?.() || fasttrack?.interview_system_prompt?.trim?.();
       if (custom) systemPrompt = custom;
-      const fn = landing.branding?.firmenname?.trim?.();
+      const fn = landing?.branding?.firmenname?.trim?.() || fasttrack?.branding?.firmenname?.trim?.();
       if (fn) companyName = fn;
-      const rn = landing.branding?.recruiter_name?.trim?.() || landing.recruiter_name?.trim?.();
+      const rn =
+        landing?.branding?.recruiter_name?.trim?.() ||
+        landing?.recruiter_name?.trim?.() ||
+        fasttrack?.branding?.recruiter_name?.trim?.() ||
+        fasttrack?.recruiter_name?.trim?.();
       if (rn) recruiterName = rn;
-      if (landing.recruiter_avatar_url) recruiterAvatarUrl = landing.recruiter_avatar_url;
-      if (landing.interview_voice_id) voiceId = landing.interview_voice_id;
-      if (landing.interview_mode === "voice" || landing.interview_mode === "both" || landing.interview_mode === "chat") {
-        interviewMode = landing.interview_mode;
-      }
-      landingSlug = landing.slug || landing.source_slug || landingSlug;
+      recruiterAvatarUrl = landing?.recruiter_avatar_url || fasttrack?.recruiter_avatar_url || null;
+      voiceId = landing?.interview_voice_id || fasttrack?.interview_voice_id || null;
+      const mode = landing?.interview_mode || fasttrack?.interview_mode;
+      if (mode === "voice" || mode === "both" || mode === "chat") interviewMode = mode;
+      landingSlug = landing?.slug || landing?.source_slug || fasttrack?.slug || fasttrack?.source_slug || landingSlug;
     }
   }
 
