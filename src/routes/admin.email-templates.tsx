@@ -693,15 +693,6 @@ function AdminEmailTemplatesPage() {
                 <TabsTrigger value="app_no_booking" className="text-xs">Vermittlung: Kein Termin</TabsTrigger>
                 <TabsTrigger value="app_no_show" className="text-xs">Vermittlung: No-Show</TabsTrigger>
               </TabsList>
-              <TabsContent value="invite">
-                <TemplateEditor
-                  label="Einladungs-Erinnerung"
-                  subject={rInviteSubject} onSubjectChange={setRInviteSubject}
-                  body={rInviteBody} onBodyChange={setRInviteBody}
-                  signature={signature} onSignatureChange={setSignature}
-                  tenant={selectedTenant}
-                />
-              </TabsContent>
               <TabsContent value="confirm">
                 <TemplateEditor
                   label="E-Mail-Bestätigungs-Erinnerung"
