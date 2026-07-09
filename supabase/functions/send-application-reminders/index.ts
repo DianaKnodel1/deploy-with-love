@@ -261,10 +261,12 @@ serve(async (req) => {
     // Landing-Pages mit Calendly-Link (direkte Zuordnung via source_landing_id / target_landing_id)
     const landingIds = Array.from(new Set(apps.flatMap((a: any) => [a.source_landing_id, a.target_landing_id]).filter(Boolean)));
     const landingMap = new Map<string, LandingRow>();
+    const landingErrors: Record<string, string> = {};
     if (landingIds.length) {
-      const { data: lps } = await admin.from("landing_pages")
+      const { data: lps, error: lpErr } = await admin.from("landing_pages")
         .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
         .in("id", landingIds);
+      if (lpErr) landingErrors.direct = lpErr.message;
       for (const l of (lps ?? []) as any[]) landingMap.set(l.id, toLanding(l));
     }
 
@@ -273,12 +275,14 @@ serve(async (req) => {
     const sourceSlugs = Array.from(new Set(apps.map((a: any) => normalizeKey(a.source_slug)).filter(Boolean)));
     const slugLandingMap = new Map<string, LandingRow>();
     if (sourceSlugs.length) {
-      const { data: bySlug } = await admin.from("landing_pages")
+      const { data: bySlug, error: bsErr } = await admin.from("landing_pages")
         .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
         .in("slug", sourceSlugs);
-      const { data: bySourceSlug } = await admin.from("landing_pages")
+      const { data: bySourceSlug, error: bssErr } = await admin.from("landing_pages")
         .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
         .in("source_slug", sourceSlugs);
+      if (bsErr) landingErrors.by_slug = bsErr.message;
+      if (bssErr) landingErrors.by_source_slug = bssErr.message;
       for (const l of ([...(bySlug ?? []), ...(bySourceSlug ?? [])] as any[])) {
         const landing = toLanding(l);
         const keys = [landing.slug, landing.source_slug].map(normalizeKey).filter(Boolean);
@@ -293,11 +297,14 @@ serve(async (req) => {
     // oder wenn deren Landing keinen Calendly-Link hat — z.B. Legacy-/Direktbewerbungen).
     const tenantIdsForFallback = Array.from(new Set(apps.map((a: any) => a.tenant_id).filter(Boolean)));
     const tenantLandingFallback = new Map<string, LandingRow>();
+    let tenantLandingRawCount = 0;
     if (tenantIdsForFallback.length) {
-      const { data: tlps } = await admin.from("landing_pages")
+      const { data: tlps, error: tlpErr } = await admin.from("landing_pages")
         .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
         .in("tenant_id", tenantIdsForFallback)
         .order("updated_at", { ascending: false });
+      if (tlpErr) landingErrors.tenant = tlpErr.message;
+      tenantLandingRawCount = (tlps ?? []).length;
       for (const l of (tlps ?? []) as any[]) {
         const landing = toLanding(l);
         if (!tenantLandingFallback.has(l.tenant_id) && calendlyFromLanding(landing)) {
@@ -305,6 +312,16 @@ serve(async (req) => {
         }
       }
     }
+    console.log("[reminders v4] landing queries", {
+      landingIdsCount: landingIds.length,
+      landingMapSize: landingMap.size,
+      sourceSlugsCount: sourceSlugs.length,
+      slugLandingMapSize: slugLandingMap.size,
+      tenantIdsForFallbackCount: tenantIdsForFallback.length,
+      tenantLandingRawCount,
+      tenantLandingFallbackSize: tenantLandingFallback.size,
+      landingErrors,
+    });
 
     // Bereits versendete Reminder pro (application_id, kind)
     const appIds = apps.map((a: any) => a.id);
