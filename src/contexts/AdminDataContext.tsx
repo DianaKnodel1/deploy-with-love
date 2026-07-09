@@ -20,11 +20,11 @@ export interface ProfileRow {
   id: string; user_id: string; full_name: string; status: EmployeeStatus; address: string | null; birth_date: string | null;
   living_since: string | null; created_at: string; contract_signed_at: string | null; onboarding_status: OnboardingStatus;
   admin_notes: string | null;
-  email?: string | null; phone?: string | null; first_name?: string | null; last_name?: string | null; street?: string | null;
+  application_id?: string | null; email?: string | null; phone?: string | null; first_name?: string | null; last_name?: string | null; street?: string | null;
   zip_code?: string | null; city?: string | null; birth_place?: string | null; nationality?: string | null; previous_address?: string | null;
   id_front_url?: string | null; id_back_url?: string | null; contract_pdf_url?: string | null; signature_url?: string | null;
   social_security_number?: string | null; tax_number?: string | null; iban?: string | null; health_insurance?: string | null;
-  family_status?: string | null; employment_type?: string | null; employment_start_date?: string | null;
+  family_status?: string | null; employment_type?: string | null; employment_start_date?: string | null; tenant_id?: string | null; team_leader_id?: string | null;
 }
 export interface KycRow {
   id: string; user_id: string; status: KycStatus; id_front_url: string | null; id_back_url: string | null; selfie_url: string | null;
@@ -70,8 +70,8 @@ interface AdminDataContextType {
 
 const AdminDataContext = createContext<AdminDataContextType | null>(null);
 
-const APPLICATION_OVERVIEW_COLUMNS = "id, full_name, first_name, last_name, email, phone, message, status, created_at, tenant_id, address, postal_code, city, birth_date, birth_place, nationality, user_id, source_slug, source_landing_id, target_landing_id, flow_type, booking_status, scheduled_at, interview_started_at, interview_completed_at, interview_recommendation, interview_score, interview_summary, interview_messages, interview_mode";
-const PROFILE_OVERVIEW_COLUMNS = "id, user_id, full_name, email, phone, first_name, last_name, status, address, street, zip_code, city, birth_date, birth_place, nationality, living_since, previous_address, created_at, contract_signed_at, contract_pdf_url, signature_url, onboarding_status, admin_notes, id_front_url, id_back_url, social_security_number, tax_number, iban, health_insurance, family_status, employment_type, employment_start_date";
+const APPLICATION_OVERVIEW_COLUMNS = "id, full_name, first_name, last_name, email, phone, message, status, created_at, tenant_id, address, postal_code, city, birth_date, birth_place, nationality, user_id, source_slug, source_landing_id, target_landing_id, flow_type, booking_status, scheduled_at, interview_started_at, interview_completed_at, interview_recommendation, interview_score, interview_summary, interview_mode";
+const PROFILE_OVERVIEW_COLUMNS = "id, user_id, full_name, application_id, phone, status, address, street, zip_code, city, birth_date, birth_place, nationality, living_since, previous_address, created_at, contract_signed_at, signature_url, onboarding_status, admin_notes, social_security_number, tax_number, iban, health_insurance, family_status, employment_type, employment_start_date, tenant_id, team_leader_id";
 const KYC_OVERVIEW_COLUMNS = "id, user_id, status, id_front_url, id_back_url, selfie_url, rejection_reason, risk_flag, reviewed_at, created_at";
 const TEMPLATE_OVERVIEW_COLUMNS = "id, title, description, instructions, compensation, is_active, is_published, image_url, created_at";
 const ASSIGNMENT_OVERVIEW_COLUMNS = "id, task_template_id, user_id, status, admin_comment, created_at, sms_channel_id, release_at, individual_instructions, individual_phone, individual_hint, post_ident_pdf_url, post_ident_pdf_name";
