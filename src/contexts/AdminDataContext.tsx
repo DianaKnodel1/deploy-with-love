@@ -81,11 +81,14 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [emailConfirmedUserIds, setEmailConfirmedUserIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const inFlightRef = useRef<Promise<void> | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const loadData = useCallback(async () => {
     // Re-entry-Guard: laufende Ladevorgänge mergen, statt parallel zu starten
     if (inFlightRef.current) return inFlightRef.current;
-    setLoading(true);
+    // Nur beim ersten Laden Skeleton zeigen; spätere Refreshes laufen im
+    // Hintergrund, damit die Navigation zwischen Admin-Seiten nicht 30 s blockt.
+    if (!hasLoadedOnceRef.current) setLoading(true);
 
     const getValue = <T,>(
       result: PromiseSettledResult<T>,
