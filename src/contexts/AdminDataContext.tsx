@@ -164,7 +164,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       const criticalResults = await Promise.all(criticalTasks);
 
-      const backgroundTasks: Promise<{ ok: boolean; label: string }>[] = [
+      const backgroundTasks: Promise<{ ok: boolean; label: string; error?: string }>[] = [
         track<{ user_id: string; email_confirmed: boolean }[]>("E-Mail-Bestätigungen",
           () => (supabase as any).rpc("admin_get_email_confirmations").then((r: any) => (r.data ?? []) as { user_id: string; email_confirmed: boolean }[]),
           (confs) => setEmailConfirmedUserIds(new Set(confs.filter((c) => c.email_confirmed).map((c) => c.user_id)))),
