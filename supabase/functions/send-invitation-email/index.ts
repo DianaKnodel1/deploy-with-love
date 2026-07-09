@@ -111,15 +111,15 @@ serve(async (req) => {
 
     const subject = subjectOverride && subjectOverride.trim()
       ? subjectOverride.trim()
-      : (dbSubject ? applyPh(dbSubject) : `Willkommen im Team – ${tenant.name}`);
+      : (dbSubject ? applyPh(dbSubject) : `Mitarbeiter registriert sich – ${tenant.name}`);
     const headline = headlineOverride && headlineOverride.trim()
       ? headlineOverride.trim()
-      : (dbSubject ? applyPh(dbSubject) : "Willkommen im Team!");
+      : (dbSubject ? applyPh(dbSubject) : "Mitarbeiter registriert sich");
     const intro = introOverride && introOverride.trim()
       ? introOverride.trim()
       : (dbBody
           ? applyPh(dbBody).replace(/\n/g, "<br/>")
-          : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""}, mein Name ist Sabine Schneider von <strong>${escapeHtml(tenant.name)}</strong>, wir hatten gemeinsam das Bewerbungsgespräch.<br/><br/>Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!`);
+          : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""},<br/><br/>dein Zugang bei <strong>${escapeHtml(tenant.name)}</strong> ist bereit. Bitte registriere dich im Mitarbeiterportal und schließe anschließend dein Profil ab.`);
     const buttonLabel = buttonLabelOverride && buttonLabelOverride.trim()
       ? buttonLabelOverride.trim()
       : (dbButton ? applyPh(dbButton) : "Jetzt registrieren");
