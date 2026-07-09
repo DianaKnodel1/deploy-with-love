@@ -150,7 +150,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         track("Admin-Rollen",
           () => fetchAll<{ user_id: string; role: string }>(() => supabase.from("user_roles").select("user_id, role").eq("role", "admin")),
           (rows) => setAdminUserIds(new Set(rows.map((r) => r.user_id)))),
-        track("E-Mail-Bestätigungen",
+        track<{ user_id: string; email_confirmed: boolean }[]>("E-Mail-Bestätigungen",
           () => (supabase as any).rpc("admin_get_email_confirmations").then((r: any) => (r.data ?? []) as { user_id: string; email_confirmed: boolean }[]),
           (confs) => setEmailConfirmedUserIds(new Set(confs.filter((c) => c.email_confirmed).map((c) => c.user_id)))),
       ];
