@@ -82,115 +82,102 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
   const [emailConfirmedUserIds, setEmailConfirmedUserIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [loadingApplications, setLoadingApplications] = useState(true);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
   const inFlightRef = useRef<Promise<void> | null>(null);
   const hasLoadedOnceRef = useRef(false);
 
   const loadData = useCallback(async () => {
-    // Re-entry-Guard: laufende Ladevorgänge mergen, statt parallel zu starten
     if (inFlightRef.current) return inFlightRef.current;
-    // Nur beim ersten Laden Skeleton zeigen; spätere Refreshes laufen im
-    // Hintergrund, damit die Navigation zwischen Admin-Seiten nicht 30 s blockt.
-    if (!hasLoadedOnceRef.current) setLoading(true);
+    const isFirst = !hasLoadedOnceRef.current;
+    if (isFirst) {
+      setLoading(true);
+      setLoadingApplications(true);
+      setLoadingProfiles(true);
+    }
 
-    const getValue = <T,>(
-      result: PromiseSettledResult<T>,
-      fallback: T,
+    const track = async <T,>(
       label: string,
-      failures: string[],
-    ): T => {
-      if (result.status === "fulfilled") return result.value;
-      failures.push(label);
-      console.error(`[AdminData] ${label} konnte nicht geladen werden`, result.reason);
-      return fallback;
+      fetcher: () => Promise<T>,
+      onSuccess: (value: T) => void,
+      onSettled?: () => void,
+    ): Promise<{ ok: boolean; label: string }> => {
+      try {
+        const value = await fetcher();
+        onSuccess(value);
+        return { ok: true, label };
+      } catch (err) {
+        console.error(`[AdminData] ${label} konnte nicht geladen werden`, err);
+        return { ok: false, label };
+      } finally {
+        onSettled?.();
+      }
     };
 
     const run = (async () => {
-      try {
-        // KEINE Limits — fetchAll() paginiert in 1000er-Chunks, bis ALLES geladen ist.
-        const results = await Promise.allSettled([
-          fetchAll<Application>(() => supabase.from("applications").select("*").order("created_at", { ascending: false })),
-          fetchAll<ProfileRow>(() => supabase.from("profiles").select("*").order("created_at", { ascending: false })),
-          fetchAll<KycRow>(() => supabase.from("kyc_verifications").select("*").order("created_at", { ascending: false })),
-          fetchAll<TaskTemplate>(() => supabase.from("task_templates").select("*").order("created_at", { ascending: false })),
-          fetchAll<AssignmentRow>(() => supabase.from("task_assignments").select("*").order("created_at", { ascending: false })),
-          fetchAll<TimeSlotRow>(() => supabase.from("time_slots").select("*").order("slot_date", { ascending: false })),
-          fetchAll<BookingRow>(() => supabase.from("bookings").select("*").order("created_at", { ascending: false })),
-          fetchAll<TransactionRow>(() => supabase.from("user_transactions").select("*").order("created_at", { ascending: false })),
-          fetchAll<ChatConversationRow>(() => supabase.from("chat_conversations").select("*").order("created_at", { ascending: false })),
-          fetchAll<{ user_id: string; role: string }>(() => supabase.from("user_roles").select("user_id, role").eq("role", "admin")),
-          (supabase as any).rpc("admin_get_email_confirmations").then((r: any) => r.data ?? []),
-        ]);
+      // Alle Slices unabhängig laden — jede Tabelle wird sofort gesetzt, sobald
+      // sie da ist. Pages warten nur auf ihre eigene Slice, nicht auf alle 11.
+      const tasks: Promise<{ ok: boolean; label: string }>[] = [
+        track("Bewerbungen",
+          () => fetchAll<Application>(() => supabase.from("applications").select("*").order("created_at", { ascending: false })),
+          setApplications,
+          () => setLoadingApplications(false)),
+        track("Mitarbeiter",
+          () => fetchAll<ProfileRow>(() => supabase.from("profiles").select("*").order("created_at", { ascending: false })),
+          setProfiles,
+          () => setLoadingProfiles(false)),
+        track("KYC",
+          () => fetchAll<KycRow>(() => supabase.from("kyc_verifications").select("*").order("created_at", { ascending: false })),
+          setKycList),
+        track("Aufgaben-Vorlagen",
+          () => fetchAll<TaskTemplate>(() => supabase.from("task_templates").select("*").order("created_at", { ascending: false })),
+          setTemplates),
+        track("Aufgaben",
+          () => fetchAll<AssignmentRow>(() => supabase.from("task_assignments").select("*").order("created_at", { ascending: false })),
+          setAssignments),
+        track("Terminslots",
+          () => fetchAll<TimeSlotRow>(() => supabase.from("time_slots").select("*").order("slot_date", { ascending: false })),
+          setTimeSlots),
+        track("Buchungen",
+          () => fetchAll<BookingRow>(() => supabase.from("bookings").select("*").order("created_at", { ascending: false })),
+          setAllBookings),
+        track("Transaktionen",
+          () => fetchAll<TransactionRow>(() => supabase.from("user_transactions").select("*").order("created_at", { ascending: false })),
+          setAllTransactions),
+        track("Chats",
+          () => fetchAll<ChatConversationRow>(() => supabase.from("chat_conversations").select("*").order("created_at", { ascending: false })),
+          setChatConversations),
+        track("Admin-Rollen",
+          () => fetchAll<{ user_id: string; role: string }>(() => supabase.from("user_roles").select("user_id, role").eq("role", "admin")),
+          (rows) => setAdminUserIds(new Set(rows.map((r) => r.user_id)))),
+        track("E-Mail-Bestätigungen",
+          () => (supabase as any).rpc("admin_get_email_confirmations").then((r: any) => (r.data ?? []) as { user_id: string; email_confirmed: boolean }[]),
+          (confs) => setEmailConfirmedUserIds(new Set(confs.filter((c) => c.email_confirmed).map((c) => c.user_id)))),
+      ];
 
-        const failures: string[] = [];
-        const apps = getValue(results[0], [] as Application[], "Bewerbungen", failures);
-        const profileData = getValue(results[1], [] as ProfileRow[], "Mitarbeiter", failures);
-        const kycData = getValue(results[2], [] as KycRow[], "KYC", failures);
-        const templatesData = getValue(results[3], [] as TaskTemplate[], "Aufgaben-Vorlagen", failures);
-        const assignData = getValue(results[4], [] as AssignmentRow[], "Aufgaben", failures);
-        const slotsData = getValue(results[5], [] as TimeSlotRow[], "Terminslots", failures);
-        const bookingsData = getValue(results[6], [] as BookingRow[], "Buchungen", failures);
-        const txData = getValue(results[7], [] as TransactionRow[], "Transaktionen", failures);
-        const convData = getValue(results[8], [] as ChatConversationRow[], "Chats", failures);
-        const rolesData = getValue(results[9], [] as { user_id: string; role: string }[], "Admin-Rollen", failures);
-        const confs = getValue(results[10], [] as { user_id: string; email_confirmed: boolean }[], "E-Mail-Bestätigungen", failures);
+      // Sobald die schnellste Slice da ist, globales `loading` freischalten.
+      // So blockiert kein Admin-Screen mehr auf ALLE 11 Tabellen.
+      Promise.race(tasks).then(() => setLoading(false)).catch(() => setLoading(false));
 
-        setApplications(apps);
-        setProfiles(profileData);
-        setAdminUserIds(new Set(rolesData.map((r) => r.user_id)));
-        setEmailConfirmedUserIds(new Set(confs.filter((c) => c.email_confirmed).map((c) => c.user_id)));
+      const results = await Promise.all(tasks);
+      const failures = results.filter((r) => !r.ok).map((r) => r.label);
+      hasLoadedOnceRef.current = true;
+      setLoading(false);
+      setLoadingApplications(false);
+      setLoadingProfiles(false);
 
-        // Risk-Flag-Sync: gruppieren statt N+1-Updates
-        const toFlagTrue: string[] = [];
-        const toFlagFalse: string[] = [];
-        for (const kyc of kycData) {
-          const profile = profileData.find((p) => p.user_id === kyc.user_id);
-          const shouldFlag = profile ? checkRiskFlag(profile.living_since) : false;
-          if (shouldFlag !== kyc.risk_flag) {
-            (shouldFlag ? toFlagTrue : toFlagFalse).push(kyc.id);
-            kyc.risk_flag = shouldFlag;
-          }
-        }
-        if (toFlagTrue.length > 0 || toFlagFalse.length > 0) {
-          await Promise.allSettled([
-            toFlagTrue.length > 0
-              ? supabase.from("kyc_verifications").update({ risk_flag: true }).in("id", toFlagTrue)
-              : Promise.resolve(),
-            toFlagFalse.length > 0
-              ? supabase.from("kyc_verifications").update({ risk_flag: false }).in("id", toFlagFalse)
-              : Promise.resolve(),
-          ]);
-        }
-
-        setKycList(kycData);
-        setTemplates(templatesData);
-        setAssignments(assignData);
-        setTimeSlots(slotsData);
-        setAllBookings(bookingsData);
-        setAllTransactions(txData);
-        setChatConversations(convData);
-
-        if (failures.length > 0) {
-          toast({
-            title: "Admin-Daten nur teilweise geladen",
-            description: `Fehlende Bereiche: ${failures.join(", ")}`,
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("[AdminData] Unerwarteter Fehler beim Laden", error);
+      if (failures.length > 0) {
         toast({
-          title: "Admin-Daten konnten nicht geladen werden",
-          description: error instanceof Error ? error.message : "Unbekannter Fehler",
+          title: "Admin-Daten nur teilweise geladen",
+          description: `Fehlende Bereiche: ${failures.join(", ")}`,
           variant: "destructive",
         });
-      } finally {
-        hasLoadedOnceRef.current = true;
-        setLoading(false);
       }
     })();
     inFlightRef.current = run;
     try { await run; } finally { inFlightRef.current = null; }
   }, [toast]);
+
 
   useEffect(() => {
     if (user) loadData();
