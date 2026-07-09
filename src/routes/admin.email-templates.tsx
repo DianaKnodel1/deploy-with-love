@@ -60,6 +60,11 @@ const REMINDER_DEFAULTS = {
     subject: "Schade, dass es nicht geklappt hat – buche einen neuen Termin",
     body: `Hallo {{first_name}},\n\nleider konnten wir dich zu deinem Termin am {{appointment_date}} um {{appointment_time}} Uhr nicht erreichen. Kein Problem – wir hätten dich gern trotzdem kennengelernt.\n\nBitte wähle einen neuen Wunschtermin, der besser passt:\n\n{{cta:Neuen Termin auswählen|{{calendly_link}}}}\n\nFalls du Fragen hast oder Unterstützung brauchst, antworte einfach auf diese E-Mail.\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
   },
+  bewerbung_magic_link: {
+    subject: "Ihr Bewerbungsgespräch ist bereit",
+    body: `Guten Tag {{first_name}},\n\nvielen Dank für Ihre Terminbuchung. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch über den folgenden Link:\n\n{{cta:Bewerbungsgespräch starten|{{portal_link}}}}\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+    button: "Bewerbungsgespräch starten",
+  },
 
 };
 
