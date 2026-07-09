@@ -255,39 +255,10 @@ export const Route = createFileRoute("/api/public/applications")({
           } catch (e) { console.warn("[applications fast] invitation mail error:", e); }
         }
 
-        // Bestätigungs-Mail bei Vermittlungs-Bewerbung (Broker-Flow) mit
-        // Calendly-Link. Fire-and-forget – blockiert die Response nicht.
-        // Nur wenn: broker-Flow + Calendly-Link vorhanden + kein Testsubmit +
-        // kein KI-Interview davor (dort kommt die Mail erst nach Zusage).
-        const shouldSendBrokerConfirm =
-          isBroker && !!broker_block?.calendly_url && !d.is_test && !useInterview && !!resolvedTenantId;
-        if (shouldSendBrokerConfirm) {
-          try {
-            const parts = d.full_name.trim().split(/\s+/);
-            const firstName = parts[0] ?? "";
-            const lastName = parts.slice(1).join(" ");
-            const partnerName = broker_block!.partner_name || "unser Team";
-            // Template kommt aus tenants.application_received_* (editierbar unter
-            // /admin/email-templates → Tab "Bewerbungseingang"). Fallback siehe
-            // send-invitation-email/index.ts, wenn Spalten leer sind.
-            void supabaseAdmin.functions.invoke("send-invitation-email", {
-              body: {
-                to: d.email,
-                fullName: d.full_name,
-                firstName,
-                lastName,
-                registrationLink: broker_block!.calendly_url,
-                tenantId: resolvedTenantId,
-                templateName: "application_received",
-                buttonLabel: broker_block!.button_label || undefined,
-                placeholders: {
-                  partner_name: partnerName,
-                  calendly_link: broker_block!.calendly_url!,
-                },
-              },
-            }).catch((e) => console.warn("[applications broker] confirm mail:", e));
-          } catch (e) { console.warn("[applications broker] confirm mail error:", e); }
-        }
+        // Kein Bewerbungseingang-Confirm mehr — Broker-Flow versendet nur
+        // Kein-Termin / No-Show Reminder (send-application-reminders) und
+        // accept/reject Mails (Admin-Aktion).
+
 
         return json({ success: true, flow_type: d.flow_type ?? "classic", redirect_url, broker: broker_block });
 
