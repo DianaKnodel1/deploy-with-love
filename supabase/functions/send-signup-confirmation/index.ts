@@ -90,7 +90,7 @@ serve(async (req) => {
       type: "signup",
       email,
       password,
-      options: { data: { full_name: full_name ?? "" }, redirectTo },
+      options: { data: { full_name: full_name ?? "", tenant_id }, redirectTo },
     });
 
     // Fallback: User existiert bereits. Wenn er NICHT bestätigt ist → neuen Link
@@ -107,7 +107,7 @@ serve(async (req) => {
         const retry = await supabaseAdmin.auth.admin.generateLink({
           type: "signup",
           email,
-          options: { redirectTo },
+          options: { data: { full_name: full_name ?? "", tenant_id }, redirectTo },
         });
         if (retry.error || !retry.data?.properties?.action_link || !retry.data?.user) {
           return json({ error: retry.error?.message ?? "Confirmation-Link konnte nicht erzeugt werden" }, 400);
