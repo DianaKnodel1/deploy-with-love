@@ -80,7 +80,7 @@ serve(async (req) => {
     const brand = tenant.primary_color ?? "#0f172a";
     const greetingName = firstName || (fullName ? fullName.split(" ")[0] : "");
 
-    // Placeholder-Map für DB-Templates (application_received etc.).
+    // Placeholder-Map für DB-Templates.
     const phMap: Record<string, string> = {
       first_name: greetingName,
       last_name: lastName || "",
@@ -95,7 +95,7 @@ serve(async (req) => {
     };
     const applyPh = (s: string) => s.replace(/\{\{(\w+)\}\}/g, (_m, k) => phMap[k] ?? "");
 
-    // Template-Defaults aus tenant-Spalten laden (aktuell nur application_received).
+    // Template-Defaults aus tenant-Spalten laden.
     let dbSubject: string | null = null;
     let dbBody: string | null = null;
     let dbButton: string | null = null;

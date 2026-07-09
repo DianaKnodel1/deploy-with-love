@@ -80,8 +80,6 @@ interface TenantEmail {
   email_signature: string | null;
   team_leader_name: string;
   company_email?: string | null;
-  reminder_invite_subject: string | null;
-  reminder_invite_body: string | null;
   reminder_confirm_subject: string | null;
   reminder_confirm_body: string | null;
   reminder_completion_subject: string | null;
@@ -90,10 +88,6 @@ interface TenantEmail {
   reminder_no_booking_body: string | null;
   reminder_recovery_subject: string | null;
   reminder_recovery_body: string | null;
-  reminder_recovery_bewerber_subject: string | null;
-  reminder_recovery_bewerber_body: string | null;
-  reminder_appointment_subject: string | null;
-  reminder_appointment_body: string | null;
   reminder_chat_subject: string | null;
   reminder_chat_body: string | null;
   reminder_app_no_booking_subject: string | null;
