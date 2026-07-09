@@ -11,6 +11,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import nodemailer from "https://esm.sh/nodemailer@6.9.14";
 
+const FUNCTION_VERSION = "2026-07-09-calendly-fallback-v2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
@@ -65,6 +67,38 @@ interface TenantRow {
   email_signature: string | null; emails_paused: boolean | null;
   reminder_app_no_booking_subject: string | null; reminder_app_no_booking_body: string | null;
   reminder_app_no_show_subject: string | null;    reminder_app_no_show_body: string | null;
+}
+
+type LandingRow = {
+  id?: string | null;
+  tenant_id?: string | null;
+  slug?: string | null;
+  source_slug?: string | null;
+  calendly_url?: string | null;
+  branding?: any;
+  recruiter_name?: string | null;
+  updated_at?: string | null;
+};
+
+function normalizeKey(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function calendlyFromLanding(landing: LandingRow | null | undefined): string {
+  return String(landing?.calendly_url || landing?.branding?.calendly_url || "").trim();
+}
+
+function toLanding(row: any): LandingRow {
+  return {
+    id: row?.id ?? null,
+    tenant_id: row?.tenant_id ?? null,
+    slug: row?.slug ?? null,
+    source_slug: row?.source_slug ?? null,
+    calendly_url: row?.calendly_url ?? null,
+    branding: row?.branding ?? null,
+    recruiter_name: row?.recruiter_name ?? null,
+    updated_at: row?.updated_at ?? null,
+  };
 }
 
 function hasValidSmtp(t: TenantRow | null | undefined): t is TenantRow {
@@ -218,35 +252,56 @@ serve(async (req) => {
     const since = new Date(now - 10 * 86400_000).toISOString();
     const { data: apps, error: aErr } = await admin
       .from("applications")
-      .select("id,tenant_id,source_landing_id,full_name,email,created_at,booking_status,scheduled_at,interview_started_at,interview_completed_at,flow_type")
+      .select("id,tenant_id,source_slug,source_landing_id,target_landing_id,full_name,email,created_at,booking_status,scheduled_at,interview_started_at,interview_completed_at,flow_type")
       .gte("created_at", since);
     if (aErr) return json({ error: aErr.message }, 500);
 
     if (!apps?.length) return json({ success: true, dry_run: dryRun, candidates: 0, sent: 0, skipped: 0, failed: 0 });
 
-    // Landing-Pages mit Calendly-Link (direkte Zuordnung via source_landing_id)
-    const landingIds = Array.from(new Set(apps.map((a: any) => a.source_landing_id).filter(Boolean)));
-    const landingMap = new Map<string, { calendly_url: string | null; branding: any; recruiter_name: string | null }>();
+    // Landing-Pages mit Calendly-Link (direkte Zuordnung via source_landing_id / target_landing_id)
+    const landingIds = Array.from(new Set(apps.flatMap((a: any) => [a.source_landing_id, a.target_landing_id]).filter(Boolean)));
+    const landingMap = new Map<string, LandingRow>();
     if (landingIds.length) {
       const { data: lps } = await admin.from("landing_pages")
-        .select("id,calendly_url,branding,recruiter_name")
+        .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
         .in("id", landingIds);
-      for (const l of (lps ?? []) as any[]) landingMap.set(l.id, { calendly_url: l.calendly_url, branding: l.branding, recruiter_name: l.recruiter_name });
+      for (const l of (lps ?? []) as any[]) landingMap.set(l.id, toLanding(l));
+    }
+
+    // Legacy-Fallback: ältere Bewerbungen haben oft source_landing_id = NULL,
+    // aber source_slug ist noch gesetzt. Daher zusätzlich Landing per slug/source_slug laden.
+    const sourceSlugs = Array.from(new Set(apps.map((a: any) => normalizeKey(a.source_slug)).filter(Boolean)));
+    const slugLandingMap = new Map<string, LandingRow>();
+    if (sourceSlugs.length) {
+      const { data: bySlug } = await admin.from("landing_pages")
+        .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
+        .in("slug", sourceSlugs);
+      const { data: bySourceSlug } = await admin.from("landing_pages")
+        .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
+        .in("source_slug", sourceSlugs);
+      for (const l of ([...(bySlug ?? []), ...(bySourceSlug ?? [])] as any[])) {
+        const landing = toLanding(l);
+        const keys = [landing.slug, landing.source_slug].map(normalizeKey).filter(Boolean);
+        for (const key of keys) {
+          const current = slugLandingMap.get(key);
+          if (!current || (!calendlyFromLanding(current) && calendlyFromLanding(landing))) slugLandingMap.set(key, landing);
+        }
+      }
     }
 
     // Fallback: pro Tenant erste Landing-Page mit Calendly-Link (für Apps ohne source_landing_id
     // oder wenn deren Landing keinen Calendly-Link hat — z.B. Legacy-/Direktbewerbungen).
     const tenantIdsForFallback = Array.from(new Set(apps.map((a: any) => a.tenant_id).filter(Boolean)));
-    const tenantLandingFallback = new Map<string, { calendly_url: string | null; branding: any; recruiter_name: string | null }>();
+    const tenantLandingFallback = new Map<string, LandingRow>();
     if (tenantIdsForFallback.length) {
       const { data: tlps } = await admin.from("landing_pages")
-        .select("tenant_id,calendly_url,branding,recruiter_name,updated_at")
+        .select("id,tenant_id,slug,source_slug,calendly_url,branding,recruiter_name,updated_at")
         .in("tenant_id", tenantIdsForFallback)
-        .not("calendly_url", "is", null)
         .order("updated_at", { ascending: false });
       for (const l of (tlps ?? []) as any[]) {
-        if (!tenantLandingFallback.has(l.tenant_id) && (l.calendly_url || "").trim()) {
-          tenantLandingFallback.set(l.tenant_id, { calendly_url: l.calendly_url, branding: l.branding, recruiter_name: l.recruiter_name });
+        const landing = toLanding(l);
+        if (!tenantLandingFallback.has(l.tenant_id) && calendlyFromLanding(landing)) {
+          tenantLandingFallback.set(l.tenant_id, landing);
         }
       }
     }
@@ -343,11 +398,19 @@ serve(async (req) => {
       if (total12h >= MAX_PER_12H_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_12h_cap" }); continue; }
 
       const landing = (app.source_landing_id ? landingMap.get(app.source_landing_id) : null)
+        || (app.target_landing_id ? landingMap.get(app.target_landing_id) : null)
+        || (app.source_slug ? slugLandingMap.get(normalizeKey(app.source_slug)) : null)
         || tenantLandingFallback.get(app.tenant_id)
         || null;
-      const rawCalendly = (landing?.calendly_url || landing?.branding?.calendly_url || "").trim();
+      const rawCalendly = calendlyFromLanding(landing);
       if (!rawCalendly) {
-        skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "no_calendly_link" });
+        skipped++; results.push({
+          app: app.id, kind, status: "skipped", reason: "no_calendly_link",
+          source_landing_id: app.source_landing_id ?? null,
+          target_landing_id: app.target_landing_id ?? null,
+          source_slug: app.source_slug ?? null,
+          tenant_has_landing_fallback: tenantLandingFallback.has(app.tenant_id),
+        });
         if (!dryRun) await admin.from("application_reminder_log").insert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "skipped", error: "no_calendly_link",
@@ -439,8 +502,13 @@ serve(async (req) => {
 
 
     return json({
-      success: true, dry_run: dryRun,
+      success: true, version: FUNCTION_VERSION, dry_run: dryRun,
       candidates: todo.length, sent, skipped, failed,
+      fallback_counts: {
+        direct_landing_ids: landingMap.size,
+        source_slugs: slugLandingMap.size,
+        tenant_landing_fallbacks: tenantLandingFallback.size,
+      },
       results: dryRun || todo.length < 100 ? results : undefined,
     });
   } catch (err: any) {
