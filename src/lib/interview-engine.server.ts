@@ -206,7 +206,6 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
     landing = byId ?? null;
   }
   if (!landing && app.source_slug) {
-    const sel = "slug, source_slug, interview_system_prompt, recruiter_avatar_url, recruiter_name, branding, interview_mode, interview_voice_id, linked_fasttrack_landing_id";
     const { data: bySource } = await supabaseAdmin
       .from("landing_pages").select(sel).eq("source_slug", app.source_slug).maybeSingle();
     landing = bySource ?? null;
@@ -224,29 +223,29 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
     fasttrack = ft ?? null;
   }
   if (!landing && app.target_landing_id) {
-      const { data: ft } = await supabaseAdmin
-        .from("landing_pages").select(sel).eq("id", app.target_landing_id).maybeSingle();
-      fasttrack = ft ?? null;
+    const { data: ft } = await supabaseAdmin
+      .from("landing_pages").select(sel).eq("id", app.target_landing_id).maybeSingle();
+    fasttrack = ft ?? null;
   }
-    // Source-Landing hat Vorrang (dort pflegt der Admin Recruiter-Name etc.);
-    // Fasttrack-Landing dient nur als Fallback für fehlende Felder.
-    if (landing || fasttrack) {
-      const custom = landing?.interview_system_prompt?.trim?.() || fasttrack?.interview_system_prompt?.trim?.();
-      if (custom) systemPrompt = custom;
-      const fn = landing?.branding?.firmenname?.trim?.() || fasttrack?.branding?.firmenname?.trim?.();
-      if (fn) companyName = fn;
-      const rn =
-        landing?.branding?.recruiter_name?.trim?.() ||
-        landing?.recruiter_name?.trim?.() ||
-        fasttrack?.branding?.recruiter_name?.trim?.() ||
-        fasttrack?.recruiter_name?.trim?.();
-      if (rn) recruiterName = rn;
-      recruiterAvatarUrl = landing?.recruiter_avatar_url || fasttrack?.recruiter_avatar_url || null;
-      voiceId = landing?.interview_voice_id || fasttrack?.interview_voice_id || null;
-      const mode = landing?.interview_mode || fasttrack?.interview_mode;
-      if (mode === "voice" || mode === "both" || mode === "chat") interviewMode = mode;
-      landingSlug = landing?.slug || landing?.source_slug || fasttrack?.slug || fasttrack?.source_slug || landingSlug;
-    }
+  // Source-Landing hat Vorrang (dort pflegt der Admin Recruiter-Name etc.);
+  // Fasttrack-Landing dient nur als Fallback für fehlende Felder.
+  if (landing || fasttrack) {
+    const custom = landing?.interview_system_prompt?.trim?.() || fasttrack?.interview_system_prompt?.trim?.();
+    if (custom) systemPrompt = custom;
+    const fn = landing?.branding?.firmenname?.trim?.() || fasttrack?.branding?.firmenname?.trim?.();
+    if (fn) companyName = fn;
+    const rn =
+      landing?.branding?.recruiter_name?.trim?.() ||
+      landing?.recruiter_name?.trim?.() ||
+      fasttrack?.branding?.recruiter_name?.trim?.() ||
+      fasttrack?.recruiter_name?.trim?.();
+    if (rn) recruiterName = rn;
+    recruiterAvatarUrl = landing?.recruiter_avatar_url || fasttrack?.recruiter_avatar_url || null;
+    voiceId = landing?.interview_voice_id || fasttrack?.interview_voice_id || null;
+    const mode = landing?.interview_mode || fasttrack?.interview_mode;
+    if (mode === "voice" || mode === "both" || mode === "chat") interviewMode = mode;
+    landingSlug = landing?.slug || landing?.source_slug || fasttrack?.slug || fasttrack?.source_slug || landingSlug;
+  }
 
   systemPrompt = systemPrompt.replace(/\{company\}/g, companyName).replace(/\{recruiter\}/g, recruiterName);
 
