@@ -265,11 +265,11 @@ function InterviewPage() {
           })}
           {loading && !ended && (
             <div className="flex justify-start mt-2">
-              <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl rounded-bl-sm px-4 py-3">
-                <div className="flex gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                <div className="flex items-end gap-1.5 h-4">
+                  <span className="typing-dot" style={{ animationDelay: "0ms" }} />
+                  <span className="typing-dot" style={{ animationDelay: "180ms" }} />
+                  <span className="typing-dot" style={{ animationDelay: "360ms" }} />
                 </div>
               </div>
             </div>
