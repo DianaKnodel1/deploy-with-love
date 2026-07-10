@@ -201,7 +201,7 @@ function InterviewPage() {
   const recruiterName = branding?.recruiter_name || "Sabine Schneider";
   const avatarUrl = branding?.recruiter_avatar_url || null;
   const initials = recruiterName.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
-  const status = loading ? "tippt…" : ended ? "Gespräch beendet" : "online";
+  const status = loading ? `${recruiterName.split(" ")[0]} schreibt …` : ended ? "Gespräch beendet" : "online";
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
