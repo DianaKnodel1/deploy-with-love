@@ -298,11 +298,6 @@ export async function sendRegistrationInviteAfterAiAccept(app: ApplicationRow, r
       lastName,
       registrationLink,
       tenantId: app.tenant_id,
-      subject: "Ihr Bewerbungsgespräch war erfolgreich",
-      headline: `Hallo ${firstName || name},`,
-      intro: "Ihr Bewerbungsgespräch wurde positiv bewertet. Im nächsten Schritt legen Sie Ihr Konto an und schließen Ihr Onboarding ab. Klicken Sie dafür auf den Button:",
-      buttonLabel: "Jetzt registrieren",
-      templateName: "ai_acceptance_invitation",
     },
   });
   if (mailErr) {

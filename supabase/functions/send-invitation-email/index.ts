@@ -174,7 +174,6 @@ ${renderedBody.html}
 ${renderedBody.hasCta ? "" : `<table cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 24px"><tr><td style="background:${brand};border-radius:10px">
 <a href="${escapeAttr(registrationLink)}" style="display:inline-block;padding:15px 36px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.4px;text-transform:uppercase">${escapeHtml(buttonLabel)}</a>
 </td></tr></table>`}
-<table cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 24px"><tr><td style="background:${brand};border-radius:10px">
 <p style="font-size:12px;color:#94a3b8;margin:0 0 6px;text-align:center">Sollte der Button nicht funktionieren, kopieren Sie bitte den folgenden Link in Ihren Browser:</p>
 <p style="font-size:12px;margin:0 0 28px;text-align:center;word-break:break-all"><a href="${escapeAttr(registrationLink)}" style="color:${brand}">${escapeHtml(registrationLink)}</a></p>
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:8px 0 24px"/>
