@@ -627,7 +627,7 @@ function AdminEmailTemplatesPage() {
 
           <TabsContent value="employee_signup">
             <TemplateEditor
-              label="Mitarbeiter registriert sich"
+              label="Herzlichen Glückwunsch"
               subject={employeeSignupSubject}
               onSubjectChange={setEmployeeSignupSubject}
               body={employeeSignupBody}
