@@ -161,7 +161,8 @@ serve(async (req) => {
     const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a">
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px"><tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;max-width:600px;overflow:hidden;box-shadow:0 2px 12px rgba(15,23,42,0.06)">
-<tr><td style="padding:40px 44px 8px">${logo}</td></tr>
+<tr><td style="padding:32px 44px 0;text-align:center;font-size:56px;line-height:1">🎉🎊✨</td></tr>
+<tr><td style="padding:16px 44px 8px">${logo}</td></tr>
 <tr><td style="padding:0 44px">
 <div style="background:linear-gradient(135deg, ${brand} 0%, ${brand}dd 100%);border-radius:12px;padding:32px 28px;text-align:center;color:#ffffff">
 <div style="font-size:42px;line-height:1;margin-bottom:12px">🎉</div>
