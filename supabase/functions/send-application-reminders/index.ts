@@ -486,7 +486,7 @@ serve(async (req) => {
 
     const jitter = () => new Promise(res => setTimeout(res, JITTER_MIN_MS + Math.random() * (JITTER_MAX_MS - JITTER_MIN_MS)));
 
-    for (const { app, kind } of todo) {
+    for (const { app, kind, inviteToken } of todo) {
       const tenant = tenants.get(app.tenant_id);
       if (!tenant) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_missing" }); continue; }
       if (tenant.emails_paused || pausedInThisRun.has(tenant.id)) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_paused" }); continue; }
@@ -498,36 +498,59 @@ serve(async (req) => {
       const total12h = (sent12hByTenant.get(tenant.id) ?? 0) + runCount;
       if (total12h >= MAX_PER_12H_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_12h_cap" }); continue; }
 
+      const isRegistration = kind === "registration_pending_24h" || kind === "registration_pending_72h";
+      const isNoShow = kind === "no_show_24h";
+
       const landing = (app.source_landing_id ? landingMap.get(app.source_landing_id) : null)
         || (app.target_landing_id ? landingMap.get(app.target_landing_id) : null)
         || (app.source_slug ? slugLandingMap.get(normalizeKey(app.source_slug)) : null)
         || tenantLandingFallback.get(app.tenant_id)
         || null;
       const rawCalendly = calendlyFromLanding(landing);
-      if (!rawCalendly) {
-        skipped++; results.push({
-          app: app.id, kind, status: "skipped", reason: "no_calendly_link",
-          source_landing_id: app.source_landing_id ?? null,
-          target_landing_id: app.target_landing_id ?? null,
-          source_slug: app.source_slug ?? null,
-          tenant_has_landing_fallback: tenantLandingFallback.has(app.tenant_id),
-        });
-        if (!dryRun) await admin.from("application_reminder_log").upsert({
-          application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
-          recipient_email: app.email, status: "skipped", error: "no_calendly_link",
-          sent_at: new Date().toISOString(),
-        }, { onConflict: "application_id,reminder_kind" });
-        continue;
-      }
-      const calendlyLink = appendUtm(rawCalendly, app.id);
 
-      const isNoShow = kind === "no_show_24h";
-      const tmplSubject = isNoShow
-        ? (tenant.reminder_app_no_show_subject || DEFAULTS.no_show.subject)
-        : (tenant.reminder_app_no_booking_subject || DEFAULTS.no_booking.subject);
-      const tmplBody = isNoShow
-        ? (tenant.reminder_app_no_show_body || DEFAULTS.no_show.body)
-        : (tenant.reminder_app_no_booking_body || DEFAULTS.no_booking.body);
+      // Registration-Reminder braucht KEIN Calendly, sondern portal_link.
+      let calendlyLink = "";
+      let portalLink = "";
+      if (isRegistration) {
+        if (!inviteToken) {
+          skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "no_invite_token" });
+          continue;
+        }
+        const activeDomain = tenant.primary_domain || tenant.domain;
+        if (!activeDomain) {
+          skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "no_tenant_domain" });
+          continue;
+        }
+        portalLink = `https://portal.${activeDomain}/register?token=${encodeURIComponent(inviteToken)}&ref=${encodeURIComponent(app.id)}`;
+      } else {
+        if (!rawCalendly) {
+          skipped++; results.push({
+            app: app.id, kind, status: "skipped", reason: "no_calendly_link",
+            source_landing_id: app.source_landing_id ?? null,
+            target_landing_id: app.target_landing_id ?? null,
+            source_slug: app.source_slug ?? null,
+            tenant_has_landing_fallback: tenantLandingFallback.has(app.tenant_id),
+          });
+          if (!dryRun) await admin.from("application_reminder_log").upsert({
+            application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
+            recipient_email: app.email, status: "skipped", error: "no_calendly_link",
+            sent_at: new Date().toISOString(),
+          }, { onConflict: "application_id,reminder_kind" });
+          continue;
+        }
+        calendlyLink = appendUtm(rawCalendly, app.id);
+      }
+
+      const tmplSubject = isRegistration
+        ? (tenant.reminder_app_registration_subject || DEFAULTS.registration.subject)
+        : isNoShow
+          ? (tenant.reminder_app_no_show_subject || DEFAULTS.no_show.subject)
+          : (tenant.reminder_app_no_booking_subject || DEFAULTS.no_booking.subject);
+      const tmplBody = isRegistration
+        ? (tenant.reminder_app_registration_body || DEFAULTS.registration.body)
+        : isNoShow
+          ? (tenant.reminder_app_no_show_body || DEFAULTS.no_show.body)
+          : (tenant.reminder_app_no_booking_body || DEFAULTS.no_booking.body);
 
       const recruiter = landing?.recruiter_name || landing?.branding?.recruiter_name || tenant.sender_name || tenant.name;
 
@@ -539,6 +562,7 @@ serve(async (req) => {
         tenant_name: tenant.name,
         recruiter_name: recruiter,
         calendly_link: calendlyLink,
+        portal_link: portalLink,
         appointment_date: scheduledDate ? scheduledDate.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }) : "",
         appointment_time: scheduledDate ? scheduledDate.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "",
       };
