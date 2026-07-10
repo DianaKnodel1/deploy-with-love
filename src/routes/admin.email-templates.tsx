@@ -464,6 +464,8 @@ function AdminEmailTemplatesPage() {
         reminder_app_no_booking_body: rAppNoBookingBody,
         reminder_app_no_show_subject: rAppNoShowSubject,
         reminder_app_no_show_body: rAppNoShowBody,
+        reminder_app_registration_subject: rAppRegSubject,
+        reminder_app_registration_body: rAppRegBody,
         bewerbung_magic_link_subject: mlSubject,
         bewerbung_magic_link_body: mlBody,
         bewerbung_magic_link_button: mlButton || null,
