@@ -761,6 +761,18 @@ function AdminEmailTemplatesPage() {
                   tenant={selectedTenant}
                 />
               </TabsContent>
+              <TabsContent value="app_registration">
+                <div className="rounded-md border border-sky-300 bg-sky-50 dark:bg-sky-950/30 dark:border-sky-700 px-3 py-2 mb-3 text-[11px] text-sky-900 dark:text-sky-200">
+                  Wird an Bewerber gesendet, die eine <strong>Zusage erhalten</strong>, sich aber noch nicht im Mitarbeiter-Portal registriert haben (24h + 72h nach Einladung, Cron alle 30 Min). Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{portal_link}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Registrierung offen (24h/72h nach Zusage)"
+                  subject={rAppRegSubject} onSubjectChange={setRAppRegSubject}
+                  body={rAppRegBody} onBodyChange={setRAppRegBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+              </TabsContent>
               <TabsContent value="magic_link">
                 <div className="rounded-md border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-700 px-3 py-2 mb-3 text-[11px] text-emerald-900 dark:text-emerald-200">
                   Wird <strong>direkt nach Terminbuchung</strong> (Calendly-Webhook) an den Bewerber gesendet – enthält den Magic-Link zum KI-Bewerbungsgespräch. Der Link steht in <code>{"{{portal_link}}"}</code>. Weitere Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>.
