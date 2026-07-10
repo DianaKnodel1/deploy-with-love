@@ -340,20 +340,15 @@ function WelcomeAccepted({
   const base = (portal || "").replace(/\/+$/, "") || (typeof window !== "undefined" ? window.location.origin : "");
   const registerHref = `${base}/register`;
   return (
-    <div className="mt-4 bg-white dark:bg-slate-900 rounded-2xl border border-border p-6 space-y-4">
-      <div className="flex items-start gap-3">
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-          style={{ background: `${primary}1a`, color: primary }}
-        >
-          <CheckCircle2 className="h-5 w-5" />
-        </div>
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold leading-tight">Vielen Dank für das Gespräch.</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Ihr Profil passt zu {company}. Im nächsten Schritt legen Sie kurz Ihr Zugangs-Konto an — danach begleiten wir Sie durchs Onboarding.
-          </p>
-        </div>
+    <div className="mt-4 bg-white dark:bg-slate-900 rounded-2xl border border-border p-6 space-y-5 text-center">
+      <div className="text-4xl leading-none">🎉🎊✨</div>
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold leading-tight">Herzlichen Glückwunsch!</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Ihr Profil hat uns überzeugt — willkommen bei {company}. Legen Sie jetzt
+          in wenigen Schritten Ihr Zugangs-Konto an, danach begleiten wir Sie
+          persönlich durchs Onboarding.
+        </p>
       </div>
 
       <Button
@@ -367,9 +362,10 @@ function WelcomeAccepted({
         </a>
       </Button>
 
-      <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+      <p className="text-xs text-muted-foreground pt-2 border-t border-border">
         Herzliche Grüße, {recruiter} · HR bei {company}
       </p>
     </div>
   );
 }
+
