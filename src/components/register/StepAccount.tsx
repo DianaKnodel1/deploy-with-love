@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, UserPlus, Zap, ShieldCheck, Globe } from "lucide-react";
+import { ArrowRight, UserPlus, LifeBuoy, Mail } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface Props {
   firstName: string;
