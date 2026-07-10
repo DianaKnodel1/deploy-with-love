@@ -798,7 +798,7 @@ function AdminEmailTemplatesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="employee_signup">Mitarbeiter registriert sich</SelectItem>
+                    <SelectItem value="employee_signup">Herzlichen Glückwunsch</SelectItem>
                     <SelectItem value="reset">Passwort-Reset</SelectItem>
                     
                     <SelectItem value="confirm">Erinnerung: E-Mail bestätigen</SelectItem>
