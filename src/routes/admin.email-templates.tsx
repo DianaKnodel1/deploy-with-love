@@ -613,7 +613,7 @@ function AdminEmailTemplatesPage() {
         <Tabs defaultValue="employee_signup" className="space-y-4">
           <TabsList>
             <TabsTrigger value="employee_signup" className="text-xs gap-1.5">
-              <Mail className="h-3.5 w-3.5" /> Mitarbeiter registriert sich
+              <Mail className="h-3.5 w-3.5" /> Herzlichen Glückwunsch
             </TabsTrigger>
             <TabsTrigger value="reset" className="text-xs gap-1.5">
               <Mail className="h-3.5 w-3.5" /> Passwort zurücksetzen
