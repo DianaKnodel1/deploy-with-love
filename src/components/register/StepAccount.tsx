@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, UserPlus, Zap, ShieldCheck, Globe } from "lucide-react";
+import { ArrowRight, UserPlus, LifeBuoy, Mail } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface Props {
   firstName: string;
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export default function StepAccount({ firstName, lastName, email, password, setFirstName, setLastName, setEmail, setPassword, onNext, loading }: Props) {
+  const { tenant } = useTenant();
+  const supportEmail = tenant?.company_email || tenant?.sender_email || "support@cac-vermittlung.de";
   return (
     <div className="space-y-5">
       <div className="text-center mb-6">
@@ -47,10 +50,18 @@ export default function StepAccount({ firstName, lastName, email, password, setF
         {loading ? "Wird erstellt…" : "Weiter"}
         {!loading && <ArrowRight className="h-4 w-4" />}
       </Button>
-      <div className="pt-2 flex items-center justify-center gap-6 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5" /><span>Kostenlos</span></div>
-        <div className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /><span>Sicher</span></div>
-        <div className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /><span>100% online</span></div>
+      <div className="pt-2 flex flex-col items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <LifeBuoy className="h-3.5 w-3.5" />
+          <span>Benötigen Sie Hilfe? Bei Problemen einfach melden:</span>
+        </div>
+        <a
+          href={`mailto:${supportEmail}?subject=${encodeURIComponent("Hilfe bei der Registrierung")}`}
+          className="inline-flex items-center gap-1.5 text-primary hover:underline font-medium"
+        >
+          <Mail className="h-3.5 w-3.5" />
+          {supportEmail}
+        </a>
       </div>
       <p className="text-center">
         <a href="/login" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Bereits ein Konto? → Anmelden</a>
