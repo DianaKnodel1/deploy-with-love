@@ -154,11 +154,11 @@ serve(async (req) => {
 <p style="font-size:12px;color:#94a3b8;margin:0 0 6px;text-align:center">Sollte der Button nicht funktionieren, kopieren Sie bitte den folgenden Link in Ihren Browser:</p>
 <p style="font-size:12px;margin:0 0 28px;text-align:center;word-break:break-all"><a href="${registrationLink}" style="color:${brand}">${registrationLink}</a></p>
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:8px 0 24px"/>
-<p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 18px">Natürlich können Sie sich jederzeit auch direkt an mich wenden. Darüber hinaus ist Ihre Teamleitung im Mitarbeiterchat jederzeit für Sie da.</p>
-<p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px">Wir wünschen Ihnen einen erfolgreichen Start!</p>
+<p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 18px">Bei Fragen bin ich jederzeit persönlich für Sie da – ebenso Ihre Teamleitung im Mitarbeiterchat.</p>
+<p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px">Ich wünsche Ihnen einen erfolgreichen Start!</p>
 <p style="font-size:14px;line-height:1.5;color:#0f172a;margin:0 0 4px">Mit freundlichen Grüßen</p>
-<p style="font-size:14px;line-height:1.5;color:#0f172a;margin:0;font-weight:600">Sabine Schneider</p>
-<p style="font-size:13px;line-height:1.5;color:#64748b;margin:0">HR Management</p>
+<p style="font-size:14px;line-height:1.5;color:#0f172a;margin:0;font-weight:600">${escapeHtml(senderName)}</p>
+<p style="font-size:13px;line-height:1.5;color:#64748b;margin:0">Geschäftsführung</p>
 <p style="font-size:13px;line-height:1.5;color:#64748b;margin:0 0 32px">${escapeHtml(tenant.name)}</p>
 </td></tr>
 <tr><td style="padding:0 44px 32px">
