@@ -131,8 +131,17 @@ function InterviewPage() {
     setLoading(true);
     // optimistic
     setMessages((prev) => [...prev, { role: "user", text, ts: new Date().toISOString() }]);
+    const startedAt = Date.now();
     try {
       const data = await postInterview({ applicationId: appId, action: "message", text });
+      // Menschlichere Antwortzeit: kurze Denkpause + „Tipp"-Zeit abhängig von Antwortlänge
+      const reply = (data.history ?? []).slice(-1)[0]?.text ?? "";
+      const chars = reply.length;
+      // ~35ms pro Zeichen "Tippen", + 900ms Denkpause, gedeckelt bei 6s
+      const targetMs = Math.min(6000, 900 + chars * 35);
+      const elapsed = Date.now() - startedAt;
+      const wait = Math.max(0, targetMs - elapsed);
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       setMessages(data.history ?? []);
       if (data.ended) setEnded(true);
       if (data.application_status) setAppStatus(data.application_status);
@@ -192,7 +201,7 @@ function InterviewPage() {
   const recruiterName = branding?.recruiter_name || "Sabine Schneider";
   const avatarUrl = branding?.recruiter_avatar_url || null;
   const initials = recruiterName.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
-  const status = loading ? "tippt…" : ended ? "Gespräch beendet" : "online";
+  const status = loading ? `${recruiterName.split(" ")[0]} schreibt …` : ended ? "Gespräch beendet" : "online";
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -256,11 +265,11 @@ function InterviewPage() {
           })}
           {loading && !ended && (
             <div className="flex justify-start mt-2">
-              <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl rounded-bl-sm px-4 py-3">
-                <div className="flex gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="bg-white dark:bg-slate-900 border border-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                <div className="flex items-end gap-1.5 h-4">
+                  <span className="typing-dot" style={{ animationDelay: "0ms" }} />
+                  <span className="typing-dot" style={{ animationDelay: "180ms" }} />
+                  <span className="typing-dot" style={{ animationDelay: "360ms" }} />
                 </div>
               </div>
             </div>
