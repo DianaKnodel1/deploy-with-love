@@ -412,6 +412,8 @@ function AdminEmailTemplatesPage() {
     setRAppNoBookingBody((t as any).reminder_app_no_booking_body || REMINDER_DEFAULTS.app_no_booking.body);
     setRAppNoShowSubject((t as any).reminder_app_no_show_subject || REMINDER_DEFAULTS.app_no_show.subject);
     setRAppNoShowBody((t as any).reminder_app_no_show_body || REMINDER_DEFAULTS.app_no_show.body);
+    setRAppRegSubject((t as any).reminder_app_registration_subject || REMINDER_DEFAULTS.app_registration.subject);
+    setRAppRegBody((t as any).reminder_app_registration_body || REMINDER_DEFAULTS.app_registration.body);
     setMlSubject((t as any).bewerbung_magic_link_subject || REMINDER_DEFAULTS.bewerbung_magic_link.subject);
     setMlBody((t as any).bewerbung_magic_link_body || REMINDER_DEFAULTS.bewerbung_magic_link.body);
     setMlButton((t as any).bewerbung_magic_link_button || REMINDER_DEFAULTS.bewerbung_magic_link.button);
