@@ -126,6 +126,8 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-tts-beratung") return { html: ttsbFormHtml, css: ttsbFormCss };
   if (id === "theme-for-tel") return { html: ftFormHtml, css: ftFormCss };
   if (id === "theme-job-gleiter") return { html: jgFormHtml, css: jgFormCss };
+  if (id === "theme-tester-lab") return { html: tlFormHtml, css: tlFormCss };
+  if (id === "theme-qa-grid") return { html: qgFormHtml, css: qgFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 
 }
@@ -189,6 +191,8 @@ export const THEMES: ThemeFiles[] = [
   { id: ttsbMeta.id, name: ttsbMeta.name, description: ttsbMeta.description, html: ttsbHtml, css: ttsbCss, js: ttsbJs, slots: pickSlots(ttsbMeta) },
   { id: tftMeta.id, name: tftMeta.name, description: tftMeta.description, html: tftHtml, css: tftCss, js: tftJs, slots: pickSlots(tftMeta) },
   { id: tjgMeta.id, name: tjgMeta.name, description: tjgMeta.description, html: tjgHtml, css: tjgCss, js: tjgJs, slots: pickSlots(tjgMeta) },
+  { id: ttlMeta.id, name: ttlMeta.name, description: ttlMeta.description, html: ttlHtml, css: ttlCss, js: ttlJs, slots: pickSlots(ttlMeta) },
+  { id: tqgMeta.id, name: tqgMeta.name, description: tqgMeta.description, html: tqgHtml, css: tqgCss, js: tqgJs, slots: pickSlots(tqgMeta) },
 ].map(withSharedForm);
 
 
