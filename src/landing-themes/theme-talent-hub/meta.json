@@ -7,7 +7,7 @@
     { "key": "hero_title", "label": "Hero Titel", "type": "text", "default": "Ihr neuer Job im Homeoffice — flexibel, sicher, fair bezahlt." },
     { "key": "hero_subtitle", "label": "Hero Untertitel", "type": "longtext", "default": "Sie testen Apps und Webseiten unserer Kunden, dokumentieren Ihre Ergebnisse und bekommen dafür 19–21 €/h. 100% Homeoffice. Arbeitszeit frei wählbar von 8–21 Uhr, Montag bis Sonntag." },
     { "key": "hero_cta", "label": "Hero Button", "type": "text", "default": "In 2 Minuten bewerben" },
-    { "key": "hero_image", "label": "Hero Bild", "type": "image", "default": "/theme-assets/talent-hub-hero.jpg" },
+    { "key": "hero_image", "label": "Hero Bild", "type": "image", "default": "/src/assets/landing-themes/talent-hub-hero.jpg" },
 
     { "key": "trust_1", "label": "Vertrauens-Chip 1", "type": "text", "default": "Festanstellung · sozialversichert" },
     { "key": "trust_2", "label": "Vertrauens-Chip 2", "type": "text", "default": "Bezahlte Einarbeitung" },
