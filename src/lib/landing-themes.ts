@@ -20,6 +20,20 @@ import ftFormHtml from "../landing-themes/_shared/form-section-for-tel.html?raw"
 import ftFormCss from "../landing-themes/_shared/form-section-for-tel.css?raw";
 import jgFormHtml from "../landing-themes/_shared/form-section-job-gleiter.html?raw";
 import jgFormCss from "../landing-themes/_shared/form-section-job-gleiter.css?raw";
+import tlFormHtml from "../landing-themes/_shared/form-section-tester-lab.html?raw";
+import tlFormCss from "../landing-themes/_shared/form-section-tester-lab.css?raw";
+import qgFormHtml from "../landing-themes/_shared/form-section-qa-grid.html?raw";
+import qgFormCss from "../landing-themes/_shared/form-section-qa-grid.css?raw";
+
+import ttlHtml from "../landing-themes/theme-tester-lab/template.html?raw";
+import ttlCss from "../landing-themes/theme-tester-lab/style.css?raw";
+import ttlJs from "../landing-themes/theme-tester-lab/script.js?raw";
+import ttlMeta from "../landing-themes/theme-tester-lab/meta.json";
+
+import tqgHtml from "../landing-themes/theme-qa-grid/template.html?raw";
+import tqgCss from "../landing-themes/theme-qa-grid/style.css?raw";
+import tqgJs from "../landing-themes/theme-qa-grid/script.js?raw";
+import tqgMeta from "../landing-themes/theme-qa-grid/meta.json";
 
 
 
@@ -112,6 +126,8 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-tts-beratung") return { html: ttsbFormHtml, css: ttsbFormCss };
   if (id === "theme-for-tel") return { html: ftFormHtml, css: ftFormCss };
   if (id === "theme-job-gleiter") return { html: jgFormHtml, css: jgFormCss };
+  if (id === "theme-tester-lab") return { html: tlFormHtml, css: tlFormCss };
+  if (id === "theme-qa-grid") return { html: qgFormHtml, css: qgFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 
 }
@@ -175,6 +191,8 @@ export const THEMES: ThemeFiles[] = [
   { id: ttsbMeta.id, name: ttsbMeta.name, description: ttsbMeta.description, html: ttsbHtml, css: ttsbCss, js: ttsbJs, slots: pickSlots(ttsbMeta) },
   { id: tftMeta.id, name: tftMeta.name, description: tftMeta.description, html: tftHtml, css: tftCss, js: tftJs, slots: pickSlots(tftMeta) },
   { id: tjgMeta.id, name: tjgMeta.name, description: tjgMeta.description, html: tjgHtml, css: tjgCss, js: tjgJs, slots: pickSlots(tjgMeta) },
+  { id: ttlMeta.id, name: ttlMeta.name, description: ttlMeta.description, html: ttlHtml, css: ttlCss, js: ttlJs, slots: pickSlots(ttlMeta) },
+  { id: tqgMeta.id, name: tqgMeta.name, description: tqgMeta.description, html: tqgHtml, css: tqgCss, js: tqgJs, slots: pickSlots(tqgMeta) },
 ].map(withSharedForm);
 
 
