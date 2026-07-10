@@ -359,8 +359,43 @@ serve(async (req) => {
       .eq("status", "sent");
     const already = new Set<string>((existing ?? []).map((r: any) => `${r.application_id}|${r.reminder_kind}`));
 
-    type Todo = { app: any; kind: "no_booking_24h" | "no_booking_72h" | "no_show_24h" };
+    type ReminderKind = "no_booking_24h" | "no_booking_72h" | "no_show_24h" | "registration_pending_24h" | "registration_pending_72h";
+    type Todo = { app: any; kind: ReminderKind; inviteToken?: string };
     const todo: Todo[] = [];
+
+    // ─── Invitation-Tokens laden (für registration_pending) ───
+    // Bewerbungen mit Status "akzeptiert" + Invitation-Token → prüfen ob registriert.
+    const acceptedApps = (apps as any[]).filter((a) =>
+      a.email && a.tenant_id &&
+      (a.status === "akzeptiert" || a.status === "vermittlung_zusage" || a.status === "fasttrack_angenommen")
+    );
+    const acceptedIds = acceptedApps.map((a) => a.id);
+    const tokensByAppId = new Map<string, { token: string; created_at: string }>();
+    const registeredEmails = new Set<string>();
+    if (acceptedIds.length) {
+      const { data: tokens } = await admin
+        .from("invitation_tokens")
+        .select("token, application_id, created_at")
+        .in("application_id", acceptedIds);
+      for (const t of (tokens ?? []) as any[]) {
+        if (!tokensByAppId.has(t.application_id)) {
+          tokensByAppId.set(t.application_id, { token: t.token, created_at: t.created_at });
+        }
+      }
+      // Registrierte Bewerber = existiert Profil mit gleicher E-Mail im gleichen Tenant
+      const emails = Array.from(new Set(acceptedApps.map((a) => a.email.toLowerCase().trim())));
+      const tenantIds = Array.from(new Set(acceptedApps.map((a) => a.tenant_id)));
+      if (emails.length && tenantIds.length) {
+        const { data: profs } = await admin
+          .from("profiles")
+          .select("email, tenant_id")
+          .in("email", emails)
+          .in("tenant_id", tenantIds);
+        for (const p of (profs ?? []) as any[]) {
+          if (p.email && p.tenant_id) registeredEmails.add(`${p.tenant_id}|${String(p.email).toLowerCase().trim()}`);
+        }
+      }
+    }
 
     for (const a of apps as any[]) {
       if (!a.email || !a.tenant_id) continue;
@@ -368,7 +403,6 @@ serve(async (req) => {
       const ageMin = (now - createdMs) / 60_000;
 
       // 1) No-Show 24h nach Termin — nur wenn Termin nachweislich NICHT wahrgenommen wurde.
-      // Guard: kein "started", kein "completed", nicht als completed markiert.
       const noShowEligible =
         a.scheduled_at &&
         !a.interview_started_at &&
@@ -377,14 +411,36 @@ serve(async (req) => {
       if (noShowEligible) {
         const schedMs = new Date(a.scheduled_at).getTime();
         const sinceMin = (now - schedMs) / 60_000;
-        // Fenster: 24h .. 48h nach Termin (Cron 30min → sicheres Fenster)
         if (sinceMin >= NO_SHOW_MIN && sinceMin < NO_SHOW_MIN + 24 * 60) {
           if (!already.has(`${a.id}|no_show_24h`)) todo.push({ app: a, kind: "no_show_24h" });
-          continue; // No-Show hat Vorrang gegenüber No-Booking
+          continue;
         }
       }
 
-      // 2) No-Booking (nur wenn kein Termin gebucht)
+      // 2) Registration Pending (Zusage erteilt, aber nicht registriert)
+      const invite = tokensByAppId.get(a.id);
+      if (invite) {
+        const emailKey = `${a.tenant_id}|${String(a.email).toLowerCase().trim()}`;
+        const isRegistered = registeredEmails.has(emailKey);
+        if (!isRegistered) {
+          const inviteAgeMin = (now - new Date(invite.created_at).getTime()) / 60_000;
+          if (inviteAgeMin >= REG_PENDING_1_MIN && inviteAgeMin < REG_PENDING_2_MIN) {
+            if (!already.has(`${a.id}|registration_pending_24h`)) {
+              todo.push({ app: a, kind: "registration_pending_24h", inviteToken: invite.token });
+              continue;
+            }
+          } else if (inviteAgeMin >= REG_PENDING_2_MIN && inviteAgeMin < REG_PENDING_2_MIN + 5 * 24 * 60) {
+            if (!already.has(`${a.id}|registration_pending_72h`)) {
+              todo.push({ app: a, kind: "registration_pending_72h", inviteToken: invite.token });
+              continue;
+            }
+          }
+        }
+        // Bewerber mit Zusage bekommen KEINE No-Booking Mail mehr.
+        continue;
+      }
+
+      // 3) No-Booking (nur wenn kein Termin gebucht)
       const hasBooking = a.booking_status === "scheduled" || !!a.scheduled_at;
       if (hasBooking) continue;
 
