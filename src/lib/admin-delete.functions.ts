@@ -272,3 +272,89 @@ export const purgeInactivePeople = createServerFn({ method: "POST" })
   });
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Bulk-Delete: mehrere Bewerbungen auf einmal (Chunks à 500).
+// ─────────────────────────────────────────────────────────────────────────────
+const BulkAppsSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(5000),
+});
+
+export const bulkDeleteApplications = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => BulkAppsSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = supabaseAdmin as any;
+    let deleted = 0;
+    const failures: { chunk_start: number; error: string }[] = [];
+    for (let i = 0; i < data.ids.length; i += 500) {
+      const chunk = data.ids.slice(i, i + 500);
+      const { error } = await sb.from("applications").delete().in("id", chunk);
+      if (error) failures.push({ chunk_start: i, error: error.message });
+      else deleted += chunk.length;
+    }
+    try {
+      await sb.from("activity_log").insert({
+        action: "bewerbungen_bulk_geloescht",
+        entity_type: "application",
+        actor_id: context.userId,
+        comment: `Bulk-Löschung: ${deleted} von ${data.ids.length} Bewerbungen gelöscht.`,
+      });
+    } catch {}
+    return { ok: true, deleted, failures };
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bulk-Delete: mehrere Mitarbeiter (Profil + Auth) auf einmal.
+// ─────────────────────────────────────────────────────────────────────────────
+const BulkUsersSchema = z.object({
+  user_ids: z.array(z.string().uuid()).min(1).max(500),
+});
+
+export const bulkDeleteEmployees = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => BulkUsersSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = supabaseAdmin as any;
+    let deleted = 0;
+    const failures: { user_id: string; error: string }[] = [];
+    for (const uid of data.user_ids) {
+      if (uid === context.userId) {
+        failures.push({ user_id: uid, error: "Selbst-Löschung nicht erlaubt" });
+        continue;
+      }
+      try {
+        for (const bucket of ["kyc-documents", "documents", "task-submissions"] as const) {
+          try {
+            const { data: files } = await sb.storage.from(bucket).list(uid, { limit: 1000 });
+            if (files && files.length > 0) {
+              await sb.storage.from(bucket).remove(files.map((f: any) => `${uid}/${f.name}`));
+            }
+          } catch {}
+        }
+        const { error: rpcErr } = await sb.rpc("admin_delete_user_cascade", {
+          _user_id: uid,
+          _actor_id: context.userId,
+        });
+        if (rpcErr) throw new Error(rpcErr.message);
+        const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(uid);
+        if (authErr) throw new Error(authErr.message);
+        deleted++;
+      } catch (e: any) {
+        failures.push({ user_id: uid, error: e?.message ?? String(e) });
+      }
+    }
+    try {
+      await sb.from("activity_log").insert({
+        action: "mitarbeiter_bulk_geloescht",
+        entity_type: "profile",
+        actor_id: context.userId,
+        comment: `Bulk-Löschung: ${deleted} von ${data.user_ids.length} Mitarbeitern gelöscht. Fehler: ${failures.length}.`,
+      });
+    } catch {}
+    return { ok: true, deleted, failures };
+  });
+
+
+
