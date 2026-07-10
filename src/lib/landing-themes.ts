@@ -30,6 +30,10 @@ import caFormHtml from "../landing-themes/_shared/form-section-career-atlas.html
 import caFormCss from "../landing-themes/_shared/form-section-career-atlas.css?raw";
 import dsFormHtml from "../landing-themes/_shared/form-section-device-stack.html?raw";
 import dsFormCss from "../landing-themes/_shared/form-section-device-stack.css?raw";
+import qrFormHtml from "../landing-themes/_shared/form-section-quality-report.html?raw";
+import qrFormCss from "../landing-themes/_shared/form-section-quality-report.css?raw";
+import cpFormHtml from "../landing-themes/_shared/form-section-connect-people.html?raw";
+import cpFormCss from "../landing-themes/_shared/form-section-connect-people.css?raw";
 
 import ttlHtml from "../landing-themes/theme-tester-lab/template.html?raw";
 import ttlCss from "../landing-themes/theme-tester-lab/style.css?raw";
@@ -55,6 +59,16 @@ import tdsHtml from "../landing-themes/theme-device-stack/template.html?raw";
 import tdsCss from "../landing-themes/theme-device-stack/style.css?raw";
 import tdsJs from "../landing-themes/theme-device-stack/script.js?raw";
 import tdsMeta from "../landing-themes/theme-device-stack/meta.json";
+
+import tqrHtml from "../landing-themes/theme-quality-report/template.html?raw";
+import tqrCss from "../landing-themes/theme-quality-report/style.css?raw";
+import tqrJs from "../landing-themes/theme-quality-report/script.js?raw";
+import tqrMeta from "../landing-themes/theme-quality-report/meta.json";
+
+import tcpHtml from "../landing-themes/theme-connect-people/template.html?raw";
+import tcpCss from "../landing-themes/theme-connect-people/style.css?raw";
+import tcpJs from "../landing-themes/theme-connect-people/script.js?raw";
+import tcpMeta from "../landing-themes/theme-connect-people/meta.json";
 
 
 
@@ -151,6 +165,8 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-qa-grid") return { html: qgFormHtml, css: qgFormCss };
   if (id === "theme-career-atlas") return { html: caFormHtml, css: caFormCss };
   if (id === "theme-device-stack") return { html: dsFormHtml, css: dsFormCss };
+  if (id === "theme-quality-report") return { html: qrFormHtml, css: qrFormCss };
+  if (id === "theme-connect-people") return { html: cpFormHtml, css: cpFormCss };
   if (id === "theme-talent-hub") return { html: thFormHtml, css: thFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 
@@ -220,6 +236,8 @@ export const THEMES: ThemeFiles[] = [
   { id: tthMeta.id, name: tthMeta.name, description: tthMeta.description, html: tthHtml, css: tthCss, js: tthJs, slots: pickSlots(tthMeta) },
   { id: tcaMeta.id, name: tcaMeta.name, description: tcaMeta.description, html: tcaHtml, css: tcaCss, js: tcaJs, slots: pickSlots(tcaMeta) },
   { id: tdsMeta.id, name: tdsMeta.name, description: tdsMeta.description, html: tdsHtml, css: tdsCss, js: tdsJs, slots: pickSlots(tdsMeta) },
+  { id: tqrMeta.id, name: tqrMeta.name, description: tqrMeta.description, html: tqrHtml, css: tqrCss, js: tqrJs, slots: pickSlots(tqrMeta) },
+  { id: tcpMeta.id, name: tcpMeta.name, description: tcpMeta.description, html: tcpHtml, css: tcpCss, js: tcpJs, slots: pickSlots(tcpMeta) },
 ].map(withSharedForm);
 
 
