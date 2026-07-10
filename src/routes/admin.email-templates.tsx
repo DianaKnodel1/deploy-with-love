@@ -52,6 +52,10 @@ const REMINDER_DEFAULTS = {
     subject: "Schade, dass es nicht geklappt hat – buche einen neuen Termin",
     body: `Hallo {{first_name}},\n\nleider konnten wir dich zu deinem Termin am {{appointment_date}} um {{appointment_time}} Uhr nicht erreichen. Kein Problem – wir hätten dich gern trotzdem kennengelernt.\n\nBitte wähle einen neuen Wunschtermin, der besser passt:\n\n{{cta:Neuen Termin auswählen|{{calendly_link}}}}\n\nFalls du Fragen hast oder Unterstützung brauchst, antworte einfach auf diese E-Mail.\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
   },
+  app_registration: {
+    subject: "🎉 Ihr Portal-Zugang wartet – nur noch ein Klick, {{first_name}}",
+    body: `Hallo {{first_name}},\n\nherzlichen Glückwunsch nochmal zu Ihrer Zusage bei {{tenant_name}}! 🎊\n\nUns ist aufgefallen, dass Sie sich noch nicht im Mitarbeiter-Portal registriert haben. Erst mit der Registrierung können wir Ihren Arbeitsvertrag bereitstellen und Sie erhalten Zugriff auf Ihre ersten Aufträge.\n\nDie Registrierung dauert nur 2 Minuten:\n\n{{cta:Jetzt im Portal registrieren|{{portal_link}}}}\n\nFalls der Button nicht funktioniert, kopieren Sie diesen Link:\n{{portal_link}}\n\nBei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.\n\nHerzliche Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+  },
   bewerbung_magic_link: {
     subject: "Ihr Bewerbungsgespräch ist bereit",
     body: `Guten Tag {{first_name}},\n\nvielen Dank für Ihre Terminbuchung. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch über den folgenden Link:\n\n{{cta:Bewerbungsgespräch starten|{{portal_link}}}}\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
