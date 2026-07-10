@@ -26,6 +26,10 @@ import qgFormHtml from "../landing-themes/_shared/form-section-qa-grid.html?raw"
 import qgFormCss from "../landing-themes/_shared/form-section-qa-grid.css?raw";
 import thFormHtml from "../landing-themes/_shared/form-section-talent-hub.html?raw";
 import thFormCss from "../landing-themes/_shared/form-section-talent-hub.css?raw";
+import caFormHtml from "../landing-themes/_shared/form-section-career-atlas.html?raw";
+import caFormCss from "../landing-themes/_shared/form-section-career-atlas.css?raw";
+import dsFormHtml from "../landing-themes/_shared/form-section-device-stack.html?raw";
+import dsFormCss from "../landing-themes/_shared/form-section-device-stack.css?raw";
 
 import ttlHtml from "../landing-themes/theme-tester-lab/template.html?raw";
 import ttlCss from "../landing-themes/theme-tester-lab/style.css?raw";
@@ -41,6 +45,16 @@ import tthHtml from "../landing-themes/theme-talent-hub/template.html?raw";
 import tthCss from "../landing-themes/theme-talent-hub/style.css?raw";
 import tthJs from "../landing-themes/theme-talent-hub/script.js?raw";
 import tthMeta from "../landing-themes/theme-talent-hub/meta.json";
+
+import tcaHtml from "../landing-themes/theme-career-atlas/template.html?raw";
+import tcaCss from "../landing-themes/theme-career-atlas/style.css?raw";
+import tcaJs from "../landing-themes/theme-career-atlas/script.js?raw";
+import tcaMeta from "../landing-themes/theme-career-atlas/meta.json";
+
+import tdsHtml from "../landing-themes/theme-device-stack/template.html?raw";
+import tdsCss from "../landing-themes/theme-device-stack/style.css?raw";
+import tdsJs from "../landing-themes/theme-device-stack/script.js?raw";
+import tdsMeta from "../landing-themes/theme-device-stack/meta.json";
 
 
 
@@ -135,6 +149,8 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-job-gleiter") return { html: jgFormHtml, css: jgFormCss };
   if (id === "theme-tester-lab") return { html: tlFormHtml, css: tlFormCss };
   if (id === "theme-qa-grid") return { html: qgFormHtml, css: qgFormCss };
+  if (id === "theme-career-atlas") return { html: caFormHtml, css: caFormCss };
+  if (id === "theme-device-stack") return { html: dsFormHtml, css: dsFormCss };
   if (id === "theme-talent-hub") return { html: thFormHtml, css: thFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 
@@ -202,6 +218,8 @@ export const THEMES: ThemeFiles[] = [
   { id: ttlMeta.id, name: ttlMeta.name, description: ttlMeta.description, html: ttlHtml, css: ttlCss, js: ttlJs, slots: pickSlots(ttlMeta) },
   { id: tqgMeta.id, name: tqgMeta.name, description: tqgMeta.description, html: tqgHtml, css: tqgCss, js: tqgJs, slots: pickSlots(tqgMeta) },
   { id: tthMeta.id, name: tthMeta.name, description: tthMeta.description, html: tthHtml, css: tthCss, js: tthJs, slots: pickSlots(tthMeta) },
+  { id: tcaMeta.id, name: tcaMeta.name, description: tcaMeta.description, html: tcaHtml, css: tcaCss, js: tcaJs, slots: pickSlots(tcaMeta) },
+  { id: tdsMeta.id, name: tdsMeta.name, description: tdsMeta.description, html: tdsHtml, css: tdsCss, js: tdsJs, slots: pickSlots(tdsMeta) },
 ].map(withSharedForm);
 
 
