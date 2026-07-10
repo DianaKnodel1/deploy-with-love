@@ -21,7 +21,7 @@ import { Mail, Save, Send, Eye, AlertTriangle, CheckCircle2, Copy, Loader2 } fro
 // Defaults für Reminder-Templates (gespiegelt zur Edge Function).
 const REMINDER_DEFAULTS = {
   employee_signup: {
-    subject: "Mitarbeiter registriert sich – {{tenant_name}}",
+    subject: "Herzlichen Glückwunsch – {{tenant_name}}",
     body: `Hallo {{first_name}},\n\ndein Zugang für {{tenant_name}} ist bereit. Bitte registriere dich im Mitarbeiterportal und schließe anschließend dein Profil ab.\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nOder kopiere diesen Link: {{portal_link}}`,
   },
   confirm: {
@@ -613,7 +613,7 @@ function AdminEmailTemplatesPage() {
         <Tabs defaultValue="employee_signup" className="space-y-4">
           <TabsList>
             <TabsTrigger value="employee_signup" className="text-xs gap-1.5">
-              <Mail className="h-3.5 w-3.5" /> Mitarbeiter registriert sich
+              <Mail className="h-3.5 w-3.5" /> Herzlichen Glückwunsch
             </TabsTrigger>
             <TabsTrigger value="reset" className="text-xs gap-1.5">
               <Mail className="h-3.5 w-3.5" /> Passwort zurücksetzen
@@ -627,7 +627,7 @@ function AdminEmailTemplatesPage() {
 
           <TabsContent value="employee_signup">
             <TemplateEditor
-              label="Mitarbeiter registriert sich"
+              label="Herzlichen Glückwunsch"
               subject={employeeSignupSubject}
               onSubjectChange={setEmployeeSignupSubject}
               body={employeeSignupBody}
@@ -798,7 +798,7 @@ function AdminEmailTemplatesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="employee_signup">Mitarbeiter registriert sich</SelectItem>
+                    <SelectItem value="employee_signup">Herzlichen Glückwunsch</SelectItem>
                     <SelectItem value="reset">Passwort-Reset</SelectItem>
                     
                     <SelectItem value="confirm">Erinnerung: E-Mail bestätigen</SelectItem>

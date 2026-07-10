@@ -111,10 +111,10 @@ serve(async (req) => {
 
     const subject = subjectOverride && subjectOverride.trim()
       ? subjectOverride.trim()
-      : (dbSubject ? applyPh(dbSubject) : `Mitarbeiter registriert sich – ${tenant.name}`);
+      : (dbSubject ? applyPh(dbSubject) : `Herzlichen Glückwunsch – ${tenant.name}`);
     const headline = headlineOverride && headlineOverride.trim()
       ? headlineOverride.trim()
-      : (dbSubject ? applyPh(dbSubject) : "Mitarbeiter registriert sich");
+      : (dbSubject ? applyPh(dbSubject) : "Herzlichen Glückwunsch");
     const intro = introOverride && introOverride.trim()
       ? introOverride.trim()
       : (dbBody
