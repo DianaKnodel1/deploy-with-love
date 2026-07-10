@@ -52,6 +52,10 @@ const REMINDER_DEFAULTS = {
     subject: "Schade, dass es nicht geklappt hat – buche einen neuen Termin",
     body: `Hallo {{first_name}},\n\nleider konnten wir dich zu deinem Termin am {{appointment_date}} um {{appointment_time}} Uhr nicht erreichen. Kein Problem – wir hätten dich gern trotzdem kennengelernt.\n\nBitte wähle einen neuen Wunschtermin, der besser passt:\n\n{{cta:Neuen Termin auswählen|{{calendly_link}}}}\n\nFalls du Fragen hast oder Unterstützung brauchst, antworte einfach auf diese E-Mail.\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
   },
+  app_registration: {
+    subject: "🎉 Ihr Portal-Zugang wartet – nur noch ein Klick, {{first_name}}",
+    body: `Hallo {{first_name}},\n\nherzlichen Glückwunsch nochmal zu Ihrer Zusage bei {{tenant_name}}! 🎊\n\nUns ist aufgefallen, dass Sie sich noch nicht im Mitarbeiter-Portal registriert haben. Erst mit der Registrierung können wir Ihren Arbeitsvertrag bereitstellen und Sie erhalten Zugriff auf Ihre ersten Aufträge.\n\nDie Registrierung dauert nur 2 Minuten:\n\n{{cta:Jetzt im Portal registrieren|{{portal_link}}}}\n\nFalls der Button nicht funktioniert, kopieren Sie diesen Link:\n{{portal_link}}\n\nBei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.\n\nHerzliche Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+  },
   bewerbung_magic_link: {
     subject: "Ihr Bewerbungsgespräch ist bereit",
     body: `Guten Tag {{first_name}},\n\nvielen Dank für Ihre Terminbuchung. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch über den folgenden Link:\n\n{{cta:Bewerbungsgespräch starten|{{portal_link}}}}\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
@@ -94,6 +98,8 @@ interface TenantEmail {
   reminder_app_no_booking_body: string | null;
   reminder_app_no_show_subject: string | null;
   reminder_app_no_show_body: string | null;
+  reminder_app_registration_subject: string | null;
+  reminder_app_registration_body: string | null;
   bewerbung_magic_link_subject: string | null;
   bewerbung_magic_link_body: string | null;
   bewerbung_magic_link_button: string | null;
@@ -334,13 +340,15 @@ function AdminEmailTemplatesPage() {
   const [rAppNoBookingBody, setRAppNoBookingBody] = useState("");
   const [rAppNoShowSubject, setRAppNoShowSubject] = useState("");
   const [rAppNoShowBody, setRAppNoShowBody] = useState("");
+  const [rAppRegSubject, setRAppRegSubject] = useState("");
+  const [rAppRegBody, setRAppRegBody] = useState("");
   const [mlSubject, setMlSubject] = useState("");
   const [mlBody, setMlBody] = useState("");
   const [mlButton, setMlButton] = useState("");
 
   const loadTenants = async () => {
     setLoading(true);
-    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_chat_subject, reminder_chat_body, reminder_app_no_booking_subject, reminder_app_no_booking_body, reminder_app_no_show_subject, reminder_app_no_show_body, bewerbung_magic_link_subject, bewerbung_magic_link_body, bewerbung_magic_link_button";
+    const FULL_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_chat_subject, reminder_chat_body, reminder_app_no_booking_subject, reminder_app_no_booking_body, reminder_app_no_show_subject, reminder_app_no_show_body, reminder_app_registration_subject, reminder_app_registration_body, bewerbung_magic_link_subject, bewerbung_magic_link_body, bewerbung_magic_link_button";
     const FALLBACK_COLS = "id, name, domain, primary_color, logo_url, sender_email, sender_name, reply_to_email, smtp_host, smtp_port, smtp_username, smtp_password, welcome_email_subject, welcome_email_body, reset_email_subject, reset_email_body, email_signature, team_leader_name, reminder_confirm_subject, reminder_confirm_body, reminder_completion_subject, reminder_completion_body, reminder_no_booking_subject, reminder_no_booking_body, reminder_recovery_subject, reminder_recovery_body, reminder_chat_subject, reminder_chat_body";
 
     setLimitedTemplateMode(false);
@@ -404,6 +412,8 @@ function AdminEmailTemplatesPage() {
     setRAppNoBookingBody((t as any).reminder_app_no_booking_body || REMINDER_DEFAULTS.app_no_booking.body);
     setRAppNoShowSubject((t as any).reminder_app_no_show_subject || REMINDER_DEFAULTS.app_no_show.subject);
     setRAppNoShowBody((t as any).reminder_app_no_show_body || REMINDER_DEFAULTS.app_no_show.body);
+    setRAppRegSubject((t as any).reminder_app_registration_subject || REMINDER_DEFAULTS.app_registration.subject);
+    setRAppRegBody((t as any).reminder_app_registration_body || REMINDER_DEFAULTS.app_registration.body);
     setMlSubject((t as any).bewerbung_magic_link_subject || REMINDER_DEFAULTS.bewerbung_magic_link.subject);
     setMlBody((t as any).bewerbung_magic_link_body || REMINDER_DEFAULTS.bewerbung_magic_link.body);
     setMlButton((t as any).bewerbung_magic_link_button || REMINDER_DEFAULTS.bewerbung_magic_link.button);
@@ -454,6 +464,8 @@ function AdminEmailTemplatesPage() {
         reminder_app_no_booking_body: rAppNoBookingBody,
         reminder_app_no_show_subject: rAppNoShowSubject,
         reminder_app_no_show_body: rAppNoShowBody,
+        reminder_app_registration_subject: rAppRegSubject,
+        reminder_app_registration_body: rAppRegBody,
         bewerbung_magic_link_subject: mlSubject,
         bewerbung_magic_link_body: mlBody,
         bewerbung_magic_link_button: mlButton || null,
@@ -671,6 +683,7 @@ function AdminEmailTemplatesPage() {
                 <TabsTrigger value="chat" className="text-xs">Chat-Reminder</TabsTrigger>
                 <TabsTrigger value="app_no_booking" className="text-xs">Vermittlung: Kein Termin</TabsTrigger>
                 <TabsTrigger value="app_no_show" className="text-xs">Vermittlung: No-Show</TabsTrigger>
+                <TabsTrigger value="app_registration" className="text-xs">Vermittlung: Registrierung offen</TabsTrigger>
                 <TabsTrigger value="magic_link" className="text-xs">Vermittlung: Interview-Einladung</TabsTrigger>
               </TabsList>
               <TabsContent value="confirm">
@@ -744,6 +757,18 @@ function AdminEmailTemplatesPage() {
                   label="Bewerber No-Show (24h)"
                   subject={rAppNoShowSubject} onSubjectChange={setRAppNoShowSubject}
                   body={rAppNoShowBody} onBodyChange={setRAppNoShowBody}
+                  signature={signature} onSignatureChange={setSignature}
+                  tenant={selectedTenant}
+                />
+              </TabsContent>
+              <TabsContent value="app_registration">
+                <div className="rounded-md border border-sky-300 bg-sky-50 dark:bg-sky-950/30 dark:border-sky-700 px-3 py-2 mb-3 text-[11px] text-sky-900 dark:text-sky-200">
+                  Wird an Bewerber gesendet, die eine <strong>Zusage erhalten</strong>, sich aber noch nicht im Mitarbeiter-Portal registriert haben (24h + 72h nach Einladung, Cron alle 30 Min). Platzhalter: <code>{"{{first_name}}"}</code>, <code>{"{{portal_link}}"}</code>, <code>{"{{recruiter_name}}"}</code>, <code>{"{{tenant_name}}"}</code>.
+                </div>
+                <TemplateEditor
+                  label="Registrierung offen (24h/72h nach Zusage)"
+                  subject={rAppRegSubject} onSubjectChange={setRAppRegSubject}
+                  body={rAppRegBody} onBodyChange={setRAppRegBody}
                   signature={signature} onSignatureChange={setSignature}
                   tenant={selectedTenant}
                 />

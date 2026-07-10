@@ -11,7 +11,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import nodemailer from "https://esm.sh/nodemailer@6.9.14";
 
-const FUNCTION_VERSION = "2026-07-09-throttle-v6";
+const FUNCTION_VERSION = "2026-07-13-registration-pending-v7";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,6 +22,8 @@ const corsHeaders = {
 const NO_BOOKING_1_MIN = 24 * 60;         // 24h
 const NO_BOOKING_2_MIN = 72 * 60;         // 72h
 const NO_SHOW_MIN      = 24 * 60;         // 24h nach Termin
+const REG_PENDING_1_MIN = 24 * 60;        // 24h nach Zusage/Invite
+const REG_PENDING_2_MIN = 72 * 60;        // 72h nach Zusage/Invite (2. Nachfass)
 
 const DEFAULTS = {
   no_booking: {
@@ -57,6 +59,28 @@ Viele Grüße
 {{recruiter_name}}
 {{tenant_name}}`,
   },
+  registration: {
+    subject: "🎉 Ihr Portal-Zugang wartet – nur noch ein Klick, {{first_name}}",
+    body:
+`Hallo {{first_name}},
+
+herzlichen Glückwunsch nochmal zu Ihrer Zusage bei {{tenant_name}}! 🎊
+
+Uns ist aufgefallen, dass Sie sich noch nicht im Mitarbeiter-Portal registriert haben. Erst mit der Registrierung können wir Ihren Arbeitsvertrag bereitstellen und Sie erhalten Zugriff auf Ihre ersten Aufträge.
+
+Die Registrierung dauert nur 2 Minuten:
+
+{{cta:Jetzt im Portal registrieren|{{portal_link}}}}
+
+Falls der Button nicht funktioniert, kopieren Sie diesen Link:
+{{portal_link}}
+
+Bei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.
+
+Herzliche Grüße
+{{recruiter_name}}
+{{tenant_name}}`,
+  },
 };
 
 interface TenantRow {
@@ -67,6 +91,7 @@ interface TenantRow {
   email_signature: string | null; emails_paused: boolean | null;
   reminder_app_no_booking_subject: string | null; reminder_app_no_booking_body: string | null;
   reminder_app_no_show_subject: string | null;    reminder_app_no_show_body: string | null;
+  reminder_app_registration_subject: string | null; reminder_app_registration_body: string | null;
 }
 
 type LandingRow = {
@@ -240,7 +265,7 @@ serve(async (req) => {
     // Tenants vorladen
     const { data: tList, error: tErr } = await admin
       .from("tenants")
-      .select("id,name,domain,primary_domain,logo_url,primary_color,sender_email,sender_name,reply_to_email,smtp_host,smtp_port,smtp_username,smtp_password,email_signature,is_active,emails_paused,reminder_app_no_booking_subject,reminder_app_no_booking_body,reminder_app_no_show_subject,reminder_app_no_show_body")
+      .select("id,name,domain,primary_domain,logo_url,primary_color,sender_email,sender_name,reply_to_email,smtp_host,smtp_port,smtp_username,smtp_password,email_signature,is_active,emails_paused,reminder_app_no_booking_subject,reminder_app_no_booking_body,reminder_app_no_show_subject,reminder_app_no_show_body,reminder_app_registration_subject,reminder_app_registration_body")
       .eq("is_active", true);
     if (tErr) return json({ error: tErr.message }, 500);
     const tenants = new Map<string, TenantRow>((tList ?? []).map((t: any) => [t.id, t as TenantRow]));
@@ -252,7 +277,7 @@ serve(async (req) => {
     const since = new Date(now - 10 * 86400_000).toISOString();
     const { data: apps, error: aErr } = await admin
       .from("applications")
-      .select("id,tenant_id,source_slug,source_landing_id,target_landing_id,full_name,email,created_at,booking_status,scheduled_at,interview_started_at,interview_completed_at,flow_type")
+      .select("id,tenant_id,source_slug,source_landing_id,target_landing_id,full_name,email,status,created_at,booking_status,scheduled_at,interview_started_at,interview_completed_at,flow_type")
       .gte("created_at", since);
     if (aErr) return json({ error: aErr.message }, 500);
 
@@ -334,8 +359,43 @@ serve(async (req) => {
       .eq("status", "sent");
     const already = new Set<string>((existing ?? []).map((r: any) => `${r.application_id}|${r.reminder_kind}`));
 
-    type Todo = { app: any; kind: "no_booking_24h" | "no_booking_72h" | "no_show_24h" };
+    type ReminderKind = "no_booking_24h" | "no_booking_72h" | "no_show_24h" | "registration_pending_24h" | "registration_pending_72h";
+    type Todo = { app: any; kind: ReminderKind; inviteToken?: string };
     const todo: Todo[] = [];
+
+    // ─── Invitation-Tokens laden (für registration_pending) ───
+    // Bewerbungen mit Status "akzeptiert" + Invitation-Token → prüfen ob registriert.
+    const acceptedApps = (apps as any[]).filter((a) =>
+      a.email && a.tenant_id &&
+      (a.status === "akzeptiert" || a.status === "vermittlung_zusage" || a.status === "fasttrack_angenommen")
+    );
+    const acceptedIds = acceptedApps.map((a) => a.id);
+    const tokensByAppId = new Map<string, { token: string; created_at: string }>();
+    const registeredEmails = new Set<string>();
+    if (acceptedIds.length) {
+      const { data: tokens } = await admin
+        .from("invitation_tokens")
+        .select("token, application_id, created_at")
+        .in("application_id", acceptedIds);
+      for (const t of (tokens ?? []) as any[]) {
+        if (!tokensByAppId.has(t.application_id)) {
+          tokensByAppId.set(t.application_id, { token: t.token, created_at: t.created_at });
+        }
+      }
+      // Registrierte Bewerber = existiert Profil mit gleicher E-Mail im gleichen Tenant
+      const emails = Array.from(new Set(acceptedApps.map((a) => a.email.toLowerCase().trim())));
+      const tenantIds = Array.from(new Set(acceptedApps.map((a) => a.tenant_id)));
+      if (emails.length && tenantIds.length) {
+        const { data: profs } = await admin
+          .from("profiles")
+          .select("email, tenant_id")
+          .in("email", emails)
+          .in("tenant_id", tenantIds);
+        for (const p of (profs ?? []) as any[]) {
+          if (p.email && p.tenant_id) registeredEmails.add(`${p.tenant_id}|${String(p.email).toLowerCase().trim()}`);
+        }
+      }
+    }
 
     for (const a of apps as any[]) {
       if (!a.email || !a.tenant_id) continue;
@@ -343,7 +403,6 @@ serve(async (req) => {
       const ageMin = (now - createdMs) / 60_000;
 
       // 1) No-Show 24h nach Termin — nur wenn Termin nachweislich NICHT wahrgenommen wurde.
-      // Guard: kein "started", kein "completed", nicht als completed markiert.
       const noShowEligible =
         a.scheduled_at &&
         !a.interview_started_at &&
@@ -352,14 +411,36 @@ serve(async (req) => {
       if (noShowEligible) {
         const schedMs = new Date(a.scheduled_at).getTime();
         const sinceMin = (now - schedMs) / 60_000;
-        // Fenster: 24h .. 48h nach Termin (Cron 30min → sicheres Fenster)
         if (sinceMin >= NO_SHOW_MIN && sinceMin < NO_SHOW_MIN + 24 * 60) {
           if (!already.has(`${a.id}|no_show_24h`)) todo.push({ app: a, kind: "no_show_24h" });
-          continue; // No-Show hat Vorrang gegenüber No-Booking
+          continue;
         }
       }
 
-      // 2) No-Booking (nur wenn kein Termin gebucht)
+      // 2) Registration Pending (Zusage erteilt, aber nicht registriert)
+      const invite = tokensByAppId.get(a.id);
+      if (invite) {
+        const emailKey = `${a.tenant_id}|${String(a.email).toLowerCase().trim()}`;
+        const isRegistered = registeredEmails.has(emailKey);
+        if (!isRegistered) {
+          const inviteAgeMin = (now - new Date(invite.created_at).getTime()) / 60_000;
+          if (inviteAgeMin >= REG_PENDING_1_MIN && inviteAgeMin < REG_PENDING_2_MIN) {
+            if (!already.has(`${a.id}|registration_pending_24h`)) {
+              todo.push({ app: a, kind: "registration_pending_24h", inviteToken: invite.token });
+              continue;
+            }
+          } else if (inviteAgeMin >= REG_PENDING_2_MIN && inviteAgeMin < REG_PENDING_2_MIN + 5 * 24 * 60) {
+            if (!already.has(`${a.id}|registration_pending_72h`)) {
+              todo.push({ app: a, kind: "registration_pending_72h", inviteToken: invite.token });
+              continue;
+            }
+          }
+        }
+        // Bewerber mit Zusage bekommen KEINE No-Booking Mail mehr.
+        continue;
+      }
+
+      // 3) No-Booking (nur wenn kein Termin gebucht)
       const hasBooking = a.booking_status === "scheduled" || !!a.scheduled_at;
       if (hasBooking) continue;
 
@@ -405,7 +486,7 @@ serve(async (req) => {
 
     const jitter = () => new Promise(res => setTimeout(res, JITTER_MIN_MS + Math.random() * (JITTER_MAX_MS - JITTER_MIN_MS)));
 
-    for (const { app, kind } of todo) {
+    for (const { app, kind, inviteToken } of todo) {
       const tenant = tenants.get(app.tenant_id);
       if (!tenant) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_missing" }); continue; }
       if (tenant.emails_paused || pausedInThisRun.has(tenant.id)) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_paused" }); continue; }
@@ -417,36 +498,59 @@ serve(async (req) => {
       const total12h = (sent12hByTenant.get(tenant.id) ?? 0) + runCount;
       if (total12h >= MAX_PER_12H_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_12h_cap" }); continue; }
 
+      const isRegistration = kind === "registration_pending_24h" || kind === "registration_pending_72h";
+      const isNoShow = kind === "no_show_24h";
+
       const landing = (app.source_landing_id ? landingMap.get(app.source_landing_id) : null)
         || (app.target_landing_id ? landingMap.get(app.target_landing_id) : null)
         || (app.source_slug ? slugLandingMap.get(normalizeKey(app.source_slug)) : null)
         || tenantLandingFallback.get(app.tenant_id)
         || null;
       const rawCalendly = calendlyFromLanding(landing);
-      if (!rawCalendly) {
-        skipped++; results.push({
-          app: app.id, kind, status: "skipped", reason: "no_calendly_link",
-          source_landing_id: app.source_landing_id ?? null,
-          target_landing_id: app.target_landing_id ?? null,
-          source_slug: app.source_slug ?? null,
-          tenant_has_landing_fallback: tenantLandingFallback.has(app.tenant_id),
-        });
-        if (!dryRun) await admin.from("application_reminder_log").upsert({
-          application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
-          recipient_email: app.email, status: "skipped", error: "no_calendly_link",
-          sent_at: new Date().toISOString(),
-        }, { onConflict: "application_id,reminder_kind" });
-        continue;
-      }
-      const calendlyLink = appendUtm(rawCalendly, app.id);
 
-      const isNoShow = kind === "no_show_24h";
-      const tmplSubject = isNoShow
-        ? (tenant.reminder_app_no_show_subject || DEFAULTS.no_show.subject)
-        : (tenant.reminder_app_no_booking_subject || DEFAULTS.no_booking.subject);
-      const tmplBody = isNoShow
-        ? (tenant.reminder_app_no_show_body || DEFAULTS.no_show.body)
-        : (tenant.reminder_app_no_booking_body || DEFAULTS.no_booking.body);
+      // Registration-Reminder braucht KEIN Calendly, sondern portal_link.
+      let calendlyLink = "";
+      let portalLink = "";
+      if (isRegistration) {
+        if (!inviteToken) {
+          skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "no_invite_token" });
+          continue;
+        }
+        const activeDomain = tenant.primary_domain || tenant.domain;
+        if (!activeDomain) {
+          skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "no_tenant_domain" });
+          continue;
+        }
+        portalLink = `https://portal.${activeDomain}/register?token=${encodeURIComponent(inviteToken)}&ref=${encodeURIComponent(app.id)}`;
+      } else {
+        if (!rawCalendly) {
+          skipped++; results.push({
+            app: app.id, kind, status: "skipped", reason: "no_calendly_link",
+            source_landing_id: app.source_landing_id ?? null,
+            target_landing_id: app.target_landing_id ?? null,
+            source_slug: app.source_slug ?? null,
+            tenant_has_landing_fallback: tenantLandingFallback.has(app.tenant_id),
+          });
+          if (!dryRun) await admin.from("application_reminder_log").upsert({
+            application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
+            recipient_email: app.email, status: "skipped", error: "no_calendly_link",
+            sent_at: new Date().toISOString(),
+          }, { onConflict: "application_id,reminder_kind" });
+          continue;
+        }
+        calendlyLink = appendUtm(rawCalendly, app.id);
+      }
+
+      const tmplSubject = isRegistration
+        ? (tenant.reminder_app_registration_subject || DEFAULTS.registration.subject)
+        : isNoShow
+          ? (tenant.reminder_app_no_show_subject || DEFAULTS.no_show.subject)
+          : (tenant.reminder_app_no_booking_subject || DEFAULTS.no_booking.subject);
+      const tmplBody = isRegistration
+        ? (tenant.reminder_app_registration_body || DEFAULTS.registration.body)
+        : isNoShow
+          ? (tenant.reminder_app_no_show_body || DEFAULTS.no_show.body)
+          : (tenant.reminder_app_no_booking_body || DEFAULTS.no_booking.body);
 
       const recruiter = landing?.recruiter_name || landing?.branding?.recruiter_name || tenant.sender_name || tenant.name;
 
@@ -458,6 +562,7 @@ serve(async (req) => {
         tenant_name: tenant.name,
         recruiter_name: recruiter,
         calendly_link: calendlyLink,
+        portal_link: portalLink,
         appointment_date: scheduledDate ? scheduledDate.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }) : "",
         appointment_time: scheduledDate ? scheduledDate.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "",
       };
