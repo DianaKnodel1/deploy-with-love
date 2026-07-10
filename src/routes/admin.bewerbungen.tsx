@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Users, Search, ExternalLink, Trash2 } from "lucide-react";
 import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders";
 import { StageTimeline, type Stage } from "@/components/StageTimeline";
-import { deleteOrphanApplications, deleteApplication } from "@/lib/admin-delete.functions";
+import { deleteOrphanApplications, deleteApplication, bulkDeleteApplications } from "@/lib/admin-delete.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -20,6 +20,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
   AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationBar } from "@/components/PaginationBar";
 
