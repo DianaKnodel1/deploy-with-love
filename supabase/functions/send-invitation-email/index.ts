@@ -18,6 +18,27 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const DEFAULT_WELCOME_TEMPLATE = `Hallo {{first_name}},
+
+Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!
+
+Wie geht es weiter?
+1. Registrieren Sie sich im Mitarbeiterportal
+2. Führen Sie anschließend das Onboarding durch
+
+{{cta:Jetzt registrieren|{{portal_link}}}}
+
+Ich wünsche Ihnen einen erfolgreichen Start!
+
+Mit freundlichen Grüßen
+{{sender_name}}`;
+
+const LEGACY_WELCOME_MARKERS = [
+  "dein Zugang für {{tenant_name}} ist bereit",
+  "dein Zugang für",
+  "Bitte registriere dich im Mitarbeiterportal und schließe anschließend dein Profil ab",
+];
+
 interface Payload {
   to: string;
   fullName?: string;
@@ -88,6 +109,7 @@ serve(async (req) => {
       email: to,
       tenant_name: tenant.name,
       company_name: tenant.name,
+      sender_name: senderName,
       portal_link: registrationLink,
       booking_link: registrationLink,
       registration_link: registrationLink,
@@ -109,20 +131,28 @@ serve(async (req) => {
       dbButton = tenant.application_received_button_label || null;
     }
 
+    const isDefaultInvitation = !templateNameOverride || templateNameOverride === "invitation" || templateNameOverride === "ai_acceptance_invitation";
+    if (isDefaultInvitation && dbBody && isLegacyWelcomeTemplate(dbBody)) dbBody = null;
+
+    const templateBody = introOverride && introOverride.trim()
+      ? introOverride.trim()
+      : (dbBody || (isDefaultInvitation ? DEFAULT_WELCOME_TEMPLATE : null));
+
     const subject = subjectOverride && subjectOverride.trim()
       ? subjectOverride.trim()
       : (dbSubject ? applyPh(dbSubject) : `Herzlichen Glückwunsch – ${tenant.name}`);
     const headline = headlineOverride && headlineOverride.trim()
       ? headlineOverride.trim()
       : "Willkommen im Team!";
-    const intro = introOverride && introOverride.trim()
-      ? introOverride.trim()
-      : (dbBody
-          ? applyPh(dbBody).replace(/\n/g, "<br/>")
-          : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""},<br/><br/><strong>Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!</strong><br/><br/>Wir freuen uns sehr, Sie bei <strong>${escapeHtml(tenant.name)}</strong> begrüßen zu dürfen. Damit Sie sofort loslegen können, haben wir Ihren persönlichen Zugang zum Mitarbeiterportal bereits für Sie vorbereitet.`);
     const buttonLabel = buttonLabelOverride && buttonLabelOverride.trim()
       ? buttonLabelOverride.trim()
       : (dbButton ? applyPh(dbButton) : "Jetzt registrieren");
+    const renderedBody = templateBody
+      ? renderTemplateBody(templateBody, phMap, brand, registrationLink, buttonLabel)
+      : {
+          html: `<p style="font-size:15px;line-height:1.65;color:#334155;margin:0 0 20px">Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""},<br/><br/><strong>Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!</strong><br/><br/>Wir freuen uns sehr, Sie bei <strong>${escapeHtml(tenant.name)}</strong> begrüßen zu dürfen. Damit Sie sofort loslegen können, haben wir Ihren persönlichen Zugang zum Mitarbeiterportal bereits für Sie vorbereitet.</p>`,
+          hasCta: false,
+        };
 
     const logo = tenant.logo_url
       ? `<img src="${tenant.logo_url}" alt="${escapeHtml(tenant.name)}" style="max-height:48px;margin-bottom:24px"/>`
@@ -140,24 +170,13 @@ serve(async (req) => {
 </div>
 </td></tr>
 <tr><td style="padding:32px 44px 8px">
-<p style="font-size:15px;line-height:1.65;color:#334155;margin:0 0 20px">${intro}</p>
-<div style="font-size:13px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:24px 0 12px">Wie geht es weiter?</div>
-<table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px">
-<tr><td width="44" valign="top" style="padding:6px 0"><div style="width:28px;height:28px;border-radius:50%;background:${brand};color:#fff;text-align:center;line-height:28px;font-weight:700;font-size:13px">1</div></td>
-<td style="padding:8px 0;font-size:15px;color:#0f172a">Registrieren Sie sich im Mitarbeiterportal</td></tr>
-<tr><td width="44" valign="top" style="padding:6px 0"><div style="width:28px;height:28px;border-radius:50%;background:${brand};color:#fff;text-align:center;line-height:28px;font-weight:700;font-size:13px">2</div></td>
-<td style="padding:8px 0;font-size:15px;color:#0f172a">Führen Sie anschließend das Onboarding durch</td></tr>
-</table>
-<table cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 24px"><tr><td style="background:${brand};border-radius:10px">
-<a href="${registrationLink}" style="display:inline-block;padding:15px 36px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.4px;text-transform:uppercase">${escapeHtml(buttonLabel)}</a>
-</td></tr></table>
+${renderedBody.html}
+${renderedBody.hasCta ? "" : `<table cellpadding="0" cellspacing="0" align="center" style="margin:0 auto 24px"><tr><td style="background:${brand};border-radius:10px">
+<a href="${escapeAttr(registrationLink)}" style="display:inline-block;padding:15px 36px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.4px;text-transform:uppercase">${escapeHtml(buttonLabel)}</a>
+</td></tr></table>`}
 <p style="font-size:12px;color:#94a3b8;margin:0 0 6px;text-align:center">Sollte der Button nicht funktionieren, kopieren Sie bitte den folgenden Link in Ihren Browser:</p>
-<p style="font-size:12px;margin:0 0 28px;text-align:center;word-break:break-all"><a href="${registrationLink}" style="color:${brand}">${registrationLink}</a></p>
+<p style="font-size:12px;margin:0 0 28px;text-align:center;word-break:break-all"><a href="${escapeAttr(registrationLink)}" style="color:${brand}">${escapeHtml(registrationLink)}</a></p>
 <hr style="border:none;border-top:1px solid #e2e8f0;margin:8px 0 24px"/>
-<p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 18px">Bei Fragen bin ich jederzeit persönlich für Sie da – ebenso Ihre Teamleitung im Mitarbeiterchat.</p>
-<p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px">Ich wünsche Ihnen einen erfolgreichen Start!</p>
-<p style="font-size:14px;line-height:1.5;color:#0f172a;margin:0 0 4px">Mit freundlichen Grüßen</p>
-<p style="font-size:14px;line-height:1.5;color:#0f172a;margin:0;font-weight:600">${escapeHtml(senderName)}</p>
 <p style="font-size:13px;line-height:1.5;color:#64748b;margin:0">Geschäftsführung</p>
 <p style="font-size:13px;line-height:1.5;color:#64748b;margin:0 0 32px">${escapeHtml(tenant.name)}</p>
 </td></tr>
@@ -227,6 +246,67 @@ function escapeHtml(s: string) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
 
+function escapeAttr(s: string) {
+  return escapeHtml(s).replace(/`/g, "&#96;");
+}
+
+function isLegacyWelcomeTemplate(s: string) {
+  const value = String(s || "");
+  return LEGACY_WELCOME_MARKERS.some((marker) => value.includes(marker));
+}
+
+function renderTemplateBody(template: string, phMap: Record<string, string>, brand: string, registrationLink: string, defaultButtonLabel: string) {
+  const applyPh = (s: string) => s.replace(/\{\{(\w+)\}\}/g, (_m, k) => phMap[k] ?? "");
+  const source = applyPh(template).replace(/\r\n/g, "\n").trim();
+  const lines = source.split("\n");
+  const parts: string[] = [];
+  let para: string[] = [];
+  let listItems: string[] = [];
+  let hasCta = false;
+
+  const flushPara = () => {
+    if (!para.length) return;
+    parts.push(`<p style="font-size:15px;line-height:1.65;color:#334155;margin:0 0 18px">${para.map(escapeHtml).join("<br/>")}</p>`);
+    para = [];
+  };
+  const flushList = () => {
+    if (!listItems.length) return;
+    parts.push(`<table cellpadding="0" cellspacing="0" width="100%" style="margin:4px 0 24px">${listItems.map((item, index) => `<tr><td width="44" valign="top" style="padding:6px 0"><div style="width:28px;height:28px;border-radius:50%;background:${brand};color:#fff;text-align:center;line-height:28px;font-weight:700;font-size:13px">${index + 1}</div></td><td style="padding:8px 0;font-size:15px;color:#0f172a">${escapeHtml(item)}</td></tr>`).join("")}</table>`);
+    listItems = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushPara();
+      flushList();
+      continue;
+    }
+    const cta = line.match(/^\{\{cta:([^|]+)\|([^}]+)\}\}$/);
+    if (cta) {
+      flushPara();
+      flushList();
+      const label = cta[1].trim() || defaultButtonLabel;
+      const href = cta[2].trim() || registrationLink;
+      hasCta = true;
+      parts.push(`<table cellpadding="0" cellspacing="0" align="center" style="margin:4px auto 24px"><tr><td style="background:${brand};border-radius:10px"><a href="${escapeAttr(href)}" style="display:inline-block;padding:15px 36px;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.4px;text-transform:uppercase">${escapeHtml(label)}</a></td></tr></table>`);
+      continue;
+    }
+    const list = line.match(/^\d+[.)]\s+(.+)$/);
+    if (list) {
+      flushPara();
+      listItems.push(list[1]);
+      continue;
+    }
+    flushList();
+    para.push(line);
+  }
+  flushPara();
+  flushList();
+
+  return { html: parts.join("\n"), hasCta };
+}
+
 async function logSend(admin: any, tenantId: string, to: string, subject: string, html: string, senderEmail: string, status: string, error?: string, metadata?: Record<string, unknown>) {
   try {
     await admin.from("email_send_log").insert({
@@ -249,20 +329,28 @@ async function verifyOrPause(admin: any, tenant: any, transporter: any): Promise
       transporter.verify(),
       new Promise((_r, rej) => setTimeout(() => rej(new Error("verify timeout 8s")), 8000)),
     ]);
-    await admin.from("tenant_smtp_health").upsert({
+    const { error: healthOkErr } = await admin.from("tenant_smtp_health").upsert({
       tenant_id: tenant.id, consecutive_fails: 0,
       last_verify_at: new Date().toISOString(), last_verify_ok: true, updated_at: new Date().toISOString(),
     });
+    if (healthOkErr) console.warn("[send-invitation-email] smtp health write skipped:", healthOkErr.message ?? healthOkErr);
     return { ok: true };
   } catch (e: any) {
     const reason = String(e?.message ?? e);
-    const { data: h } = await admin.from("tenant_smtp_health").select("consecutive_fails").eq("tenant_id", tenant.id).maybeSingle();
-    const fails = (h?.consecutive_fails ?? 0) + 1;
-    await admin.from("tenant_smtp_health").upsert({
-      tenant_id: tenant.id, consecutive_fails: fails,
-      last_fail_at: new Date().toISOString(), last_fail_error: reason,
-      last_verify_at: new Date().toISOString(), last_verify_ok: false, updated_at: new Date().toISOString(),
-    });
+    let fails = 1;
+    try {
+      const { data: h, error: readErr } = await admin.from("tenant_smtp_health").select("consecutive_fails").eq("tenant_id", tenant.id).maybeSingle();
+      if (readErr) console.warn("[send-invitation-email] smtp health read skipped:", readErr.message ?? readErr);
+      fails = (h?.consecutive_fails ?? 0) + 1;
+      const { error: writeErr } = await admin.from("tenant_smtp_health").upsert({
+        tenant_id: tenant.id, consecutive_fails: fails,
+        last_fail_at: new Date().toISOString(), last_fail_error: reason,
+        last_verify_at: new Date().toISOString(), last_verify_ok: false, updated_at: new Date().toISOString(),
+      });
+      if (writeErr) console.warn("[send-invitation-email] smtp health fail write skipped:", writeErr.message ?? writeErr);
+    } catch (healthErr: any) {
+      console.warn("[send-invitation-email] smtp health skipped:", healthErr?.message ?? healthErr);
+    }
     let paused = false;
     if (fails >= 3 && !tenant.emails_paused) {
       await admin.from("tenants").update({

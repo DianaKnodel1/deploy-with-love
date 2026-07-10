@@ -22,7 +22,7 @@ import { Mail, Save, Send, Eye, AlertTriangle, CheckCircle2, Copy, Loader2 } fro
 const REMINDER_DEFAULTS = {
   employee_signup: {
     subject: "Herzlichen Glückwunsch – {{tenant_name}}",
-    body: `Hallo {{first_name}},\n\ndein Zugang für {{tenant_name}} ist bereit. Bitte registriere dich im Mitarbeiterportal und schließe anschließend dein Profil ab.\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nOder kopiere diesen Link: {{portal_link}}`,
+    body: `Hallo {{first_name}},\n\nIhr Profil hat uns überzeugt – lassen Sie uns direkt starten!\n\nWie geht es weiter?\n1. Registrieren Sie sich im Mitarbeiterportal\n2. Führen Sie anschließend das Onboarding durch\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nIch wünsche Ihnen einen erfolgreichen Start!\n\nMit freundlichen Grüßen\n{{sender_name}}`,
   },
   confirm: {
     subject: "Bitte bestätige deine E-Mail – {{tenant_name}}",
@@ -112,6 +112,7 @@ const PLACEHOLDERS = [
   { key: "login_link", label: "Login-Link", preview: "https://portal.example.com/login" },
   { key: "confirmation_link", label: "Bestätigungs-Link", preview: "https://portal.example.com/auth/confirmed?token_hash=…" },
   { key: "booking_link", label: "Aufträge-Link", preview: "https://portal.example.com/appointments" },
+  { key: "sender_name", label: "Absender-Name", preview: "Max Geschäftsführer" },
 ];
 
 function replacePlaceholders(text: string, tenant: TenantEmail): string {
@@ -124,6 +125,7 @@ function replacePlaceholders(text: string, tenant: TenantEmail): string {
     team_leader_name: tenant.team_leader_name,
     tenant_name: tenant.name,
     support_email: tenant.company_email || tenant.sender_email || "support@example.com",
+    sender_name: tenant.sender_name || "Geschäftsführung",
     reset_link: `https://${tenant.domain}/reset-password?token=demo123`,
     login_link: `https://${tenant.domain}/login`,
     confirmation_link: `https://${tenant.domain}/auth/confirmed?token_hash=demo123`,
@@ -134,7 +136,7 @@ function replacePlaceholders(text: string, tenant: TenantEmail): string {
     result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value || "");
   }
   // CTA-Syntax: {{cta:Label|URL}} -> sichtbarer Button (in Vorschau)
-  result = result.replace(/\{\{cta:([^|}]+)\|([^}]+)\}\}/g, (_m, label, href) => {
+  result = result.replace(/\{\{cta:([^|]+)\|([\s\S]*?)\}\}/g, (_m, label, href) => {
     const color = tenant.primary_color || "#0f172a";
     return `<table cellpadding="0" cellspacing="0" style="margin:16px 0"><tr><td style="background:${color};border-radius:8px"><a href="${String(href).trim()}" style="display:inline-block;padding:14px 28px;color:#fff;text-decoration:none;font-weight:600;font-size:15px">${String(label).trim()}</a></td></tr></table>`;
   });
@@ -505,9 +507,12 @@ function AdminEmailTemplatesPage() {
           registrationLink: `https://${selectedTenant.domain}/register?token=test`,
           tenantId: selectedTenantId,
           subject: `[TEST] ${replacePlaceholders(subject, selectedTenant)}`,
-          intro: replacePlaceholders(body, selectedTenant).replace(/\n/g, "<br/>"),
+          intro: body,
           buttonLabel: testType === "magic_link" ? mlButton : undefined,
           templateName: testType === "magic_link" ? "bewerbung_magic_link" : testType,
+          placeholders: {
+            sender_name: selectedTenant.sender_name || "Geschäftsführung",
+          },
         },
       });
       if (error) throw new Error(error.message);
