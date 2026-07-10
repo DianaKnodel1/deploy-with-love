@@ -349,29 +349,36 @@ function WelcomeAccepted({
   const base = (portal || "").replace(/\/+$/, "") || (typeof window !== "undefined" ? window.location.origin : "");
   const registerHref = `${base}/register`;
   return (
-    <div className="mt-4 bg-white dark:bg-slate-900 rounded-2xl border border-border p-6 space-y-5 text-center">
-      <div className="text-4xl leading-none">🎉🎊✨</div>
+    <div className="mt-4 bg-white dark:bg-slate-900 rounded-2xl border-2 p-6 space-y-5 text-center shadow-lg" style={{ borderColor: primary }}>
+      <div className="text-5xl leading-none animate-bounce">🎉</div>
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold leading-tight">Herzlichen Glückwunsch!</h2>
+        <h2 className="text-2xl font-bold leading-tight">Herzlichen Glückwunsch!</h2>
+        <p className="text-[15px] text-foreground leading-relaxed">
+          Ihr Profil hat uns <strong>überzeugt</strong> — willkommen bei {company}!
+        </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Ihr Profil hat uns überzeugt — willkommen bei {company}. Legen Sie jetzt
-          in wenigen Schritten Ihr Zugangs-Konto an, danach begleiten wir Sie
-          persönlich durchs Onboarding.
+          Registrieren Sie sich jetzt im Mitarbeiter-Portal, um Ihren
+          Arbeitsvertrag zu unterschreiben und direkt zu starten.
         </p>
       </div>
 
       <Button
         asChild
-        className="w-full font-medium"
+        size="lg"
+        className="w-full font-semibold text-base h-12 shadow-md hover:shadow-lg transition-shadow"
         style={{ background: primary }}
       >
         <a href={registerHref}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Jetzt Konto anlegen
+          <UserPlus className="h-5 w-5 mr-2" />
+          Jetzt im Mitarbeiter-Portal registrieren
         </a>
       </Button>
 
-      <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        ⏱️ Dauert nur 5 Minuten · 📄 Vertrag digital unterschreiben · 🚀 Sofort startklar
+      </p>
+
+      <p className="text-xs text-muted-foreground pt-3 border-t border-border">
         Herzliche Grüße, {recruiter} · HR bei {company}
       </p>
     </div>
