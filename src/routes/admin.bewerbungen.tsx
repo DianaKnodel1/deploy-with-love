@@ -314,12 +314,42 @@ function AdminBewerbungenPage() {
     try {
       const res: any = await runCleanup({ data: { older_than_days: cleanupDays, dry_run: false } });
       toast.success(`${res.deleted} Bewerbungen gelöscht.`);
+      await loadData();
     } catch (e: any) {
       toast.error(e?.message ?? "Cleanup fehlgeschlagen");
     } finally {
       setBusy(false);
     }
   }
+
+  async function doBulkDelete() {
+    setBulkBusy(true);
+    try {
+      const ids = Array.from(selected);
+      const res: any = await runBulkDelete({ data: { ids } });
+      toast.success(`${res.deleted} Bewerbungen gelöscht${res.failures?.length ? ` (${res.failures.length} Fehler)` : ""}.`);
+      setSelected(new Set());
+      setBulkOpen(false);
+      await loadData();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Bulk-Löschen fehlgeschlagen");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  const allVisibleSelected = filtered.length > 0 && filtered.every(r => selected.has(r.id));
+  const toggleAllVisible = () => {
+    const next = new Set(selected);
+    if (allVisibleSelected) filtered.forEach(r => next.delete(r.id));
+    else filtered.forEach(r => next.add(r.id));
+    setSelected(next);
+  };
+  const toggleOne = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
 
   if (loading) return (
     <div className="p-6 space-y-4"><PageHeaderSkeleton /><TableSkeleton /></div>
