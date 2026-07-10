@@ -29,7 +29,7 @@
     { "key": "p2", "label": "Schritt 2", "type": "text", "default": "Kurzes Kennenlern-Gespräch mit unserer HR-Kollegin" },
     { "key": "p3", "label": "Schritt 3", "type": "text", "default": "Vertrag unterschreiben & starten" },
 
-    { "key": "quote_text", "label": "Zitat", "type": "longtext", "default": "„Ich arbeite genau dann, wenn es zu meinem Alltag passt. Nach 4 Wochen war ich komplett eingearbeitet — das Team ist immer erreichbar."" },
+    { "key": "quote_text", "label": "Zitat", "type": "longtext", "default": "Ich arbeite genau dann, wenn es zu meinem Alltag passt. Nach 4 Wochen war ich komplett eingearbeitet — das Team ist immer erreichbar." },
     { "key": "quote_author", "label": "Zitat Autor", "type": "text", "default": "Julia M., Teilzeit-Testerin seit 2 Jahren" },
 
     { "key": "final_title", "label": "Final CTA Titel", "type": "text", "default": "Bereit für Ihren neuen Job?" },
