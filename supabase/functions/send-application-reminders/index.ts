@@ -22,6 +22,8 @@ const corsHeaders = {
 const NO_BOOKING_1_MIN = 24 * 60;         // 24h
 const NO_BOOKING_2_MIN = 72 * 60;         // 72h
 const NO_SHOW_MIN      = 24 * 60;         // 24h nach Termin
+const REG_PENDING_1_MIN = 24 * 60;        // 24h nach Zusage/Invite
+const REG_PENDING_2_MIN = 72 * 60;        // 72h nach Zusage/Invite (2. Nachfass)
 
 const DEFAULTS = {
   no_booking: {
@@ -54,6 +56,28 @@ Bitte wähle einen neuen Wunschtermin, der besser passt:
 Falls du Fragen hast oder Unterstützung brauchst, antworte einfach auf diese E-Mail.
 
 Viele Grüße
+{{recruiter_name}}
+{{tenant_name}}`,
+  },
+  registration: {
+    subject: "🎉 Ihr Portal-Zugang wartet – nur noch ein Klick, {{first_name}}",
+    body:
+`Hallo {{first_name}},
+
+herzlichen Glückwunsch nochmal zu Ihrer Zusage bei {{tenant_name}}! 🎊
+
+Uns ist aufgefallen, dass Sie sich noch nicht im Mitarbeiter-Portal registriert haben. Erst mit der Registrierung können wir Ihren Arbeitsvertrag bereitstellen und Sie erhalten Zugriff auf Ihre ersten Aufträge.
+
+Die Registrierung dauert nur 2 Minuten:
+
+{{cta:Jetzt im Portal registrieren|{{portal_link}}}}
+
+Falls der Button nicht funktioniert, kopieren Sie diesen Link:
+{{portal_link}}
+
+Bei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.
+
+Herzliche Grüße
 {{recruiter_name}}
 {{tenant_name}}`,
   },
