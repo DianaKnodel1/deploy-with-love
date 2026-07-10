@@ -26,6 +26,10 @@ import qgFormHtml from "../landing-themes/_shared/form-section-qa-grid.html?raw"
 import qgFormCss from "../landing-themes/_shared/form-section-qa-grid.css?raw";
 import thFormHtml from "../landing-themes/_shared/form-section-talent-hub.html?raw";
 import thFormCss from "../landing-themes/_shared/form-section-talent-hub.css?raw";
+import caFormHtml from "../landing-themes/_shared/form-section-career-atlas.html?raw";
+import caFormCss from "../landing-themes/_shared/form-section-career-atlas.css?raw";
+import dsFormHtml from "../landing-themes/_shared/form-section-device-stack.html?raw";
+import dsFormCss from "../landing-themes/_shared/form-section-device-stack.css?raw";
 
 import ttlHtml from "../landing-themes/theme-tester-lab/template.html?raw";
 import ttlCss from "../landing-themes/theme-tester-lab/style.css?raw";
