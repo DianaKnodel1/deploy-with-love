@@ -21,7 +21,7 @@ import { Mail, Save, Send, Eye, AlertTriangle, CheckCircle2, Copy, Loader2 } fro
 // Defaults für Reminder-Templates (gespiegelt zur Edge Function).
 const REMINDER_DEFAULTS = {
   employee_signup: {
-    subject: "Mitarbeiter registriert sich – {{tenant_name}}",
+    subject: "Herzlichen Glückwunsch – {{tenant_name}}",
     body: `Hallo {{first_name}},\n\ndein Zugang für {{tenant_name}} ist bereit. Bitte registriere dich im Mitarbeiterportal und schließe anschließend dein Profil ab.\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nOder kopiere diesen Link: {{portal_link}}`,
   },
   confirm: {
