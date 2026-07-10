@@ -3,6 +3,7 @@
 // Solange die Migration nicht durchgelaufen ist, fallen die Reads auf leere
 // Antworten zurück, damit die UI nicht crasht.
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -89,5 +90,41 @@ export const advanceApplicationStage = createServerFn({ method: "POST" })
       } as any,
     );
     if (error) throw new Error(error.message);
-    return { stage: result as string };
+
+    // Trigger "Herzlichen Glückwunsch" invitation email when admin marks
+    // an application as accepted (Vermittlung-Zusage or Fasttrack-Angenommen).
+    // Idempotent: skip if an invitation_token already exists for this application.
+    let invite_mail: { sent: boolean; skipped?: boolean; reason?: string; error?: string } | null = null;
+    if (data.toStage === "vermittlung_zusage" || data.toStage === "fasttrack_angenommen") {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: existing } = await supabaseAdmin
+          .from("invitation_tokens")
+          .select("token")
+          .eq("application_id", data.applicationId)
+          .limit(1)
+          .maybeSingle();
+        if (existing?.token) {
+          invite_mail = { sent: false, skipped: true, reason: "already_invited" };
+        } else {
+          const { data: appRow, error: appErr } = await supabaseAdmin
+            .from("applications")
+            .select("id, full_name, first_name, last_name, email, tenant_id, status, source_slug, source_landing_id, target_landing_id")
+            .eq("id", data.applicationId)
+            .maybeSingle();
+          if (appErr || !appRow) {
+            invite_mail = { sent: false, error: appErr?.message ?? "application_not_found" };
+          } else {
+            const { sendRegistrationInviteAfterAiAccept } = await import("@/lib/interview-engine.server");
+            const req = getRequest();
+            invite_mail = await sendRegistrationInviteAfterAiAccept(appRow as any, req);
+          }
+        }
+      } catch (e: any) {
+        console.warn("[application-stage] invite mail failed:", e);
+        invite_mail = { sent: false, error: e?.message ?? "invite_failed" };
+      }
+    }
+
+    return { stage: result as string, invite_mail };
   });
