@@ -218,6 +218,8 @@ export const THEMES: ThemeFiles[] = [
   { id: ttlMeta.id, name: ttlMeta.name, description: ttlMeta.description, html: ttlHtml, css: ttlCss, js: ttlJs, slots: pickSlots(ttlMeta) },
   { id: tqgMeta.id, name: tqgMeta.name, description: tqgMeta.description, html: tqgHtml, css: tqgCss, js: tqgJs, slots: pickSlots(tqgMeta) },
   { id: tthMeta.id, name: tthMeta.name, description: tthMeta.description, html: tthHtml, css: tthCss, js: tthJs, slots: pickSlots(tthMeta) },
+  { id: tcaMeta.id, name: tcaMeta.name, description: tcaMeta.description, html: tcaHtml, css: tcaCss, js: tcaJs, slots: pickSlots(tcaMeta) },
+  { id: tdsMeta.id, name: tdsMeta.name, description: tdsMeta.description, html: tdsHtml, css: tdsCss, js: tdsJs, slots: pickSlots(tdsMeta) },
 ].map(withSharedForm);
 
 
