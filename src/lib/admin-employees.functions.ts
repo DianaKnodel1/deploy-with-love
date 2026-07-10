@@ -3,171 +3,98 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const Schema = z.object({
-  email: z.string().email().max(255),
-  password: z.string().min(8).max(72),
-  full_name: z.string().min(1).max(120),
-  phone: z.string().max(40).optional().nullable(),
-  birth_date: z.string().max(20).optional().nullable(),
-  birth_place: z.string().max(120).optional().nullable(),
-  birth_country: z.string().max(120).optional().nullable(),
-  birth_name: z.string().max(120).optional().nullable(),
-  nationality: z.string().max(120).optional().nullable(),
-  family_status: z.string().max(40).optional().nullable(),
-  street: z.string().max(200).optional().nullable(),
-  zip_code: z.string().max(20).optional().nullable(),
-  city: z.string().max(120).optional().nullable(),
-  living_since: z.string().max(20).optional().nullable(),
-  previous_address: z.string().max(400).optional().nullable(),
-  employment_type: z.enum(["minijob", "teilzeit", "vollzeit"]).optional().nullable(),
-  employment_start_date: z.string().max(20).optional().nullable(),
-  current_activity: z.string().max(200).optional().nullable(),
-  health_insurance: z.string().max(200).optional().nullable(),
-  social_security_number: z.string().max(40).optional().nullable(),
-  tax_number: z.string().max(40).optional().nullable(),
-  iban: z.string().max(40).optional().nullable(),
-  tenant_id: z.string().uuid().optional().nullable(),
-  status: z.enum(["registriert", "angenommen", "abgelehnt", "deaktiviert"]).default("angenommen"),
-  admin_notes: z.string().max(2000).optional().nullable(),
+const CreateSchema = z.object({
+  email: z.string().email(),
+  first_name: z.string().trim().min(1),
+  last_name: z.string().trim().min(1),
+  phone: z.string().trim().optional().default(""),
+  employment_type: z.enum(["minijob", "teilzeit", "vollzeit"]).optional(),
 });
+
+async function assertAdmin(ctx: { supabase: any; userId: string }) {
+  const { data, error } = await ctx.supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", ctx.userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Nicht autorisiert");
+}
 
 export const createEmployeeAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => Schema.parse(input))
+  .inputValidator((input: unknown) => CreateSchema.parse(input))
   .handler(async ({ data, context }) => {
-    // Admin check via RLS-respecting client
-    const { data: roleRow, error: roleErr } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (roleErr) throw new Error(roleErr.message);
-    if (!roleRow) throw new Error("Nicht autorisiert");
+    await assertAdmin(context);
+    const sb = supabaseAdmin as any;
 
-    // Create auth user (email pre-confirmed so they can log in immediately)
-    // Telefon NICHT an auth.users hängen – sonst "Phone already registered"
-    // wenn zwei Mitarbeiter dieselbe Nummer haben. Telefon lebt im Profil.
+    // Tenant des Admins ermitteln
+    const { data: adminProfile } = await sb
+      .from("profiles")
+      .select("tenant_id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    const tenantId = adminProfile?.tenant_id ?? null;
+
+    // 1) Auth-User anlegen (E-Mail direkt bestätigt)
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: data.password,
       email_confirm: true,
-      user_metadata: { full_name: data.full_name },
+      user_metadata: {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        full_name: `${data.first_name} ${data.last_name}`,
+      },
     });
-    if (createErr || !created.user) {
-      throw new Error(createErr?.message ?? "Konnte Account nicht anlegen");
-    }
-    const newUserId = created.user.id;
+    if (createErr) throw new Error(`Auth: ${createErr.message}`);
+    const uid = created.user?.id;
+    if (!uid) throw new Error("Auth: keine User-ID erhalten");
 
-    // handle_new_user trigger created a profile row. Update it with full data.
-    const profileUpdate = {
-      full_name: data.full_name,
+    const fullName = `${data.first_name} ${data.last_name}`.trim();
+
+    // 2) Profil ergänzen (Trigger legt Zeile an; wir aktualisieren die Felder).
+    //    Falls kein Trigger: upsert stellt sicher, dass die Zeile existiert.
+    const profileRow: any = {
+      user_id: uid,
+      full_name: fullName,
       phone: data.phone || null,
-      birth_date: data.birth_date || null,
-      birth_place: data.birth_place || null,
-      birth_country: data.birth_country || null,
-      birth_name: data.birth_name || null,
-      nationality: data.nationality || null,
-      family_status: data.family_status || null,
-      street: data.street || null,
-      zip_code: data.zip_code || null,
-      city: data.city || null,
-      address: [data.street, [data.zip_code, data.city].filter(Boolean).join(" ")]
-        .filter(Boolean)
-        .join(", ") || null,
-      living_since: data.living_since || null,
-      previous_address: data.previous_address || null,
-      employment_type: data.employment_type ?? null,
-      employment_start_date: data.employment_start_date || null,
-      current_activity: data.current_activity || null,
-      health_insurance: data.health_insurance || null,
-      social_security_number: data.social_security_number || null,
-      tax_number: data.tax_number || null,
-      iban: data.iban || null,
-      tenant_id: data.tenant_id || null,
-      status: data.status,
-      admin_notes: data.admin_notes || null,
-      onboarding_status: (data.status === "angenommen" ? "abgeschlossen" : "in_bearbeitung") as "abgeschlossen" | "in_bearbeitung",
+      tenant_id: tenantId,
+      status: "registriert",
+      onboarding_status: "nicht_begonnen",
     };
+    if (data.employment_type) profileRow.employment_type = data.employment_type;
 
-    const { error: updErr } = await supabaseAdmin
+    const { error: upsertErr } = await sb
       .from("profiles")
-      .update(profileUpdate)
-      .eq("user_id", newUserId);
-    if (updErr) {
-      // rollback auth user to avoid orphan
-      await supabaseAdmin.auth.admin.deleteUser(newUserId).catch(() => {});
-      throw new Error(updErr.message);
+      .upsert(profileRow, { onConflict: "user_id" });
+    if (upsertErr) {
+      // Rollback: Auth-User wieder löschen, sonst Waise
+      await supabaseAdmin.auth.admin.deleteUser(uid).catch(() => {});
+      throw new Error(`Profil: ${upsertErr.message}`);
     }
 
-    // Activity log
-    await supabaseAdmin.from("activity_log").insert({
-      action: "mitarbeiter_manuell_angelegt",
-      entity_type: "profile",
-      entity_id: newUserId,
-      actor_id: context.userId,
-      comment: `Mitarbeiter manuell angelegt: ${data.full_name}`,
-      new_status: data.status,
-    });
-
-    return { user_id: newUserId };
-  });
-
-// ------------------------------------------------------------------
-// Admin: Beschäftigungsart / Startdatum eines bestehenden Mitarbeiters
-// ändern. Wird aus admin.personen.$id "AV bearbeiten" aufgerufen.
-// ------------------------------------------------------------------
-const UpdateEmploymentSchema = z.object({
-  user_id: z.string().uuid(),
-  employment_type: z.enum(["minijob", "teilzeit", "vollzeit"]).nullable(),
-  employment_start_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .nullable()
-    .optional(),
-});
-
-export const updateEmployeeEmployment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => UpdateEmploymentSchema.parse(input))
-  .handler(async ({ data, context }) => {
-    const { data: roleRow, error: roleErr } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (roleErr) throw new Error(roleErr.message);
-    if (!roleRow) throw new Error("Nicht autorisiert");
-
-    const patch: Record<string, any> = {
-      employment_type: data.employment_type,
-    };
-    if (data.employment_start_date !== undefined) {
-      patch.employment_start_date = data.employment_start_date;
+    // 3) Passwort-Reset-Link generieren → E-Mail für Passwortvergabe
+    let recoveryLink: string | null = null;
+    try {
+      const { data: link } = await (supabaseAdmin.auth.admin as any).generateLink({
+        type: "recovery",
+        email: data.email,
+      });
+      recoveryLink = link?.properties?.action_link ?? null;
+    } catch {
+      // nicht kritisch — Admin sieht den fehlenden Link in der Response
     }
 
-    const { data: before } = await supabaseAdmin
-      .from("profiles")
-      .select("employment_type, employment_start_date, full_name")
-      .eq("user_id", data.user_id)
-      .maybeSingle();
+    try {
+      await sb.from("activity_log").insert({
+        action: "mitarbeiter_angelegt",
+        entity_type: "profile",
+        entity_id: uid,
+        actor_id: context.userId,
+        comment: `Mitarbeiter ${fullName} (${data.email}) manuell angelegt`,
+      });
+    } catch {}
 
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update(patch)
-      .eq("user_id", data.user_id);
-    if (error) throw new Error(error.message);
-
-    await supabaseAdmin.from("activity_log").insert({
-      action: "mitarbeiter_beschaeftigung_geaendert",
-      entity_type: "profile",
-      entity_id: data.user_id,
-      actor_id: context.userId,
-      comment: `Beschäftigungsart/Startdatum aktualisiert für ${before?.full_name ?? data.user_id} (${before?.employment_type ?? "—"} → ${data.employment_type ?? "—"}).`,
-      old_status: before?.employment_type ?? null,
-      new_status: data.employment_type ?? null,
-    }).then(() => {}, () => {});
-
-    return { ok: true };
+    return { ok: true, user_id: uid, recovery_link: recoveryLink };
   });
