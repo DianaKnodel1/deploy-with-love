@@ -24,6 +24,8 @@ import tlFormHtml from "../landing-themes/_shared/form-section-tester-lab.html?r
 import tlFormCss from "../landing-themes/_shared/form-section-tester-lab.css?raw";
 import qgFormHtml from "../landing-themes/_shared/form-section-qa-grid.html?raw";
 import qgFormCss from "../landing-themes/_shared/form-section-qa-grid.css?raw";
+import thFormHtml from "../landing-themes/_shared/form-section-talent-hub.html?raw";
+import thFormCss from "../landing-themes/_shared/form-section-talent-hub.css?raw";
 
 import ttlHtml from "../landing-themes/theme-tester-lab/template.html?raw";
 import ttlCss from "../landing-themes/theme-tester-lab/style.css?raw";
