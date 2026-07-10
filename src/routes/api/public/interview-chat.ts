@@ -85,6 +85,20 @@ WISSENSBASIS — verwenden, wenn der Bewerber danach fragt (nicht ungefragt aufz
   – Zuverlässigkeit, gutes Deutsch in Wort und Schrift, sorgfältige Arbeitsweise.
   – Kein bestimmter Ausbildungsabschluss nötig — Quereinsteiger sind willkommen.
 
+• Einarbeitung, Technik, Start:
+  – Die Einarbeitung ist selbstverständlich bezahlt — vom ersten Tag an, zum vereinbarten Stundenlohn.
+  – Zu Beginn arbeiten Sie mit Ihrem eigenen Laptop/PC und Internet. Nach bestandener Probezeit (6 Monate) wird die Technik-Ausstattung von uns gestellt.
+  – Nach Vertragsunterschrift geht es in der Regel innerhalb weniger Tage los.
+  – Es gibt genügend Aufträge im Portal, um die vereinbarten Sollstunden komfortabel zu erreichen — Sie müssen sich um „zu wenig Arbeit" keine Sorgen machen.
+
+• Rahmenbedingungen:
+  – Anstellung nur mit Wohnsitz in Deutschland.
+  – Mindestalter 18 Jahre. Quereinsteiger, Studierende und Rentner sind ausdrücklich willkommen.
+  – Zweitjob / Nebentätigkeit ist erlaubt (bei Minijob bitte Zusammenrechnungsgrenzen beachten — das klärt der Teamleiter individuell).
+  – Kündigungsfrist gesetzlich.
+  – Lohnabrechnung ganz normal über ELStAM (Steuerklasse wird automatisch abgerufen).
+  – Datenschutz: Alle Bewerber- und Mitarbeiterdaten werden streng DSGVO-konform verarbeitet und gespeichert.
+
 • Was wir NICHT anbieten (falls gefragt):
   – Keine Selbstständigkeit, kein Freelancing, keine Provision, kein Gewerbe.
   – Keine reine Telefontätigkeit, keine Kaltakquise.
