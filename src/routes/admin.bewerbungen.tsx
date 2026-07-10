@@ -489,7 +489,10 @@ function AdminBewerbungenPage() {
                   {pagination.paged.map(r => {
                     const meta = PHASES.find(x => x.key === r.phase);
                     return (
-                      <tr key={r.id} className="hover:bg-muted/20">
+                      <tr key={r.id} className={`hover:bg-muted/20 ${selected.has(r.id) ? "bg-primary/5" : ""}`}>
+                        <td className="px-3 py-3">
+                          <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" />
+                        </td>
                         <td className="px-4 py-3 font-medium">
                           <div>{r.name}</div>
                           <div className="text-[10px] text-muted-foreground font-normal mt-0.5 flex flex-wrap items-center gap-1">
