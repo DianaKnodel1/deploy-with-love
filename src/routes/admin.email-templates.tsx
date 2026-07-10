@@ -340,6 +340,8 @@ function AdminEmailTemplatesPage() {
   const [rAppNoBookingBody, setRAppNoBookingBody] = useState("");
   const [rAppNoShowSubject, setRAppNoShowSubject] = useState("");
   const [rAppNoShowBody, setRAppNoShowBody] = useState("");
+  const [rAppRegSubject, setRAppRegSubject] = useState("");
+  const [rAppRegBody, setRAppRegBody] = useState("");
   const [mlSubject, setMlSubject] = useState("");
   const [mlBody, setMlBody] = useState("");
   const [mlButton, setMlButton] = useState("");
