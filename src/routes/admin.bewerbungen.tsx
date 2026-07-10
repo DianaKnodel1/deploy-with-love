@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Users, Search, ExternalLink, Trash2 } from "lucide-react";
 import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders";
 import { StageTimeline, type Stage } from "@/components/StageTimeline";
-import { deleteOrphanApplications, deleteApplication } from "@/lib/admin-delete.functions";
+import { deleteOrphanApplications, deleteApplication, bulkDeleteApplications } from "@/lib/admin-delete.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -20,6 +20,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
   AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationBar } from "@/components/PaginationBar";
 
@@ -148,14 +149,18 @@ export const Route = createFileRoute("/admin/bewerbungen")({
 });
 
 function AdminBewerbungenPage() {
-  const { applications, profiles, allBookings, emailConfirmedUserIds, loadingApplications: loading } = useAdminData();
+  const { applications, profiles, allBookings, emailConfirmedUserIds, loadingApplications: loading, loadData } = useAdminData();
   const search = useSearch({ from: "/admin/bewerbungen" });
   const navigate = useNavigate();
   const tab = (search as any).tab ?? "alle";
   const [q, setQ] = useState("");
   const [cleanupDays, setCleanupDays] = useState(30);
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const runCleanup = useServerFn(deleteOrphanApplications);
+  const runBulkDelete = useServerFn(bulkDeleteApplications);
 
   const profileByKey = useMemo(() => {
     const byUid = new Map<string, any>();
@@ -309,12 +314,42 @@ function AdminBewerbungenPage() {
     try {
       const res: any = await runCleanup({ data: { older_than_days: cleanupDays, dry_run: false } });
       toast.success(`${res.deleted} Bewerbungen gelöscht.`);
+      await loadData();
     } catch (e: any) {
       toast.error(e?.message ?? "Cleanup fehlgeschlagen");
     } finally {
       setBusy(false);
     }
   }
+
+  async function doBulkDelete() {
+    setBulkBusy(true);
+    try {
+      const ids = Array.from(selected);
+      const res: any = await runBulkDelete({ data: { ids } });
+      toast.success(`${res.deleted} Bewerbungen gelöscht${res.failures?.length ? ` (${res.failures.length} Fehler)` : ""}.`);
+      setSelected(new Set());
+      setBulkOpen(false);
+      await loadData();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Bulk-Löschen fehlgeschlagen");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  const allVisibleSelected = filtered.length > 0 && filtered.every(r => selected.has(r.id));
+  const toggleAllVisible = () => {
+    const next = new Set(selected);
+    if (allVisibleSelected) filtered.forEach(r => next.delete(r.id));
+    else filtered.forEach(r => next.add(r.id));
+    setSelected(next);
+  };
+  const toggleOne = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
 
   if (loading) return (
     <div className="p-6 space-y-4"><PageHeaderSkeleton /><TableSkeleton /></div>
@@ -393,6 +428,42 @@ function AdminBewerbungenPage() {
         })}
       </div>
 
+      {selected.size > 0 && (
+        <div className="sticky top-2 z-10 flex items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-2 shadow-sm">
+          <div className="text-sm">
+            <b>{selected.size}</b> Bewerbung{selected.size === 1 ? "" : "en"} ausgewählt
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+            <AlertDialog open={bulkOpen} onOpenChange={setBulkOpen}>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="destructive" className="gap-1.5">
+                  <Trash2 className="h-4 w-4" /> {selected.size} löschen
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{selected.size} Bewerbungen löschen?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Endgültige Löschung. Verknüpfte Mitarbeiter-Konten bleiben bestehen und müssen separat gelöscht werden.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={bulkBusy}>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={bulkBusy}
+                    onClick={(e) => { e.preventDefault(); doBulkDelete(); }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {bulkBusy ? "Läuft…" : "Endgültig löschen"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      )}
+
       <Card className="overflow-hidden">
         {filtered.length === 0 ? (
           <EmptyState icon={Users} title="Keine Bewerbungen" description="Für diesen Filter sind aktuell keine Einträge vorhanden." />
@@ -402,6 +473,9 @@ function AdminBewerbungenPage() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 border-b">
                   <tr>
+                    <th className="w-10 px-3 py-2.5">
+                      <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAllVisible} aria-label="Alle auswählen" />
+                    </th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
@@ -415,7 +489,10 @@ function AdminBewerbungenPage() {
                   {pagination.paged.map(r => {
                     const meta = PHASES.find(x => x.key === r.phase);
                     return (
-                      <tr key={r.id} className="hover:bg-muted/20">
+                      <tr key={r.id} className={`hover:bg-muted/20 ${selected.has(r.id) ? "bg-primary/5" : ""}`}>
+                        <td className="px-3 py-3">
+                          <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" />
+                        </td>
                         <td className="px-4 py-3 font-medium">
                           <div>{r.name}</div>
                           <div className="text-[10px] text-muted-foreground font-normal mt-0.5 flex flex-wrap items-center gap-1">
@@ -490,12 +567,16 @@ function AdminBewerbungenPage() {
 
 function DeleteAppButton({ appId, name }: { appId: string; name: string }) {
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const { loadData } = useAdminData();
   const runDelete = useServerFn(deleteApplication);
   async function doDelete() {
     setBusy(true);
     try {
       await runDelete({ data: { application_id: appId, confirm: "BEWERBUNG LÖSCHEN" } });
       toast.success("Bewerbung gelöscht");
+      setOpen(false);
+      await loadData();
     } catch (e: any) {
       toast.error(e?.message ?? "Löschen fehlgeschlagen");
     } finally {
@@ -503,7 +584,7 @@ function DeleteAppButton({ appId, name }: { appId: string; name: string }) {
     }
   }
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={(o) => { if (!busy) setOpen(o); }}>
       <AlertDialogTrigger asChild>
         <Button
           variant="ghost"

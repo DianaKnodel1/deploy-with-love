@@ -6,38 +6,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
-import { Users, Search, ExternalLink, Check, X, Trash2 } from "lucide-react";
+import { Users, Search, ExternalLink, Check, X, Trash2, UserPlus, Copy } from "lucide-react";
 import { TableSkeleton, PageHeaderSkeleton } from "@/components/SkeletonLoaders";
 import { STATUS_CONFIG, ONBOARDING_STATUS_CONFIG, type EmployeeStatus } from "@/lib/status";
 import { StageTimeline, type Stage } from "@/components/StageTimeline";
 import { toast } from "sonner";
-import { purgeInactivePeople, deleteEmployeeAccount } from "@/lib/admin-delete.functions";
+import { purgeInactivePeople, deleteEmployeeAccount, bulkDeleteEmployees } from "@/lib/admin-delete.functions";
+import { createEmployeeAccount } from "@/lib/admin-employees.functions";
 import { useServerFn } from "@tanstack/react-start";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { usePagination } from "@/hooks/use-pagination";
 import { PaginationBar } from "@/components/PaginationBar";
-
-
-/**
- * Mitarbeiter — nur registrierte Personen (profiles).
- * Admin klickt „Annehmen" nachdem Onboarding (Vertrag + Ausweis) abgeschlossen ist.
- */
 
 export const Route = createFileRoute("/admin/mitarbeiter")({
   component: AdminMitarbeiterPage,
 });
 
 function AdminMitarbeiterPage() {
-  const { applications, profiles, adminUserIds, emailConfirmedUserIds, loadingProfiles: loading } = useAdminData();
+  const { applications, profiles, adminUserIds, emailConfirmedUserIds, loadingProfiles: loading, loadData } = useAdminData();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"alle" | "wartet" | "aktiv" | "abgelehnt">("alle");
   const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const runBulkDelete = useServerFn(bulkDeleteEmployees);
 
   const rows = useMemo(() => {
     const appById = new Map((applications as any[]).map((a) => [a.id, a]));
@@ -108,16 +111,40 @@ function AdminMitarbeiterPage() {
   }, [rows, q, tab]);
   const pagination = usePagination(filtered, 50);
 
+  const allVisibleSelected = filtered.length > 0 && filtered.every(r => selected.has(r.id));
+  const toggleAllVisible = () => {
+    const next = new Set(selected);
+    if (allVisibleSelected) filtered.forEach(r => next.delete(r.id));
+    else filtered.forEach(r => next.add(r.id));
+    setSelected(next);
+  };
+  const toggleOne = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
+
+  async function doBulkDelete() {
+    setBulkBusy(true);
+    try {
+      const r: any = await runBulkDelete({ data: { user_ids: Array.from(selected) } });
+      toast.success(`Gelöscht: ${r.deleted}${r.failures?.length ? ` (${r.failures.length} Fehler)` : ""}`);
+      setSelected(new Set());
+      setBulkOpen(false);
+      await loadData();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Bulk-Löschen fehlgeschlagen");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   async function setStatus(userId: string, status: EmployeeStatus) {
     setBusy(userId);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ status })
-        .eq("user_id", userId);
+      const { error } = await supabase.from("profiles").update({ status }).eq("user_id", userId);
       if (error) throw error;
       toast.success(status === "angenommen" ? "Mitarbeiter freigeschaltet" : "Status aktualisiert");
-      // AdminDataContext hört auf Realtime-Updates.
     } catch (e: any) {
       toast.error(e?.message ?? "Fehler");
     } finally {
@@ -151,13 +178,13 @@ function AdminMitarbeiterPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <CreateEmployeeButton onCreated={loadData} />
           <PurgeButton />
           <div className="relative w-72">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="Name, E-Mail, Telefon…" value={q} onChange={e => setQ(e.target.value)} className="pl-9" />
           </div>
         </div>
-
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -180,6 +207,42 @@ function AdminMitarbeiterPage() {
         })}
       </div>
 
+      {selected.size > 0 && (
+        <div className="sticky top-2 z-10 flex items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-2 shadow-sm">
+          <div className="text-sm">
+            <b>{selected.size}</b> Mitarbeiter ausgewählt
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+            <AlertDialog open={bulkOpen} onOpenChange={setBulkOpen}>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="destructive" className="gap-1.5">
+                  <Trash2 className="h-4 w-4" /> {selected.size} löschen
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{selected.size} Mitarbeiter endgültig löschen?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Profile, Auth-Accounts, Dokumente, KYC und Aufgaben-Einreichungen werden entfernt. Aktion nicht rückgängig zu machen.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={bulkBusy}>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={bulkBusy}
+                    onClick={(e) => { e.preventDefault(); doBulkDelete(); }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {bulkBusy ? "Läuft…" : "Endgültig löschen"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      )}
+
       <Card className="overflow-hidden">
         {filtered.length === 0 ? (
           <EmptyState icon={Users} title="Keine Mitarbeiter" description="Für diesen Filter sind aktuell keine Einträge vorhanden." />
@@ -189,6 +252,9 @@ function AdminMitarbeiterPage() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 border-b">
                   <tr>
+                    <th className="w-10 px-3 py-2.5">
+                      <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAllVisible} aria-label="Alle auswählen" />
+                    </th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Telefon</th>
@@ -202,7 +268,10 @@ function AdminMitarbeiterPage() {
                     const wartet = r.status === "registriert" && r.onboarding === "abgeschlossen";
                     const st = STATUS_CONFIG[r.status];
                     return (
-                      <tr key={r.id} className="hover:bg-muted/20">
+                      <tr key={r.id} className={`hover:bg-muted/20 ${selected.has(r.id) ? "bg-primary/5" : ""}`}>
+                        <td className="px-3 py-3">
+                          <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleOne(r.id)} aria-label="Auswählen" />
+                        </td>
                         <td className="px-4 py-3 font-medium">
                           <div>{r.name}</div>
                           <div className="text-[10px] text-muted-foreground font-normal mt-0.5">
@@ -242,7 +311,7 @@ function AdminMitarbeiterPage() {
                             <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/personen/${r.id}`)} className="h-7 gap-1.5 text-xs">
                               Öffnen <ExternalLink className="h-3 w-3" />
                             </Button>
-                            <DeleteEmployeeButton userId={r.id} name={r.name} />
+                            <DeleteEmployeeButton userId={r.id} name={r.name} onDeleted={loadData} />
                           </div>
                         </td>
                       </tr>
@@ -330,7 +399,8 @@ function PurgeButton() {
   );
 }
 
-function DeleteEmployeeButton({ userId, name }: { userId: string; name: string }) {
+function DeleteEmployeeButton({ userId, name, onDeleted }: { userId: string; name: string; onDeleted: () => void | Promise<void> }) {
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState("");
   const runDelete = useServerFn(deleteEmployeeAccount);
@@ -339,6 +409,9 @@ function DeleteEmployeeButton({ userId, name }: { userId: string; name: string }
     try {
       await runDelete({ data: { user_id: userId, confirm: "MITARBEITER LÖSCHEN" } });
       toast.success("Mitarbeiter gelöscht");
+      setOpen(false);
+      setText("");
+      await onDeleted();
     } catch (e: any) {
       toast.error(e?.message ?? "Löschen fehlgeschlagen");
     } finally {
@@ -346,7 +419,7 @@ function DeleteEmployeeButton({ userId, name }: { userId: string; name: string }
     }
   }
   return (
-    <AlertDialog onOpenChange={(o) => { if (!o) setText(""); }}>
+    <AlertDialog open={open} onOpenChange={(o) => { if (busy) return; setOpen(o); if (!o) setText(""); }}>
       <AlertDialogTrigger asChild>
         <Button
           variant="ghost"
@@ -393,4 +466,123 @@ function DeleteEmployeeButton({ userId, name }: { userId: string; name: string }
   );
 }
 
+function CreateEmployeeButton({ onCreated }: { onCreated: () => void | Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [empType, setEmpType] = useState<"minijob" | "teilzeit" | "vollzeit" | "">("");
+  const [recoveryLink, setRecoveryLink] = useState<string | null>(null);
+  const runCreate = useServerFn(createEmployeeAccount);
 
+  function reset() {
+    setEmail(""); setFirstName(""); setLastName(""); setPhone(""); setEmpType(""); setRecoveryLink(null);
+  }
+
+  async function submit() {
+    if (!email || !firstName || !lastName) {
+      toast.error("Bitte E-Mail, Vor- und Nachname ausfüllen");
+      return;
+    }
+    setBusy(true);
+    try {
+      const r: any = await runCreate({
+        data: {
+          email: email.trim(),
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          phone: phone.trim() || undefined,
+          employment_type: empType || undefined,
+        },
+      });
+      toast.success("Mitarbeiter angelegt");
+      setRecoveryLink(r?.recovery_link ?? null);
+      await onCreated();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Anlegen fehlgeschlagen");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (busy) return; setOpen(o); if (!o) reset(); }}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-1.5">
+          <UserPlus className="h-4 w-4" /> Mitarbeiter anlegen
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mitarbeiter-Konto anlegen</DialogTitle>
+          <DialogDescription>
+            Erstellt einen Auth-Account und ein Profil. Anschließend erhältst du einen Passwort-Link zum Weitergeben.
+          </DialogDescription>
+        </DialogHeader>
+
+        {recoveryLink ? (
+          <div className="space-y-3">
+            <div className="rounded-md border border-emerald-300/50 bg-emerald-50 dark:bg-emerald-950/30 p-3 text-sm">
+              Konto wurde erstellt. Sende dem Mitarbeiter den folgenden Link, damit er sein Passwort setzen kann:
+            </div>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={recoveryLink} className="font-mono text-xs" />
+              <Button
+                variant="outline" size="sm"
+                onClick={() => { navigator.clipboard.writeText(recoveryLink); toast.success("Link kopiert"); }}
+                className="gap-1.5"
+              >
+                <Copy className="h-3.5 w-3.5" /> Kopieren
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label className="text-xs">E-Mail *</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="max@example.com" />
+            </div>
+            <div>
+              <Label className="text-xs">Vorname *</Label>
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Nachname *</Label>
+              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            </div>
+            <div className="col-span-2">
+              <Label className="text-xs">Telefon</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+49…" />
+            </div>
+            <div className="col-span-2">
+              <Label className="text-xs">Anstellung</Label>
+              <select
+                className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
+                value={empType}
+                onChange={(e) => setEmpType(e.target.value as any)}
+              >
+                <option value="">— nicht festgelegt —</option>
+                <option value="minijob">Minijob (40h)</option>
+                <option value="teilzeit">Teilzeit (120h)</option>
+                <option value="vollzeit">Vollzeit (160h)</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          {recoveryLink ? (
+            <Button onClick={() => { setOpen(false); reset(); }}>Fertig</Button>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy}>Abbrechen</Button>
+              <Button onClick={submit} disabled={busy}>{busy ? "Anlegen…" : "Anlegen"}</Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
