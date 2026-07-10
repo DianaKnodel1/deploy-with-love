@@ -567,12 +567,16 @@ function AdminBewerbungenPage() {
 
 function DeleteAppButton({ appId, name }: { appId: string; name: string }) {
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const { loadData } = useAdminData();
   const runDelete = useServerFn(deleteApplication);
   async function doDelete() {
     setBusy(true);
     try {
       await runDelete({ data: { application_id: appId, confirm: "BEWERBUNG LÖSCHEN" } });
       toast.success("Bewerbung gelöscht");
+      setOpen(false);
+      await loadData();
     } catch (e: any) {
       toast.error(e?.message ?? "Löschen fehlgeschlagen");
     } finally {
@@ -580,7 +584,7 @@ function DeleteAppButton({ appId, name }: { appId: string; name: string }) {
     }
   }
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={(o) => { if (!busy) setOpen(o); }}>
       <AlertDialogTrigger asChild>
         <Button
           variant="ghost"
