@@ -131,8 +131,17 @@ function InterviewPage() {
     setLoading(true);
     // optimistic
     setMessages((prev) => [...prev, { role: "user", text, ts: new Date().toISOString() }]);
+    const startedAt = Date.now();
     try {
       const data = await postInterview({ applicationId: appId, action: "message", text });
+      // Menschlichere Antwortzeit: kurze Denkpause + „Tipp"-Zeit abhängig von Antwortlänge
+      const reply = (data.history ?? []).slice(-1)[0]?.text ?? "";
+      const chars = reply.length;
+      // ~35ms pro Zeichen "Tippen", + 900ms Denkpause, gedeckelt bei 6s
+      const targetMs = Math.min(6000, 900 + chars * 35);
+      const elapsed = Date.now() - startedAt;
+      const wait = Math.max(0, targetMs - elapsed);
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       setMessages(data.history ?? []);
       if (data.ended) setEnded(true);
       if (data.application_status) setAppStatus(data.application_status);
