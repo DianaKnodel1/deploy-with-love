@@ -20,6 +20,20 @@ import ftFormHtml from "../landing-themes/_shared/form-section-for-tel.html?raw"
 import ftFormCss from "../landing-themes/_shared/form-section-for-tel.css?raw";
 import jgFormHtml from "../landing-themes/_shared/form-section-job-gleiter.html?raw";
 import jgFormCss from "../landing-themes/_shared/form-section-job-gleiter.css?raw";
+import tlFormHtml from "../landing-themes/_shared/form-section-tester-lab.html?raw";
+import tlFormCss from "../landing-themes/_shared/form-section-tester-lab.css?raw";
+import qgFormHtml from "../landing-themes/_shared/form-section-qa-grid.html?raw";
+import qgFormCss from "../landing-themes/_shared/form-section-qa-grid.css?raw";
+
+import ttlHtml from "../landing-themes/theme-tester-lab/template.html?raw";
+import ttlCss from "../landing-themes/theme-tester-lab/style.css?raw";
+import ttlJs from "../landing-themes/theme-tester-lab/script.js?raw";
+import ttlMeta from "../landing-themes/theme-tester-lab/meta.json";
+
+import tqgHtml from "../landing-themes/theme-qa-grid/template.html?raw";
+import tqgCss from "../landing-themes/theme-qa-grid/style.css?raw";
+import tqgJs from "../landing-themes/theme-qa-grid/script.js?raw";
+import tqgMeta from "../landing-themes/theme-qa-grid/meta.json";
 
 
 
