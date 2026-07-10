@@ -66,7 +66,7 @@ function EmailMonitorWidget() {
             </div>
             <div>
               <p className="text-xs font-medium text-foreground">E-Mail System</p>
-              <p className="text-[10px] text-muted-foreground">Letzte 24 h · {stats.total} eindeutige Mails</p>
+              <p className="text-[10px] text-muted-foreground">Letzte 7 Tage · {stats.total} eindeutige Mails</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => navigate("/admin/email-center")}>
