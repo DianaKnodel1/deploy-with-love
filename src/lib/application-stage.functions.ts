@@ -3,6 +3,7 @@
 // Solange die Migration nicht durchgelaufen ist, fallen die Reads auf leere
 // Antworten zurück, damit die UI nicht crasht.
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
