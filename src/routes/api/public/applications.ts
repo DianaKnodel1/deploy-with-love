@@ -151,33 +151,48 @@ export const Route = createFileRoute("/api/public/applications")({
         const isBroker = d.flow_type === "broker" && !!partner && !d.is_test;
         const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test;
 
-        const appId = crypto.randomUUID();
+        // Dedup: identische E-Mail im selben Tenant innerhalb 60 Tagen →
+        // vorhandene Bewerbung wiederverwenden statt neuen Datensatz anzulegen.
+        // Verhindert Doppel-/Dreifach-Einträge, wenn ein Bewerber das Formular
+        // mehrfach abschickt (Marc Jung, Shirin Alaqrabawi, …).
+        let appId: string | null = null;
+        if (resolvedTenantId && !d.is_test) {
+          const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60_000).toISOString();
+          const { data: existing } = await supabaseAdmin
+            .from("applications")
+            .select("id")
+            .eq("tenant_id", resolvedTenantId)
+            .ilike("email", d.email)
+            .gte("created_at", sixtyDaysAgo)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if ((existing as any)?.id) appId = (existing as any).id as string;
+        }
 
-        const { error } = await supabaseAdmin.from("applications").insert({
-          id: appId,
-          full_name: displayName,
-          email: d.email,
-          phone: d.phone ?? null,
-          postal_code: d.postal_code ?? null,
-          city: d.city ?? null,
-          message: d.message ?? null,
-          tenant_id: resolvedTenantId,
-          status: isFast ? "akzeptiert" : "neu",
-          flow_type: d.flow_type ?? "classic",
-          source_slug: d.source_slug ?? null,
-          // Tracking-Anker: source = die Vermittlungs-Landing (wo submit passierte),
-          // target = die per landing_pages.linked_fasttrack_landing_id hinterlegte
-          // Fasttrack-Landing. Server-seitig ableiten, damit die Zuordnung auch dann
-          // korrekt gespeichert ist, wenn sie später am landing_page-Datensatz geändert
-          // wird — historisch bleibt sichtbar: "Bewerber X kam von A und ging zu B".
-          source_landing_id: d.source_landing_id ?? landingPage?.id ?? null,
-          target_landing_id: d.target_landing_id ?? landingPage?.linked_fasttrack_landing_id ?? null,
-          is_test: !!d.is_test,
-          booking_status: (isBroker || useCalendly) ? "pending" : "none",
-        } as any);
-        if (error) {
-          console.error("[applications] insert error:", error);
-          return json({ error: "Could not save application" }, 500);
+        if (!appId) {
+          appId = crypto.randomUUID();
+          const { error } = await supabaseAdmin.from("applications").insert({
+            id: appId,
+            full_name: displayName,
+            email: d.email,
+            phone: d.phone ?? null,
+            postal_code: d.postal_code ?? null,
+            city: d.city ?? null,
+            message: d.message ?? null,
+            tenant_id: resolvedTenantId,
+            status: isFast ? "akzeptiert" : "neu",
+            flow_type: d.flow_type ?? "classic",
+            source_slug: d.source_slug ?? null,
+            source_landing_id: d.source_landing_id ?? landingPage?.id ?? null,
+            target_landing_id: d.target_landing_id ?? landingPage?.linked_fasttrack_landing_id ?? null,
+            is_test: !!d.is_test,
+            booking_status: (isBroker || useCalendly) ? "pending" : "none",
+          } as any);
+          if (error) {
+            console.error("[applications] insert error:", error);
+            return json({ error: "Could not save application" }, 500);
+          }
         }
 
         let redirect_url: string | null = null;
