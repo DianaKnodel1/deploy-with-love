@@ -201,6 +201,7 @@ export const THEMES: ThemeFiles[] = [
   { id: tjgMeta.id, name: tjgMeta.name, description: tjgMeta.description, html: tjgHtml, css: tjgCss, js: tjgJs, slots: pickSlots(tjgMeta) },
   { id: ttlMeta.id, name: ttlMeta.name, description: ttlMeta.description, html: ttlHtml, css: ttlCss, js: ttlJs, slots: pickSlots(ttlMeta) },
   { id: tqgMeta.id, name: tqgMeta.name, description: tqgMeta.description, html: tqgHtml, css: tqgCss, js: tqgJs, slots: pickSlots(tqgMeta) },
+  { id: tthMeta.id, name: tthMeta.name, description: tthMeta.description, html: tthHtml, css: tthCss, js: tthJs, slots: pickSlots(tthMeta) },
 ].map(withSharedForm);
 
 
