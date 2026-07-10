@@ -22,7 +22,8 @@ function EmailMonitorWidget() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    // Identisch zum E-Mail-Center: 7 Tage + gleiche Dedup-Logik.
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     supabase
       .from("email_send_log")
       .select("id, message_id, template_name, recipient_email, status, error_message, metadata, created_at, acknowledged_at")
@@ -31,14 +32,14 @@ function EmailMonitorWidget() {
       .limit(5000)
       .then(({ data }) => {
         const rows = (data ?? []) as EmailLog[];
-        // Dedup per message_id → latest row wins (sorted DESC, first seen).
-        // Rows ohne message_id zählen einzeln (id als Key).
-        const seen = new Map<string, EmailLog>();
+        const seen = new Set<string>();
+        const unique: EmailLog[] = [];
         for (const r of rows) {
-          const k = r.message_id || `__no_mid__${r.id}`;
-          if (!seen.has(k)) seen.set(k, r);
+          const key = r.message_id || `${r.template_name}:${r.recipient_email}:${r.created_at}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          unique.push(r);
         }
-        const unique = Array.from(seen.values());
         const pending = unique.filter(l => l.status === "pending").length;
         const computed = computeEmailStats(unique);
         setStats({
