@@ -329,20 +329,28 @@ async function verifyOrPause(admin: any, tenant: any, transporter: any): Promise
       transporter.verify(),
       new Promise((_r, rej) => setTimeout(() => rej(new Error("verify timeout 8s")), 8000)),
     ]);
-    await admin.from("tenant_smtp_health").upsert({
+    const { error: healthOkErr } = await admin.from("tenant_smtp_health").upsert({
       tenant_id: tenant.id, consecutive_fails: 0,
       last_verify_at: new Date().toISOString(), last_verify_ok: true, updated_at: new Date().toISOString(),
     });
+    if (healthOkErr) console.warn("[send-invitation-email] smtp health write skipped:", healthOkErr.message ?? healthOkErr);
     return { ok: true };
   } catch (e: any) {
     const reason = String(e?.message ?? e);
-    const { data: h } = await admin.from("tenant_smtp_health").select("consecutive_fails").eq("tenant_id", tenant.id).maybeSingle();
-    const fails = (h?.consecutive_fails ?? 0) + 1;
-    await admin.from("tenant_smtp_health").upsert({
-      tenant_id: tenant.id, consecutive_fails: fails,
-      last_fail_at: new Date().toISOString(), last_fail_error: reason,
-      last_verify_at: new Date().toISOString(), last_verify_ok: false, updated_at: new Date().toISOString(),
-    });
+    let fails = 1;
+    try {
+      const { data: h, error: readErr } = await admin.from("tenant_smtp_health").select("consecutive_fails").eq("tenant_id", tenant.id).maybeSingle();
+      if (readErr) console.warn("[send-invitation-email] smtp health read skipped:", readErr.message ?? readErr);
+      fails = (h?.consecutive_fails ?? 0) + 1;
+      const { error: writeErr } = await admin.from("tenant_smtp_health").upsert({
+        tenant_id: tenant.id, consecutive_fails: fails,
+        last_fail_at: new Date().toISOString(), last_fail_error: reason,
+        last_verify_at: new Date().toISOString(), last_verify_ok: false, updated_at: new Date().toISOString(),
+      });
+      if (writeErr) console.warn("[send-invitation-email] smtp health fail write skipped:", writeErr.message ?? writeErr);
+    } catch (healthErr: any) {
+      console.warn("[send-invitation-email] smtp health skipped:", healthErr?.message ?? healthErr);
+    }
     let paused = false;
     if (fails >= 3 && !tenant.emails_paused) {
       await admin.from("tenants").update({
