@@ -40,6 +40,12 @@ import tqgHtml from "../landing-themes/theme-qa-grid/template.html?raw";
 import tqgCss from "../landing-themes/theme-qa-grid/style.css?raw";
 import tqgJs from "../landing-themes/theme-qa-grid/script.js?raw";
 import tqgMeta from "../landing-themes/theme-qa-grid/meta.json";
+
+import tthHtml from "../landing-themes/theme-talent-hub/template.html?raw";
+import tthCss from "../landing-themes/theme-talent-hub/style.css?raw";
+import tthJs from "../landing-themes/theme-talent-hub/script.js?raw";
+import tthMeta from "../landing-themes/theme-talent-hub/meta.json";
+
 import tcaHtml from "../landing-themes/theme-career-atlas/template.html?raw";
 import tcaCss from "../landing-themes/theme-career-atlas/style.css?raw";
 import tcaJs from "../landing-themes/theme-career-atlas/script.js?raw";
