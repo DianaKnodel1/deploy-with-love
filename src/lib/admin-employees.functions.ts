@@ -98,3 +98,26 @@ export const createEmployeeAccount = createServerFn({ method: "POST" })
 
     return { ok: true, user_id: uid, recovery_link: recoveryLink };
   });
+
+const UpdateEmpSchema = z.object({
+  user_id: z.string().uuid(),
+  employment_type: z.enum(["minijob", "teilzeit", "vollzeit"]).nullable(),
+  employment_start_date: z.string().nullable(),
+});
+
+export const updateEmployeeEmployment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => UpdateEmpSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = supabaseAdmin as any;
+    const { error } = await sb
+      .from("profiles")
+      .update({
+        employment_type: data.employment_type,
+        employment_start_date: data.employment_start_date,
+      })
+      .eq("user_id", data.user_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
