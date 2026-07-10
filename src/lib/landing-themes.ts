@@ -149,6 +149,8 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-job-gleiter") return { html: jgFormHtml, css: jgFormCss };
   if (id === "theme-tester-lab") return { html: tlFormHtml, css: tlFormCss };
   if (id === "theme-qa-grid") return { html: qgFormHtml, css: qgFormCss };
+  if (id === "theme-career-atlas") return { html: caFormHtml, css: caFormCss };
+  if (id === "theme-device-stack") return { html: dsFormHtml, css: dsFormCss };
   if (id === "theme-talent-hub") return { html: thFormHtml, css: thFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 
