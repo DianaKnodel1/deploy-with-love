@@ -114,12 +114,12 @@ serve(async (req) => {
       : (dbSubject ? applyPh(dbSubject) : `Herzlichen Glückwunsch – ${tenant.name}`);
     const headline = headlineOverride && headlineOverride.trim()
       ? headlineOverride.trim()
-      : (dbSubject ? applyPh(dbSubject) : "Herzlichen Glückwunsch");
+      : "Willkommen im Team!";
     const intro = introOverride && introOverride.trim()
       ? introOverride.trim()
       : (dbBody
           ? applyPh(dbBody).replace(/\n/g, "<br/>")
-          : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""},<br/><br/>dein Zugang bei <strong>${escapeHtml(tenant.name)}</strong> ist bereit. Bitte registriere dich im Mitarbeiterportal und schließe anschließend dein Profil ab.`);
+          : `Guten Tag${greetingName ? ` ${escapeHtml(greetingName)}` : ""},<br/><br/><strong>Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!</strong><br/><br/>Wir freuen uns sehr, Sie bei <strong>${escapeHtml(tenant.name)}</strong> begrüßen zu dürfen. Damit Sie sofort loslegen können, haben wir Ihren persönlichen Zugang zum Mitarbeiterportal bereits für Sie vorbereitet.`);
     const buttonLabel = buttonLabelOverride && buttonLabelOverride.trim()
       ? buttonLabelOverride.trim()
       : (dbButton ? applyPh(dbButton) : "Jetzt registrieren");
