@@ -24,6 +24,8 @@ import tlFormHtml from "../landing-themes/_shared/form-section-tester-lab.html?r
 import tlFormCss from "../landing-themes/_shared/form-section-tester-lab.css?raw";
 import qgFormHtml from "../landing-themes/_shared/form-section-qa-grid.html?raw";
 import qgFormCss from "../landing-themes/_shared/form-section-qa-grid.css?raw";
+import thFormHtml from "../landing-themes/_shared/form-section-talent-hub.html?raw";
+import thFormCss from "../landing-themes/_shared/form-section-talent-hub.css?raw";
 
 import ttlHtml from "../landing-themes/theme-tester-lab/template.html?raw";
 import ttlCss from "../landing-themes/theme-tester-lab/style.css?raw";
@@ -34,6 +36,11 @@ import tqgHtml from "../landing-themes/theme-qa-grid/template.html?raw";
 import tqgCss from "../landing-themes/theme-qa-grid/style.css?raw";
 import tqgJs from "../landing-themes/theme-qa-grid/script.js?raw";
 import tqgMeta from "../landing-themes/theme-qa-grid/meta.json";
+
+import tthHtml from "../landing-themes/theme-talent-hub/template.html?raw";
+import tthCss from "../landing-themes/theme-talent-hub/style.css?raw";
+import tthJs from "../landing-themes/theme-talent-hub/script.js?raw";
+import tthMeta from "../landing-themes/theme-talent-hub/meta.json";
 
 
 
@@ -128,6 +135,7 @@ function pickFormAssets(id: string): { html: string; css: string } {
   if (id === "theme-job-gleiter") return { html: jgFormHtml, css: jgFormCss };
   if (id === "theme-tester-lab") return { html: tlFormHtml, css: tlFormCss };
   if (id === "theme-qa-grid") return { html: qgFormHtml, css: qgFormCss };
+  if (id === "theme-talent-hub") return { html: thFormHtml, css: thFormCss };
   return { html: sharedFormHtml, css: sharedFormCss };
 
 }
@@ -193,6 +201,7 @@ export const THEMES: ThemeFiles[] = [
   { id: tjgMeta.id, name: tjgMeta.name, description: tjgMeta.description, html: tjgHtml, css: tjgCss, js: tjgJs, slots: pickSlots(tjgMeta) },
   { id: ttlMeta.id, name: ttlMeta.name, description: ttlMeta.description, html: ttlHtml, css: ttlCss, js: ttlJs, slots: pickSlots(ttlMeta) },
   { id: tqgMeta.id, name: tqgMeta.name, description: tqgMeta.description, html: tqgHtml, css: tqgCss, js: tqgJs, slots: pickSlots(tqgMeta) },
+  { id: tthMeta.id, name: tthMeta.name, description: tthMeta.description, html: tthHtml, css: tthCss, js: tthJs, slots: pickSlots(tthMeta) },
 ].map(withSharedForm);
 
 
