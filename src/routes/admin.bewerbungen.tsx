@@ -149,14 +149,18 @@ export const Route = createFileRoute("/admin/bewerbungen")({
 });
 
 function AdminBewerbungenPage() {
-  const { applications, profiles, allBookings, emailConfirmedUserIds, loadingApplications: loading } = useAdminData();
+  const { applications, profiles, allBookings, emailConfirmedUserIds, loadingApplications: loading, loadData } = useAdminData();
   const search = useSearch({ from: "/admin/bewerbungen" });
   const navigate = useNavigate();
   const tab = (search as any).tab ?? "alle";
   const [q, setQ] = useState("");
   const [cleanupDays, setCleanupDays] = useState(30);
   const [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const runCleanup = useServerFn(deleteOrphanApplications);
+  const runBulkDelete = useServerFn(bulkDeleteApplications);
 
   const profileByKey = useMemo(() => {
     const byUid = new Map<string, any>();
