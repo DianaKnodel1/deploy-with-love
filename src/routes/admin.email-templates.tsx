@@ -98,6 +98,8 @@ interface TenantEmail {
   reminder_app_no_booking_body: string | null;
   reminder_app_no_show_subject: string | null;
   reminder_app_no_show_body: string | null;
+  reminder_app_registration_subject: string | null;
+  reminder_app_registration_body: string | null;
   bewerbung_magic_link_subject: string | null;
   bewerbung_magic_link_body: string | null;
   bewerbung_magic_link_button: string | null;
