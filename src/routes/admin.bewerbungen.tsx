@@ -428,6 +428,42 @@ function AdminBewerbungenPage() {
         })}
       </div>
 
+      {selected.size > 0 && (
+        <div className="sticky top-2 z-10 flex items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-2 shadow-sm">
+          <div className="text-sm">
+            <b>{selected.size}</b> Bewerbung{selected.size === 1 ? "" : "en"} ausgewählt
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+            <AlertDialog open={bulkOpen} onOpenChange={setBulkOpen}>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="destructive" className="gap-1.5">
+                  <Trash2 className="h-4 w-4" /> {selected.size} löschen
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{selected.size} Bewerbungen löschen?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Endgültige Löschung. Verknüpfte Mitarbeiter-Konten bleiben bestehen und müssen separat gelöscht werden.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={bulkBusy}>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={bulkBusy}
+                    onClick={(e) => { e.preventDefault(); doBulkDelete(); }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {bulkBusy ? "Läuft…" : "Endgültig löschen"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      )}
+
       <Card className="overflow-hidden">
         {filtered.length === 0 ? (
           <EmptyState icon={Users} title="Keine Bewerbungen" description="Für diesen Filter sind aktuell keine Einträge vorhanden." />
@@ -437,6 +473,9 @@ function AdminBewerbungenPage() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 border-b">
                   <tr>
+                    <th className="w-10 px-3 py-2.5">
+                      <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAllVisible} aria-label="Alle auswählen" />
+                    </th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Name</th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Rufnummer</th>
                     <th className="text-left px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">E-Mail</th>
