@@ -1,32 +1,58 @@
-### Ziel
-1. **Loop beim Löschen fixen** — nach Erfolg schließt sich der Dialog nicht, `busy` bleibt hängen, Liste refresht nicht.
-2. **Bulk-Delete** für Bewerber (`/admin/bewerbungen`) und Mitarbeiter (`/admin/mitarbeiter`) — Checkbox pro Zeile, „Auswahl (n) löschen"-Button in Batches à 500.
-3. **„Mitarbeiter anlegen"** auf `/admin/mitarbeiter` — Dialog mit Vorname / Nachname / E-Mail / Telefon / Beschäftigungsart, Auth-Account wird angelegt und Passwort-Reset-Link per E-Mail.
+# 10 neue Landing-Page-Themes
 
-### Änderungen
+## Ziel
+5 Themes für **App/Webseite-Testing-Dienstleistung** + 5 Themes für **Personalvermittlung generisch**. Jedes Theme visuell klar unterschiedlich, mit KI-generierten Hero-Bildern und einem eigens gestylten Bewerbungsformular. Alle Themes werden in die bestehende `THEMES`-Registry (`src/lib/landing-themes.ts`) eingehängt und sind sofort im Landing-Generator wählbar.
 
-**Server-Funktionen** (`src/lib/admin-delete.functions.ts`)
-- Neu: `bulkDeleteApplications({ ids: string[] })` — löscht in Chunks à 500, gibt `{ deleted, failed }` zurück.
-- Neu: `bulkDeleteEmployees({ user_ids: string[] })` — pro User: Storage-Cleanup + `admin_delete_user_cascade` + `auth.admin.deleteUser`, gibt `{ deleted, failures[] }` zurück.
-- Beide mit `assertAdmin`-Check.
+## Die 10 Themes
 
-**Neue Datei** `src/lib/admin-employees.functions.ts`
-- `createEmployeeAccount({ email, first_name, last_name, phone?, employment_type? })`
-  - `supabaseAdmin.auth.admin.createUser` mit `email_confirm: true`
-  - Profil-Row per Trigger; ergänzt Felder (`full_name`, `phone`, `employment_type`, `tenant_id` = Tenant des Admins).
-  - `supabaseAdmin.auth.admin.generateLink({ type: "recovery" })` → schickt Setz-Passwort-Mail über bestehende Reset-Vorlage.
+### Testing / QA-Dienstleistung (5)
+1. **`theme-tester-lab`** — Editorial/Magazin-Stil, warme Erdtöne (Terracotta/Sand), Serif-Headlines. „Feldnotizen aus dem Homeoffice-Testlabor". Ruhig, seriös, journalistisch.
+2. **`theme-qa-grid`** — Bento-Grid, Dark Mode, Neon-Mint-Akzent, Mono-Font für Zahlen. Sehr technisch, „Ops-Dashboard-Vibe" — spricht techaffine Bewerber an.
+3. **`theme-remote-flow`** — Split-Screen mit großen Fotos rechts, viel Whitespace links, sanfte Pastelltöne (Blush/Sky). Human, warm, „New-Work"-Ästhetik.
+4. **`theme-device-stack`** — Isometrische Geräte-Illustrationen, Purple-Gradient, Card-Grid. Playful-Corporate, Fintech-nah.
+5. **`theme-quality-report`** — Ultra-minimal Swiss-Style, schwarz auf gebrochenem Weiß, sehr strenge Typo (Neue Haas Grotesk-artig), rote Akzentlinien. Awwwards-Level Ruhe.
 
-**UI `/admin/bewerbungen`**
-- Erste Spalte: Checkbox pro Zeile + Select-All im Header.
-- Sticky Bar über Tabelle wenn ≥ 1 gewählt: „N Bewerbungen löschen".
-- Nach Delete: `loadData()` refetch + Auswahl leeren.
-- `DeleteAppButton`: dialog-`open`-State kontrolliert, schließt bei Erfolg, `busy` immer im `finally` zurückgesetzt.
+### Personalvermittlung generisch (5)
+6. **`theme-career-atlas`** — Zeitschriften-Cover-Look, große Foto-Hero, Kuratier-Serif + Sans-Body, warme Beige-Töne. „Karriere-Kompass"-Positionierung.
+7. **`theme-connect-people`** — Zwei-spaltiges Portrait-Grid mit realen Homeoffice-Szenen, weiche Schatten, Sage-Grün. Community-Fokus.
+8. **`theme-fast-match`** — Corporate-Blau, klare Icons, Stufen-Prozess-Grafik, sehr traditioneller Personalberater-Look (Vertrauen, Bank-Nähe).
+9. **`theme-talent-hub`** — Broken-Grid, asymmetrisch, Chrome/Iridescent-Akzente auf Off-White. Modern, agentur-nah.
+10. **`theme-partner-network`** — Full-Width-Sections mit alternierenden Farbbändern (Emerald + Cream), Foto-Sektionen wie ein Corporate-Report. Premium, „Enterprise-HR".
 
-**UI `/admin/mitarbeiter`**
-- Checkbox-Spalte + Select-All + Bulk-Bar analog.
-- Neuer Button oben rechts: „**+ Mitarbeiter anlegen**" öffnet Dialog mit `createEmployeeAccount`.
-- `DeleteEmployeeButton` + `PurgeButton`: kontrollierter Dialog, schließt bei Erfolg, ruft `loadData()`.
+## Umfang pro Theme
+Jedes Theme bekommt:
+- `src/landing-themes/<id>/template.html` — vollständige Landing (Hero, About, Prozess/Steps, Salary/Benefits, Footer) mit `{{slots}}`
+- `src/landing-themes/<id>/style.css` — themeneigener Namespace-Prefix (z.B. `.tl-` für `tester-lab`)
+- `src/landing-themes/<id>/script.js` — kleiner Enhancer (Scroll-Reveal, Nav-Toggle)
+- `src/landing-themes/<id>/meta.json` — id, name, description, `slots[]` mit Defaults
+- `src/landing-themes/_shared/form-section-<id>.html` + `.css` — eigenes Form-Styling, das visuell zum Theme passt
+- Registrierung in `src/lib/landing-themes.ts` (Imports + `pickFormAssets` + `THEMES`-Array)
 
-### Nicht Teil dieses Plans
-- Keine DB-Migrationen nötig (nutzt bestehende RPC `admin_delete_user_cascade`).
-- Keine Änderung an RLS-Policies.
+## Bilder
+- **Hero-Bild pro Theme**: 10 KI-generierte Bilder via `imagegen--generate_image`, gespeichert in `src/assets/landing-themes/<id>-hero.jpg`. Prompts sind auf den jeweiligen Theme-Stil abgestimmt (photorealistisch für 3,4,5,6,7,10; illustrativ für 2,4,9; editorial für 1,5).
+- **Sekundärbilder**: 5 zusätzliche Bilder für die auffälligsten Themes (1, 5, 6, 8, 10 bekommen ein zweites Motiv im About/Prozess-Bereich). Restliche Themes nutzen Unsplash.
+- Kein KI-Bild pro Slot-Default — Bilder werden fix im Template referenziert und können pro Landing im Admin überschrieben werden.
+
+## Umsetzungsreihenfolge
+1. **Assets zuerst** — alle 15 KI-Bilder generieren (parallelisierbar in 3 Batches à 5), damit später keine Templates auf fehlende Assets zeigen.
+2. **Themes 1–5 (Testing)** — Template + CSS + Script + Meta + Form-Section pro Theme, Registry-Eintrag am Ende jedes Themes.
+3. **Themes 6–10 (Vermittlung)** — gleicher Ablauf.
+4. **Registry-Konsolidierung** — `src/lib/landing-themes.ts` bekommt alle 10 neuen Imports und 10 neue `pickFormAssets`-Zweige in einem finalen Edit.
+5. **Build-Check** — `bun run build` läuft grün.
+
+## Was NICHT enthalten ist
+- Keine Änderung am Bewerbungs-Modal-Wrapper (bleibt zentral in `landing-themes.ts`).
+- Keine neuen Slots-Typen — nur `text`, `longtext`, `image`, `color` (existierende Typen).
+- Keine Änderung an bestehenden Themes.
+- Keine Screenshots/Preview-Pages unter `public/theme-preview/` — die generiert der Landing-Generator on-demand.
+
+## Aufwand & Credits
+- ~60 neue Dateien
+- 15 KI-Bilder (`imagegen fast`-Tier reicht für Hero-Fotos; `standard` für die 5 Sekundärbilder mit feinen Details)
+- Reine Bauzeit: ~8–10 Turns, ich arbeite die Themes seriell ab und melde nach je 2 Themes kurz den Zwischenstand.
+
+## Offene Freigabe
+Bevor ich die Bilder generiere (das kostet Credits), bestätige bitte:
+- **A)** „Los, alles wie geplant" → ich starte mit den 15 Bildern und baue durch.
+- **B)** „Zuerst nur Themes 1+2 als Pilot" → ich baue erst zwei komplett fertig, du reviewst, dann Rest.
+- **C)** „Andere Aufteilung / andere Stile" → sag welche Themes ändern.
