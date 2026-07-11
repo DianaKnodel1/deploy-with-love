@@ -360,6 +360,12 @@ function WelcomeAccepted({
           Registrieren Sie sich jetzt im Mitarbeiter-Portal, um Ihren
           Arbeitsvertrag zu unterschreiben und direkt zu starten.
         </p>
+        <div className="mt-3 mx-auto max-w-sm rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-200">
+          📬 Sie erhalten in ca. <strong>1 Minute</strong> eine Bestätigungs-E-Mail mit Ihrem persönlichen Portal-Link. Bitte auch den Spam-Ordner prüfen.
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Bitte für die Registrierung bereithalten: <strong>Personalausweis</strong>, <strong>IBAN</strong>, <strong>Steuer-ID</strong>.
+        </p>
       </div>
 
       <Button
