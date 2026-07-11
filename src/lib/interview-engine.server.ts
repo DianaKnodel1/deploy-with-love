@@ -244,14 +244,22 @@ export async function loadInterviewContext(app: ApplicationRow): Promise<Intervi
     landingSlug = landing?.slug || landing?.source_slug || fasttrack?.slug || fasttrack?.source_slug || landingSlug;
   }
 
+  const recruiterFirst = recruiterName.trim().split(/\s+/)[0] || recruiterName;
+  const fullName = (app.full_name || "").trim();
+  const brandingFirstName = app.first_name?.trim() || fullName.split(/\s+/)[0] || "";
+  const candidateFirst = brandingFirstName || "";
+
   systemPrompt = systemPrompt
     .replace(/\{company\}/g, companyName)
     .replace(/\{recruiter\}/g, recruiterName)
+    .replace(/\{firstName\}/g, candidateFirst)
     // Alte/custom Landing-Prompts enthielten Sabine teils hartcodiert statt als {recruiter}.
-    .replace(/Sabine Schneider/g, recruiterName);
+    .replace(/Sabine Schneider/g, recruiterName)
+    .replace(/\bSabine\b/g, recruiterFirst);
 
-  const fullName = (app.full_name || "").trim();
-  const brandingFirstName = app.first_name?.trim() || fullName.split(/\s+/)[0] || "";
+  // Zusatz-Regeln: persönliche Anrede + Pacing + Support-Hinweis bei Problemen.
+  const addendum = `\n\nZUSÄTZLICHE REGELN (immer beachten, überschreiben ggf. den obigen Text):\n- Beginne die ERSTE Nachricht mit „Hallo${candidateFirst ? " " + candidateFirst : ""}, schön dass Sie sich Zeit nehmen! Mein Name ist ${recruiterName} vom HR-Team bei ${companyName}." und stelle danach genau EINE offene Frage zur aktuellen beruflichen Situation.\n- Nenne dich AUSSCHLIESSLICH ${recruiterName}. Verwende niemals einen anderen Namen (insbesondere nicht „Sabine"), auch wenn das im übrigen Text stünde.\n- Nach ca. 3–4 Fragen streue EIN kurzes Zwischen-Feedback ein, z. B. „Danke, das klingt schon sehr passend — noch 2–3 Fragen, dann sind wir durch." So weiß die Person, wo sie steht.\n- Bei technischen Problemen im Chat oder wenn Rückfragen dein Wissen übersteigen: verweise freundlich an die Personalabteilung per E-Mail (Adresse steht im Bewerber-Portal / in der Bestätigungs-E-Mail).`;
+  systemPrompt = systemPrompt + addendum;
 
   return { systemPrompt, companyName, recruiterName, recruiterAvatarUrl, voiceId, interviewMode, landingSlug, brandingFirstName };
 }
