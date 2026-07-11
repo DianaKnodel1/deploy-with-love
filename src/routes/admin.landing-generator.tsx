@@ -765,6 +765,27 @@ document.addEventListener('submit', function(e){
           <CardDescription>Alle laufen auf Server 1. Klick „Bearbeiten" um eine zu laden.</CardDescription>
         </CardHeader>
         <CardContent>
+          {(() => {
+            const missing = landings.filter((l) => !l.branding?.firmenname?.trim?.());
+            if (missing.length === 0) return null;
+            return (
+              <div className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs">
+                <div className="font-semibold text-destructive mb-1">⚠️ Firmenname fehlt bei {missing.length} Landing{missing.length === 1 ? "" : "s"}</div>
+                <p className="text-muted-foreground mb-2">
+                  Ohne Firmennamen stellt sich der KI-Recruiter mit „unserem Unternehmen" vor — unpersönlich. Bitte pflegen:
+                </p>
+                <ul className="space-y-1">
+                  {missing.map((l) => (
+                    <li key={l.id}>
+                      <button className="underline hover:text-destructive" onClick={() => handleEditLanding(l.id)}>
+                        {l.domain} / {l.slug}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
           {landingsLoading ? (
             <p className="text-xs text-muted-foreground">Lade …</p>
           ) : landings.length === 0 ? (
