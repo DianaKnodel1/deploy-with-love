@@ -149,7 +149,7 @@ serve(async (req) => {
 
     const subject = subjectOverride && subjectOverride.trim()
       ? subjectOverride.trim()
-      : (dbSubject ? applyPh(dbSubject) : `Herzlichen Glückwunsch – ${tenant.name}`);
+      : (dbSubject ? applyPh(dbSubject) : `🎉 Willkommen im Team – Ihre Registrierung in 5 Min`);
     const headline = headlineOverride && headlineOverride.trim()
       ? headlineOverride.trim()
       : "Willkommen im Team!";
