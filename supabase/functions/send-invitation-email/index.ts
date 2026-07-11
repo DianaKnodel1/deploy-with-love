@@ -20,17 +20,26 @@ const corsHeaders = {
 
 const DEFAULT_WELCOME_TEMPLATE = `Hallo {{first_name}},
 
-Ihr Profil hat uns überzeugt – lassen Sie uns direkt starten!
+herzlichen Glückwunsch – Ihr Profil hat uns überzeugt! 🎉
+
+Damit Sie direkt starten können, ist nur noch ein Schritt nötig: die Registrierung im Mitarbeiter-Portal.
+
+Was Sie brauchen (bitte bereithalten):
+• Personalausweis oder Reisepass
+• IBAN (Bankverbindung für die Gehaltszahlung)
+• Steuer-Identifikationsnummer (11-stellig, steht auf Ihrem Lohnsteuerbescheid)
+• Sozialversicherungsnummer (falls vorhanden)
 
 Wie geht es weiter?
-1. Registrieren Sie sich im Mitarbeiterportal
-2. Führen Sie anschließend das Onboarding durch
+1. Portal-Registrierung abschließen (ca. 5 Minuten)
+2. Arbeitsvertrag digital unterschreiben
+3. Sofort loslegen – Aufträge stehen bereit
 
 {{cta:Jetzt registrieren|{{portal_link}}}}
 
-Ich wünsche Ihnen einen erfolgreichen Start!
+Bei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.
 
-Mit freundlichen Grüßen
+Herzliche Grüße
 {{sender_name}}`;
 
 const LEGACY_WELCOME_MARKERS = [

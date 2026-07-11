@@ -29,16 +29,24 @@ const corsHeaders = {
 const WINDOW_LOW_MIN = 25;
 const WINDOW_HIGH_MIN = 40;
 
-const DEFAULT_SUBJECT = "In 30 Minuten startet Ihr Bewerbungsgespräch";
+const DEFAULT_SUBJECT = "⏰ In 30 Minuten startet Ihr Bewerbungsgespräch";
 const DEFAULT_BODY = `Hallo {{first_name}},
 
 kurze Erinnerung: In etwa 30 Minuten ({{appointment_time}} Uhr) startet Ihr Bewerbungsgespräch.
 
-Bitte starten Sie das kurze KI-Vorgespräch direkt über den folgenden Link – so sind wir bestens vorbereitet:
+So läuft es ab:
+
+1️⃣  Kurzes Gespräch (ca. 10–15 Min)
+2️⃣  Bei positiver Bewertung erhalten Sie direkt eine Zusage per E-Mail
+3️⃣  Anschließend Registrierung im Mitarbeiter-Portal – Vertrag digital unterschreiben und loslegen
+
+Bitte starten Sie das Gespräch über Ihren persönlichen Link:
 
 {{cta:{{button_label}}|{{magic_link}}}}
 
-Viele Grüße
+Tipp: Ruhige Umgebung, stabile Internet-Verbindung. Bei Problemen einfach auf diese E-Mail antworten.
+
+Viel Erfolg und bis gleich!
 {{tenant_name}}`;
 const DEFAULT_BUTTON = "Bewerbungsgespräch starten";
 

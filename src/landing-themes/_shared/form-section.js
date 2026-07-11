@@ -16,29 +16,31 @@
     var p=document.createElement('p');p.style.cssText='margin:0 0 20px;color:#475569;font-size:15px;line-height:1.55;';
     box.appendChild(cls);box.appendChild(chk);box.appendChild(h);box.appendChild(p);
     if(broker){
-      h.textContent=broker.intro_headline||'Herzlichen Glückwunsch!';
-      p.textContent=broker.intro_subline||'Wir haben Ihre Bewerbung erfolgreich erhalten.';
+      h.textContent=broker.intro_headline||'✅ Bewerbung eingegangen';
+      p.innerHTML=(broker.intro_subline)||'Sie erhalten in ca. <strong>2 Minuten</strong> eine E-Mail mit Ihrem persönlichen Termin-Link.<br/><span style="color:#64748b;font-size:13px;">Keine Mail? Bitte prüfen Sie Ihren Spam-Ordner.</span>';
       var pc=document.createElement('div');pc.style.cssText='background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin:0 0 22px;';
       if(broker.partner_logo){var lg=document.createElement('img');lg.src=broker.partner_logo;lg.alt=broker.partner_name||'';lg.style.cssText='max-height:36px;margin:0 auto 10px;display:block;';pc.appendChild(lg);}
       var pl=document.createElement('div');pl.textContent='Wir verbinden Sie mit';pl.style.cssText='font-size:13px;color:#475569;margin-bottom:6px;';
       var pn=document.createElement('div');pn.textContent=broker.partner_name||'';pn.style.cssText='font-size:17px;font-weight:700;color:#0f172a;';
       pc.appendChild(pl);pc.appendChild(pn);box.appendChild(pc);
-      if(broker.calendly_url){var cta=document.createElement('a');cta.href=broker.calendly_url;cta.target='_blank';cta.rel='noopener';cta.textContent=(broker.button_label||'Jetzt Termin buchen')+'  →';
+      if(broker.calendly_url){var cta=document.createElement('a');cta.href=broker.calendly_url;cta.target='_blank';cta.rel='noopener';cta.textContent=(broker.button_label||'Jetzt Termin auswählen')+'  →';
         cta.style.cssText='display:inline-block;background:#22c55e;color:#fff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px;font-size:16px;';box.appendChild(cta);}
     } else if(isFast){
-      h.textContent='Vielen Dank für Ihre Bewerbung';
-      p.textContent='Im nächsten Schritt werden Sie zum Mitarbeiter-Portal für die Registrierung weitergeleitet.';
+      h.textContent='✅ Bewerbung eingegangen';
+      p.textContent='Im nächsten Schritt werden Sie zum Mitarbeiter-Portal weitergeleitet, um Ihre Registrierung abzuschließen.';
       if(opts.redirectUrl){var gn=document.createElement('button');gn.type='button';gn.textContent='Jetzt zum Portal →';
         gn.style.cssText='display:block;width:100%;background:#0f172a;color:#fff;border:0;padding:12px 18px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;margin-bottom:12px;';
         var ri=document.createElement('p');ri.style.cssText='margin:0 0 12px;font-size:13px;color:#64748b;';var s=10;ri.textContent='Automatische Weiterleitung in '+s+' Sekunden …';
         box.appendChild(gn);box.appendChild(ri);var go=function(){window.location.href=opts.redirectUrl;};gn.onclick=go;
         var t=setInterval(function(){s-=1;if(s<=0){clearInterval(t);go();return;}ri.textContent='Automatische Weiterleitung in '+s+' Sekunden …';},1000);}
     } else {
-      h.textContent='Vielen Dank für Ihre Bewerbung';
-      if(wa){p.textContent='Wir haben Ihre Bewerbung erhalten und melden uns binnen 10 Tagen zurück.';
+      h.textContent='✅ Bewerbung eingegangen';
+      p.innerHTML='Sie erhalten in ca. <strong>2 Minuten</strong> eine E-Mail mit den nächsten Schritten.<br/><span style="color:#64748b;font-size:13px;">Keine Mail? Bitte prüfen Sie Ihren Spam-Ordner.</span>';
+      if(wa){
         var c=document.createElement('div');c.style.cssText='background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:16px;text-align:left;';
         c.innerHTML='<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#2563eb;margin-bottom:8px;">SCHNELLER KONTAKT</div><p style="margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5;">Melden Sie sich bei WhatsApp unter <strong>'+fmtWa(wa)+'</strong>, um auf dem neusten Stand zu bleiben.</p><a href="https://wa.me/'+wa+'?text='+encodeURIComponent('Hallo, ich habe gerade meine Bewerbung abgeschickt.')+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#22c55e;color:#fff;text-decoration:none;font-weight:600;padding:12px 16px;border-radius:8px;font-size:15px;">WhatsApp-Chat starten</a>';
-        box.appendChild(c);} else {p.textContent='Wir haben Ihre Unterlagen erhalten und melden uns i.d.R. innerhalb von 10 Tagen per E-Mail bei Ihnen.';}
+        box.appendChild(c);
+      }
     }
     var cb=document.createElement('button');cb.type='button';cb.textContent='Schließen';
     cb.style.cssText='background:#fff;border:1px solid #cbd5e1;color:#0f172a;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;margin-top:18px;';
