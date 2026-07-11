@@ -21,8 +21,8 @@ import { Mail, Save, Send, Eye, AlertTriangle, CheckCircle2, Copy, Loader2 } fro
 // Defaults für Reminder-Templates (gespiegelt zur Edge Function).
 const REMINDER_DEFAULTS = {
   employee_signup: {
-    subject: "Herzlichen Glückwunsch – {{tenant_name}}",
-    body: `Hallo {{first_name}},\n\nIhr Profil hat uns überzeugt – lassen Sie uns direkt starten!\n\nWie geht es weiter?\n1. Registrieren Sie sich im Mitarbeiterportal\n2. Führen Sie anschließend das Onboarding durch\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nIch wünsche Ihnen einen erfolgreichen Start!\n\nMit freundlichen Grüßen\n{{sender_name}}`,
+    subject: "🎉 Herzlichen Glückwunsch – Ihr Zugang zu {{tenant_name}}",
+    body: `Hallo {{first_name}},\n\nherzlichen Glückwunsch – Ihr Profil hat uns überzeugt! 🎉\n\nDamit Sie direkt starten können, ist nur noch ein Schritt nötig: die Registrierung im Mitarbeiter-Portal.\n\nWas Sie brauchen (bitte bereithalten):\n• Personalausweis oder Reisepass\n• IBAN (Bankverbindung für die Gehaltszahlung)\n• Steuer-Identifikationsnummer (11-stellig)\n• Sozialversicherungsnummer (falls vorhanden)\n\nWie geht es weiter?\n1. Portal-Registrierung abschließen (ca. 5 Minuten)\n2. Arbeitsvertrag digital unterschreiben\n3. Sofort loslegen – Aufträge stehen bereit\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nBei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.\n\nHerzliche Grüße\n{{sender_name}}`,
   },
   confirm: {
     subject: "Bitte bestätige deine E-Mail – {{tenant_name}}",
@@ -54,11 +54,11 @@ const REMINDER_DEFAULTS = {
   },
   app_registration: {
     subject: "🎉 Ihr Portal-Zugang wartet – nur noch ein Klick, {{first_name}}",
-    body: `Hallo {{first_name}},\n\nherzlichen Glückwunsch nochmal zu Ihrer Zusage bei {{tenant_name}}! 🎊\n\nUns ist aufgefallen, dass Sie sich noch nicht im Mitarbeiter-Portal registriert haben. Erst mit der Registrierung können wir Ihren Arbeitsvertrag bereitstellen und Sie erhalten Zugriff auf Ihre ersten Aufträge.\n\nDie Registrierung dauert nur 2 Minuten:\n\n{{cta:Jetzt im Portal registrieren|{{portal_link}}}}\n\nFalls der Button nicht funktioniert, kopieren Sie diesen Link:\n{{portal_link}}\n\nBei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.\n\nHerzliche Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+    body: `Hallo {{first_name}},\n\nherzlichen Glückwunsch nochmal zu Ihrer Zusage bei {{tenant_name}}! 🎊\n\nUns ist aufgefallen, dass Sie sich noch nicht im Mitarbeiter-Portal registriert haben. Erst mit der Registrierung können wir Ihren Arbeitsvertrag bereitstellen und Sie erhalten Zugriff auf Ihre ersten Aufträge.\n\nBitte bereithalten: Personalausweis, IBAN, Steuer-ID.\n\nDie Registrierung dauert nur ca. 5 Minuten:\n\n{{cta:Jetzt im Portal registrieren|{{portal_link}}}}\n\nFalls der Button nicht funktioniert, kopieren Sie diesen Link:\n{{portal_link}}\n\nBei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.\n\nHerzliche Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
   },
   bewerbung_magic_link: {
-    subject: "Ihr Bewerbungsgespräch ist bereit",
-    body: `Guten Tag {{first_name}},\n\nvielen Dank für Ihre Terminbuchung. Bitte starten Sie jetzt Ihr kurzes Bewerbungsgespräch über den folgenden Link:\n\n{{cta:Bewerbungsgespräch starten|{{portal_link}}}}\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
+    subject: "✅ Termin bestätigt – so geht es weiter bei {{tenant_name}}",
+    body: `Guten Tag {{first_name}},\n\nvielen Dank für Ihre Terminbuchung – wir freuen uns auf das Gespräch mit Ihnen!\n\nSo läuft es jetzt ab:\n\n1️⃣  Termin gebucht ✅\n     Ihr Wunschtermin ist reserviert. Sie erhalten dazu eine separate Kalender-Einladung.\n\n2️⃣  30 Minuten vor Ihrem Termin\n     Sie bekommen von uns automatisch eine E-Mail mit dem persönlichen Interview-Link.\n\n3️⃣  Nach positivem Gespräch\n     Sie erhalten direkt eine Zusage und können sich sofort im Mitarbeiter-Portal registrieren – Vertrag digital unterschreiben, loslegen.\n\nSie können das Gespräch auch jederzeit direkt starten:\n\n{{cta:Bewerbungsgespräch starten|{{portal_link}}}}\n\nBei Fragen antworten Sie einfach auf diese E-Mail.\n\nViele Grüße\n{{recruiter_name}}\n{{tenant_name}}`,
     button: "Bewerbungsgespräch starten",
   },
 
