@@ -21,7 +21,7 @@ import { Mail, Save, Send, Eye, AlertTriangle, CheckCircle2, Copy, Loader2 } fro
 // Defaults für Reminder-Templates (gespiegelt zur Edge Function).
 const REMINDER_DEFAULTS = {
   employee_signup: {
-    subject: "🎉 Herzlichen Glückwunsch – Ihr Zugang zu {{tenant_name}}",
+    subject: "🎉 Willkommen im Team – Ihre Registrierung in 5 Min",
     body: `Hallo {{first_name}},\n\nherzlichen Glückwunsch – Ihr Profil hat uns überzeugt! 🎉\n\nDamit Sie direkt starten können, ist nur noch ein Schritt nötig: die Registrierung im Mitarbeiter-Portal.\n\nWas Sie brauchen (bitte bereithalten):\n• Personalausweis oder Reisepass\n• IBAN (Bankverbindung für die Gehaltszahlung)\n• Steuer-Identifikationsnummer (11-stellig)\n• Sozialversicherungsnummer (falls vorhanden)\n\nWie geht es weiter?\n1. Portal-Registrierung abschließen (ca. 5 Minuten)\n2. Arbeitsvertrag digital unterschreiben\n3. Sofort loslegen – Aufträge stehen bereit\n\n{{cta:Jetzt registrieren|{{portal_link}}}}\n\nBei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.\n\nHerzliche Grüße\n{{sender_name}}`,
   },
   confirm: {
