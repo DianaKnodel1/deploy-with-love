@@ -229,6 +229,21 @@ function InterviewPage() {
     );
   }
 
+  // Warte-Screen: Termin liegt in der Zukunft (>5 Min Vorlauf noch nicht erreicht).
+  if (scheduledAt && Date.now() < scheduledAt - 5 * 60 * 1000) {
+    return (
+      <WaitingScreen
+        scheduledAt={scheduledAt}
+        company={company}
+        primary={primary}
+        logoUrl={branding?.logo_url || null}
+        recruiterName={branding?.recruiter_name || "Sabine Schneider"}
+      />
+    );
+  }
+
+
+
   const recruiterName = branding?.recruiter_name || "Sabine Schneider";
   const avatarUrl = branding?.recruiter_avatar_url || null;
   const initials = recruiterName.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
