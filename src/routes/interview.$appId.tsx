@@ -59,7 +59,7 @@ function InterviewPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
 
-  const MAX_SEC = 900; // 15 Minuten
+  
 
   // Branding laden
   useEffect(() => {
