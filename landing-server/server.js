@@ -20,7 +20,7 @@ const CACHE_TTL_MS = 60_000;
 const ASSET_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const assetCache = new Map();
 
-const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,calendly_url,intermediate_company_name,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding,calendly_url,intermediate_company_name,logo_url)";
+const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,calendly_url,intermediate_company_name,updated_at,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding,calendly_url,intermediate_company_name,logo_url)";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Themes-Verzeichnis: zuerst ENV, dann Portal-Repo (automatisch), dann lokales themes/
 function resolveThemesDir() {
