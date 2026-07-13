@@ -425,10 +425,14 @@ const server = createServer(async (req, res) => {
       return send(res, 200, await renderJs(row), { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path.startsWith("/assets/logo")) {
-      return row.logo_url ? send(res, 302, "", { location: row.logo_url }) : send(res, 404, "no logo");
+      return row.logo_url
+        ? send(res, 302, "", { location: row.logo_url, "cache-control": "no-cache, no-store, must-revalidate" })
+        : send(res, 404, "no logo");
     }
     if (path.startsWith("/assets/favicon")) {
-      return row.favicon_url ? send(res, 302, "", { location: row.favicon_url }) : send(res, 404, "no favicon");
+      return row.favicon_url
+        ? send(res, 302, "", { location: row.favicon_url, "cache-control": "no-cache, no-store, must-revalidate" })
+        : send(res, 404, "no favicon");
     }
     if (path.startsWith("/assets/")) {
       const rel = path.slice("/assets/".length);
