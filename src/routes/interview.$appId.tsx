@@ -125,25 +125,13 @@ function InterviewPage() {
     return () => clearInterval(id);
   }, [scheduledAt, appId]);
 
-  // Countdown — bei 0 automatisch serverseitig beenden (löst Summary + Entscheidung aus)
-  useEffect(() => {
-    if (!startedAt || ended) return;
-    const tick = async () => {
-      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
-      const left = Math.max(0, MAX_SEC - elapsed);
-      setRemainingSec(left);
-      if (left === 0 && !ended) {
-        setEnded(true);
-        try {
-          const data = await postInterview({ applicationId: appId, action: "end" });
-          if (data?.application_status) setAppStatus(data.application_status);
-        } catch { /* ignore */ }
-      }
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [startedAt, ended, appId]);
+  // Kein hartes Zeitlimit mehr im Frontend.
+  // Das Gespräch endet ausschließlich durch:
+  //  1. [INTERVIEW_END] von der KI (sauberer Abschluss mit rotem Faden),
+  //  2. "Gespräch beenden"-Button des Bewerbers,
+  //  3. Server-Auto-Timeout nach 45 Min Inaktivität (Migration 20260715).
+  // Grund: Ein starres 15-Min-Limit killte Interviews mitten im Abschluss.
+
 
   // Auto-scroll
   useEffect(() => {
