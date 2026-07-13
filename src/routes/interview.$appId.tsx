@@ -83,6 +83,13 @@ function InterviewPage() {
       try {
         const data = await postInterview({ applicationId: appId, action: "init" });
         if (cancelled) return;
+        if ((data as any).__notYet) {
+          const sched = (data as any).scheduled_at ? new Date((data as any).scheduled_at).getTime() : null;
+          setScheduledAt(sched);
+          setInitializing(false);
+          return;
+        }
+        setScheduledAt(null);
         setMessages(data.history ?? []);
         if (data.ended) setEnded(true);
         if (data.application_status) setAppStatus(data.application_status);
@@ -97,6 +104,27 @@ function InterviewPage() {
     init();
     return () => { cancelled = true; };
   }, [appId, consent]);
+
+  // Auto-Retry sobald der Termin (minus 5 Min Vorlauf) erreicht ist.
+  useEffect(() => {
+    if (!scheduledAt) return;
+    const readyAt = scheduledAt - 5 * 60 * 1000;
+    const check = async () => {
+      if (Date.now() < readyAt) return;
+      try {
+        const data = await postInterview({ applicationId: appId, action: "init" });
+        if ((data as any).__notYet) return;
+        setScheduledAt(null);
+        setMessages(data.history ?? []);
+        if (data.ended) setEnded(true);
+        if (data.application_status) setAppStatus(data.application_status);
+        setStartedAt(data.interview_started_at ? new Date(data.interview_started_at).getTime() : Date.now());
+      } catch { /* still waiting */ }
+    };
+    const id = setInterval(check, 5000);
+    check();
+    return () => clearInterval(id);
+  }, [scheduledAt, appId]);
 
   // Countdown — bei 0 automatisch serverseitig beenden (löst Summary + Entscheidung aus)
   useEffect(() => {
