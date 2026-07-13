@@ -1,93 +1,69 @@
-# Verbesserungspunkte — Review /admin/bewerbungen + Bewerber-Flow
 
-Ich habe die Bewerber-Seite (Admin), den Chat-Prompt, die E-Mails und den WelcomeAccepted-Screen durchgesehen. Hier sind die Punkte, die mir wirklich auffallen — sortiert nach Wirkung. Sag mir welche (Nummern), und ich baue sie.
+## Status Deploy Portal-Server
 
----
+Deploy lief sauber durch:
+- git pull ✓
+- build ✓ (48s)
+- portal.service läuft ✓
 
-## A) `/admin/bewerbungen` — UX & Klarheit
+**Aber:** Schritt 3/4 sagt „keine Manual-Migrations oder TARGET_DB_URL nicht gesetzt — übersprungen". Das bedeutet: alle neuen SQL-Migrations (u.a. **45-Min-Interview-Timeout**, `interview_auto_timeout`, `registration_pending_reminder` etc.) sind **noch nicht in der DB**. Ohne die läuft der Timeout weiter auf dem alten Wert (bzw. 20 Min) und Bewerber-Chats brechen weiter zu früh ab.
 
-**A1. Phasen-Chips sind zu viele (11 Stück nebeneinander)**
-Aktuell: „Alle · Kein Termin · Termin gebucht · Abgesagt · No-Show · Interview läuft · Zusage · Abgelehnt · Registriert · E-Mail bestätigt · Onboarding fertig · Mitarbeiter aktiv" — auf schmalen Screens ein Wrap-Chaos.
-Vorschlag: 3 Gruppen mit Zähler-Badges:
-`Alle · Offen (kein Termin / gebucht / no-show) · Im Interview · Entschieden (Zusage/Absage) · Mitarbeiter (registriert…aktiv)`
-Klick öffnet ein Sub-Filter.
+## Was zu tun ist
 
-**A2. „Kein Termin" ist mehrdeutig**
-Bedeutet aktuell sowohl „noch nie gebucht" als auch „Termin abgelaufen ohne Buchung". Umbenennen in **„Wartet auf Buchung"** + Tooltip mit Alter der Bewerbung („vor 3 Tagen beworben, keine Buchung").
+### Schritt 1 — `TARGET_DB_URL` in Portal-`.env` hinterlegen (einmalig)
 
-**A3. E-Mail-Status-Badge braucht Kontext**
-Aktuell: grün / rot / orange / grau. Beim Hover sieht man den Grund, aber kein Zeitstempel.
-Vorschlag: `✉️ Gesendet · vor 2 Std` direkt sichtbar bei den kritischen Zeilen (No-Show, Kein Termin).
+Auf dem Portal-Server:
 
-**A4. Schnellaktionen pro Zeile**
-Bulk-Delete gibt's schon. Fehlt in der Zeile: **„Reminder jetzt senden"** (manueller Trigger, überschreibt Idempotenz mit `force=true`) und **„Neuen Magic-Link generieren"** — beides Standard-Support-Fragen.
+```bash
+# Prüfen ob schon vorhanden
+grep TARGET_DB_URL /opt/apps/portal/.env
 
-**A5. Interview-Transkript-Preview**
-Beim Öffnen eines Bewerbers wird das Transkript gezeigt — aber ohne Score/Empfehlung oben. KI-Score (0–100) + Empfehlungs-Badge groß nach oben, Transkript darunter.
+# Falls leer → hinzufügen (Passwort aus Supabase-Server holen)
+nano /opt/apps/portal/.env
+# Zeile ergänzen:
+# TARGET_DB_URL=postgres://postgres:<DB-PASSWORD>@<SUPABASE-HOST>:5432/postgres
+```
 
-**A6. Sortierung**
-Default aktuell nach `created_at`. Für die Tabs „No-Show" / „Kein Termin" wäre **`interview_completed_at DESC`** bzw. `created_at ASC` (ältester zuerst = dringendster) sinnvoller.
+Das `<DB-PASSWORD>` ist das Postgres-Passwort deines self-hosted Supabase. Falls unklar: liegt in der Supabase-`.env` unter `POSTGRES_PASSWORD`. Host ist meist die IP des Supabase-Servers (Server 3) oder `127.0.0.1` wenn Portal + Supabase auf derselben Kiste laufen.
 
----
+### Schritt 2 — Deploy erneut ausführen (spielt Migrations ein)
 
-## B) Bewerber-Texte (Landing → Chat → E-Mail → Registrierung)
+```bash
+bash /opt/apps/portal/scripts/deploy.sh
+```
 
-**B1. Landing „Danke"-Screen**
-Aktuell: „Vielen Dank. Wir melden uns per E-Mail."
-Besser: „**Fast geschafft! In den nächsten 60 Sek. bekommst du eine E-Mail von uns mit deinem persönlichen Interview-Link.** Bitte auch im Spam-Ordner schauen — Absender: `bewerbung@…`"
+Erwartete Ausgabe in Schritt 3/4: mehrere `· 2026xxxxx_xxx.sql → einspielen…` + `✓ … angewendet`. Wenn eine Migration bereits läuft, wird sie einfach übersprungen — kein Risiko.
 
-**B2. Bewerbungseingang-Mail (Betreff)**
-Aktuell vermutlich: „Ihre Bewerbung ist eingegangen"
-Besser: **„✅ Bewerbung erhalten – nächster Schritt: dein Interview (5 Min)"**
-Body: klare 3-Schritt-Timeline, Button „Interview jetzt starten", P.S. mit Support-Kontakt.
+### Schritt 3 — Landing-Server (Server 1, `uwkconsulting`, 190.97.165.213) updaten
 
-**B3. Chat-Eröffnung des KI-Recruiters**
-Schon verbessert („Hallo {firstName}…"). Zusätzlich: **eine Erwartungs-Zeile** in Nachricht 1: „Das Gespräch dauert ca. 8–12 Min. Sie können jederzeit Rückfragen stellen."
+Für den Logo-Cache-Buster-Fix in `landing-server/server.js`:
 
-**B4. Chat-Absage-Text**
-Aktuell wirkt die Absage bei „reject" abrupt. Vorschlag empathischer:
-„Vielen Dank für Ihre Zeit und Offenheit. Nach diesem Gespräch passt die Position aktuell leider nicht — das liegt oft an Zeitrahmen oder Modell, nicht an Ihnen persönlich. Wir behalten Ihre Unterlagen gerne im Blick, falls eine passendere Rolle frei wird."
+```bash
+# Von deinem lokalen Rechner ODER vom Portal-Server aus:
+scp /opt/apps/portal/landing-server/server.js \
+    root@190.97.165.213:/opt/apps/landing-server/server.js
 
-**B5. Zusage-Screen (`WelcomeAccepted`)**
-Momentan: Checkliste + „E-Mail kommt gleich". Fehlt: **direkter Button „Jetzt weiter zur Registrierung"** (Magic-Link ist ja bereits erzeugt) — nicht auf Mail warten lassen. Das war schon besprochen, ist aber m.W. noch nicht drin.
+ssh root@190.97.165.213 'systemctl restart landing.service && \
+  systemctl status landing.service --no-pager | head -n 8'
+```
 
-**B6. „Herzlichen Glückwunsch"-E-Mail**
-Betreff ist gut. Body-Vorschlag: **Zeitangaben konkreter** — statt „zeitnah" → „**heute noch** freischalten, damit du morgen mit dem ersten Auftrag starten kannst".
+### Schritt 4 — Kurz-Verifikation
 
-**B7. No-Show-Mail**
-Aktuell neutral. Vorschlag zwei-stufig:
-- Nach 2 Std: freundlich („Termin verpasst? Kein Problem, hier neu buchen: …")
-- Nach 24 Std: dringlicher („Letzte Erinnerung — dein Platz wird sonst vergeben")
+```bash
+# Portal reachable?
+curl -sI https://mb-portal.com | head -n 1        # → 200
 
-**B8. „Kein Termin"-Reminder**
-Aktuell nach 4 Tagen. Zu spät — Bewerber sind da meist schon woanders.
-Vorschlag: **24 h · 72 h · 7 Tage** (drei Stufen), Text jeweils eskalierend.
+# Landing Cache-Header vorhanden?
+curl -sI https://<eine-live-landing>/logo | grep -i cache-control  # → no-cache
 
----
+# Timeout aktiv (via psql)?
+psql "$TARGET_DB_URL" -c "SELECT pg_get_functiondef('public.auto_timeout_stale_interviews'::regproc);" | grep "45 minutes"
+```
 
-## C) Technisch / Kleinigkeiten
+## Wenn du das Postgres-Passwort nicht hast
 
-**C1. `computePhase`** in `admin.bewerbungen.tsx` — Logik verzweigt in ~10 Zweigen. Als Unit-Test absichern (aktuell keiner), sonst brechen künftige Änderungen still.
+Alternativen:
+1. Auf Supabase-Server (Server 3): `grep POSTGRES_PASSWORD /opt/supabase/.env`
+2. Oder: Migrations manuell per `psql` von Supabase-Server aus einspielen (dort ist Postgres lokal ohne Passwort erreichbar).
 
-**C2. `interview-engine.server.ts` Default-Fallback** — `recruiterName = "Sabine Schneider"` als Hardcode. Auf `"unser HR-Team"` ändern, damit alte Landings ohne Recruiter-Name nicht wieder Sabine zeigen.
-
-**C3. Company-Fallback „unserem Unternehmen"** — wenn kein Firmenname gepflegt: statt Fallback lieber im Admin-UI eine Warnung „Firmenname fehlt in Branding" mit Direkt-Link.
-
-**C4. Chat-Timeout** — falls Bewerber 5 Min inaktiv ist, sollte nach 10 Min automatisch `finalizeInterview` laufen (aktuell hängt der Chat offen, kein Status-Update, kein Score). Cron oder client-seitiger Ping.
-
----
-
-## Empfehlung Reihenfolge
-
-**Runde 1 (heute, hoher ROI, wenig Risiko):**
-B1, B2, B5 (Direkt-Button Registrierung), B6, A2, A6, C2
-
-**Runde 2 (nächster Deploy):**
-A1, A3, A4, B4, B7, B8
-
-**Runde 3 (technisch):**
-C1, C3, C4, A5
-
----
-
-Sag mir: **welche Nummern** soll ich in Runde 1 machen? Oder gib mir grünes Licht für meinen Vorschlag (B1, B2, B5, B6, A2, A6, C2) und ich baue das in einem Rutsch.
+Sag Bescheid welchen Weg du gehen willst, dann geb ich dir den exakten Befehl.
