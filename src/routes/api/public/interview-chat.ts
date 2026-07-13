@@ -444,10 +444,11 @@ export const Route = createFileRoute("/api/public/interview-chat")({
 
         // Geschäftszeiten-Gate deaktiviert (Testphase) — Recruiter rund um die Uhr erreichbar.
 
-        // Hartes 15-Min-Limit ab erstem Start
-        const MAX_DURATION_MS = 15 * 60 * 1000;
-        const startedAt = app.interview_started_at ? new Date(app.interview_started_at as string).getTime() : null;
-        const timedOut = startedAt !== null && Date.now() - startedAt > MAX_DURATION_MS;
+        // Kein hartes Zeitlimit mehr — Server-Auto-Timeout (45 Min Inaktivität) via DB-Cron
+        // beendet vergessene Gespräche. Ein starres 15-Min-Limit killte Interviews mitten
+        // im Abschluss (siehe Stephanie Adler).
+        const timedOut = false;
+
 
         let systemPrompt = DEFAULT_SYSTEM_PROMPT;
         let companyName = "unserem Unternehmen";
