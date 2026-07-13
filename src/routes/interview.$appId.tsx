@@ -27,6 +27,8 @@ async function postInterview(body: unknown) {
   }
   let data: any = {};
   try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Antwort konnte nicht gelesen werden."); }
+  // "Noch zu früh" ist kein Fehler — Frontend rendert Wartescreen mit Countdown.
+  if (res.status === 425 || data?.not_yet) return { __notYet: true as const, scheduled_at: data?.scheduled_at ?? null, message: data?.error ?? null };
   if (!res.ok) throw new Error(data?.error ?? `Fehler ${res.status}`);
   return data;
 }
