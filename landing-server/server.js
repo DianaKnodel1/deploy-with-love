@@ -366,14 +366,16 @@ async function renderHtml(row, host) {
   // die Startseite nicht mehr bis zu den Rechtstexten durchscrollt.
   slots.impressum_url = "impressum.html";
   slots.datenschutz_url = "datenschutz.html";
-  if (row.logo_url && !slots.logo_image) slots.logo_image = "/assets/logo";
-  if (row.favicon_url && !slots.favicon_image) slots.favicon_image = "/assets/favicon";
+  // Cache-Buster aus updated_at, damit Browser/Cloudflare beim Logo-Wechsel neu laden.
+  const ver = row.updated_at ? `?v=${Date.parse(row.updated_at) || ""}` : "";
+  if (row.logo_url && !slots.logo_image) slots.logo_image = `/assets/logo${ver}`;
+  if (row.favicon_url && !slots.favicon_image) slots.favicon_image = `/assets/favicon${ver}`;
   let html = applyPlaceholders(theme.html, row.branding, slots);
   html = html.replace(/<section[^>]*id=["'](?:impressum|datenschutz)["'][\s\S]*?<\/section>\s*/gi, "");
   html = cleanEmptyMeta(html, row.branding, host);
   html = injectLandingConfig(html, row);
-  if (row.logo_url) html = html.replace(/assets\/logo\.[a-z]+/gi, "/assets/logo");
-  if (row.favicon_url) html = html.replace(/assets\/favicon\.[a-z]+/gi, "/assets/favicon");
+  if (row.logo_url) html = html.replace(/assets\/logo\.[a-z]+/gi, `/assets/logo${ver}`);
+  if (row.favicon_url) html = html.replace(/assets\/favicon\.[a-z]+/gi, `/assets/favicon${ver}`);
   return { body: html, status: 200 };
 }
 
