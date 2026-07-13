@@ -188,8 +188,8 @@ function InterviewPage() {
   const company = branding?.firmenname || "uns";
   const primary = branding?.primary_color || "#2563eb";
 
-  const mm = Math.floor(remainingSec / 60).toString().padStart(2, "0");
-  const ss = (remainingSec % 60).toString().padStart(2, "0");
+
+
 
   // Consent-Gate (DSGVO + EU AI Act)
   if (!consent) {
