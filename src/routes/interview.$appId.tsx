@@ -55,6 +55,7 @@ function InterviewPage() {
   const [consent, setConsent] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [remainingSec, setRemainingSec] = useState<number>(900);
+  const [scheduledAt, setScheduledAt] = useState<number | null>(null);
   const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null; recruiter_name?: string; recruiter_avatar_url?: string | null } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
