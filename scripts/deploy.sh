@@ -35,6 +35,7 @@ ok "Repo auf neuesten Stand"
 # ── 2) Dependencies + Build ────────────────────────────────────────────────
 log "2/4  bun install + build"
 bun install --frozen-lockfile
+export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
 bun run build
 ok "Build fertig"
 
