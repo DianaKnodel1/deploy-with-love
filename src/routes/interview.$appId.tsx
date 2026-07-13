@@ -54,13 +54,12 @@ function InterviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [remainingSec, setRemainingSec] = useState<number>(900);
   const [scheduledAt, setScheduledAt] = useState<number | null>(null);
   const [branding, setBranding] = useState<{ firmenname?: string; primary_color?: string; logo_url?: string | null; recruiter_name?: string; recruiter_avatar_url?: string | null } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
 
-  const MAX_SEC = 900; // 15 Minuten
+  
 
   // Branding laden
   useEffect(() => {
@@ -126,25 +125,13 @@ function InterviewPage() {
     return () => clearInterval(id);
   }, [scheduledAt, appId]);
 
-  // Countdown — bei 0 automatisch serverseitig beenden (löst Summary + Entscheidung aus)
-  useEffect(() => {
-    if (!startedAt || ended) return;
-    const tick = async () => {
-      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
-      const left = Math.max(0, MAX_SEC - elapsed);
-      setRemainingSec(left);
-      if (left === 0 && !ended) {
-        setEnded(true);
-        try {
-          const data = await postInterview({ applicationId: appId, action: "end" });
-          if (data?.application_status) setAppStatus(data.application_status);
-        } catch { /* ignore */ }
-      }
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [startedAt, ended, appId]);
+  // Kein hartes Zeitlimit mehr im Frontend.
+  // Das Gespräch endet ausschließlich durch:
+  //  1. [INTERVIEW_END] von der KI (sauberer Abschluss mit rotem Faden),
+  //  2. "Gespräch beenden"-Button des Bewerbers,
+  //  3. Server-Auto-Timeout nach 45 Min Inaktivität (Migration 20260715).
+  // Grund: Ein starres 15-Min-Limit killte Interviews mitten im Abschluss.
+
 
   // Auto-scroll
   useEffect(() => {
@@ -201,8 +188,8 @@ function InterviewPage() {
   const company = branding?.firmenname || "uns";
   const primary = branding?.primary_color || "#2563eb";
 
-  const mm = Math.floor(remainingSec / 60).toString().padStart(2, "0");
-  const ss = (remainingSec % 60).toString().padStart(2, "0");
+
+
 
   // Consent-Gate (DSGVO + EU AI Act)
   if (!consent) {
