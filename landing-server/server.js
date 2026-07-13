@@ -20,7 +20,7 @@ const CACHE_TTL_MS = 60_000;
 const ASSET_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const assetCache = new Map();
 
-const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,calendly_url,intermediate_company_name,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding,calendly_url,intermediate_company_name,logo_url)";
+const LANDING_SELECT = "id,slug,domain,tenant_id,theme_id,branding,slots,logo_url,favicon_url,flow_type,source_slug,is_published,calendly_url,intermediate_company_name,updated_at,linked_fasttrack_landing_id,linked_fasttrack:landing_pages!linked_fasttrack_landing_id(domain,branding,calendly_url,intermediate_company_name,logo_url)";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Themes-Verzeichnis: zuerst ENV, dann Portal-Repo (automatisch), dann lokales themes/
 function resolveThemesDir() {
@@ -366,14 +366,16 @@ async function renderHtml(row, host) {
   // die Startseite nicht mehr bis zu den Rechtstexten durchscrollt.
   slots.impressum_url = "impressum.html";
   slots.datenschutz_url = "datenschutz.html";
-  if (row.logo_url && !slots.logo_image) slots.logo_image = "/assets/logo";
-  if (row.favicon_url && !slots.favicon_image) slots.favicon_image = "/assets/favicon";
+  // Cache-Buster aus updated_at, damit Browser/Cloudflare beim Logo-Wechsel neu laden.
+  const ver = row.updated_at ? `?v=${Date.parse(row.updated_at) || ""}` : "";
+  if (row.logo_url && !slots.logo_image) slots.logo_image = `/assets/logo${ver}`;
+  if (row.favicon_url && !slots.favicon_image) slots.favicon_image = `/assets/favicon${ver}`;
   let html = applyPlaceholders(theme.html, row.branding, slots);
   html = html.replace(/<section[^>]*id=["'](?:impressum|datenschutz)["'][\s\S]*?<\/section>\s*/gi, "");
   html = cleanEmptyMeta(html, row.branding, host);
   html = injectLandingConfig(html, row);
-  if (row.logo_url) html = html.replace(/assets\/logo\.[a-z]+/gi, "/assets/logo");
-  if (row.favicon_url) html = html.replace(/assets\/favicon\.[a-z]+/gi, "/assets/favicon");
+  if (row.logo_url) html = html.replace(/assets\/logo\.[a-z]+/gi, `/assets/logo${ver}`);
+  if (row.favicon_url) html = html.replace(/assets\/favicon\.[a-z]+/gi, `/assets/favicon${ver}`);
   return { body: html, status: 200 };
 }
 
@@ -423,10 +425,14 @@ const server = createServer(async (req, res) => {
       return send(res, 200, await renderJs(row), { "content-type": "application/javascript; charset=utf-8", "cache-control": "public,max-age=300" });
     }
     if (path.startsWith("/assets/logo")) {
-      return row.logo_url ? send(res, 302, "", { location: row.logo_url }) : send(res, 404, "no logo");
+      return row.logo_url
+        ? send(res, 302, "", { location: row.logo_url, "cache-control": "no-cache, no-store, must-revalidate" })
+        : send(res, 404, "no logo");
     }
     if (path.startsWith("/assets/favicon")) {
-      return row.favicon_url ? send(res, 302, "", { location: row.favicon_url }) : send(res, 404, "no favicon");
+      return row.favicon_url
+        ? send(res, 302, "", { location: row.favicon_url, "cache-control": "no-cache, no-store, must-revalidate" })
+        : send(res, 404, "no favicon");
     }
     if (path.startsWith("/assets/")) {
       const rel = path.slice("/assets/".length);
