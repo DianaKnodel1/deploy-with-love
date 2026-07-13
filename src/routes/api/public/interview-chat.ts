@@ -493,10 +493,13 @@ export const Route = createFileRoute("/api/public/interview-chat")({
             ft?.recruiter_name?.trim?.();
           if (rn) recruiterName = rn;
         }
-        // Platzhalter pro Landing personalisieren
+        // Vorname personalisieren — für persönliche Ansprache im Prompt.
+        const rawFirst = (app as any).first_name?.trim?.() || (app.full_name || "").trim().split(/\s+/)[0] || "";
+        const firstNameForPrompt = rawFirst || "";
         systemPrompt = systemPrompt
           .replace(/\{company\}/g, companyName)
           .replace(/\{recruiter\}/g, recruiterName)
+          .replace(/\{first_name\}/g, firstNameForPrompt)
           // Alte/custom Landing-Prompts enthielten Sabine teils hartcodiert statt als {recruiter}.
           .replace(/Sabine Schneider/g, recruiterName);
 
