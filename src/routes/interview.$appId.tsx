@@ -390,9 +390,13 @@ function WelcomeAccepted({
           Ihr Profil hat uns <strong>überzeugt</strong> — willkommen bei {company}!
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Registrieren Sie sich jetzt im Mitarbeiter-Portal, um Ihren
-          Arbeitsvertrag zu unterschreiben und direkt zu starten.
+          Registrieren Sie sich jetzt im Mitarbeiter-Portal. Direkt nach der
+          Registrierung liegt Ihr <strong>Arbeitsvertrag</strong> dort für Sie zur
+          Durchsicht und digitalen Unterschrift bereit.
         </p>
+        <div className="mt-3 mx-auto max-w-sm rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 px-3 py-2 text-xs text-amber-900 dark:text-amber-200 text-left">
+          ⏱️ <strong>Wenn Sie sich heute noch registrieren</strong>, kann Ihr Teamleiter Ihren Vertrag oft schon <strong>morgen früh</strong> freigeben — dann starten Sie noch <strong>diese Woche</strong>.
+        </div>
         <div className="mt-3 mx-auto max-w-sm rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-200">
           📬 Sie erhalten in ca. <strong>1 Minute</strong> eine Bestätigungs-E-Mail mit Ihrem persönlichen Portal-Link. Bitte auch den Spam-Ordner prüfen.
         </div>
