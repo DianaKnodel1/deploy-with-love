@@ -24,6 +24,8 @@ const NO_BOOKING_2_MIN = 72 * 60;         // 72h
 const NO_SHOW_MIN      = 24 * 60;         // 24h nach Termin
 const REG_PENDING_1_MIN = 24 * 60;        // 24h nach Zusage/Invite
 const REG_PENDING_2_MIN = 72 * 60;        // 72h nach Zusage/Invite (2. Nachfass)
+const REBOOK_1_MIN      = 24 * 60;        // 24h nach Cancel
+const REBOOK_2_MIN      = 72 * 60;        // 72h nach Cancel
 
 const DEFAULTS = {
   no_booking: {
