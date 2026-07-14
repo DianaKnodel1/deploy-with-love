@@ -380,7 +380,7 @@ serve(async (req) => {
       .eq("status", "sent");
     const already = new Set<string>((existing ?? []).map((r: any) => `${r.application_id}|${r.reminder_kind}`));
 
-    type ReminderKind = "no_booking_24h" | "no_booking_72h" | "no_show_24h" | "registration_pending_24h" | "registration_pending_72h";
+    type ReminderKind = "no_booking_24h" | "no_booking_72h" | "no_show_24h" | "registration_pending_24h" | "registration_pending_72h" | "rebook_after_cancel_24h" | "rebook_after_cancel_72h";
     type Todo = { app: any; kind: ReminderKind; inviteToken?: string };
     const todo: Todo[] = [];
 
