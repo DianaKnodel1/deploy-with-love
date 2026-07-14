@@ -113,15 +113,22 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
           if (data) appRow = data;
         }
         if (!appRow && email) {
+          // Lücke A: 'cancelled' und 'no_show' mit einbeziehen, damit bei einer
+          // Neubuchung derselbe Application-Datensatz recycled wird
+          // (inkl. bestehendem magic_token → derselbe Link zeigt neuen Termin).
           const { data } = await supabaseAdmin
             .from("applications")
             .select("id, tenant_id, email, booking_status, magic_token, created_at")
             .ilike("email", email)
-            .in("booking_status", ["pending", "none", "scheduled"])
+            .in("booking_status", ["pending", "none", "scheduled", "cancelled", "no_show"])
             .order("created_at", { ascending: false })
             .limit(10);
           const rows = (data ?? []) as any[];
-          appRow = rows.find((r) => r.booking_status === "pending") ?? rows[0] ?? null;
+          appRow =
+            rows.find((r) => r.booking_status === "pending") ??
+            rows.find((r) => r.booking_status === "cancelled" || r.booking_status === "no_show") ??
+            rows[0] ??
+            null;
         }
 
         // Auto-create application if booking arrived without an existing one
@@ -188,6 +195,17 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
             upd.magic_token_expires_at = expiresAt;
           }
           await supabaseAdmin.from("applications").update(upd).eq("id", appRow.id);
+
+          // Re-Booking: alte Rebook-Reminder-Log-Einträge löschen, damit bei
+          // erneuter Absage die Reminder wieder feuern können.
+          if (event === "invitee.created" &&
+              (appRow.booking_status === "cancelled" || appRow.booking_status === "no_show")) {
+            await supabaseAdmin
+              .from("application_reminder_log")
+              .delete()
+              .eq("application_id", appRow.id)
+              .in("reminder_kind", ["rebook_after_cancel_24h", "rebook_after_cancel_72h", "no_show_24h"]);
+          }
 
           // Stage-Lifecycle mitziehen (Migration 20260706000000).
           const targetStage =

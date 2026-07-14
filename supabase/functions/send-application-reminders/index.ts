@@ -11,7 +11,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import nodemailer from "https://esm.sh/nodemailer@6.9.14";
 
-const FUNCTION_VERSION = "2026-07-13-registration-pending-v7";
+const FUNCTION_VERSION = "2026-07-15-rebook-after-cancel-v8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +24,8 @@ const NO_BOOKING_2_MIN = 72 * 60;         // 72h
 const NO_SHOW_MIN      = 24 * 60;         // 24h nach Termin
 const REG_PENDING_1_MIN = 24 * 60;        // 24h nach Zusage/Invite
 const REG_PENDING_2_MIN = 72 * 60;        // 72h nach Zusage/Invite (2. Nachfass)
+const REBOOK_1_MIN      = 24 * 60;        // 24h nach Cancel
+const REBOOK_2_MIN      = 72 * 60;        // 72h nach Cancel
 
 const DEFAULTS = {
   no_booking: {
@@ -56,6 +58,24 @@ Bitte wähle einen neuen Wunschtermin, der besser passt:
 Falls du Fragen hast oder Unterstützung brauchst, antworte einfach auf diese E-Mail.
 
 Viele Grüße
+{{recruiter_name}}
+{{tenant_name}}`,
+  },
+  rebook: {
+    subject: "Ihr Termin wurde abgesagt – bitte wählen Sie einen neuen",
+    body:
+`Hallo {{first_name}},
+
+Ihr geplanter Termin bei {{tenant_name}} wurde abgesagt. Wir würden Sie trotzdem sehr gerne kennenlernen und laden Sie ein, einen neuen Wunschtermin zu wählen.
+
+{{cta:Neuen Termin auswählen|{{calendly_link}}}}
+
+Falls der Button nicht funktioniert, kopieren Sie diesen Link:
+{{calendly_link}}
+
+Bei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.
+
+Herzliche Grüße
 {{recruiter_name}}
 {{tenant_name}}`,
   },
@@ -92,6 +112,7 @@ interface TenantRow {
   reminder_app_no_booking_subject: string | null; reminder_app_no_booking_body: string | null;
   reminder_app_no_show_subject: string | null;    reminder_app_no_show_body: string | null;
   reminder_app_registration_subject: string | null; reminder_app_registration_body: string | null;
+  reminder_app_rebook_subject: string | null; reminder_app_rebook_body: string | null;
 }
 
 type LandingRow = {
@@ -265,7 +286,7 @@ serve(async (req) => {
     // Tenants vorladen
     const { data: tList, error: tErr } = await admin
       .from("tenants")
-      .select("id,name,domain,primary_domain,logo_url,primary_color,sender_email,sender_name,reply_to_email,smtp_host,smtp_port,smtp_username,smtp_password,email_signature,is_active,emails_paused,reminder_app_no_booking_subject,reminder_app_no_booking_body,reminder_app_no_show_subject,reminder_app_no_show_body,reminder_app_registration_subject,reminder_app_registration_body")
+      .select("id,name,domain,primary_domain,logo_url,primary_color,sender_email,sender_name,reply_to_email,smtp_host,smtp_port,smtp_username,smtp_password,email_signature,is_active,emails_paused,reminder_app_no_booking_subject,reminder_app_no_booking_body,reminder_app_no_show_subject,reminder_app_no_show_body,reminder_app_registration_subject,reminder_app_registration_body,reminder_app_rebook_subject,reminder_app_rebook_body")
       .eq("is_active", true);
     if (tErr) return json({ error: tErr.message }, 500);
     const tenants = new Map<string, TenantRow>((tList ?? []).map((t: any) => [t.id, t as TenantRow]));
@@ -277,7 +298,7 @@ serve(async (req) => {
     const since = new Date(now - 10 * 86400_000).toISOString();
     const { data: apps, error: aErr } = await admin
       .from("applications")
-      .select("id,tenant_id,source_slug,source_landing_id,target_landing_id,full_name,email,status,created_at,booking_status,scheduled_at,interview_started_at,interview_completed_at,flow_type")
+      .select("id,tenant_id,source_slug,source_landing_id,target_landing_id,full_name,email,status,created_at,updated_at,booking_status,scheduled_at,interview_started_at,interview_completed_at,flow_type")
       .gte("created_at", since);
     if (aErr) return json({ error: aErr.message }, 500);
 
@@ -359,7 +380,7 @@ serve(async (req) => {
       .eq("status", "sent");
     const already = new Set<string>((existing ?? []).map((r: any) => `${r.application_id}|${r.reminder_kind}`));
 
-    type ReminderKind = "no_booking_24h" | "no_booking_72h" | "no_show_24h" | "registration_pending_24h" | "registration_pending_72h";
+    type ReminderKind = "no_booking_24h" | "no_booking_72h" | "no_show_24h" | "registration_pending_24h" | "registration_pending_72h" | "rebook_after_cancel_24h" | "rebook_after_cancel_72h";
     type Todo = { app: any; kind: ReminderKind; inviteToken?: string };
     const todo: Todo[] = [];
 
@@ -440,7 +461,19 @@ serve(async (req) => {
         continue;
       }
 
-      // 3) No-Booking (nur wenn kein Termin gebucht)
+      // 3) Rebook nach Cancel (Termin wurde abgesagt, kein neuer gebucht)
+      if (a.booking_status === "cancelled") {
+        const changedMs = new Date(a.updated_at ?? a.created_at).getTime();
+        const sinceChangeMin = (now - changedMs) / 60_000;
+        if (sinceChangeMin >= REBOOK_1_MIN && sinceChangeMin < REBOOK_2_MIN) {
+          if (!already.has(`${a.id}|rebook_after_cancel_24h`)) todo.push({ app: a, kind: "rebook_after_cancel_24h" });
+        } else if (sinceChangeMin >= REBOOK_2_MIN && sinceChangeMin < REBOOK_2_MIN + 5 * 24 * 60) {
+          if (!already.has(`${a.id}|rebook_after_cancel_72h`)) todo.push({ app: a, kind: "rebook_after_cancel_72h" });
+        }
+        continue;
+      }
+
+      // 4) No-Booking (nur wenn kein Termin gebucht)
       const hasBooking = a.booking_status === "scheduled" || !!a.scheduled_at;
       if (hasBooking) continue;
 
@@ -500,6 +533,7 @@ serve(async (req) => {
 
       const isRegistration = kind === "registration_pending_24h" || kind === "registration_pending_72h";
       const isNoShow = kind === "no_show_24h";
+      const isRebook = kind === "rebook_after_cancel_24h" || kind === "rebook_after_cancel_72h";
 
       const landing = (app.source_landing_id ? landingMap.get(app.source_landing_id) : null)
         || (app.target_landing_id ? landingMap.get(app.target_landing_id) : null)
@@ -543,14 +577,18 @@ serve(async (req) => {
 
       const tmplSubject = isRegistration
         ? (tenant.reminder_app_registration_subject || DEFAULTS.registration.subject)
-        : isNoShow
-          ? (tenant.reminder_app_no_show_subject || DEFAULTS.no_show.subject)
-          : (tenant.reminder_app_no_booking_subject || DEFAULTS.no_booking.subject);
+        : isRebook
+          ? (tenant.reminder_app_rebook_subject || DEFAULTS.rebook.subject)
+          : isNoShow
+            ? (tenant.reminder_app_no_show_subject || DEFAULTS.no_show.subject)
+            : (tenant.reminder_app_no_booking_subject || DEFAULTS.no_booking.subject);
       const tmplBody = isRegistration
         ? (tenant.reminder_app_registration_body || DEFAULTS.registration.body)
-        : isNoShow
-          ? (tenant.reminder_app_no_show_body || DEFAULTS.no_show.body)
-          : (tenant.reminder_app_no_booking_body || DEFAULTS.no_booking.body);
+        : isRebook
+          ? (tenant.reminder_app_rebook_body || DEFAULTS.rebook.body)
+          : isNoShow
+            ? (tenant.reminder_app_no_show_body || DEFAULTS.no_show.body)
+            : (tenant.reminder_app_no_booking_body || DEFAULTS.no_booking.body);
 
       const recruiter = landing?.recruiter_name || landing?.branding?.recruiter_name || tenant.sender_name || tenant.name;
 
