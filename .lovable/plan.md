@@ -1,69 +1,99 @@
+## Ziel
+Rebook-Feature auf Backend-Server (190.97.167.123) einspielen und danach End-to-End verifizieren, dass das gesamte Bewerbungs- + Reminder-System sauber läuft.
 
-## Status Deploy Portal-Server
+## Was fehlt aktuell auf 123
+1. **DB-Migration:** `supabase/manual-migrations/20260715100000_rebook_after_cancel_reminder.sql`
+   → fügt Spalten `reminder_app_rebook_subject/_body` in `tenants` hinzu + erweitert CHECK-Constraint auf `application_reminder_log` um `rebook_after_cancel_24h/72h`.
+2. **Edge Function:** `supabase/functions/send-application-reminders/index.ts` (aktualisiert mit Rebook-Logik).
+3. **Frontend/Webhook:** ist bereits mit `deploy.sh` auf 124 gelandet (Portal läuft), aber der Calendly-Webhook läuft ebenfalls im Portal → ✅ schon aktiv.
 
-Deploy lief sauber durch:
-- git pull ✓
-- build ✓ (48s)
-- portal.service läuft ✓
+## Schritt-für-Schritt (auf 123 per SSH)
 
-**Aber:** Schritt 3/4 sagt „keine Manual-Migrations oder TARGET_DB_URL nicht gesetzt — übersprungen". Das bedeutet: alle neuen SQL-Migrations (u.a. **45-Min-Interview-Timeout**, `interview_auto_timeout`, `registration_pending_reminder` etc.) sind **noch nicht in der DB**. Ohne die läuft der Timeout weiter auf dem alten Wert (bzw. 20 Min) und Bewerber-Chats brechen weiter zu früh ab.
-
-## Was zu tun ist
-
-### Schritt 1 — `TARGET_DB_URL` in Portal-`.env` hinterlegen (einmalig)
-
-Auf dem Portal-Server:
-
+### A) Migration einspielen
 ```bash
-# Prüfen ob schon vorhanden
-grep TARGET_DB_URL /opt/apps/portal/.env
+ssh root@190.97.167.123
+cd /opt/apps/portal        # falls Repo dort auch geklont ist
+git pull
+docker exec -i supabase-db psql -U postgres -d postgres \
+  < supabase/manual-migrations/20260715100000_rebook_after_cancel_reminder.sql
+```
+Erwartung: `ALTER TABLE`, `NOTIFY`, keine Fehler.
 
-# Falls leer → hinzufügen (Passwort aus Supabase-Server holen)
-nano /opt/apps/portal/.env
-# Zeile ergänzen:
-# TARGET_DB_URL=postgres://postgres:<DB-PASSWORD>@<SUPABASE-HOST>:5432/postgres
+Verifikation:
+```bash
+docker exec -i supabase-db psql -U postgres -d postgres -c \
+  "\d public.tenants" | grep reminder_app_rebook
+docker exec -i supabase-db psql -U postgres -d postgres -c \
+  "SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint 
+   WHERE conname='application_reminder_log_reminder_kind_check';"
 ```
 
-Das `<DB-PASSWORD>` ist das Postgres-Passwort deines self-hosted Supabase. Falls unklar: liegt in der Supabase-`.env` unter `POSTGRES_PASSWORD`. Host ist meist die IP des Supabase-Servers (Server 3) oder `127.0.0.1` wenn Portal + Supabase auf derselben Kiste laufen.
-
-### Schritt 2 — Deploy erneut ausführen (spielt Migrations ein)
-
+### B) Edge Function deployen
 ```bash
-bash /opt/apps/portal/scripts/deploy.sh
+cd /opt/apps/portal
+supabase functions deploy send-application-reminders \
+  --project-ref <PROJECT_REF> --no-verify-jwt
+```
+(oder falls self-hosted CLI-Weg nicht geht: neuen Container-Ordner nach `/var/lib/supabase/functions/send-application-reminders/` kopieren und `docker restart supabase-edge-functions`.)
+
+### C) Cron-Job prüfen
+```sql
+SELECT jobname, schedule, active
+FROM cron.job
+WHERE jobname LIKE '%application_reminders%';
+```
+Muss aktiv sein (alle 30 Min).
+
+## Verifikation (End-to-End)
+
+### 1. SMTP-Health & Templates
+```sql
+SELECT id, name, reminder_app_rebook_subject IS NOT NULL AS rebook_ready,
+       bewerbung_magic_link_subject IS NOT NULL AS invite_ready
+FROM tenants;
 ```
 
-Erwartete Ausgabe in Schritt 3/4: mehrere `· 2026xxxxx_xxx.sql → einspielen…` + `✓ … angewendet`. Wenn eine Migration bereits läuft, wird sie einfach übersprungen — kein Risiko.
-
-### Schritt 3 — Landing-Server (Server 1, `uwkconsulting`, 190.97.165.213) updaten
-
-Für den Logo-Cache-Buster-Fix in `landing-server/server.js`:
-
+### 2. Reminder-Dry-Run
 ```bash
-# Von deinem lokalen Rechner ODER vom Portal-Server aus:
-scp /opt/apps/portal/landing-server/server.js \
-    root@190.97.165.213:/opt/apps/landing-server/server.js
+curl -X POST https://<supabase-url>/functions/v1/send-application-reminders \
+  -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+  -d '{"dry_run": true}'
+```
+Erwartung: JSON mit `candidates`-Array, keine Errors.
 
-ssh root@190.97.165.213 'systemctl restart landing.service && \
-  systemctl status landing.service --no-pager | head -n 8'
+### 3. Live-Szenario Rebook (echter Test)
+- Test-Bewerber im Calendly-Widget einer Fast-Track-Landing buchen
+  → `applications.booking_status='scheduled'` + `magic_token` gesetzt
+- Termin in Calendly stornieren
+  → Webhook setzt `booking_status='cancelled'`
+- 24h später (oder `updated_at` manuell zurücksetzen zum Testen):
+  → Function schickt `rebook_after_cancel_24h` E-Mail
+- Bewerber bucht neuen Termin über Calendly-Link
+  → derselbe `magic_token` bleibt aktiv, `booking_status='scheduled'`,
+     alte Rebook-Log-Einträge werden gelöscht
+- Magic-Link öffnen → Interview zeigt neuen Termin ✅
+
+### 4. Logs prüfen
+```sql
+SELECT action, status, target, created_at 
+FROM automation_log 
+WHERE action LIKE 'calendly.%' OR action LIKE 'reminder.%'
+ORDER BY created_at DESC LIMIT 30;
+
+SELECT * FROM application_reminder_log 
+ORDER BY created_at DESC LIMIT 20;
 ```
 
-### Schritt 4 — Kurz-Verifikation
-
-```bash
-# Portal reachable?
-curl -sI https://mb-portal.com | head -n 1        # → 200
-
-# Landing Cache-Header vorhanden?
-curl -sI https://<eine-live-landing>/logo | grep -i cache-control  # → no-cache
-
-# Timeout aktiv (via psql)?
-psql "$TARGET_DB_URL" -c "SELECT pg_get_functiondef('public.auto_timeout_stale_interviews'::regproc);" | grep "45 minutes"
+### 5. Chat-Reminder + Interview-Timeout
+```sql
+SELECT jobname, schedule, active FROM cron.job;
 ```
+Muss enthalten: `auto_timeout_stale_interviews`, `send_appointment_reminders`, `send_application_reminders`, `send_chat_reminder`.
 
-## Wenn du das Postgres-Passwort nicht hast
+## Bei Fehlern
+- **Migration failed** → SQL-Output posten, meist Constraint-Konflikt weil alte Werte drin sind → SQL zum Bereinigen liefere ich dann.
+- **Edge Function 500** → `docker logs supabase-edge-functions --tail 100`.
+- **Cron läuft, aber keine Mails** → `email_send_log` + `tenants.smtp_health` prüfen.
 
-Alternativen:
-1. Auf Supabase-Server (Server 3): `grep POSTGRES_PASSWORD /opt/supabase/.env`
-2. Oder: Migrations manuell per `psql` von Supabase-Server aus einspielen (dort ist Postgres lokal ohne Passwort erreichbar).
-
-Sag Bescheid welchen Weg du gehen willst, dann geb ich dir den exakten Befehl.
+## Nach erfolgreicher Verifikation
+Zusammenfassung an dich: welche 11 E-Mail-Typen aktiv sind, welche Cron-Jobs laufen, ob Rebook-Flow durchgängig funktioniert.
