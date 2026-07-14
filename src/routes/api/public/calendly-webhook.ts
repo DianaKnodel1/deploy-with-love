@@ -113,15 +113,22 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
           if (data) appRow = data;
         }
         if (!appRow && email) {
+          // Lücke A: 'cancelled' und 'no_show' mit einbeziehen, damit bei einer
+          // Neubuchung derselbe Application-Datensatz recycled wird
+          // (inkl. bestehendem magic_token → derselbe Link zeigt neuen Termin).
           const { data } = await supabaseAdmin
             .from("applications")
             .select("id, tenant_id, email, booking_status, magic_token, created_at")
             .ilike("email", email)
-            .in("booking_status", ["pending", "none", "scheduled"])
+            .in("booking_status", ["pending", "none", "scheduled", "cancelled", "no_show"])
             .order("created_at", { ascending: false })
             .limit(10);
           const rows = (data ?? []) as any[];
-          appRow = rows.find((r) => r.booking_status === "pending") ?? rows[0] ?? null;
+          appRow =
+            rows.find((r) => r.booking_status === "pending") ??
+            rows.find((r) => r.booking_status === "cancelled" || r.booking_status === "no_show") ??
+            rows[0] ??
+            null;
         }
 
         // Auto-create application if booking arrived without an existing one
