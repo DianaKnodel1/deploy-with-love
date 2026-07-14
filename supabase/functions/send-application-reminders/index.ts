@@ -461,7 +461,19 @@ serve(async (req) => {
         continue;
       }
 
-      // 3) No-Booking (nur wenn kein Termin gebucht)
+      // 3) Rebook nach Cancel (Termin wurde abgesagt, kein neuer gebucht)
+      if (a.booking_status === "cancelled") {
+        const changedMs = new Date(a.updated_at ?? a.created_at).getTime();
+        const sinceChangeMin = (now - changedMs) / 60_000;
+        if (sinceChangeMin >= REBOOK_1_MIN && sinceChangeMin < REBOOK_2_MIN) {
+          if (!already.has(`${a.id}|rebook_after_cancel_24h`)) todo.push({ app: a, kind: "rebook_after_cancel_24h" });
+        } else if (sinceChangeMin >= REBOOK_2_MIN && sinceChangeMin < REBOOK_2_MIN + 5 * 24 * 60) {
+          if (!already.has(`${a.id}|rebook_after_cancel_72h`)) todo.push({ app: a, kind: "rebook_after_cancel_72h" });
+        }
+        continue;
+      }
+
+      // 4) No-Booking (nur wenn kein Termin gebucht)
       const hasBooking = a.booking_status === "scheduled" || !!a.scheduled_at;
       if (hasBooking) continue;
 
