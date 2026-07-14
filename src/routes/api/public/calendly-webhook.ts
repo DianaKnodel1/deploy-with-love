@@ -196,6 +196,17 @@ export const Route = createFileRoute("/api/public/calendly-webhook")({
           }
           await supabaseAdmin.from("applications").update(upd).eq("id", appRow.id);
 
+          // Re-Booking: alte Rebook-Reminder-Log-Einträge löschen, damit bei
+          // erneuter Absage die Reminder wieder feuern können.
+          if (event === "invitee.created" &&
+              (appRow.booking_status === "cancelled" || appRow.booking_status === "no_show")) {
+            await supabaseAdmin
+              .from("application_reminder_log")
+              .delete()
+              .eq("application_id", appRow.id)
+              .in("reminder_kind", ["rebook_after_cancel_24h", "rebook_after_cancel_72h", "no_show_24h"]);
+          }
+
           // Stage-Lifecycle mitziehen (Migration 20260706000000).
           const targetStage =
             newStatus === "scheduled" ? "vermittlung_termin_gebucht"
