@@ -11,7 +11,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import nodemailer from "https://esm.sh/nodemailer@6.9.14";
 
-const FUNCTION_VERSION = "2026-07-15-rebook-after-cancel-v8";
+const FUNCTION_VERSION = "2026-07-15-rebook-after-cancel-v9-smtp-rate-limit-safe";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -267,6 +267,23 @@ function appendUtm(url: string, appId: string): string {
   return has ? url : `${url}${sep}utm_content=${encodeURIComponent(appId)}`;
 }
 
+function smtpErrorMessage(e: unknown): string {
+  return String((e as any)?.message ?? e ?? "SMTP error").slice(0, 500);
+}
+
+function isSmtpHourlyRateLimit(errMsg: string): boolean {
+  const normalized = errMsg.toLowerCase();
+  return (
+    normalized.includes("too many messages") ||
+    normalized.includes("last 60 minutes") ||
+    normalized.includes("rate limit") ||
+    normalized.includes("rate-limit") ||
+    normalized.includes("throttl") ||
+    normalized.includes("quota exceeded") ||
+    normalized.includes("try again later")
+  );
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -488,9 +505,11 @@ serve(async (req) => {
     const results: any[] = [];
 
     // ─── Rate-Limits (SMTP-Reputationsschutz) ───
-    // Pro Tenant hartes Limit pro Cron-Lauf und pro 12h — verhindert Spam-Flags.
-    const MAX_PER_RUN_PER_TENANT = 40;
-    const MAX_PER_12H_PER_TENANT = 200;
+    // Pro Tenant/Sender bewusst konservativ: einige Mailserver blocken schon
+    // nach wenigen Mails pro Stunde mit "too many messages from sender".
+    const MAX_PER_RUN_PER_TENANT = 5;
+    const MAX_PER_1H_PER_TENANT = 8;
+    const MAX_PER_12H_PER_TENANT = 80;
     const JITTER_MIN_MS = 400;
     const JITTER_MAX_MS = 1200;
     const AUTO_PAUSE_AFTER_FAILS = 3;
@@ -498,24 +517,34 @@ serve(async (req) => {
     const runSentByTenant = new Map<string, number>();
     const failStreakByTenant = new Map<string, number>();
     const pausedInThisRun = new Set<string>();
+    const rateLimitedInThisRun = new Set<string>();
 
-    // 12h-Zählstand aus email_log (falls Tabelle existiert; ansonsten silent 0)
+    // 1h-/12h-Zählstand aus email_send_log (zentrale Tabelle im E-Mail-Center).
     const sent12hByTenant = new Map<string, number>();
+    const sent1hByTenant = new Map<string, number>();
     try {
       const cutoff = new Date(Date.now() - 12 * 3600_000).toISOString();
+      const cutoff1hMs = Date.now() - 3600_000;
       const tenantIds = Array.from(tenants.keys());
       if (tenantIds.length) {
-        const { data: recent } = await admin
-          .from("email_log")
-          .select("tenant_id")
+        const { data: recent, error: recentErr } = await admin
+          .from("email_send_log")
+          .select("tenant_id,created_at")
           .in("tenant_id", tenantIds)
-          .gte("sent_at", cutoff);
-        for (const r of (recent ?? []) as any[]) {
-          const c = sent12hByTenant.get(r.tenant_id) ?? 0;
-          sent12hByTenant.set(r.tenant_id, c + 1);
+          .eq("status", "sent")
+          .gte("created_at", cutoff);
+        if (!recentErr) {
+          for (const r of (recent ?? []) as any[]) {
+            const c = sent12hByTenant.get(r.tenant_id) ?? 0;
+            sent12hByTenant.set(r.tenant_id, c + 1);
+            if (new Date(r.created_at).getTime() >= cutoff1hMs) {
+              const h = sent1hByTenant.get(r.tenant_id) ?? 0;
+              sent1hByTenant.set(r.tenant_id, h + 1);
+            }
+          }
         }
       }
-    } catch { /* email_log optional */ }
+    } catch { /* email_send_log optional */ }
 
     const jitter = () => new Promise(res => setTimeout(res, JITTER_MIN_MS + Math.random() * (JITTER_MAX_MS - JITTER_MIN_MS)));
 
@@ -523,11 +552,14 @@ serve(async (req) => {
       const tenant = tenants.get(app.tenant_id);
       if (!tenant) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_missing" }); continue; }
       if (tenant.emails_paused || pausedInThisRun.has(tenant.id)) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_paused" }); continue; }
+      if (rateLimitedInThisRun.has(tenant.id)) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_rate_limited_retry_later" }); continue; }
       if (!hasValidSmtp(tenant)) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "smtp_incomplete" }); continue; }
 
       // Rate-Limits
       const runCount = runSentByTenant.get(tenant.id) ?? 0;
       if (runCount >= MAX_PER_RUN_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_run_cap" }); continue; }
+      const total1h = (sent1hByTenant.get(tenant.id) ?? 0) + runCount;
+      if (total1h >= MAX_PER_1H_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_1h_cap", limit: MAX_PER_1H_PER_TENANT }); continue; }
       const total12h = (sent12hByTenant.get(tenant.id) ?? 0) + runCount;
       if (total12h >= MAX_PER_12H_PER_TENANT) { skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "tenant_12h_cap" }); continue; }
 
@@ -636,7 +668,28 @@ serve(async (req) => {
         failStreakByTenant.set(tenant.id, 0);
         await jitter();
       } catch (e: any) {
-        const errMsg = String(e?.message ?? e).slice(0, 500);
+        const errMsg = smtpErrorMessage(e);
+        if (isSmtpHourlyRateLimit(errMsg)) {
+          rateLimitedInThisRun.add(tenant.id);
+          await admin.from("application_reminder_log").upsert({
+            application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
+            recipient_email: app.email, status: "skipped", error: `smtp_rate_limited_retry_later: ${errMsg}`,
+            sent_at: new Date().toISOString(),
+          }, { onConflict: "application_id,reminder_kind" });
+          try {
+            await admin.from("email_send_log").insert({
+              message_id: messageId, tenant_id: tenant.id,
+              template_name: templateName, recipient_email: app.email,
+              status: "pending", error_message: `SMTP-Stundenlimit erreicht, wird später erneut versucht: ${errMsg}`,
+              rendered_subject: subject, rendered_html: html,
+              sender_email: tenant.sender_email ?? tenant.smtp_username,
+              metadata: { application_id: app.id, kind, source: "send-application-reminders", retry_reason: "smtp_hourly_rate_limit" },
+            } as any);
+          } catch { /* non-critical */ }
+          skipped++; results.push({ app: app.id, kind, status: "skipped", reason: "smtp_rate_limited_retry_later", detail: errMsg });
+          await jitter();
+          continue;
+        }
         await admin.from("application_reminder_log").upsert({
           application_id: app.id, tenant_id: tenant.id, reminder_kind: kind,
           recipient_email: app.email, status: "failed", error: errMsg,
