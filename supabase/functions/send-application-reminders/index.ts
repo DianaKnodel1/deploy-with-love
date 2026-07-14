@@ -533,6 +533,7 @@ serve(async (req) => {
 
       const isRegistration = kind === "registration_pending_24h" || kind === "registration_pending_72h";
       const isNoShow = kind === "no_show_24h";
+      const isRebook = kind === "rebook_after_cancel_24h" || kind === "rebook_after_cancel_72h";
 
       const landing = (app.source_landing_id ? landingMap.get(app.source_landing_id) : null)
         || (app.target_landing_id ? landingMap.get(app.target_landing_id) : null)
@@ -576,14 +577,18 @@ serve(async (req) => {
 
       const tmplSubject = isRegistration
         ? (tenant.reminder_app_registration_subject || DEFAULTS.registration.subject)
-        : isNoShow
-          ? (tenant.reminder_app_no_show_subject || DEFAULTS.no_show.subject)
-          : (tenant.reminder_app_no_booking_subject || DEFAULTS.no_booking.subject);
+        : isRebook
+          ? (tenant.reminder_app_rebook_subject || DEFAULTS.rebook.subject)
+          : isNoShow
+            ? (tenant.reminder_app_no_show_subject || DEFAULTS.no_show.subject)
+            : (tenant.reminder_app_no_booking_subject || DEFAULTS.no_booking.subject);
       const tmplBody = isRegistration
         ? (tenant.reminder_app_registration_body || DEFAULTS.registration.body)
-        : isNoShow
-          ? (tenant.reminder_app_no_show_body || DEFAULTS.no_show.body)
-          : (tenant.reminder_app_no_booking_body || DEFAULTS.no_booking.body);
+        : isRebook
+          ? (tenant.reminder_app_rebook_body || DEFAULTS.rebook.body)
+          : isNoShow
+            ? (tenant.reminder_app_no_show_body || DEFAULTS.no_show.body)
+            : (tenant.reminder_app_no_booking_body || DEFAULTS.no_booking.body);
 
       const recruiter = landing?.recruiter_name || landing?.branding?.recruiter_name || tenant.sender_name || tenant.name;
 
