@@ -195,6 +195,42 @@ export const Route = createFileRoute("/api/public/applications")({
           }
         }
 
+        // Eigenes Buchungssystem: falls für diese Landing ein aktives Schedule
+        // existiert, wird Calendly ignoriert und der Bewerber landet auf
+        // /buchen/:magic_token. Interview-Modus hat weiter Vorrang.
+        let ownBookingUrl: string | null = null;
+        const landingIdForSchedule = d.source_landing_id ?? landingPage?.id ?? null;
+        if (!d.is_test && !isBroker && !isFast && landingIdForSchedule && d.portal_url) {
+          const { data: sched } = await supabaseAdmin
+            .from("availability_schedules")
+            .select("id")
+            .eq("landing_page_id", landingIdForSchedule)
+            .eq("active", true)
+            .maybeSingle();
+          if ((sched as any)?.id) {
+            let token: string | null = null;
+            const { data: existingApp } = await supabaseAdmin
+              .from("applications")
+              .select("magic_token, magic_token_expires_at")
+              .eq("id", appId).maybeSingle();
+            const stillValid = (existingApp as any)?.magic_token &&
+              (!((existingApp as any).magic_token_expires_at) ||
+                new Date((existingApp as any).magic_token_expires_at) > new Date());
+            if (stillValid) {
+              token = (existingApp as any).magic_token as string;
+            } else {
+              token = crypto.randomUUID().replace(/-/g, "");
+              await supabaseAdmin.from("applications").update({
+                magic_token: token,
+                magic_token_expires_at: new Date(Date.now() + 14 * 24 * 60 * 60_000).toISOString(),
+                booking_status: "pending",
+              } as any).eq("id", appId);
+            }
+            const base = d.portal_url.replace(/\/+$/, "");
+            ownBookingUrl = `${base}/buchen/${token}`;
+          }
+        }
+
         let redirect_url: string | null = null;
         let broker_block: any = null;
 
@@ -238,6 +274,8 @@ export const Route = createFileRoute("/api/public/applications")({
           // erfolgt dort separat — keine PII in der URL.
           const base = d.portal_url.replace(/\/+$/, "");
           redirect_url = `${base}/`;
+        } else if (ownBookingUrl) {
+          redirect_url = ownBookingUrl;
         } else if (useCalendly && d.portal_url && d.source_slug) {
           const base = d.portal_url.replace(/\/+$/, "");
           const parts = d.full_name.trim().split(/\s+/);
