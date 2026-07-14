@@ -112,6 +112,7 @@ interface TenantRow {
   reminder_app_no_booking_subject: string | null; reminder_app_no_booking_body: string | null;
   reminder_app_no_show_subject: string | null;    reminder_app_no_show_body: string | null;
   reminder_app_registration_subject: string | null; reminder_app_registration_body: string | null;
+  reminder_app_rebook_subject: string | null; reminder_app_rebook_body: string | null;
 }
 
 type LandingRow = {
