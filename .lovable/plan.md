@@ -1,99 +1,134 @@
+# Eigenes Buchungssystem — Ersatz für Calendly
+
 ## Ziel
-Rebook-Feature auf Backend-Server (190.97.167.123) einspielen und danach End-to-End verifizieren, dass das gesamte Bewerbungs- + Reminder-System sauber läuft.
 
-## Was fehlt aktuell auf 123
-1. **DB-Migration:** `supabase/manual-migrations/20260715100000_rebook_after_cancel_reminder.sql`
-   → fügt Spalten `reminder_app_rebook_subject/_body` in `tenants` hinzu + erweitert CHECK-Constraint auf `application_reminder_log` um `rebook_after_cancel_24h/72h`.
-2. **Edge Function:** `supabase/functions/send-application-reminders/index.ts` (aktualisiert mit Rebook-Logik).
-3. **Frontend/Webhook:** ist bereits mit `deploy.sh` auf 124 gelandet (Portal läuft), aber der Calendly-Webhook läuft ebenfalls im Portal → ✅ schon aktiv.
+Ein schlankes, in die Plattform integriertes Termin-System für Bewerbungsgespräche. Bewerber:
+- sehen freie Slots einer Landing-Page / eines Tenants
+- buchen einen Termin (ohne Login, per Magic Link)
+- bekommen Bestätigungs-Mail mit ICS + Absage-/Umbuchen-Link
+- können absagen und neu buchen
+- werden 30 Min vor Termin per E-Mail an das Interview erinnert (bestehende Reminder-Function)
 
-## Schritt-für-Schritt (auf 123 per SSH)
+Admin:
+- definiert **Verfügbarkeiten** (Wochenrhythmus + Ausnahmen) pro Recruiter/Landing-Page
+- sieht alle gebuchten Termine im bestehenden `admin.bewerbungen`-View
+- kann Termine manuell verschieben/absagen
 
-### A) Migration einspielen
-```bash
-ssh root@190.97.167.123
-cd /opt/apps/portal        # falls Repo dort auch geklont ist
-git pull
-docker exec -i supabase-db psql -U postgres -d postgres \
-  < supabase/manual-migrations/20260715100000_rebook_after_cancel_reminder.sql
-```
-Erwartung: `ALTER TABLE`, `NOTIFY`, keine Fehler.
+## Was wir NICHT bauen (bewusst)
 
-Verifikation:
-```bash
-docker exec -i supabase-db psql -U postgres -d postgres -c \
-  "\d public.tenants" | grep reminder_app_rebook
-docker exec -i supabase-db psql -U postgres -d postgres -c \
-  "SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint 
-   WHERE conname='application_reminder_log_reminder_kind_check';"
-```
+- Keine Kalender-Sync (Google/Outlook) — Recruiter tragen Blocker in unserer UI ein
+- Keine Team-Round-Robin-Logik — 1 Landing-Page = 1 Recruiter-Kalender
+- Keine Zahlungen, keine Gruppen-Events mit Anmeldeliste
+- Kein öffentliches Widget-Embedding — Buchung läuft auf unserer Domain
 
-### B) Edge Function deployen
-```bash
-cd /opt/apps/portal
-supabase functions deploy send-application-reminders \
-  --project-ref <PROJECT_REF> --no-verify-jwt
-```
-(oder falls self-hosted CLI-Weg nicht geht: neuen Container-Ordner nach `/var/lib/supabase/functions/send-application-reminders/` kopieren und `docker restart supabase-edge-functions`.)
+## Datenmodell (neue Tabellen)
 
-### C) Cron-Job prüfen
-```sql
-SELECT jobname, schedule, active
-FROM cron.job
-WHERE jobname LIKE '%application_reminders%';
-```
-Muss aktiv sein (alle 30 Min).
+```text
+availability_schedules       (pro Recruiter/Landing-Page: Wochenraster)
+ ├─ id, tenant_id, landing_page_id, name, timezone
+ ├─ slot_duration_minutes (default 30)
+ ├─ buffer_before_minutes, buffer_after_minutes
+ ├─ min_notice_hours (z.B. 4h Vorlaufzeit)
+ └─ max_days_ahead (z.B. 21 Tage im Voraus buchbar)
 
-## Verifikation (End-to-End)
+availability_rules           (Wochentags-Regeln)
+ ├─ schedule_id, weekday (0-6), start_time, end_time
 
-### 1. SMTP-Health & Templates
-```sql
-SELECT id, name, reminder_app_rebook_subject IS NOT NULL AS rebook_ready,
-       bewerbung_magic_link_subject IS NOT NULL AS invite_ready
-FROM tenants;
+availability_exceptions      (Urlaub / Extra-Slots)
+ ├─ schedule_id, date, is_blocked, start_time, end_time
+
+interview_appointments       (die eigentlichen Buchungen)
+ ├─ id, tenant_id, application_id, schedule_id
+ ├─ starts_at, ends_at, timezone
+ ├─ status: scheduled | cancelled | no_show | completed
+ ├─ cancel_token (uuid, für Absage-Link ohne Login)
+ ├─ cancelled_at, cancelled_by (applicant|admin), cancel_reason
+ ├─ rescheduled_from_id (Kette bei Neubuchung)
+ └─ created_at, updated_at
 ```
 
-### 2. Reminder-Dry-Run
-```bash
-curl -X POST https://<supabase-url>/functions/v1/send-application-reminders \
-  -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-  -d '{"dry_run": true}'
-```
-Erwartung: JSON mit `candidates`-Array, keine Errors.
+Migration ersetzt Calendly-Felder nicht sofort — `applications.booking_status` bleibt (`scheduled/cancelled/…`) und wird vom neuen System genauso gesetzt. `calendly_url` in `landing_pages` wird optional; wenn `schedule_id` gesetzt ist, hat das Vorrang.
 
-### 3. Live-Szenario Rebook (echter Test)
-- Test-Bewerber im Calendly-Widget einer Fast-Track-Landing buchen
-  → `applications.booking_status='scheduled'` + `magic_token` gesetzt
-- Termin in Calendly stornieren
-  → Webhook setzt `booking_status='cancelled'`
-- 24h später (oder `updated_at` manuell zurücksetzen zum Testen):
-  → Function schickt `rebook_after_cancel_24h` E-Mail
-- Bewerber bucht neuen Termin über Calendly-Link
-  → derselbe `magic_token` bleibt aktiv, `booking_status='scheduled'`,
-     alte Rebook-Log-Einträge werden gelöscht
-- Magic-Link öffnen → Interview zeigt neuen Termin ✅
+## Bewerber-Flow (neue Routen)
 
-### 4. Logs prüfen
-```sql
-SELECT action, status, target, created_at 
-FROM automation_log 
-WHERE action LIKE 'calendly.%' OR action LIKE 'reminder.%'
-ORDER BY created_at DESC LIMIT 30;
-
-SELECT * FROM application_reminder_log 
-ORDER BY created_at DESC LIMIT 20;
+```text
+/buchen/:applicationToken            → Slot-Picker (7-Tage-Grid)
+/buchen/:applicationToken/bestaetigt → Bestätigungsseite mit ICS-Download
+/termin/:cancelToken                 → "Termin absagen oder verschieben"
+/termin/:cancelToken/neu             → Slot-Picker für Neubuchung
 ```
 
-### 5. Chat-Reminder + Interview-Timeout
-```sql
-SELECT jobname, schedule, active FROM cron.job;
-```
-Muss enthalten: `auto_timeout_stale_interviews`, `send_appointment_reminders`, `send_application_reminders`, `send_chat_reminder`.
+Slot-Picker berechnet freie Slots **live** aus:
+- Wochenregeln + Ausnahmen
+- minus bereits gebuchte `interview_appointments` (status='scheduled')
+- minus `min_notice_hours` ab jetzt
+- bis `max_days_ahead`
+- in Bewerber-Zeitzone (aus Browser)
 
-## Bei Fehlern
-- **Migration failed** → SQL-Output posten, meist Constraint-Konflikt weil alte Werte drin sind → SQL zum Bereinigen liefere ich dann.
-- **Edge Function 500** → `docker logs supabase-edge-functions --tail 100`.
-- **Cron läuft, aber keine Mails** → `email_send_log` + `tenants.smtp_health` prüfen.
+## Admin-Flow (erweitert bestehende Views)
 
-## Nach erfolgreicher Verifikation
-Zusammenfassung an dich: welche 11 E-Mail-Typen aktiv sind, welche Cron-Jobs laufen, ob Rebook-Flow durchgängig funktioniert.
+- Neue Seite `admin.verfuegbarkeit`: Wochenraster-Editor + Ausnahmen-Kalender
+- `admin.bewerbungen`: bestehende Termin-Spalte zeigt `interview_appointments` statt Calendly-Event
+- Buchungs-Detail: Verschieben / Absagen mit Grund
+
+## E-Mails (nutzen bestehendes SMTP + Templates)
+
+Neue Templates pro Tenant (Fallback = Default):
+- `appointment_confirmed` — nach Buchung, mit ICS
+- `appointment_cancelled_by_admin` — mit Neubuchen-Link
+- `appointment_rescheduled` — alte Zeit → neue Zeit
+
+Bestehende Reminder greifen automatisch weiter:
+- `interview_invite_30min` — 30 Min vorher (existiert schon)
+- `rebook_after_cancel_24h/72h` — greift bei `booking_status='cancelled'` (existiert schon)
+
+## Interview-Durchführung
+
+Das eigentliche Interview (Chat/Voice mit KI-Recruiterin) existiert bereits (`landing_pages.interview_mode`, `applications.interview_messages` usw.). Neu:
+- Interview-Link wird **erst 15 Min vor `starts_at`** aktiv (verhindert Vorab-Chats)
+- 30-Min-Reminder-Mail enthält bereits Interview-Link → passt zusammen
+- Nach Ende: `interview_appointments.status='completed'` wird automatisch gesetzt (Cron), wenn Interview-Status `done|timeout` ist
+
+## Technischer Aufbau
+
+Backend:
+- Migration (neue Tabellen, RLS, Grants, Indexes)
+- Server Functions in `src/lib/appointments.functions.ts`:
+  - `getAvailableSlots({ applicationToken, timezone })` — public, kein Auth
+  - `bookAppointment({ applicationToken, startsAt, timezone })` — public
+  - `cancelAppointment({ cancelToken, reason })` — public
+  - `rescheduleAppointment({ cancelToken, newStartsAt })` — public
+  - `adminListAppointments`, `adminCancelAppointment`, `adminUpsertSchedule` — auth
+- Slot-Berechnung als Postgres-Function `get_free_slots(schedule_id, from, to)` — performant, atomar
+- Race-Condition-Schutz: Buchung per SQL `INSERT ... WHERE NOT EXISTS (overlap check)` + Unique Exclusion Constraint `EXCLUDE USING gist (schedule_id WITH =, tstzrange(starts_at, ends_at) WITH &&) WHERE (status='scheduled')`
+
+Frontend:
+- Neue Routen unter `src/routes/buchen.$token.tsx`, `src/routes/termin.$token.tsx`
+- Slot-Grid-Komponente (7 Tage, klickbar, Zeitzone im Header)
+- Admin: `src/routes/_authenticated/admin/verfuegbarkeit.tsx`
+
+ICS-Generierung: eigene Mini-Utility (`src/lib/ics.ts`), kein Package nötig.
+
+## Migration bestehender Daten
+
+- Bestehende Landing-Pages mit `calendly_url` behalten Calendly aktiv, solange kein `schedule_id` gesetzt ist → sanfter Rollout
+- Ein Tenant kann testweise auf das neue System umgestellt werden, ohne andere zu brechen
+- `applications.calendly_event_uri` bleibt für Historie
+
+## Umsetzungs-Reihenfolge (jeweils separate Deploys)
+
+1. **DB + Slot-Engine** — Migration, Postgres-Function, Server-Functions inkl. Unit-Test der Slot-Berechnung
+2. **Admin-Verfügbarkeits-Editor** — damit wir überhaupt Slots anlegen können
+3. **Bewerber-Buchungsseite** — `/buchen/:token` mit Slot-Picker + Bestätigung + ICS-Mail
+4. **Absagen / Neubuchen** — `/termin/:cancelToken`
+5. **Umschalter auf Landing-Page** — Admin wählt: Calendly oder eigenes System
+6. **Cleanup** (später) — wenn stabil, Calendly-Felder deprecaten
+
+## Offene Fragen
+
+1. **Slot-Länge**: Fix 30 Min für alle, oder pro Landing-Page einstellbar? (Vorschlag: pro Landing-Page, Default 30)
+2. **Mehrere Recruiter pro Tenant**: Braucht Personalservice Süd 1 oder mehrere parallele Kalender? (Vorschlag: 1 Kalender pro Landing-Page — reicht für alle aktuellen Cases)
+3. **Roll-out**: Erst kompletter Bau + Test intern, dann 1 Test-Tenant, dann alle? Oder direkt bei Personalservice Süd scharf schalten sobald fertig?
+4. **Calendly-Bestand**: Bestehende Calendly-Buchungen (nächste 14 Tage) — mitmigrieren oder Calendly parallel weiterlaufen lassen bis leergelaufen? (Vorschlag: parallel laufen lassen)
+
+Sag mir zu diesen 4 Punkten kurz Bescheid, dann starte ich mit Schritt 1 (DB + Slot-Engine).

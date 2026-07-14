@@ -21,10 +21,13 @@ import { Route as EmployeeRouteImport } from './routes/_employee'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BewerbungIndexRouteImport } from './routes/bewerbung.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as TerminTokenRouteImport } from './routes/termin.$token'
 import { Route as InterviewAppIdRouteImport } from './routes/interview.$appId'
+import { Route as BuchenTokenRouteImport } from './routes/buchen.$token'
 import { Route as BewerbungVerbindenRouteImport } from './routes/bewerbung.verbinden'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
 import { Route as AdminVermittlungRouteImport } from './routes/admin.vermittlung'
+import { Route as AdminVerfuegbarkeitRouteImport } from './routes/admin.verfuegbarkeit'
 import { Route as AdminUploadsRouteImport } from './routes/admin.uploads'
 import { Route as AdminTransactionsRouteImport } from './routes/admin.transactions'
 import { Route as AdminTenantsRouteImport } from './routes/admin.tenants'
@@ -147,9 +150,19 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const TerminTokenRoute = TerminTokenRouteImport.update({
+  id: '/termin/$token',
+  path: '/termin/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InterviewAppIdRoute = InterviewAppIdRouteImport.update({
   id: '/interview/$appId',
   path: '/interview/$appId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuchenTokenRoute = BuchenTokenRouteImport.update({
+  id: '/buchen/$token',
+  path: '/buchen/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BewerbungVerbindenRoute = BewerbungVerbindenRouteImport.update({
@@ -165,6 +178,11 @@ const AuthConfirmedRoute = AuthConfirmedRouteImport.update({
 const AdminVermittlungRoute = AdminVermittlungRouteImport.update({
   id: '/vermittlung',
   path: '/vermittlung',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVerfuegbarkeitRoute = AdminVerfuegbarkeitRouteImport.update({
+  id: '/verfuegbarkeit',
+  path: '/verfuegbarkeit',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminUploadsRoute = AdminUploadsRouteImport.update({
@@ -541,10 +559,13 @@ export interface FileRoutesByFullPath {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/verfuegbarkeit': typeof AdminVerfuegbarkeitRoute
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
+  '/buchen/$token': typeof BuchenTokenRoute
   '/interview/$appId': typeof InterviewAppIdRoute
+  '/termin/$token': typeof TerminTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/bewerbung/': typeof BewerbungIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
@@ -619,10 +640,13 @@ export interface FileRoutesByTo {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/verfuegbarkeit': typeof AdminVerfuegbarkeitRoute
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
+  '/buchen/$token': typeof BuchenTokenRoute
   '/interview/$appId': typeof InterviewAppIdRoute
+  '/termin/$token': typeof TerminTokenRoute
   '/admin': typeof AdminIndexRoute
   '/bewerbung': typeof BewerbungIndexRoute
   '/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
@@ -700,10 +724,13 @@ export interface FileRoutesById {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/verfuegbarkeit': typeof AdminVerfuegbarkeitRoute
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
+  '/buchen/$token': typeof BuchenTokenRoute
   '/interview/$appId': typeof InterviewAppIdRoute
+  '/termin/$token': typeof TerminTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/bewerbung/': typeof BewerbungIndexRoute
   '/_employee/tasks/$assignmentId': typeof EmployeeTasksAssignmentIdRoute
@@ -781,10 +808,13 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/verfuegbarkeit'
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
+    | '/buchen/$token'
     | '/interview/$appId'
+    | '/termin/$token'
     | '/admin/'
     | '/bewerbung/'
     | '/tasks/$assignmentId'
@@ -859,10 +889,13 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/verfuegbarkeit'
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
+    | '/buchen/$token'
     | '/interview/$appId'
+    | '/termin/$token'
     | '/admin'
     | '/bewerbung'
     | '/tasks/$assignmentId'
@@ -939,10 +972,13 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/verfuegbarkeit'
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
+    | '/buchen/$token'
     | '/interview/$appId'
+    | '/termin/$token'
     | '/admin/'
     | '/bewerbung/'
     | '/_employee/tasks/$assignmentId'
@@ -980,7 +1016,9 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   AuthConfirmedRoute: typeof AuthConfirmedRoute
   BewerbungVerbindenRoute: typeof BewerbungVerbindenRoute
+  BuchenTokenRoute: typeof BuchenTokenRoute
   InterviewAppIdRoute: typeof InterviewAppIdRoute
+  TerminTokenRoute: typeof TerminTokenRoute
   BewerbungIndexRoute: typeof BewerbungIndexRoute
   ApiPublicAiChatRoute: typeof ApiPublicAiChatRoute
   ApiPublicApplicationByTokenRoute: typeof ApiPublicApplicationByTokenRoute
@@ -1085,11 +1123,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/termin/$token': {
+      id: '/termin/$token'
+      path: '/termin/$token'
+      fullPath: '/termin/$token'
+      preLoaderRoute: typeof TerminTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/interview/$appId': {
       id: '/interview/$appId'
       path: '/interview/$appId'
       fullPath: '/interview/$appId'
       preLoaderRoute: typeof InterviewAppIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buchen/$token': {
+      id: '/buchen/$token'
+      path: '/buchen/$token'
+      fullPath: '/buchen/$token'
+      preLoaderRoute: typeof BuchenTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bewerbung/verbinden': {
@@ -1111,6 +1163,13 @@ declare module '@tanstack/react-router' {
       path: '/vermittlung'
       fullPath: '/admin/vermittlung'
       preLoaderRoute: typeof AdminVermittlungRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/verfuegbarkeit': {
+      id: '/admin/verfuegbarkeit'
+      path: '/verfuegbarkeit'
+      fullPath: '/admin/verfuegbarkeit'
+      preLoaderRoute: typeof AdminVerfuegbarkeitRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/uploads': {
@@ -1640,6 +1699,7 @@ interface AdminRouteChildren {
   AdminTenantsRoute: typeof AdminTenantsRoute
   AdminTransactionsRoute: typeof AdminTransactionsRoute
   AdminUploadsRoute: typeof AdminUploadsRoute
+  AdminVerfuegbarkeitRoute: typeof AdminVerfuegbarkeitRoute
   AdminVermittlungRoute: typeof AdminVermittlungRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAssignmentsAssignmentIdRoute: typeof AdminAssignmentsAssignmentIdRoute
@@ -1677,6 +1737,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTenantsRoute: AdminTenantsRoute,
   AdminTransactionsRoute: AdminTransactionsRoute,
   AdminUploadsRoute: AdminUploadsRoute,
+  AdminVerfuegbarkeitRoute: AdminVerfuegbarkeitRoute,
   AdminVermittlungRoute: AdminVermittlungRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminAssignmentsAssignmentIdRoute: AdminAssignmentsAssignmentIdRoute,
@@ -1699,7 +1760,9 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   AuthConfirmedRoute: AuthConfirmedRoute,
   BewerbungVerbindenRoute: BewerbungVerbindenRoute,
+  BuchenTokenRoute: BuchenTokenRoute,
   InterviewAppIdRoute: InterviewAppIdRoute,
+  TerminTokenRoute: TerminTokenRoute,
   BewerbungIndexRoute: BewerbungIndexRoute,
   ApiPublicAiChatRoute: ApiPublicAiChatRoute,
   ApiPublicApplicationByTokenRoute: ApiPublicApplicationByTokenRoute,
