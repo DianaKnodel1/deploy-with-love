@@ -532,7 +532,7 @@ serve(async (req) => {
           .select("tenant_id,created_at")
           .in("tenant_id", tenantIds)
           .eq("status", "sent")
-          .gte("sent_at", cutoff);
+          .gte("created_at", cutoff);
         if (!recentErr) {
           for (const r of (recent ?? []) as any[]) {
             const c = sent12hByTenant.get(r.tenant_id) ?? 0;
