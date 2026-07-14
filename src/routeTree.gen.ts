@@ -27,6 +27,7 @@ import { Route as BuchenTokenRouteImport } from './routes/buchen.$token'
 import { Route as BewerbungVerbindenRouteImport } from './routes/bewerbung.verbinden'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
 import { Route as AdminVermittlungRouteImport } from './routes/admin.vermittlung'
+import { Route as AdminVerfuegbarkeitRouteImport } from './routes/admin.verfuegbarkeit'
 import { Route as AdminUploadsRouteImport } from './routes/admin.uploads'
 import { Route as AdminTransactionsRouteImport } from './routes/admin.transactions'
 import { Route as AdminTenantsRouteImport } from './routes/admin.tenants'
@@ -177,6 +178,11 @@ const AuthConfirmedRoute = AuthConfirmedRouteImport.update({
 const AdminVermittlungRoute = AdminVermittlungRouteImport.update({
   id: '/vermittlung',
   path: '/vermittlung',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVerfuegbarkeitRoute = AdminVerfuegbarkeitRouteImport.update({
+  id: '/verfuegbarkeit',
+  path: '/verfuegbarkeit',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminUploadsRoute = AdminUploadsRouteImport.update({
@@ -553,6 +559,7 @@ export interface FileRoutesByFullPath {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/verfuegbarkeit': typeof AdminVerfuegbarkeitRoute
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
@@ -633,6 +640,7 @@ export interface FileRoutesByTo {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/verfuegbarkeit': typeof AdminVerfuegbarkeitRoute
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
@@ -716,6 +724,7 @@ export interface FileRoutesById {
   '/admin/tenants': typeof AdminTenantsRoute
   '/admin/transactions': typeof AdminTransactionsRoute
   '/admin/uploads': typeof AdminUploadsRoute
+  '/admin/verfuegbarkeit': typeof AdminVerfuegbarkeitRoute
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
@@ -799,6 +808,7 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/verfuegbarkeit'
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
@@ -879,6 +889,7 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/verfuegbarkeit'
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
@@ -961,6 +972,7 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/admin/transactions'
     | '/admin/uploads'
+    | '/admin/verfuegbarkeit'
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
@@ -1151,6 +1163,13 @@ declare module '@tanstack/react-router' {
       path: '/vermittlung'
       fullPath: '/admin/vermittlung'
       preLoaderRoute: typeof AdminVermittlungRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/verfuegbarkeit': {
+      id: '/admin/verfuegbarkeit'
+      path: '/verfuegbarkeit'
+      fullPath: '/admin/verfuegbarkeit'
+      preLoaderRoute: typeof AdminVerfuegbarkeitRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/uploads': {
@@ -1680,6 +1699,7 @@ interface AdminRouteChildren {
   AdminTenantsRoute: typeof AdminTenantsRoute
   AdminTransactionsRoute: typeof AdminTransactionsRoute
   AdminUploadsRoute: typeof AdminUploadsRoute
+  AdminVerfuegbarkeitRoute: typeof AdminVerfuegbarkeitRoute
   AdminVermittlungRoute: typeof AdminVermittlungRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAssignmentsAssignmentIdRoute: typeof AdminAssignmentsAssignmentIdRoute
@@ -1717,6 +1737,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTenantsRoute: AdminTenantsRoute,
   AdminTransactionsRoute: AdminTransactionsRoute,
   AdminUploadsRoute: AdminUploadsRoute,
+  AdminVerfuegbarkeitRoute: AdminVerfuegbarkeitRoute,
   AdminVermittlungRoute: AdminVermittlungRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminAssignmentsAssignmentIdRoute: AdminAssignmentsAssignmentIdRoute,
