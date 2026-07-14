@@ -61,6 +61,24 @@ Viele Grüße
 {{recruiter_name}}
 {{tenant_name}}`,
   },
+  rebook: {
+    subject: "Ihr Termin wurde abgesagt – bitte wählen Sie einen neuen",
+    body:
+`Hallo {{first_name}},
+
+Ihr geplanter Termin bei {{tenant_name}} wurde abgesagt. Wir würden Sie trotzdem sehr gerne kennenlernen und laden Sie ein, einen neuen Wunschtermin zu wählen.
+
+{{cta:Neuen Termin auswählen|{{calendly_link}}}}
+
+Falls der Button nicht funktioniert, kopieren Sie diesen Link:
+{{calendly_link}}
+
+Bei Fragen antworten Sie einfach auf diese E-Mail – wir helfen gerne.
+
+Herzliche Grüße
+{{recruiter_name}}
+{{tenant_name}}`,
+  },
   registration: {
     subject: "🎉 Ihr Portal-Zugang wartet – nur noch ein Klick, {{first_name}}",
     body:
