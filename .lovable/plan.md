@@ -1,134 +1,109 @@
-# Eigenes Buchungssystem — Ersatz für Calendly
+# Plan: Professionalisierung E-Mail-System + Funnel-Optimierung
 
-## Ziel
+Fokus: seriöser Auftritt, weniger Spam, mehr abgeschlossene Buchungen. Alles rückwärtskompatibel – keine bestehende Funktion wird kaputt.
 
-Ein schlankes, in die Plattform integriertes Termin-System für Bewerbungsgespräche. Bewerber:
-- sehen freie Slots einer Landing-Page / eines Tenants
-- buchen einen Termin (ohne Login, per Magic Link)
-- bekommen Bestätigungs-Mail mit ICS + Absage-/Umbuchen-Link
-- können absagen und neu buchen
-- werden 30 Min vor Termin per E-Mail an das Interview erinnert (bestehende Reminder-Function)
+---
 
-Admin:
-- definiert **Verfügbarkeiten** (Wochenrhythmus + Ausnahmen) pro Recruiter/Landing-Page
-- sieht alle gebuchten Termine im bestehenden `admin.bewerbungen`-View
-- kann Termine manuell verschieben/absagen
+## Teil A – Einheitlicher E-Mail-Standard
 
-## Was wir NICHT bauen (bewusst)
+### A1. Zentraler HTML-Wrapper (`supabase/functions/_shared/email-wrapper.ts`)
+Eine Datei, die alle Mails künftig durchlaufen. Enthält:
+- **Logo oben** (aus `tenant.logo_url`, fallback: Firmenname als Text)
+- **Primärfarbe** für alle Buttons (aus `tenant.primary_color`, fallback #0f172a)
+- **Preheader-Text** (versteckt für's Auge, sichtbar im Gmail-Vorschautext)
+- **Ansprechpartner-Karte unten** (Name + optional Foto aus `landing_pages.recruiter_name` / `recruiter_avatar`)
+- **Footer**: Firmenname · "Antworten Sie einfach auf diese E-Mail" · Impressum-Zeile
+- **Automatische Plain-Text-Version** aus dem HTML generiert (Spam-Score ↓)
 
-- Keine Kalender-Sync (Google/Outlook) — Recruiter tragen Blocker in unserer UI ein
-- Keine Team-Round-Robin-Logik — 1 Landing-Page = 1 Recruiter-Kalender
-- Keine Zahlungen, keine Gruppen-Events mit Anmeldeliste
-- Kein öffentliches Widget-Embedding — Buchung läuft auf unserer Domain
+### A2. Migration aller bestehenden Mail-Funktionen auf den Wrapper
+- `send-booking-confirmation` (schon neu, wird angepasst)
+- `send-application-reminders` (5 Reminder-Kinds)
+- `send-appointment-reminders` (30-Min-vorher)
+- `send-invitation-email` (Mitarbeiter-Einladung)
+- `send-chat-reminder`
+- `send-password-reset`, `resend-signup-confirmation`, `send-signup-confirmation`
+- Application-Received-Trigger (in `applications.ts`)
 
-## Datenmodell (neue Tabellen)
+### A3. Konsistente Betreffzeilen
+Max. 1 Emoji, gezielt eingesetzt. Neue Konvention:
+- Bewerbungseingang: `Ihre Bewerbung bei {tenant} – nächste Schritte`
+- Buchungsbestätigung: `✅ Termin bestätigt: {date}, {time} Uhr`
+- 30-Min-Reminder: `⏰ Ihr Gespräch beginnt in 30 Minuten`
+- No-Show: `Termin verpasst? Neuen Termin buchen`
+- Reject-Reminder: kein Emoji
 
-```text
-availability_schedules       (pro Recruiter/Landing-Page: Wochenraster)
- ├─ id, tenant_id, landing_page_id, name, timezone
- ├─ slot_duration_minutes (default 30)
- ├─ buffer_before_minutes, buffer_after_minutes
- ├─ min_notice_hours (z.B. 4h Vorlaufzeit)
- └─ max_days_ahead (z.B. 21 Tage im Voraus buchbar)
+### A4. Spam-Hinweis in kritischen Mails
+In `send-booking-confirmation` und Bewerbungseingang:
+> 💡 **Tipp:** Sollten Sie in den nächsten Minuten keine Antwort im Posteingang sehen, prüfen Sie bitte kurz Ihren Spam-Ordner und markieren Sie uns als „Kein Spam".
 
-availability_rules           (Wochentags-Regeln)
- ├─ schedule_id, weekday (0-6), start_time, end_time
+### A5. Reply-To korrekt setzen
+Alle Mails: `Reply-To: {tenant.reply_to_email || tenant.sender_email}` – kein no-reply-Feeling.
 
-availability_exceptions      (Urlaub / Extra-Slots)
- ├─ schedule_id, date, is_blocked, start_time, end_time
+---
 
-interview_appointments       (die eigentlichen Buchungen)
- ├─ id, tenant_id, application_id, schedule_id
- ├─ starts_at, ends_at, timezone
- ├─ status: scheduled | cancelled | no_show | completed
- ├─ cancel_token (uuid, für Absage-Link ohne Login)
- ├─ cancelled_at, cancelled_by (applicant|admin), cancel_reason
- ├─ rescheduled_from_id (Kette bei Neubuchung)
- └─ created_at, updated_at
-```
+## Teil B – Danke-Seite mit Inline-Erklärung (Bewerbungsformular)
 
-Migration ersetzt Calendly-Felder nicht sofort — `applications.booking_status` bleibt (`scheduled/cancelled/…`) und wird vom neuen System genauso gesetzt. `calendly_url` in `landing_pages` wird optional; wenn `schedule_id` gesetzt ist, hat das Vorrang.
+### B1. Bestätigungsdialog nach Absenden verbessert
+Im bestehenden `form-section.js` (Landing Page):
+- Große grüne Bestätigung: „✅ Bewerbung eingegangen"
+- **Neu:** Prominenter Hinweis „**Wichtig:** Prüfen Sie in den nächsten 2 Minuten Ihren Posteingang – **auch den Spam-Ordner**. Sie erhalten den Link zur Terminbuchung."
+- **CTA "Jetzt Termin buchen →"** falls Custom-Booking aktiv (führt direkt zu `/termin/<token>` – Token kommt aus der API-Response)
+- Fallback (kein Booking-System): der bisherige Modal-Flow bleibt
 
-## Bewerber-Flow (neue Routen)
+### B2. API-Response erweitert (`applications.ts`)
+Response enthält bereits `redirect_url` bei Fast-Track. Ich ergänze `booking_url` für Vermittlungs-Flow, damit das Modal den Direkt-Link zeigt.
 
-```text
-/buchen/:applicationToken            → Slot-Picker (7-Tage-Grid)
-/buchen/:applicationToken/bestaetigt → Bestätigungsseite mit ICS-Download
-/termin/:cancelToken                 → "Termin absagen oder verschieben"
-/termin/:cancelToken/neu             → Slot-Picker für Neubuchung
-```
+---
 
-Slot-Picker berechnet freie Slots **live** aus:
-- Wochenregeln + Ausnahmen
-- minus bereits gebuchte `interview_appointments` (status='scheduled')
-- minus `min_notice_hours` ab jetzt
-- bis `max_days_ahead`
-- in Bewerber-Zeitzone (aus Browser)
+## Teil C – Admin: SMTP-Health sichtbar machen
 
-## Admin-Flow (erweitert bestehende Views)
+### C1. Health-Panel im Admin-Tenants
+- `smtp_health` existiert schon (Status, letzter Check)
+- **Neu:** DKIM/SPF/DMARC-Anzeige – wir prüfen die DNS-Records der Sender-Domain per DNS-over-HTTPS (Cloudflare 1.1.1.1)
+- Grüner/gelber/roter Punkt pro Record
+- Ein Klick "Jetzt prüfen" → Server-Function
+- Bei rot: konkrete Anleitung, welchen DNS-Record zu setzen ist
 
-- Neue Seite `admin.verfuegbarkeit`: Wochenraster-Editor + Ausnahmen-Kalender
-- `admin.bewerbungen`: bestehende Termin-Spalte zeigt `interview_appointments` statt Calendly-Event
-- Buchungs-Detail: Verschieben / Absagen mit Grund
+### C2. Neue Server-Function `check-domain-auth.functions.ts`
+- Nimmt Domain → prüft SPF (TXT `v=spf1`), DKIM (TXT unter selector `_domainkey`), DMARC (TXT `_dmarc`)
+- Speichert Ergebnis in `tenant.smtp_health` (JSON erweitert)
 
-## E-Mails (nutzen bestehendes SMTP + Templates)
+---
 
-Neue Templates pro Tenant (Fallback = Default):
-- `appointment_confirmed` — nach Buchung, mit ICS
-- `appointment_cancelled_by_admin` — mit Neubuchen-Link
-- `appointment_rescheduled` — alte Zeit → neue Zeit
+## Teil D – Umbuchen-vor-Absagen-Dialog
 
-Bestehende Reminder greifen automatisch weiter:
-- `interview_invite_30min` — 30 Min vorher (existiert schon)
-- `rebook_after_cancel_24h/72h` — greift bei `booking_status='cancelled'` (existiert schon)
+### D1. Auf `/termin/<token>` (Cancel/Reschedule-Seite)
+- Klick auf "Absagen" öffnet **erst** einen Dialog:
+  > "Passt der Termin zeitlich nicht?"
+  > **[Anderen Termin wählen]** (Primary-Farbe, groß)
+  > **[Trotzdem absagen]** (dezent, grau, klein)
+- Primary-Klick → Slot-Picker inline (wie bei Erstbuchung, alte Buchung wird atomar gecanceld + neue erstellt)
+- Sekundär-Klick → aktueller Absage-Flow
 
-## Interview-Durchführung
+---
 
-Das eigentliche Interview (Chat/Voice mit KI-Recruiterin) existiert bereits (`landing_pages.interview_mode`, `applications.interview_messages` usw.). Neu:
-- Interview-Link wird **erst 15 Min vor `starts_at`** aktiv (verhindert Vorab-Chats)
-- 30-Min-Reminder-Mail enthält bereits Interview-Link → passt zusammen
-- Nach Ende: `interview_appointments.status='completed'` wird automatisch gesetzt (Cron), wenn Interview-Status `done|timeout` ist
+## Was ich NICHT anfasse (bewusst)
 
-## Technischer Aufbau
+- Unsubscribe-Link (du willst nicht)
+- Calendly-Code (bleibt als Fallback drin)
+- Bestehende DB-Struktur der Mails/Templates (nur neue Spalten für Preheader/Reply-To bei Bedarf)
+- Interview-Chat-Engine
+- Auth/Registrierungs-Flow
 
-Backend:
-- Migration (neue Tabellen, RLS, Grants, Indexes)
-- Server Functions in `src/lib/appointments.functions.ts`:
-  - `getAvailableSlots({ applicationToken, timezone })` — public, kein Auth
-  - `bookAppointment({ applicationToken, startsAt, timezone })` — public
-  - `cancelAppointment({ cancelToken, reason })` — public
-  - `rescheduleAppointment({ cancelToken, newStartsAt })` — public
-  - `adminListAppointments`, `adminCancelAppointment`, `adminUpsertSchedule` — auth
-- Slot-Berechnung als Postgres-Function `get_free_slots(schedule_id, from, to)` — performant, atomar
-- Race-Condition-Schutz: Buchung per SQL `INSERT ... WHERE NOT EXISTS (overlap check)` + Unique Exclusion Constraint `EXCLUDE USING gist (schedule_id WITH =, tstzrange(starts_at, ends_at) WITH &&) WHERE (status='scheduled')`
+---
 
-Frontend:
-- Neue Routen unter `src/routes/buchen.$token.tsx`, `src/routes/termin.$token.tsx`
-- Slot-Grid-Komponente (7 Tage, klickbar, Zeitzone im Header)
-- Admin: `src/routes/_authenticated/admin/verfuegbarkeit.tsx`
+## Deploy-Reihenfolge (später)
 
-ICS-Generierung: eigene Mini-Utility (`src/lib/ics.ts`), kein Package nötig.
+1. Migration `20260718000000_email_professional_upgrade.sql` (Preheader-Spalten, DNS-Auth-Cache)
+2. `supabase/functions/*` neu deployen (7 Funktionen)
+3. Frontend-Build → Server 124 (Portal) + Server 213 (Landing)
 
-## Migration bestehender Daten
+Ich gebe dir am Ende die genauen scp/deploy-Befehle wie immer.
 
-- Bestehende Landing-Pages mit `calendly_url` behalten Calendly aktiv, solange kein `schedule_id` gesetzt ist → sanfter Rollout
-- Ein Tenant kann testweise auf das neue System umgestellt werden, ohne andere zu brechen
-- `applications.calendly_event_uri` bleibt für Historie
+---
 
-## Umsetzungs-Reihenfolge (jeweils separate Deploys)
+## Zeitrahmen
 
-1. **DB + Slot-Engine** — Migration, Postgres-Function, Server-Functions inkl. Unit-Test der Slot-Berechnung
-2. **Admin-Verfügbarkeits-Editor** — damit wir überhaupt Slots anlegen können
-3. **Bewerber-Buchungsseite** — `/buchen/:token` mit Slot-Picker + Bestätigung + ICS-Mail
-4. **Absagen / Neubuchen** — `/termin/:cancelToken`
-5. **Umschalter auf Landing-Page** — Admin wählt: Calendly oder eigenes System
-6. **Cleanup** (später) — wenn stabil, Calendly-Felder deprecaten
+Ich baue alles in **einem Rutsch, sauber, ohne Hetze** – schätze ~8-10 Datei-Änderungen + 1 Migration. Danach testen wir zusammen mit einem echten Test-Bewerber-Flow.
 
-## Offene Fragen
-
-1. **Slot-Länge**: Fix 30 Min für alle, oder pro Landing-Page einstellbar? (Vorschlag: pro Landing-Page, Default 30)
-2. **Mehrere Recruiter pro Tenant**: Braucht Personalservice Süd 1 oder mehrere parallele Kalender? (Vorschlag: 1 Kalender pro Landing-Page — reicht für alle aktuellen Cases)
-3. **Roll-out**: Erst kompletter Bau + Test intern, dann 1 Test-Tenant, dann alle? Oder direkt bei Personalservice Süd scharf schalten sobald fertig?
-4. **Calendly-Bestand**: Bestehende Calendly-Buchungen (nächste 14 Tage) — mitmigrieren oder Calendly parallel weiterlaufen lassen bis leergelaufen? (Vorschlag: parallel laufen lassen)
-
-Sag mir zu diesen 4 Punkten kurz Bescheid, dann starte ich mit Schritt 1 (DB + Slot-Engine).
+**Sag „go" und ich lege los.**

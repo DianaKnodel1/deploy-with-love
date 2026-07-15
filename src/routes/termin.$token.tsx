@@ -7,7 +7,8 @@ import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CalendarX, CalendarClock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Loader2, CalendarX, CalendarClock, CalendarCheck } from "lucide-react";
 import {
   getAppointmentByCancelToken,
   cancelAppointment,
@@ -33,6 +34,7 @@ function CancelPage() {
 
   const [reason, setReason] = useState("");
   const [cancelledMagicToken, setCancelledMagicToken] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const detail = useQuery({
     queryKey: ["appointment-detail", token],
@@ -130,42 +132,79 @@ function CancelPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Grund für die Absage (optional)</label>
-              <Textarea
-                value={reason}
-                onChange={e => setReason(e.target.value)}
-                placeholder="z.B. Krankheit, terminliche Verschiebung ..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                variant="destructive"
-                className="flex-1"
-                onClick={() => cancelMut.mutate()}
-                disabled={cancelMut.isPending}
-              >
-                {cancelMut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Termin absagen
-              </Button>
-              {a.magic_token && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <CalendarClock className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium">Termin passt zeitlich nicht?</div>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Wählen Sie einfach einen neuen Termin – der alte wird automatisch storniert.
+                  </p>
+                </div>
+              </div>
+              {a.magic_token ? (
                 <Link
                   to="/buchen/$token"
                   params={{ token: a.magic_token }}
-                  className="flex-1 inline-flex items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+                  className="block w-full text-center rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90"
                 >
-                  Umbuchen
+                  Neuen Termin wählen
                 </Link>
-              )}
+              ) : null}
             </div>
 
-            <p className="text-xs text-muted-foreground text-center">
-              „Umbuchen" sagt den aktuellen Termin ab und öffnet den Kalender für einen neuen.
-            </p>
+            <div className="pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(true)}
+                className="w-full text-sm text-muted-foreground hover:text-destructive underline-offset-4 hover:underline"
+              >
+                Ich möchte trotzdem endgültig absagen
+              </button>
+            </div>
           </CardContent>
         </Card>
+
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Termin endgültig absagen?</DialogTitle>
+              <DialogDescription>
+                Ohne Termin können wir Ihre Bewerbung nicht weiter bearbeiten. Wenn der Zeitpunkt nicht passt, buchen Sie stattdessen einfach einen neuen Slot.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Grund (optional)</label>
+              <Textarea
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder="z.B. Andere Stelle angenommen"
+                rows={3}
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-2">
+              {a.magic_token ? (
+                <Link
+                  to="/buchen/$token"
+                  params={{ token: a.magic_token }}
+                  className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90"
+                >
+                  <CalendarCheck className="h-4 w-4 mr-2" /> Lieber umbuchen
+                </Link>
+              ) : null}
+              <Button
+                variant="ghost"
+                onClick={() => { setConfirmOpen(false); cancelMut.mutate(); }}
+                disabled={cancelMut.isPending}
+                className="text-destructive hover:text-destructive"
+              >
+                {cancelMut.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Trotzdem absagen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </div>
   );
