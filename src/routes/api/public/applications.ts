@@ -230,8 +230,18 @@ export const Route = createFileRoute("/api/public/applications")({
         // Eigenes Buchungssystem: falls für diese Landing ein aktives Schedule
         // existiert, wird Calendly ignoriert und der Bewerber landet auf
         // /buchen/:magic_token. Interview-Modus hat weiter Vorrang.
+        // K3: bei Dedup-Reuse die ORIGINAL-source_landing_id nehmen, damit
+        // Buchungs-Redirect + Statistik konsistent bleiben (nicht die neue Landing).
         let ownBookingUrl: string | null = null;
-        const landingIdForSchedule = d.source_landing_id ?? landingPage?.id ?? null;
+        let landingIdForSchedule = d.source_landing_id ?? landingPage?.id ?? null;
+        {
+          const { data: existingApp } = await supabaseAdmin
+            .from("applications")
+            .select("source_landing_id")
+            .eq("id", appId).maybeSingle();
+          const origSrc = (existingApp as any)?.source_landing_id;
+          if (origSrc) landingIdForSchedule = origSrc;
+        }
         if (!d.is_test && !isBroker && !isFast && landingIdForSchedule && d.portal_url) {
           const { data: sched } = await supabaseAdmin
             .from("availability_schedules")
