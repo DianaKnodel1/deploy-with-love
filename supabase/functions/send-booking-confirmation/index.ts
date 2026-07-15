@@ -5,7 +5,7 @@
 // Idempotent via application_reminder_log kind='booking_confirmation'.
 //
 // Trigger: pg_cron alle 2 Min (siehe Migration 20260717000000_...).
-// Auth: x-cron-secret Header oder ?key=<CRON_SECRET>.
+// Auth: x-cron-secret Header/?key=<CRON_SECRET> oder Service-Role via Authorization/apikey.
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -65,8 +65,15 @@ function json(body: unknown, status = 200) {
 async function authorize(req: Request) {
   const secret = Deno.env.get("CRON_SECRET");
   const url = new URL(req.url);
-  const provided = req.headers.get("x-cron-secret") ?? url.searchParams.get("key");
-  return !!(secret && provided && provided === secret);
+  const provided = (req.headers.get("x-cron-secret") ?? url.searchParams.get("key") ?? "").trim();
+  if (secret?.trim() && provided && provided === secret.trim()) return true;
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+  const authHeader = req.headers.get("authorization") ?? "";
+  const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const apiKey = (req.headers.get("apikey") ?? req.headers.get("x-api-key") ?? "").trim();
+
+  return !!(serviceRoleKey && (bearer === serviceRoleKey || apiKey === serviceRoleKey));
 }
 
 function pad(n: number) { return n.toString().padStart(2, "0"); }
