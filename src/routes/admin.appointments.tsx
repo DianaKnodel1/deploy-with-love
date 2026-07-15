@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/EmptyState";
@@ -21,6 +22,9 @@ import { format, startOfToday, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AssignmentIndividualData } from "@/components/AssignmentIndividualData";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { adminListAppointments } from "@/lib/appointments.functions";
 
 const BOOKING_STATUSES = [
   { value: "gebucht", label: "Gebucht", class: "bg-primary/15 text-primary border border-primary/20 font-medium" },
@@ -219,6 +223,8 @@ function AdminAppointmentsPage() {
           <Button size="sm" onClick={() => setShowCreate(true)}><Plus className="h-3.5 w-3.5 mr-1" /> Termin erstellen</Button>
         </div>
       </div>
+
+      <ApplicantInterviewAppointments />
 
       {enrichedBookings.length === 0 ? (
         <EmptyState icon={CalendarDays} title="Keine Buchungen" description={filterStatus !== "alle" ? "Kein Eintrag für diesen Filter." : "Noch keine Terminbuchungen vorhanden."} />
@@ -487,4 +493,84 @@ function AdminAppointmentsPage() {
       </Dialog>
     </div>
   );
+}
+
+function ApplicantInterviewAppointments() {
+  const listAppointments = useServerFn(adminListAppointments);
+  const q = useQuery({
+    queryKey: ["admin-applicant-interview-appointments"],
+    queryFn: () => listAppointments({ data: { status: "all" } }),
+  });
+
+  const rows = ((q.data as any)?.rows ?? []) as any[];
+  const upcoming = rows
+    .filter((r) => r.status === "scheduled")
+    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+    .slice(0, 8);
+  const recent = rows
+    .filter((r) => r.status !== "scheduled")
+    .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime())
+    .slice(0, 6);
+
+  const renderRow = (r: any) => {
+    const start = new Date(r.starts_at);
+    const app = r.applications ?? {};
+    return (
+      <tr key={r.id} className="border-t border-border">
+        <td className="px-3 py-2 font-medium text-foreground">{app.full_name ?? "Bewerber"}</td>
+        <td className="px-3 py-2 text-muted-foreground">{app.email ?? "—"}</td>
+        <td className="px-3 py-2 text-muted-foreground">
+          {start.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" })} · {start.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr
+        </td>
+        <td className="px-3 py-2">
+          <Badge variant={r.status === "scheduled" ? "default" : "secondary"}>{labelAppointmentStatus(r.status)}</Badge>
+        </td>
+      </tr>
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <CalendarDays className="h-4 w-4" /> Bewerbungs-Interviewtermine
+        </CardTitle>
+        <CardDescription>
+          Neue Bewerber-Buchungen aus dem eigenen Buchungssystem. Die Liste darunter „Termine“ ist weiterhin für Mitarbeiter-/Auftrags-Termine.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {q.isLoading ? (
+          <p className="text-sm text-muted-foreground">Lade Bewerbungs-Termine…</p>
+        ) : q.isError ? (
+          <p className="text-sm text-destructive">Bewerbungs-Termine konnten nicht geladen werden: {(q.error as any)?.message ?? "Unbekannter Fehler"}</p>
+        ) : rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Noch keine Bewerber-Termine gebucht.</p>
+        ) : (
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="overflow-x-auto rounded-md border border-border">
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/40">Kommende Interviews</div>
+              <table className="w-full text-sm">
+                <tbody>{upcoming.length ? upcoming.map(renderRow) : <tr><td className="px-3 py-3 text-muted-foreground" colSpan={4}>Keine kommenden Termine.</td></tr>}</tbody>
+              </table>
+            </div>
+            <div className="overflow-x-auto rounded-md border border-border">
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/40">Abgesagt / erledigt / No-Show</div>
+              <table className="w-full text-sm">
+                <tbody>{recent.length ? recent.map(renderRow) : <tr><td className="px-3 py-3 text-muted-foreground" colSpan={4}>Noch keine vergangenen Einträge.</td></tr>}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function labelAppointmentStatus(status: string) {
+  if (status === "scheduled") return "Gebucht";
+  if (status === "cancelled") return "Abgesagt";
+  if (status === "no_show") return "Nicht erschienen";
+  if (status === "completed") return "Abgeschlossen";
+  return status;
 }
