@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/public/applications")({
           let lp: any = null;
           const { data: bySource } = await supabaseAdmin
             .from("landing_pages")
-            .select("id, slug, source_slug, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding")
+            .select("id, slug, source_slug, tenant_id, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding")
             .eq("source_slug", d.source_slug)
             .eq("is_published", true)
             .maybeSingle();
@@ -94,12 +94,13 @@ export const Route = createFileRoute("/api/public/applications")({
           if (!lp) {
             const { data: bySlug } = await supabaseAdmin
               .from("landing_pages")
-              .select("id, slug, source_slug, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding")
+              .select("id, slug, source_slug, tenant_id, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding")
               .eq("slug", source)
               .eq("is_published", true)
               .maybeSingle();
             lp = bySlug ?? null;
           }
+
           landingPage = lp;
           calendlyOnLanding = typeof lp?.calendly_url === "string" && lp.calendly_url.trim()
             ? lp.calendly_url.trim()
@@ -152,6 +153,27 @@ export const Route = createFileRoute("/api/public/applications")({
         }
         const isBroker = d.flow_type === "broker" && !!partner && !d.is_test;
         const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test;
+
+        // Tenant-Fallback #3: Landing-Page hat i.d.R. tenant_id → nutzen wenn
+        // Origin/Referer nichts gebracht hat.
+        if (!resolvedTenantId && landingPage?.tenant_id) {
+          resolvedTenantId = landingPage.tenant_id as string;
+        }
+
+        // Tenant-Guard: Neue Bewerbung OHNE Tenant ist immer ein Bug
+        // (Origin unbekannt + kein source_slug + kein tenant_id im Payload).
+        // Statt null zu speichern → sauber abweisen, sonst rutschen Bewerber
+        // in den "Kadermarketing/Digital-DGI"-Backfill-Zustand.
+        if (!resolvedTenantId && !d.is_test) {
+          console.warn("[applications] tenant_missing", {
+            origin: request.headers.get("origin"),
+            referer: request.headers.get("referer"),
+            source_slug: d.source_slug ?? null,
+            email: d.email,
+          });
+          return json({ error: "tenant_missing", message: "Bewerbung konnte keinem Mandanten zugeordnet werden." }, 400);
+        }
+
 
         // Dedup: identische E-Mail im selben Tenant innerhalb 60 Tagen →
         // vorhandene Bewerbung wiederverwenden statt neuen Datensatz anzulegen.
