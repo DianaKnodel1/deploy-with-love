@@ -1,109 +1,64 @@
-# Plan: Professionalisierung E-Mail-System + Funnel-Optimierung
 
-Fokus: seriöser Auftritt, weniger Spam, mehr abgeschlossene Buchungen. Alles rückwärtskompatibel – keine bestehende Funktion wird kaputt.
+# Fix: Login geht ans falsche Backend
 
----
+## Diagnose
 
-## Teil A – Einheitlicher E-Mail-Standard
+Zwei getrennte Ursachen — beide müssen behoben werden:
 
-### A1. Zentraler HTML-Wrapper (`supabase/functions/_shared/email-wrapper.ts`)
-Eine Datei, die alle Mails künftig durchlaufen. Enthält:
-- **Logo oben** (aus `tenant.logo_url`, fallback: Firmenname als Text)
-- **Primärfarbe** für alle Buttons (aus `tenant.primary_color`, fallback #0f172a)
-- **Preheader-Text** (versteckt für's Auge, sichtbar im Gmail-Vorschautext)
-- **Ansprechpartner-Karte unten** (Name + optional Foto aus `landing_pages.recruiter_name` / `recruiter_avatar`)
-- **Footer**: Firmenname · "Antworten Sie einfach auf diese E-Mail" · Impressum-Zeile
-- **Automatische Plain-Text-Version** aus dem HTML generiert (Spam-Score ↓)
+1. **Build crasht mit „heap out of memory"** in `deploy.sh` bei `bun run build`. Wegen `&&`-Kette wird `systemctl restart portal` nie ausgeführt → der laufende Prozess (PID 2619816, seit ~1h) benutzt weiter die alte `.env` mit den Lovable-Cloud-URLs → Login geht an `uwtiyxphaoczcodntshl.supabase.co` statt an `api.mb-portal.com`.
+2. **`.env.production` unvollständig**: Grep-Output zeigt nur `VITE_SUPABASE_URL` + `SUPABASE_URL`. In den Logs steht `Missing Supabase environment variable(s): SUPABASE_SERVICE_ROLE_KEY`. Es fehlen mindestens Service-Role-Key, Publishable-Key und Project-ID.
 
-### A2. Migration aller bestehenden Mail-Funktionen auf den Wrapper
-- `send-booking-confirmation` (schon neu, wird angepasst)
-- `send-application-reminders` (5 Reminder-Kinds)
-- `send-appointment-reminders` (30-Min-vorher)
-- `send-invitation-email` (Mitarbeiter-Einladung)
-- `send-chat-reminder`
-- `send-password-reset`, `resend-signup-confirmation`, `send-signup-confirmation`
-- Application-Received-Trigger (in `applications.ts`)
+## Schritte (auf Server 124 ausführen)
 
-### A3. Konsistente Betreffzeilen
-Max. 1 Emoji, gezielt eingesetzt. Neue Konvention:
-- Bewerbungseingang: `Ihre Bewerbung bei {tenant} – nächste Schritte`
-- Buchungsbestätigung: `✅ Termin bestätigt: {date}, {time} Uhr`
-- 30-Min-Reminder: `⏰ Ihr Gespräch beginnt in 30 Minuten`
-- No-Show: `Termin verpasst? Neuen Termin buchen`
-- Reject-Reminder: kein Emoji
+### 1) Inhalt von `.env.production` vollständig prüfen
+```bash
+cd /opt/apps/portal
+grep -vE '^\s*(#|$)' .env.production | sed 's/=.*/=***/'
+```
+Erwartet werden mindestens: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_ID`. Was fehlt, aus der bekannten `.env`-Version auf **Backend 123** ergänzen.
 
-### A4. Spam-Hinweis in kritischen Mails
-In `send-booking-confirmation` und Bewerbungseingang:
-> 💡 **Tipp:** Sollten Sie in den nächsten Minuten keine Antwort im Posteingang sehen, prüfen Sie bitte kurz Ihren Spam-Ordner und markieren Sie uns als „Kein Spam".
+### 2) `.env` = vollständige Produktion
+```bash
+cp .env .env.oldcloud.$(date +%s)     # sichern
+cp .env.production .env                # aktive Datei ersetzen
+grep -cE '^SUPABASE_|^VITE_SUPABASE_' .env   # muss ≥ 6 zeigen
+```
 
-### A5. Reply-To korrekt setzen
-Alle Mails: `Reply-To: {tenant.reply_to_email || tenant.sender_email}` – kein no-reply-Feeling.
+### 3) Build-OOM entschärfen
+`deploy.sh` bereits um `NODE_OPTIONS="--max-old-space-size=4096"` erweitert — reicht offenbar nicht. Hochziehen:
+```bash
+# einmalig für diesen Build
+NODE_OPTIONS="--max-old-space-size=8192" ./deploy.sh
+```
+Falls Server < 8 GB RAM: `swapon --show` prüfen, ggf. 4 GB Swap anlegen (`fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile`). Danach `deploy.sh` persistent auf `--max-old-space-size=8192` anheben.
 
----
+### 4) Restart & Verifikation
+```bash
+systemctl restart portal
+systemctl status portal --no-pager | head -20
 
-## Teil B – Danke-Seite mit Inline-Erklärung (Bewerbungsformular)
+# Prozess hat jetzt neue URL?
+for pid in $(pgrep -f bun); do
+  cat /proc/$pid/environ 2>/dev/null | tr '\0' '\n' | grep SUPABASE_URL=
+done
 
-### B1. Bestätigungsdialog nach Absenden verbessert
-Im bestehenden `form-section.js` (Landing Page):
-- Große grüne Bestätigung: „✅ Bewerbung eingegangen"
-- **Neu:** Prominenter Hinweis „**Wichtig:** Prüfen Sie in den nächsten 2 Minuten Ihren Posteingang – **auch den Spam-Ordner**. Sie erhalten den Link zur Terminbuchung."
-- **CTA "Jetzt Termin buchen →"** falls Custom-Booking aktiv (führt direkt zu `/termin/<token>` – Token kommt aus der API-Response)
-- Fallback (kein Booking-System): der bisherige Modal-Flow bleibt
+# Bundle hat keine alten Cloud-Referenzen mehr?
+curl -s http://127.0.0.1:3000/ -o /tmp/local.html
+grep -oE "uwtiyxphaoczcodntshl|api\.mb-portal\.com" /tmp/local.html | sort -u
+```
+Erwartet: nur noch `api.mb-portal.com`, KEIN `uwtiyxphaoczcodntshl`.
 
-### B2. API-Response erweitert (`applications.ts`)
-Response enthält bereits `redirect_url` bei Fast-Track. Ich ergänze `booking_url` für Vermittlungs-Flow, damit das Modal den Direkt-Link zeigt.
+### 5) Login testen
+Browser → DevTools Console:
+```js
+localStorage.clear(); sessionStorage.clear(); location.reload();
+```
+Danach mit `admin@admin.de` + neuem Passwort einloggen.
 
----
+## Fallback wenn Build weiter OOM'd
 
-## Teil C – Admin: SMTP-Health sichtbar machen
+Build **außerhalb** des Servers möglich? Dann lokal/CI bauen und nur `.output/` per `scp` auf 124 kopieren — spart RAM auf der Produktions-Kiste. Alternativ: `bun run build` in kleinere Schritte splitten (Vite ohne Sourcemaps → `vite build --minify=esbuild` ohne `--sourcemap`).
 
-### C1. Health-Panel im Admin-Tenants
-- `smtp_health` existiert schon (Status, letzter Check)
-- **Neu:** DKIM/SPF/DMARC-Anzeige – wir prüfen die DNS-Records der Sender-Domain per DNS-over-HTTPS (Cloudflare 1.1.1.1)
-- Grüner/gelber/roter Punkt pro Record
-- Ein Klick "Jetzt prüfen" → Server-Function
-- Bei rot: konkrete Anleitung, welchen DNS-Record zu setzen ist
+## Was ich sonst brauche
 
-### C2. Neue Server-Function `check-domain-auth.functions.ts`
-- Nimmt Domain → prüft SPF (TXT `v=spf1`), DKIM (TXT unter selector `_domainkey`), DMARC (TXT `_dmarc`)
-- Speichert Ergebnis in `tenant.smtp_health` (JSON erweitert)
-
----
-
-## Teil D – Umbuchen-vor-Absagen-Dialog
-
-### D1. Auf `/termin/<token>` (Cancel/Reschedule-Seite)
-- Klick auf "Absagen" öffnet **erst** einen Dialog:
-  > "Passt der Termin zeitlich nicht?"
-  > **[Anderen Termin wählen]** (Primary-Farbe, groß)
-  > **[Trotzdem absagen]** (dezent, grau, klein)
-- Primary-Klick → Slot-Picker inline (wie bei Erstbuchung, alte Buchung wird atomar gecanceld + neue erstellt)
-- Sekundär-Klick → aktueller Absage-Flow
-
----
-
-## Was ich NICHT anfasse (bewusst)
-
-- Unsubscribe-Link (du willst nicht)
-- Calendly-Code (bleibt als Fallback drin)
-- Bestehende DB-Struktur der Mails/Templates (nur neue Spalten für Preheader/Reply-To bei Bedarf)
-- Interview-Chat-Engine
-- Auth/Registrierungs-Flow
-
----
-
-## Deploy-Reihenfolge (später)
-
-1. Migration `20260718000000_email_professional_upgrade.sql` (Preheader-Spalten, DNS-Auth-Cache)
-2. `supabase/functions/*` neu deployen (7 Funktionen)
-3. Frontend-Build → Server 124 (Portal) + Server 213 (Landing)
-
-Ich gebe dir am Ende die genauen scp/deploy-Befehle wie immer.
-
----
-
-## Zeitrahmen
-
-Ich baue alles in **einem Rutsch, sauber, ohne Hetze** – schätze ~8-10 Datei-Änderungen + 1 Migration. Danach testen wir zusammen mit einem echten Test-Bewerber-Flow.
-
-**Sag „go" und ich lege los.**
+Nach Schritt 1 bitte den (maskierten) Variablen-Output schicken — damit ich sehe, welche Keys in `.env.production` wirklich fehlen, bevor wir bauen.
