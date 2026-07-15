@@ -237,7 +237,7 @@ export const Route = createFileRoute("/api/public/applications")({
               } as any).eq("id", appId);
             }
             const base = d.portal_url.replace(/\/+$/, "");
-            ownBookingUrl = `${base}/buchen/${token}`;
+            ownBookingUrl = `${base}/termin/buchen/${token}`;
           }
         }
 

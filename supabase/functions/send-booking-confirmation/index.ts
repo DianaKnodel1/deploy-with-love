@@ -14,7 +14,7 @@ import { renderEmail } from "../_shared/email-wrapper.ts";
 
 const FUNCTION_VERSION = "2026-07-18-booking-confirmation-v2-wrapper";
 const REMINDER_KIND = "booking_confirmation";
-const LOOKBACK_MIN = 15;
+const LOOKBACK_MIN = 360; // 6h – überbrückt Cron-Ausfälle; Idempotenz via reminder_log
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
