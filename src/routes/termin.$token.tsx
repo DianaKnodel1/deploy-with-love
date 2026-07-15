@@ -7,7 +7,8 @@ import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CalendarX, CalendarClock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Loader2, CalendarX, CalendarClock, CalendarCheck } from "lucide-react";
 import {
   getAppointmentByCancelToken,
   cancelAppointment,
