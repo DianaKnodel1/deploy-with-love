@@ -227,28 +227,38 @@ export const Route = createFileRoute("/api/public/applications")({
           }
         }
 
-        // Eigenes Buchungssystem: falls für diese Landing ein aktives Schedule
-        // existiert, wird Calendly ignoriert und der Bewerber landet auf
-        // /buchen/:magic_token. Interview-Modus hat weiter Vorrang.
-        // K3: bei Dedup-Reuse die ORIGINAL-source_landing_id nehmen, damit
-        // Buchungs-Redirect + Statistik konsistent bleiben (nicht die neue Landing).
+        // Eigenes Buchungssystem: falls für Source- oder Ziel-Landing ein aktiver
+        // Kalender existiert, wird Calendly ignoriert und der Bewerber landet auf
+        // /termin/buchen/:magic_token. Ziel-/Fasttrack-Landing hat Vorrang,
+        // Source-Landing ist Fallback für Vermittlungsseiten ohne Ziel-Kalender.
+        // K3: bei Dedup-Reuse die ORIGINAL source/target IDs nehmen, damit
+        // Buchungs-Redirect + Statistik konsistent bleiben.
         let ownBookingUrl: string | null = null;
-        let landingIdForSchedule = d.source_landing_id ?? landingPage?.id ?? null;
+        const scheduleCandidateIds: string[] = [];
+        const pushScheduleCandidate = (id?: string | null) => {
+          if (id && !scheduleCandidateIds.includes(id)) scheduleCandidateIds.push(id);
+        };
+        pushScheduleCandidate(d.target_landing_id ?? null);
+        pushScheduleCandidate(landingPage?.linked_fasttrack_landing_id ?? null);
+        pushScheduleCandidate(d.source_landing_id ?? null);
+        pushScheduleCandidate(landingPage?.id ?? null);
         {
           const { data: existingApp } = await supabaseAdmin
             .from("applications")
-            .select("source_landing_id")
+            .select("source_landing_id, target_landing_id")
             .eq("id", appId).maybeSingle();
-          const origSrc = (existingApp as any)?.source_landing_id;
-          if (origSrc) landingIdForSchedule = origSrc;
+          pushScheduleCandidate((existingApp as any)?.target_landing_id ?? null);
+          pushScheduleCandidate((existingApp as any)?.source_landing_id ?? null);
         }
-        if (!d.is_test && !isBroker && !isFast && landingIdForSchedule && d.portal_url) {
-          const { data: sched } = await supabaseAdmin
+        if (!d.is_test && !isFast && scheduleCandidateIds.length > 0 && d.portal_url) {
+          const { data: schedules } = await supabaseAdmin
             .from("availability_schedules")
-            .select("id")
-            .eq("landing_page_id", landingIdForSchedule)
-            .eq("active", true)
-            .maybeSingle();
+            .select("id, landing_page_id")
+            .in("landing_page_id", scheduleCandidateIds)
+            .eq("active", true);
+          const sched = scheduleCandidateIds
+            .map((id) => (schedules as any[] | null)?.find((s) => s.landing_page_id === id))
+            .find(Boolean);
           if ((sched as any)?.id) {
             let token: string | null = null;
             const { data: existingApp } = await supabaseAdmin
@@ -291,6 +301,8 @@ export const Route = createFileRoute("/api/public/applications")({
             portal: base,
           }).toString();
           redirect_url = `${base}/interview/${appId}?${qs}`;
+        } else if (ownBookingUrl) {
+          redirect_url = ownBookingUrl;
         } else if (isBroker) {
           const parts = d.full_name.trim().split(/\s+/);
           const firstName = parts[0] ?? "";
@@ -316,8 +328,6 @@ export const Route = createFileRoute("/api/public/applications")({
           // erfolgt dort separat — keine PII in der URL.
           const base = d.portal_url.replace(/\/+$/, "");
           redirect_url = `${base}/`;
-        } else if (ownBookingUrl) {
-          redirect_url = ownBookingUrl;
         } else if (useCalendly && d.portal_url && d.source_slug) {
           const base = d.portal_url.replace(/\/+$/, "");
           const parts = d.full_name.trim().split(/\s+/);
