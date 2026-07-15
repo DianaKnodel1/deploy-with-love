@@ -342,6 +342,20 @@ function RegisterPage() {
         }
       }
 
+      // Fallback: Legacy-Invite ohne tenant_id → über die verknüpfte
+      // Bewerbung backfillen, damit profiles.tenant_id nicht null bleibt.
+      if (!invTenantId && invApplicationId) {
+        try {
+          const { data: appRow } = await (supabase as any)
+            .from("applications")
+            .select("tenant_id")
+            .eq("id", invApplicationId)
+            .maybeSingle();
+          if (appRow?.tenant_id) invTenantId = appRow.tenant_id;
+        } catch { /* best-effort */ }
+      }
+
+
       // 3. Profile mit ALLEN gesammelten Daten in einem Rutsch befüllen
       // (Profile-Zeile wurde durch handle_new_user-Trigger bereits angelegt.)
       const address = `${street.trim()}, ${zipCode.trim()} ${city.trim()}`;
