@@ -264,13 +264,11 @@ function BookingConfirmed(props: {
               </div>
             </div>
 
-            <a
-              href={icsDataUrl(ics)}
-              download={`bewerbungsgespraech-${format(start, "yyyy-MM-dd-HH-mm")}.ics`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-            >
-              <Download className="h-4 w-4" /> Zu meinem Kalender hinzufügen
-            </a>
+            <p className="text-sm text-muted-foreground text-center">
+              Sie erhalten in Kürze eine Bestätigung per E-Mail –
+              inklusive Kalendereintrag zum 1-Tap-Speichern in Outlook,
+              Google oder Apple.
+            </p>
 
             <div className="text-center text-sm">
               <a href={cancelUrl} className="text-primary hover:underline">
