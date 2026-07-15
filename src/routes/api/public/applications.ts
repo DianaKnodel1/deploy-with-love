@@ -10,6 +10,8 @@ const CORS = {
 
 const Schema = z.object({
   full_name: z.string().trim().min(1).max(120),
+  first_name: z.string().trim().max(80).optional().nullable(),
+  last_name: z.string().trim().max(80).optional().nullable(),
   email: z.string().trim().email().max(255),
   phone: z.string().trim().max(40).optional().nullable(),
   postal_code: z.string().trim().max(20).optional().nullable(),
