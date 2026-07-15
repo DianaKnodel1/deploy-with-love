@@ -200,7 +200,7 @@ function InterviewPage() {
           <h1 className="text-xl font-semibold">Bewerbungsgespräch mit {company}</h1>
           <div className="text-sm text-muted-foreground space-y-2">
             <p><strong>Das Gespräch wird digital geführt</strong> und automatisiert ausgewertet.</p>
-            <p>Das Gespräch dauert <strong>maximal 15 Minuten</strong> und besteht aus einigen kurzen Fragen zu Ihrer Person, Motivation und Verfügbarkeit.</p>
+            <p>Das Gespräch dauert in der Regel <strong>15 bis 30 Minuten</strong> (max. 45 Min.) und besteht aus einigen Fragen zu Ihrer Person, Motivation und Verfügbarkeit — nehmen Sie sich die Zeit, die Sie brauchen.</p>
             <p>Ihre Antworten werden zur Bewerbungsauswertung gespeichert und für maximal 6 Monate aufbewahrt. Es findet keine Audio-Aufnahme statt.</p>
           </div>
           <Button
