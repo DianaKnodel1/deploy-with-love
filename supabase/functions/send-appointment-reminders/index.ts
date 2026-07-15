@@ -6,7 +6,7 @@
 // zum AI-Bewerbungsgespräch.
 //
 // Trigger: pg_cron alle 10 Min, POST { dry_run?: bool }
-//   - Auth: x-cron-secret Header ODER ?key=<CRON_SECRET> ODER Admin JWT
+//   - Auth: x-cron-secret Header ODER ?key=<CRON_SECRET> ODER Service-Role Bearer/apikey ODER Admin JWT
 //
 // Toleranzfenster: now+25min .. now+40min
 // Idempotenz: application_reminder_log (application_id, reminder_kind='interview_invite_30min')
@@ -83,14 +83,19 @@ function json(body: unknown, status = 200) {
 }
 
 async function authorize(req: Request, admin: any) {
-  const cronSecret = Deno.env.get("CRON_SECRET");
+  const cronSecret = Deno.env.get("CRON_SECRET")?.trim();
   const url = new URL(req.url);
-  const provided = req.headers.get("x-cron-secret") ?? url.searchParams.get("key");
+  const provided = (req.headers.get("x-cron-secret") ?? url.searchParams.get("key") ?? "").trim();
   if (cronSecret && provided && provided === cronSecret) return { ok: true as const };
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
   const authHeader = req.headers.get("authorization") ?? "";
-  const jwt = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
-  if (!jwt) return { ok: false as const, status: 401, msg: "Unauthorized" };
-  const { data: userRes, error: uErr } = await admin.auth.getUser(jwt);
+  const bearer = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+  const apiKey = (req.headers.get("apikey") ?? "").trim();
+  if (serviceRoleKey && (bearer === serviceRoleKey || apiKey === serviceRoleKey)) return { ok: true as const };
+
+  if (!bearer) return { ok: false as const, status: 401, msg: "Unauthorized" };
+  const { data: userRes, error: uErr } = await admin.auth.getUser(bearer);
   if (uErr || !userRes?.user) return { ok: false as const, status: 401, msg: "Unauthorized" };
   const { data: role } = await admin.from("user_roles").select("role")
     .eq("user_id", userRes.user.id).eq("role", "admin").maybeSingle();
