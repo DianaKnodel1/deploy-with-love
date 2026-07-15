@@ -6,16 +6,15 @@ import { format, addDays, startOfDay, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, ChevronLeft, ChevronRight, CalendarCheck, Download } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CalendarCheck } from "lucide-react";
 import {
   getScheduleForApplicant,
   getAvailableSlots,
   bookAppointment,
 } from "@/lib/appointments.functions";
-import { buildIcs, icsDataUrl } from "@/lib/ics";
 import { useToast } from "@/hooks/use-toast";
 
-export const Route = createFileRoute("/buchen/$token")({
+export const Route = createFileRoute("/termin/buchen/$token")({
   head: () => ({
     meta: [
       { title: "Termin für Bewerbungsgespräch wählen" },
@@ -231,16 +230,6 @@ function BookingConfirmed(props: {
     ? `${window.location.origin}/termin/${props.cancel_token}`
     : `/termin/${props.cancel_token}`;
 
-  const ics = buildIcs({
-    uid: `${props.cancel_token}@mb-portal`,
-    title: `Bewerbungsgespräch – ${props.tenantName}`,
-    description: `Bewerbungsgespräch mit ${props.recruiterName}.\n\nTermin absagen oder verschieben: ${cancelUrl}`,
-    start, end,
-    url: cancelUrl,
-    attendeeName: props.applicantFirstName,
-    attendeeEmail: props.applicantEmail,
-  });
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-10 px-4">
       <div className="max-w-lg mx-auto">
@@ -264,13 +253,11 @@ function BookingConfirmed(props: {
               </div>
             </div>
 
-            <a
-              href={icsDataUrl(ics)}
-              download={`bewerbungsgespraech-${format(start, "yyyy-MM-dd-HH-mm")}.ics`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-            >
-              <Download className="h-4 w-4" /> Zu meinem Kalender hinzufügen
-            </a>
+            <p className="text-sm text-muted-foreground text-center">
+              Sie erhalten in Kürze eine Bestätigung per E-Mail –
+              inklusive Kalendereintrag zum 1-Tap-Speichern in Outlook,
+              Google oder Apple.
+            </p>
 
             <div className="text-center text-sm">
               <a href={cancelUrl} className="text-primary hover:underline">

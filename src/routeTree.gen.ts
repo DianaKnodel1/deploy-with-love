@@ -23,7 +23,6 @@ import { Route as BewerbungIndexRouteImport } from './routes/bewerbung.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TerminTokenRouteImport } from './routes/termin.$token'
 import { Route as InterviewAppIdRouteImport } from './routes/interview.$appId'
-import { Route as BuchenTokenRouteImport } from './routes/buchen.$token'
 import { Route as BewerbungVerbindenRouteImport } from './routes/bewerbung.verbinden'
 import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
 import { Route as AdminVermittlungRouteImport } from './routes/admin.vermittlung'
@@ -71,6 +70,7 @@ import { Route as EmployeeContractRouteImport } from './routes/_employee/contrac
 import { Route as EmployeeChatRouteImport } from './routes/_employee/chat'
 import { Route as EmployeeAppointmentsRouteImport } from './routes/_employee/appointments'
 import { Route as AdminTasksIndexRouteImport } from './routes/admin.tasks.index'
+import { Route as TerminBuchenTokenRouteImport } from './routes/termin.buchen.$token'
 import { Route as InterviewVoiceAppIdRouteImport } from './routes/interview.voice.$appId'
 import { Route as ApiPublicTtsTestRouteImport } from './routes/api/public/tts-test'
 import { Route as ApiPublicSmsPollCronRouteImport } from './routes/api/public/sms-poll-cron'
@@ -158,11 +158,6 @@ const TerminTokenRoute = TerminTokenRouteImport.update({
 const InterviewAppIdRoute = InterviewAppIdRouteImport.update({
   id: '/interview/$appId',
   path: '/interview/$appId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuchenTokenRoute = BuchenTokenRouteImport.update({
-  id: '/buchen/$token',
-  path: '/buchen/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BewerbungVerbindenRoute = BewerbungVerbindenRouteImport.update({
@@ -400,6 +395,11 @@ const AdminTasksIndexRoute = AdminTasksIndexRouteImport.update({
   path: '/tasks/',
   getParentRoute: () => AdminRoute,
 } as any)
+const TerminBuchenTokenRoute = TerminBuchenTokenRouteImport.update({
+  id: '/termin/buchen/$token',
+  path: '/termin/buchen/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InterviewVoiceAppIdRoute = InterviewVoiceAppIdRouteImport.update({
   id: '/interview/voice/$appId',
   path: '/interview/voice/$appId',
@@ -563,7 +563,6 @@ export interface FileRoutesByFullPath {
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
-  '/buchen/$token': typeof BuchenTokenRoute
   '/interview/$appId': typeof InterviewAppIdRoute
   '/termin/$token': typeof TerminTokenRoute
   '/admin/': typeof AdminIndexRoute
@@ -585,6 +584,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/api/public/tts-test': typeof ApiPublicTtsTestRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
+  '/termin/buchen/$token': typeof TerminBuchenTokenRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
   '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
@@ -644,7 +644,6 @@ export interface FileRoutesByTo {
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
-  '/buchen/$token': typeof BuchenTokenRoute
   '/interview/$appId': typeof InterviewAppIdRoute
   '/termin/$token': typeof TerminTokenRoute
   '/admin': typeof AdminIndexRoute
@@ -666,6 +665,7 @@ export interface FileRoutesByTo {
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/api/public/tts-test': typeof ApiPublicTtsTestRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
+  '/termin/buchen/$token': typeof TerminBuchenTokenRoute
   '/admin/tasks': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
   '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
@@ -728,7 +728,6 @@ export interface FileRoutesById {
   '/admin/vermittlung': typeof AdminVermittlungRoute
   '/auth/confirmed': typeof AuthConfirmedRoute
   '/bewerbung/verbinden': typeof BewerbungVerbindenRoute
-  '/buchen/$token': typeof BuchenTokenRoute
   '/interview/$appId': typeof InterviewAppIdRoute
   '/termin/$token': typeof TerminTokenRoute
   '/admin/': typeof AdminIndexRoute
@@ -750,6 +749,7 @@ export interface FileRoutesById {
   '/api/public/sms-poll-cron': typeof ApiPublicSmsPollCronRoute
   '/api/public/tts-test': typeof ApiPublicTtsTestRoute
   '/interview/voice/$appId': typeof InterviewVoiceAppIdRoute
+  '/termin/buchen/$token': typeof TerminBuchenTokenRoute
   '/admin/tasks/': typeof AdminTasksIndexRoute
   '/admin/tasks/builder/$templateId': typeof AdminTasksBuilderTemplateIdRoute
   '/api/public/landing-server-files/$': typeof ApiPublicLandingServerFilesSplatRoute
@@ -812,7 +812,6 @@ export interface FileRouteTypes {
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
-    | '/buchen/$token'
     | '/interview/$appId'
     | '/termin/$token'
     | '/admin/'
@@ -834,6 +833,7 @@ export interface FileRouteTypes {
     | '/api/public/sms-poll-cron'
     | '/api/public/tts-test'
     | '/interview/voice/$appId'
+    | '/termin/buchen/$token'
     | '/admin/tasks/'
     | '/admin/tasks/builder/$templateId'
     | '/api/public/landing-server-files/$'
@@ -893,7 +893,6 @@ export interface FileRouteTypes {
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
-    | '/buchen/$token'
     | '/interview/$appId'
     | '/termin/$token'
     | '/admin'
@@ -915,6 +914,7 @@ export interface FileRouteTypes {
     | '/api/public/sms-poll-cron'
     | '/api/public/tts-test'
     | '/interview/voice/$appId'
+    | '/termin/buchen/$token'
     | '/admin/tasks'
     | '/admin/tasks/builder/$templateId'
     | '/api/public/landing-server-files/$'
@@ -976,7 +976,6 @@ export interface FileRouteTypes {
     | '/admin/vermittlung'
     | '/auth/confirmed'
     | '/bewerbung/verbinden'
-    | '/buchen/$token'
     | '/interview/$appId'
     | '/termin/$token'
     | '/admin/'
@@ -998,6 +997,7 @@ export interface FileRouteTypes {
     | '/api/public/sms-poll-cron'
     | '/api/public/tts-test'
     | '/interview/voice/$appId'
+    | '/termin/buchen/$token'
     | '/admin/tasks/'
     | '/admin/tasks/builder/$templateId'
     | '/api/public/landing-server-files/$'
@@ -1016,7 +1016,6 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   AuthConfirmedRoute: typeof AuthConfirmedRoute
   BewerbungVerbindenRoute: typeof BewerbungVerbindenRoute
-  BuchenTokenRoute: typeof BuchenTokenRoute
   InterviewAppIdRoute: typeof InterviewAppIdRoute
   TerminTokenRoute: typeof TerminTokenRoute
   BewerbungIndexRoute: typeof BewerbungIndexRoute
@@ -1034,6 +1033,7 @@ export interface RootRouteChildren {
   ApiPublicSmsPollCronRoute: typeof ApiPublicSmsPollCronRoute
   ApiPublicTtsTestRoute: typeof ApiPublicTtsTestRoute
   InterviewVoiceAppIdRoute: typeof InterviewVoiceAppIdRoute
+  TerminBuchenTokenRoute: typeof TerminBuchenTokenRoute
   ApiPublicLandingServerFilesSplatRoute: typeof ApiPublicLandingServerFilesSplatRoute
 }
 
@@ -1135,13 +1135,6 @@ declare module '@tanstack/react-router' {
       path: '/interview/$appId'
       fullPath: '/interview/$appId'
       preLoaderRoute: typeof InterviewAppIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buchen/$token': {
-      id: '/buchen/$token'
-      path: '/buchen/$token'
-      fullPath: '/buchen/$token'
-      preLoaderRoute: typeof BuchenTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bewerbung/verbinden': {
@@ -1473,6 +1466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTasksIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/termin/buchen/$token': {
+      id: '/termin/buchen/$token'
+      path: '/termin/buchen/$token'
+      fullPath: '/termin/buchen/$token'
+      preLoaderRoute: typeof TerminBuchenTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/interview/voice/$appId': {
       id: '/interview/voice/$appId'
       path: '/interview/voice/$appId'
@@ -1760,7 +1760,6 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   AuthConfirmedRoute: AuthConfirmedRoute,
   BewerbungVerbindenRoute: BewerbungVerbindenRoute,
-  BuchenTokenRoute: BuchenTokenRoute,
   InterviewAppIdRoute: InterviewAppIdRoute,
   TerminTokenRoute: TerminTokenRoute,
   BewerbungIndexRoute: BewerbungIndexRoute,
@@ -1778,18 +1777,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSmsPollCronRoute: ApiPublicSmsPollCronRoute,
   ApiPublicTtsTestRoute: ApiPublicTtsTestRoute,
   InterviewVoiceAppIdRoute: InterviewVoiceAppIdRoute,
+  TerminBuchenTokenRoute: TerminBuchenTokenRoute,
   ApiPublicLandingServerFilesSplatRoute: ApiPublicLandingServerFilesSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
