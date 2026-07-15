@@ -34,6 +34,7 @@ function CancelPage() {
 
   const [reason, setReason] = useState("");
   const [cancelledMagicToken, setCancelledMagicToken] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const detail = useQuery({
     queryKey: ["appointment-detail", token],
