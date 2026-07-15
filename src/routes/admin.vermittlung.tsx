@@ -1,14 +1,12 @@
-// Vermittlungs-Übersicht: kombiniert Vermittlungs-Landings + Fast-Track-Firmen + Calendly-Status.
+// Vermittlungs-Übersicht: Landings + eigenes Booking-System (kein Calendly / Fast-Track mehr).
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listLandingPages } from "@/lib/landing-pages.functions";
-import { listPartnerCompanies } from "@/lib/partner-companies.functions";
-import { listCalendlyAccounts } from "@/lib/calendly.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Handshake, CalendarClock, Globe, Plus, ExternalLink, AlertTriangle } from "lucide-react";
+import { Handshake, CalendarClock, Globe, Plus, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/admin/vermittlung")({
   component: VermittlungOverview,
@@ -16,19 +14,10 @@ export const Route = createFileRoute("/admin/vermittlung")({
 
 function VermittlungOverview() {
   const listLandings = useServerFn(listLandingPages);
-  const listPartners = useServerFn(listPartnerCompanies);
-  const listCalendly = useServerFn(listCalendlyAccounts);
-
   const lQ = useQuery({ queryKey: ["landings-broker"], queryFn: () => listLandings() });
-  const pQ = useQuery({ queryKey: ["partner-companies"], queryFn: () => listPartners() });
-  const cQ = useQuery({ queryKey: ["calendly-accounts"], queryFn: () => listCalendly() });
 
   const allLandings: any[] = (lQ.data as any)?.rows ?? [];
   const brokerLandings = allLandings.filter((l) => l.flow_type === "broker");
-  const partners: any[] = (pQ.data as any)?.rows ?? [];
-  const calendlyAccounts: any[] = (cQ.data as any)?.rows ?? [];
-
-  const needsSetup = partners.length === 0 || calendlyAccounts.length === 0;
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">
@@ -37,28 +26,10 @@ function VermittlungOverview() {
           <Handshake className="h-6 w-6" /> Vermittlung
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Bewerbungen werden über deine Landing-Page eingesammelt und direkt an eine Fast-Track-Firma
-          weitergereicht (Terminbuchung via Calendly). Der Bewerber sieht nach dem Absenden inline:
-          „Wir verbinden Sie mit [Partner]" und einen Button zur Terminbuchung.
+          Bewerbungen kommen über deine Landing-Page rein und werden direkt im eigenen Portal
+          bearbeitet — inklusive Terminbuchung über das integrierte Booking-System.
         </p>
       </div>
-
-      {needsSetup && (
-        <Card className="border-yellow-300 bg-yellow-50/40">
-          <CardContent className="pt-6 flex gap-3 items-start">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-            <div className="text-sm">
-              <strong>Setup unvollständig.</strong>{" "}
-              {calendlyAccounts.length === 0 && (
-                <>Lege zuerst einen <Link to="/admin/calendly" className="underline">Calendly-Account</Link> an. </>
-              )}
-              {partners.length === 0 && (
-                <>Lege dann eine <Link to="/admin/partner-companies" className="underline">Fast-Track-Firma</Link> an.</>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <div className="grid md:grid-cols-3 gap-4">
         <StatCard
@@ -69,18 +40,18 @@ function VermittlungOverview() {
           cta="Landing anlegen"
         />
         <StatCard
-          icon={<Handshake className="h-5 w-5" />}
-          label="Fast-Track-Firmen"
-          value={partners.length}
-          to="/admin/partner-companies"
-          cta="Partner verwalten"
+          icon={<CalendarClock className="h-5 w-5" />}
+          label="Terminverfügbarkeit"
+          value="→"
+          to="/admin/verfuegbarkeit"
+          cta="Verfügbarkeit pflegen"
         />
         <StatCard
-          icon={<CalendarClock className="h-5 w-5" />}
-          label="Calendly-Accounts"
-          value={calendlyAccounts.length}
-          to="/admin/calendly"
-          cta="Calendly verwalten"
+          icon={<Handshake className="h-5 w-5" />}
+          label="Bewerbungen"
+          value="→"
+          to="/admin/bewerbungen"
+          cta="Bewerbungen öffnen"
         />
       </div>
 
@@ -131,18 +102,18 @@ function VermittlungOverview() {
           <CardTitle>So funktioniert der Flow</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>1. Bewerber füllt Formular auf deiner Vermittlungs-Landing aus.</p>
-          <p>2. Bewerbung wird im Portal mit Status <code>pending</code> gespeichert.</p>
-          <p>3. Inline-Erfolgs-Modal zeigt „Wir verbinden Sie mit [Partner]" + Calendly-Button (neuer Tab).</p>
-          <p>4. Nach Terminbuchung: Calendly-Webhook aktualisiert <code>booking_status = scheduled</code>.</p>
-          <p>5. Calendly schickt Termin-Bestätigung; Bewerber registriert sich später im Portal des Partners.</p>
+          <p>1. Bewerber füllt das Formular auf deiner Vermittlungs-Landing aus.</p>
+          <p>2. Bewerbung wird im Portal unter <Link to="/admin/bewerbungen" className="underline">Bewerbungen</Link> mit Status <code>pending</code> gespeichert.</p>
+          <p>3. Bewerber bucht direkt einen freien Termin aus deiner <Link to="/admin/verfuegbarkeit" className="underline">Verfügbarkeit</Link> (integriertes Booking, kein Calendly).</p>
+          <p>4. Automatische Bestätigungs-E-Mail mit Kalender-Anhang (.ics) geht raus, 30-Min-Reminder folgt.</p>
+          <p>5. KI-Bewerbungsgespräch startet zum Termin über den Interview-Link; Entscheidung wird im Chat mitgeteilt.</p>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function StatCard({ icon, label, value, to, cta }: { icon: React.ReactNode; label: string; value: number; to: string; cta: string }) {
+function StatCard({ icon, label, value, to, cta }: { icon: React.ReactNode; label: string; value: number | string; to: string; cta: string }) {
   return (
     <Card>
       <CardHeader className="pb-2">
