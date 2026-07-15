@@ -12,9 +12,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import nodemailer from "https://esm.sh/nodemailer@6.9.14";
 import { renderEmail } from "../_shared/email-wrapper.ts";
 
-const FUNCTION_VERSION = "2026-07-18-booking-confirmation-v2-wrapper";
+const FUNCTION_VERSION = "2026-07-18-booking-confirmation-v3-lookback72h";
 const REMINDER_KIND = "booking_confirmation";
-const LOOKBACK_MIN = 360; // 6h – überbrückt Cron-Ausfälle; Idempotenz via reminder_log
+const LOOKBACK_MIN = 4320; // 72h – überbrückt längere Cron-Ausfälle; Idempotenz via reminder_log
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
