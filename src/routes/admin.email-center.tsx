@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Mail, RefreshCw, CheckCircle2, XCircle, Clock, AlertTriangle, Search,
+  Mail, RefreshCw, CheckCircle2, XCircle, Clock, AlertTriangle, Search, FileText, ScrollText, Pencil,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/admin/email-center")({
   component: AdminEmailCenterPage,
@@ -125,6 +126,21 @@ function AdminEmailCenterPage() {
         </div>
       </div>
 
+      {/* Cross-Nav */}
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-muted-foreground mr-1">Weiter zu:</span>
+        <Link to="/admin/email-templates">
+          <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5">
+            <Pencil className="h-3 w-3" /> Templates bearbeiten
+          </Button>
+        </Link>
+        <Link to="/admin/email-logs">
+          <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5">
+            <ScrollText className="h-3 w-3" /> Roh-Log ansehen
+          </Button>
+        </Link>
+      </div>
+
       {/* KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Kpi label="Gesamt" value={stats.total} icon={Mail} tone="muted" />
@@ -137,36 +153,51 @@ function AdminEmailCenterPage() {
       <Card>
         <CardContent className="p-0">
           <div className="px-4 py-3 border-b flex items-center justify-between">
-            <div className="text-sm font-semibold">Aktive Mail-Templates</div>
+            <div>
+              <div className="text-sm font-semibold">Aktive Mail-Templates</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">Klick auf ein Template öffnet den Editor.</div>
+            </div>
             <div className="text-xs text-muted-foreground">Zeitraum: {range === "24h" ? "24 h" : range === "7d" ? "7 Tage" : "30 Tage"}</div>
           </div>
           <div className="divide-y">
             {ACTIVE_TEMPLATES.map(t => {
               const s = perTemplate.get(t.key) ?? { sent: 0, failed: 0, pending: 0 };
               const total = s.sent + s.failed + s.pending;
+              const lastRel = s.last ? relativeTime(s.last) : null;
               return (
-                <div key={t.key} className="px-4 py-3 flex items-center gap-4">
+                <Link
+                  key={t.key}
+                  to="/admin/email-templates"
+                  className="px-4 py-3 flex items-center gap-4 hover:bg-muted/30 transition-colors"
+                >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium">{t.label}</span>
                       <Badge variant="secondary" className="text-[10px]">{t.group}</Badge>
+                      {total === 0 && (
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground border-dashed">
+                          Kein Versand im Zeitraum
+                        </Badge>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{t.trigger} · <code className="text-[10px]">{t.key}</code></div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {t.trigger}
+                      {lastRel && <span className="ml-1.5">· Zuletzt {lastRel}</span>}
+                    </div>
                   </div>
                   <div className="hidden sm:flex items-center gap-4 text-xs tabular-nums">
                     <span className="text-emerald-600">✓ {s.sent}</span>
                     <span className="text-amber-600">⏳ {s.pending}</span>
                     <span className="text-rose-600">✗ {s.failed}</span>
                   </div>
-                  <div className="w-32 text-right text-[11px] text-muted-foreground">
-                    {s.last ? new Date(s.last).toLocaleString("de-DE") : total === 0 ? "—" : ""}
-                  </div>
-                </div>
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </Link>
               );
             })}
           </div>
         </CardContent>
       </Card>
+
 
       {/* Fehler-Feed */}
       {stats.failed > 0 && (
@@ -232,6 +263,19 @@ function AdminEmailCenterPage() {
     </div>
   );
 }
+
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "gerade eben";
+  if (min < 60) return `vor ${min} Min.`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `vor ${h} Std.`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `vor ${d} Tag${d === 1 ? "" : "en"}`;
+  return new Date(iso).toLocaleDateString("de-DE");
+}
+
 
 function Kpi({ label, value, icon: Icon, tone }: { label: string; value: number; icon: any; tone: "muted" | "emerald" | "amber" | "rose" }) {
   const c = {
