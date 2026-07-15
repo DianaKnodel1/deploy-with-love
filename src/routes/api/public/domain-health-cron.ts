@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Wird vom pg_cron alle 5 Min angefragt. Pingt alle aktiven Tenant-Domains
 // (primary + aliases), loggt Status, schreibt bei `down` einen Activity-Log-
 // Eintrag (Admin sieht ihn auf /admin/activity).
 //
-// Auth: ?key=<CRON_SECRET> — Wert muss als Env-Var gesetzt sein.
+// Auth: ?key=<CRON_SECRET> oder Service-Role via Authorization/apikey.
 
 function normalizeDomain(d: string): string {
   return String(d).toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^portal\./, "");
@@ -26,17 +25,29 @@ async function pingDomain(host: string, timeoutMs = 5000) {
   }
 }
 
+function isAuthorized(request: Request, url: URL) {
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const providedKey = (url.searchParams.get("key") ?? request.headers.get("x-cron-secret") ?? "").trim();
+  const bearer = (request.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  const apikey = (request.headers.get("apikey") ?? "").trim();
+
+  return Boolean(
+    (cronSecret && providedKey === cronSecret) ||
+    (serviceRole && (bearer === serviceRole || apikey === serviceRole))
+  );
+}
+
 export const Route = createFileRoute("/api/public/domain-health-cron")({
   server: {
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const key = url.searchParams.get("key");
-        const expected = process.env.CRON_SECRET;
-        if (!expected || key !== expected) {
+        if (!isAuthorized(request, url)) {
           return new Response("Unauthorized", { status: 401 });
         }
 
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const sb = supabaseAdmin as any;
         const { data: tenants, error } = await sb
           .from("tenants")
