@@ -14,7 +14,7 @@ import {
 } from "@/lib/appointments.functions";
 import { useToast } from "@/hooks/use-toast";
 
-export const Route = createFileRoute("/buchen/$token")({
+export const Route = createFileRoute("/termin/buchen/$token")({
   head: () => ({
     meta: [
       { title: "Termin für Bewerbungsgespräch wählen" },
