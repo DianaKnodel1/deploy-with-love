@@ -230,16 +230,6 @@ function BookingConfirmed(props: {
     ? `${window.location.origin}/termin/${props.cancel_token}`
     : `/termin/${props.cancel_token}`;
 
-  const ics = buildIcs({
-    uid: `${props.cancel_token}@mb-portal`,
-    title: `Bewerbungsgespräch – ${props.tenantName}`,
-    description: `Bewerbungsgespräch mit ${props.recruiterName}.\n\nTermin absagen oder verschieben: ${cancelUrl}`,
-    start, end,
-    url: cancelUrl,
-    attendeeName: props.applicantFirstName,
-    attendeeEmail: props.applicantEmail,
-  });
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-10 px-4">
       <div className="max-w-lg mx-auto">
