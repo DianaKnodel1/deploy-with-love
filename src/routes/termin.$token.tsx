@@ -94,7 +94,7 @@ function CancelPage() {
             <CardContent className="text-center">
               {(cancelledMagicToken || a.magic_token) ? (
                 <Link
-                  to="/buchen/$token"
+                  to="/termin/buchen/$token"
                   params={{ token: cancelledMagicToken || a.magic_token! }}
                   className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90"
                 >
@@ -144,7 +144,7 @@ function CancelPage() {
               </div>
               {a.magic_token ? (
                 <Link
-                  to="/buchen/$token"
+                  to="/termin/buchen/$token"
                   params={{ token: a.magic_token }}
                   className="block w-full text-center rounded-md bg-primary text-primary-foreground px-4 py-2.5 text-sm font-semibold hover:opacity-90"
                 >
@@ -185,7 +185,7 @@ function CancelPage() {
             <DialogFooter className="gap-2 sm:gap-2">
               {a.magic_token ? (
                 <Link
-                  to="/buchen/$token"
+                  to="/termin/buchen/$token"
                   params={{ token: a.magic_token }}
                   className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:opacity-90"
                 >
