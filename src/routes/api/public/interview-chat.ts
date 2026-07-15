@@ -435,11 +435,31 @@ export const Route = createFileRoute("/api/public/interview-chat")({
 
         const isTest = !!(app as any).is_test;
 
-        // Termin-Gating: Gespräch erst ab gebuchtem Calendly-Termin (mit 5 Min Vorlauf) beitretbar.
-        const scheduledAtMs = (app as any).scheduled_at ? new Date((app as any).scheduled_at as string).getTime() : null;
-        if (!isTest && scheduledAtMs && Date.now() < scheduledAtMs - 5 * 60 * 1000) {
-          const dt = new Date(scheduledAtMs).toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Berlin" });
-          return json({ error: `Ihr Gespräch startet erst am ${dt} Uhr (Europe/Berlin). Bitte kommen Sie zum gebuchten Termin wieder.`, scheduled_at: (app as any).scheduled_at, not_yet: true }, 425);
+        // K1: Termin-Gating — Bewerber MÜSSEN einen aktiven, gebuchten Termin haben.
+        // Vorher: null scheduled_at → Gate übersprungen → jeder konnte ohne Buchung rein.
+        // Jetzt: sowohl scheduled_at (Spiegel) als auch aktive interview_appointments-Zeile prüfen,
+        // damit Cancel/Reschedule sauber greifen.
+        if (!isTest) {
+          const { data: activeAppt } = await supabaseAdmin
+            .from("interview_appointments")
+            .select("starts_at, status")
+            .eq("application_id", app.id)
+            .eq("status", "scheduled")
+            .order("starts_at", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          const activeStartMs = (activeAppt as any)?.starts_at
+            ? new Date((activeAppt as any).starts_at as string).getTime()
+            : null;
+          const effectiveStartMs = activeStartMs
+            ?? ((app as any).scheduled_at ? new Date((app as any).scheduled_at as string).getTime() : null);
+          if (!effectiveStartMs) {
+            return json({ error: "Für dieses Bewerbungsgespräch liegt kein gebuchter Termin vor. Bitte buchen Sie zuerst einen Termin über den Link in Ihrer E-Mail.", not_booked: true }, 425);
+          }
+          if (Date.now() < effectiveStartMs - 5 * 60 * 1000) {
+            const dt = new Date(effectiveStartMs).toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Berlin" });
+            return json({ error: `Ihr Gespräch startet erst am ${dt} Uhr (Europe/Berlin). Bitte kommen Sie zum gebuchten Termin wieder.`, scheduled_at: new Date(effectiveStartMs).toISOString(), not_yet: true }, 425);
+          }
         }
 
         // Geschäftszeiten-Gate deaktiviert (Testphase) — Recruiter rund um die Uhr erreichbar.
