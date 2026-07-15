@@ -174,9 +174,17 @@ export const Route = createFileRoute("/api/public/applications")({
 
         if (!appId) {
           appId = crypto.randomUUID();
+          // Vor-/Nachname aus explizitem Feld, sonst aus full_name gesplittet
+          const nameParts = d.full_name.trim().split(/\s+/);
+          const derivedFirst = nameParts[0] ?? "";
+          const derivedLast = nameParts.slice(1).join(" ");
+          const firstNameForDb = (d.first_name ?? "").trim() || derivedFirst;
+          const lastNameForDb = (d.last_name ?? "").trim() || derivedLast;
           const { error } = await supabaseAdmin.from("applications").insert({
             id: appId,
             full_name: displayName,
+            first_name: firstNameForDb || null,
+            last_name: lastNameForDb || null,
             email: d.email,
             phone: d.phone ?? null,
             postal_code: d.postal_code ?? null,
