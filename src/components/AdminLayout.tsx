@@ -44,13 +44,21 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Vermittlung",
+    items: [
+      { title: "Landing-Generator", url: "/admin/landing-generator", icon: Globe },
+      { title: "Vermittlung", url: "/admin/vermittlung", icon: Handshake },
+      { title: "Verfügbarkeit", url: "/admin/verfuegbarkeit", icon: CalendarClock },
+      { title: "Bewerbungs-Termine", url: "/admin/appointments", icon: CalendarDays },
+    ],
+  },
+  {
     label: "Aufträge",
     items: [
       { title: "Aufträge", url: "/admin/tasks", icon: ClipboardList },
       { title: "Prüfungen", url: "/admin/reviews", icon: CheckSquare },
       { title: "Nachbesserungen", url: "/admin/revisions", icon: RotateCcw },
       { title: "Uploads", url: "/admin/uploads", icon: Upload },
-      { title: "Termine", url: "/admin/appointments", icon: CalendarDays },
     ],
   },
   {
