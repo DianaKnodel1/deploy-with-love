@@ -264,6 +264,19 @@ function AdminEmailCenterPage() {
   );
 }
 
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "gerade eben";
+  if (min < 60) return `vor ${min} Min.`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `vor ${h} Std.`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `vor ${d} Tag${d === 1 ? "" : "en"}`;
+  return new Date(iso).toLocaleDateString("de-DE");
+}
+
+
 function Kpi({ label, value, icon: Icon, tone }: { label: string; value: number; icon: any; tone: "muted" | "emerald" | "amber" | "rose" }) {
   const c = {
     muted:   "bg-muted/40 text-foreground",
