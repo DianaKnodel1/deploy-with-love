@@ -124,6 +124,9 @@ const EMPTY: Branding = {
   recruiter_name: "Sabine Schneider",
   recruiter_avatar_url: "",
   recruiter_avatar_data_url: "",
+  booking_mode: "calendly",
+  event_description: "",
+  booking_window_days: 30,
 };
 
 const BRANDING_DRIVEN_SLOT_KEYS = new Set([
