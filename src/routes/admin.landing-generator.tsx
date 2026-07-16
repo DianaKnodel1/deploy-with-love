@@ -79,6 +79,9 @@ type Branding = {
   recruiter_name: string;
   recruiter_avatar_url: string;
   recruiter_avatar_data_url: string;
+  booking_mode: "calendly" | "internal" | "off";
+  event_description: string;
+  booking_window_days: number;
 };
 
 const EMPTY: Branding = {
