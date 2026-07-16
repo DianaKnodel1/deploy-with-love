@@ -690,6 +690,9 @@ document.addEventListener('submit', function(e){
         recruiter_name: row.recruiter_name ?? row.branding?.recruiter_name ?? "Sabine Schneider",
         recruiter_avatar_url: row.recruiter_avatar_url ?? row.branding?.recruiter_avatar_url ?? "",
         recruiter_avatar_data_url: "",
+        booking_mode: (row.booking_mode as any) ?? "calendly",
+        event_description: row.event_description ?? "",
+        booking_window_days: row.booking_window_days ?? 30,
       } as Branding;
       setThemeId(row.theme_id);
       setSlotValues(normalizeSlotsForTheme(row.theme_id, row.slots ?? {}, withSeoDefaults(loadedBranding)));
