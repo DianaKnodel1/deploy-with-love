@@ -1,14 +1,21 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { execFileSync } from 'node:child_process';
 
 const root = new URL('..', import.meta.url).pathname;
-const files = execFileSync('rg', ['-l', '@/integrations/supabase/client.server|integrations/supabase/client.server', 'src'], {
-  cwd: root,
-  encoding: 'utf8',
-})
-  .split('\n')
-  .filter(Boolean);
+
+function walk(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir)) {
+    if (entry === 'node_modules' || entry === '.git' || entry === '.output' || entry === 'dist') continue;
+    const full = join(dir, entry);
+    const st = statSync(full);
+    if (st.isDirectory()) out.push(...walk(full));
+    else out.push(full);
+  }
+  return out;
+}
+
+const files = walk(join(root, 'src')).map((file) => file.slice(root.length + 1));
 
 const offenders = [];
 
