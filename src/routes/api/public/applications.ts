@@ -152,8 +152,8 @@ export const Route = createFileRoute("/api/public/applications")({
           }
         }
         // Booking-Mode pro Landing Page steuert Calendly vs. eigenes System.
-        // 'off' → kein Buchungslink; 'calendly' → Calendly-Flow; 'internal' → eigenes System.
-        const bookingMode: "calendly" | "internal" | "off" =
+        // 'calendly' → Calendly-Flow; 'internal' → eigenes Buchungssystem.
+        const bookingMode: "calendly" | "internal" =
           (landingPage?.booking_mode as any) ?? "calendly";
         const isBroker = d.flow_type === "broker" && !!partner && !d.is_test && bookingMode === "calendly";
         const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test && bookingMode === "calendly";
