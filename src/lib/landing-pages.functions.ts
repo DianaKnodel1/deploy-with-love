@@ -66,6 +66,10 @@ const SaveInput = z.object({
   recruiter_name: z.string().max(120).nullable().optional(),
   recruiter_avatar_url: z.string().max(500).nullable().optional(),
   recruiter_avatar_data_url: z.string().max(8_000_000).nullable().optional(),
+  // Termin-Buchungssystem pro Landing Page
+  booking_mode: z.enum(["calendly", "internal", "off"]).default("calendly"),
+  event_description: z.string().max(4000).nullable().optional(),
+  booking_window_days: z.number().int().min(1).max(180).default(30),
 });
 
 async function requireAdmin(ctx: { supabase: any; userId: string }) {
@@ -169,6 +173,9 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       interview_voice_id: data.interview_voice_id ?? null,
       interview_system_prompt: data.interview_system_prompt ?? null,
       linked_fasttrack_landing_id: data.linked_fasttrack_landing_id ?? null,
+      booking_mode: data.booking_mode ?? "calendly",
+      event_description: data.event_description ?? null,
+      booking_window_days: data.booking_window_days ?? 30,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;

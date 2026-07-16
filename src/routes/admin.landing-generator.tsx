@@ -79,6 +79,9 @@ type Branding = {
   recruiter_name: string;
   recruiter_avatar_url: string;
   recruiter_avatar_data_url: string;
+  booking_mode: "calendly" | "internal" | "off";
+  event_description: string;
+  booking_window_days: number;
 };
 
 const EMPTY: Branding = {
@@ -121,6 +124,9 @@ const EMPTY: Branding = {
   recruiter_name: "Sabine Schneider",
   recruiter_avatar_url: "",
   recruiter_avatar_data_url: "",
+  booking_mode: "calendly",
+  event_description: "",
+  booking_window_days: 30,
 };
 
 const BRANDING_DRIVEN_SLOT_KEYS = new Set([
@@ -641,6 +647,9 @@ document.addEventListener('submit', function(e){
         recruiter_avatar_data_url: branding.recruiter_avatar_data_url || null,
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
+        booking_mode: branding.booking_mode ?? "calendly",
+        event_description: branding.event_description || null,
+        booking_window_days: Number(branding.booking_window_days ?? 30),
       } as any });
       setEditingId((row as any).id);
       setSlug((row as any).slug);
@@ -681,6 +690,9 @@ document.addEventListener('submit', function(e){
         recruiter_name: row.recruiter_name ?? row.branding?.recruiter_name ?? "Sabine Schneider",
         recruiter_avatar_url: row.recruiter_avatar_url ?? row.branding?.recruiter_avatar_url ?? "",
         recruiter_avatar_data_url: "",
+        booking_mode: (row.booking_mode as any) ?? "calendly",
+        event_description: row.event_description ?? "",
+        booking_window_days: row.booking_window_days ?? 30,
       } as Branding;
       setThemeId(row.theme_id);
       setSlotValues(normalizeSlotsForTheme(row.theme_id, row.slots ?? {}, withSeoDefaults(loadedBranding)));
@@ -1240,29 +1252,66 @@ document.addEventListener('submit', function(e){
                 </div>
               ) : (
               <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
-                <Label className="text-xs font-semibold">
-                  📅 Calendly-Buchung {branding.flow_type === "broker" ? "(Pflicht für Vermittlung — meist via Fast-Track-Firma vererbt)" : "(optional)"}
-                </Label>
-                <p className="text-[11px] text-muted-foreground">
-                  Nach erfolgreicher Bewerbung erscheint inline auf der Landing der Erfolgsblock mit Button „Jetzt Termin buchen". Calendly öffnet in einem neuen Tab — <strong>keine</strong> automatische Weiterleitung. Webhook-Konfiguration unter <a href="/admin/calendly" className="underline">Vermittlung → Calendly</a>.
-                </p>
-                <Field label="Calendly-Buchungslink">
-                  <Input
-                    value={branding.calendly_url}
-                    onChange={set("calendly_url")}
-                    placeholder="https://calendly.com/sabine-schneider/bewerbung"
-                  />
-                </Field>
-                <Field label="Firmenname auf Erfolgsblock">
-                  <Input
-                    value={branding.intermediate_company_name}
-                    onChange={set("intermediate_company_name")}
-                    placeholder={branding.firmenname || "z.B. Equal Experts Germany GmbH"}
-                  />
+                <Label className="text-xs font-semibold">📅 Terminbuchung</Label>
+                <Field label="Modus">
+                  <select
+                    className="w-full h-9 px-2 rounded border border-input bg-background text-sm"
+                    value={branding.booking_mode}
+                    onChange={(e) => setBranding((b) => ({ ...b, booking_mode: e.target.value as any }))}
+                  >
+                    <option value="calendly">Calendly (extern)</option>
+                    <option value="internal">Eigenes Buchungssystem</option>
+                    <option value="off">Deaktiviert (kein Termin)</option>
+                  </select>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    „Wir verbinden Sie mit <strong>{branding.intermediate_company_name || branding.firmenname || "[Firma]"}</strong>" — leer = Firmenname.
+                    <strong>Eigenes System</strong> benötigt einen aktiven Kalender unter <a href="/admin/vermittlung" className="underline">Vermittlung → Verfügbarkeiten</a> für diese Landing Page (oder verknüpfte Fast-Track-Page).
                   </p>
                 </Field>
+
+                {branding.booking_mode === "calendly" && (
+                  <>
+                    <Field label="Calendly-Buchungslink">
+                      <Input
+                        value={branding.calendly_url}
+                        onChange={set("calendly_url")}
+                        placeholder="https://calendly.com/sabine-schneider/bewerbung"
+                      />
+                    </Field>
+                    <Field label="Firmenname auf Erfolgsblock">
+                      <Input
+                        value={branding.intermediate_company_name}
+                        onChange={set("intermediate_company_name")}
+                        placeholder={branding.firmenname || "z.B. Equal Experts Germany GmbH"}
+                      />
+                    </Field>
+                  </>
+                )}
+
+                {branding.booking_mode === "internal" && (
+                  <>
+                    <Field label="Buchungsfenster (Tage im Voraus)">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={180}
+                        value={branding.booking_window_days}
+                        onChange={(e) => setBranding((b) => ({ ...b, booking_window_days: Number(e.target.value) || 30 }))}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">Default 30 Tage.</p>
+                    </Field>
+                    <Field label="Event-Beschreibung (Slot-Picker & Bestätigungsmail)">
+                      <textarea
+                        className="w-full min-h-[120px] px-3 py-2 rounded border border-input bg-background text-sm"
+                        value={branding.event_description}
+                        onChange={(e) => setBranding((b) => ({ ...b, event_description: e.target.value }))}
+                        placeholder={"Für das Bewerbungsgespräch zu Ihrem neuen Minijob.\n\nDas Bewerbungsgespräch findet unter folgendem Link statt, bitte stellen Sie sicher, dass Sie 5 Minuten vorher anwesend sind.\n\nhttps://portal…/bewerbung"}
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Wird im Slot-Picker sowie in der Terminbestätigung angezeigt. HR-Foto und Partner-Logo werden automatisch aus dem Branding oben übernommen.
+                      </p>
+                    </Field>
+                  </>
+                )}
               </div>
               )}
 

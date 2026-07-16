@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/public/applications")({
           let lp: any = null;
           const { data: bySource } = await supabaseAdmin
             .from("landing_pages")
-            .select("id, slug, source_slug, tenant_id, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding")
+            .select("id, slug, source_slug, tenant_id, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding, booking_mode")
             .eq("source_slug", d.source_slug)
             .eq("is_published", true)
             .maybeSingle();
@@ -94,7 +94,7 @@ export const Route = createFileRoute("/api/public/applications")({
           if (!lp) {
             const { data: bySlug } = await supabaseAdmin
               .from("landing_pages")
-              .select("id, slug, source_slug, tenant_id, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding")
+              .select("id, slug, source_slug, tenant_id, calendly_url, partner_company_id, interview_mode, linked_fasttrack_landing_id, intermediate_company_name, logo_url, branding, booking_mode")
               .eq("slug", source)
               .eq("is_published", true)
               .maybeSingle();
@@ -151,8 +151,12 @@ export const Route = createFileRoute("/api/public/applications")({
             };
           }
         }
-        const isBroker = d.flow_type === "broker" && !!partner && !d.is_test;
-        const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test;
+        // Booking-Mode pro Landing Page steuert Calendly vs. eigenes System.
+        // 'off' → kein Buchungslink; 'calendly' → Calendly-Flow; 'internal' → eigenes System.
+        const bookingMode: "calendly" | "internal" | "off" =
+          (landingPage?.booking_mode as any) ?? "calendly";
+        const isBroker = d.flow_type === "broker" && !!partner && !d.is_test && bookingMode === "calendly";
+        const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test && bookingMode === "calendly";
 
         // Tenant-Fallback #3: Landing-Page hat i.d.R. tenant_id → nutzen wenn
         // Origin/Referer nichts gebracht hat.
@@ -251,11 +255,13 @@ export const Route = createFileRoute("/api/public/applications")({
           pushScheduleCandidate((existingApp as any)?.source_landing_id ?? null);
         }
         if (!d.is_test && !isFast && scheduleCandidateIds.length > 0 && d.portal_url) {
+          // Nur Landings mit booking_mode='internal' zählen als Kandidaten.
           const { data: schedules } = await supabaseAdmin
             .from("availability_schedules")
-            .select("id, landing_page_id")
+            .select("id, landing_page_id, landing_pages!inner(booking_mode)")
             .in("landing_page_id", scheduleCandidateIds)
-            .eq("active", true);
+            .eq("active", true)
+            .eq("landing_pages.booking_mode", "internal");
           const sched = scheduleCandidateIds
             .map((id) => (schedules as any[] | null)?.find((s) => s.landing_page_id === id))
             .find(Boolean);
