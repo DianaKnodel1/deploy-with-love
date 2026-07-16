@@ -1,31 +1,86 @@
-// Robust Bearer-Attacher für serverFn Aufrufe.
-// Ersetzt die auto-generierte attachSupabaseAuth: refresht den Token,
-// wenn er abgelaufen ist (oder <60s vor Ablauf), bevor er attached wird.
-// Verhindert "Unauthorized: Invalid token" nach längeren Sessions / Deploys.
+// Robust Bearer-Attacher für serverFn-Aufrufe.
+// Wichtig: NICHT zusätzlich den generierten attachSupabaseAuth registrieren.
+// Dieser Attacher wartet kurz auf die Session-Hydration, refresht den Token
+// regelmäßig vor geschützten Calls und hängt nie bewusst einen abgelaufenen
+// Token an. Das verhindert "Unauthorized: Invalid token" nach Deploy/Idle.
 import { createMiddleware } from '@tanstack/react-start';
 import { supabase } from './client';
 
+const REFRESH_EVERY_MS = 30_000;
+const SESSION_WAIT_MS = 1_500;
+
+let lastRefreshAt = 0;
+let refreshInFlight: Promise<string | null> | null = null;
+
+function isBrowser() {
+  return typeof window !== 'undefined';
+}
+
+function isJwtLike(token: string | null | undefined): token is string {
+  return typeof token === 'string' && token.split('.').length === 3;
+}
+
+async function waitForStoredSession() {
+  const first = await supabase.auth.getSession();
+  if (first.data.session) return first.data.session;
+
+  if (!isBrowser()) return null;
+
+  return await new Promise<typeof first.data.session>((resolve) => {
+    let done = false;
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    const finish = (session: typeof first.data.session) => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(timer);
+      subscription?.unsubscribe();
+      resolve(session ?? null);
+    };
+
+    const timer = window.setTimeout(() => finish(null), SESSION_WAIT_MS);
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        finish(session);
+      }
+    }).then(({ data }) => {
+      subscription = data.subscription;
+    }).catch(() => finish(null));
+  });
+}
+
 async function getFreshAccessToken(): Promise<string | null> {
   try {
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
+    const session = await waitForStoredSession();
     if (!session) return null;
 
     const expiresAt = session.expires_at ?? 0; // unix seconds
     const nowSec = Math.floor(Date.now() / 1000);
+    const expiresSoon = expiresAt > 0 && expiresAt - nowSec < 300;
+    const shouldRefresh = expiresSoon || Date.now() - lastRefreshAt > REFRESH_EVERY_MS;
 
-    // Wenn Token in <60s abläuft oder schon abgelaufen: refresh erzwingen.
-    if (expiresAt - nowSec < 60) {
-      const { data: refreshed, error } = await supabase.auth.refreshSession();
-      if (error || !refreshed.session) {
-        // Refresh fehlgeschlagen → alten Token trotzdem versuchen; Server wird
-        // 401 werfen und der Client zeigt eine sinnvolle Meldung.
-        return session.access_token ?? null;
-      }
-      return refreshed.session.access_token;
+    if (shouldRefresh) {
+      refreshInFlight ??= supabase.auth.refreshSession()
+        .then(({ data, error }) => {
+          if (error || !data.session?.access_token) return null;
+          lastRefreshAt = Date.now();
+          return data.session.access_token;
+        })
+        .finally(() => {
+          refreshInFlight = null;
+        });
+
+      const refreshedToken = await refreshInFlight;
+      if (isJwtLike(refreshedToken)) return refreshedToken;
+
+      // Abgelaufene Tokens nie mehr mitschicken – das erzeugt serverseitig
+      // genau den störenden "Invalid token"-Fehler. Der Nutzer muss sich dann
+      // sauber neu anmelden statt mit kaputter Session weiterzulaufen.
+      if (expiresAt > 0 && expiresAt <= nowSec) return null;
     }
 
-    return session.access_token;
+    return isJwtLike(session.access_token) ? session.access_token : null;
   } catch {
     return null;
   }
