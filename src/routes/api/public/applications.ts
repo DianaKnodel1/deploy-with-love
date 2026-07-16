@@ -255,11 +255,13 @@ export const Route = createFileRoute("/api/public/applications")({
           pushScheduleCandidate((existingApp as any)?.source_landing_id ?? null);
         }
         if (!d.is_test && !isFast && scheduleCandidateIds.length > 0 && d.portal_url) {
+          // Nur Landings mit booking_mode='internal' zählen als Kandidaten.
           const { data: schedules } = await supabaseAdmin
             .from("availability_schedules")
-            .select("id, landing_page_id")
+            .select("id, landing_page_id, landing_pages!inner(booking_mode)")
             .in("landing_page_id", scheduleCandidateIds)
-            .eq("active", true);
+            .eq("active", true)
+            .eq("landing_pages.booking_mode", "internal");
           const sched = scheduleCandidateIds
             .map((id) => (schedules as any[] | null)?.find((s) => s.landing_page_id === id))
             .find(Boolean);
