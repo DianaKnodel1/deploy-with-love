@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data, error } = await ctx.supabase
@@ -9,6 +8,11 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
     .eq("user_id", ctx.userId).eq("role", "admin").maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Nicht autorisiert");
+}
+
+async function getSupabaseAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
 }
 
 function normalizeDomain(d: string): string {
@@ -61,7 +65,7 @@ export const checkDomainsHealth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
     const { data: tenants, error } = await sb
       .from("tenants")
       .select("id,name,domain,domain_aliases,primary_domain,emails_paused,emails_paused_at,emails_paused_reason,emails_paused_by")
@@ -113,7 +117,7 @@ export const setTenantEmailsPaused = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
     const patch: Record<string, any> = data.paused
       ? {
           emails_paused: true,
@@ -159,7 +163,7 @@ export const setPrimaryDomain = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
     const target = normalizeDomain(data.domain);
 
     const { data: tenant, error } = await sb
@@ -216,7 +220,7 @@ export const getAffectedRecipients = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
 
     // Mitarbeiter: ALLE inkl. abgeschlossen (außer deaktiviert/abgelehnt/gebounced) —
     // matched die Filterung in der Edge-Function.
@@ -276,7 +280,7 @@ export const getRecoveryStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
 
     const { data: tenant } = await sb
       .from("tenants")
@@ -326,7 +330,7 @@ export const getRecoveryPreview = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
     const { data: t, error } = await sb
       .from("tenants")
       .select("id,name,domain,primary_domain,logo_url,primary_color,reminder_recovery_subject,reminder_recovery_body")
@@ -409,6 +413,7 @@ export const enqueueDomainRecoveryMails = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const sb = await getSupabaseAdmin();
     const SUPABASE_URL = process.env.SUPABASE_URL!;
     const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     const res = await fetch(`${SUPABASE_URL}/functions/v1/send-reminders`, {
@@ -429,7 +434,7 @@ export const enqueueDomainRecoveryMails = createServerFn({ method: "POST" })
     if (!res.ok) throw new Error(json?.error ?? `Edge function error (${res.status})`);
 
     try {
-      await (supabaseAdmin as any).from("activity_log").insert({
+      await sb.from("activity_log").insert({
         action: "domain_recovery_versendet",
         entity_type: "tenant",
         entity_id: data.tenant_id,
@@ -461,7 +466,7 @@ export const listBouncedRecipients = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
     const out: BouncedRecipient[] = [];
 
     const { data: profs } = await sb
@@ -515,7 +520,7 @@ export const resetEmailStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
     const table = data.kind === "mitarbeiter" ? "profiles" : "applications";
     const col = data.kind === "mitarbeiter" ? "user_id" : "id";
     const { error } = await sb
@@ -552,7 +557,7 @@ export const switchToNewPrimaryDomain = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
     const target = normalizeDomain(data.new_domain);
     if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(target)) {
       throw new Error(`Ungültige Domain: ${target}`);
