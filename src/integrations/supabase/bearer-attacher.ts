@@ -47,7 +47,25 @@ async function waitForStoredSession() {
       }
     });
     subscription = data.subscription;
+    if (done) subscription.unsubscribe();
   });
+}
+
+async function clearBrokenLocalSession() {
+  try {
+    await supabase.auth.signOut({ scope: 'local' });
+  } catch {
+    // Best effort only. Der nächste normale Login schreibt eine saubere Session.
+  }
+}
+
+async function currentTokenStillValid(token: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+    return !error && !!data.user;
+  } catch {
+    return false;
+  }
 }
 
 async function getFreshAccessToken(): Promise<string | null> {
@@ -74,10 +92,15 @@ async function getFreshAccessToken(): Promise<string | null> {
       const refreshedToken = await refreshInFlight;
       if (isJwtLike(refreshedToken)) return refreshedToken;
 
-      // Abgelaufene Tokens nie mehr mitschicken – das erzeugt serverseitig
-      // genau den störenden "Invalid token"-Fehler. Der Nutzer muss sich dann
-      // sauber neu anmelden statt mit kaputter Session weiterzulaufen.
-      if (expiresAt > 0 && expiresAt <= nowSec) return null;
+      // Refresh fehlgeschlagen: alten Token nur verwenden, wenn Auth ihn noch
+      // aktiv validiert. Sonst lokale kaputte Session löschen, damit nicht bei
+      // jedem serverFn-Aufruf wieder "Unauthorized: Invalid token" gesendet wird.
+      if (isJwtLike(session.access_token) && expiresAt > nowSec && await currentTokenStillValid(session.access_token)) {
+        return session.access_token;
+      }
+
+      await clearBrokenLocalSession();
+      return null;
     }
 
     return isJwtLike(session.access_token) ? session.access_token : null;
