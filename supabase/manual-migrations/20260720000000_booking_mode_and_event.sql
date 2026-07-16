@@ -1,8 +1,9 @@
 -- Booking-Mode + Event-Metadaten pro Landing Page.
--- 'calendly' (Default = bestehendes Verhalten), 'internal' = eigenes System, 'off' = kein Termin.
+-- 'calendly' (Default = bestehendes Verhalten), 'internal' = eigenes System.
+-- Vermittlungs-Pages brauchen IMMER einen Modus (kein 'off').
 
 DO $$ BEGIN
-  CREATE TYPE public.landing_booking_mode AS ENUM ('calendly', 'internal', 'off');
+  CREATE TYPE public.landing_booking_mode AS ENUM ('calendly', 'internal');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 ALTER TABLE public.landing_pages
@@ -11,14 +12,6 @@ ALTER TABLE public.landing_pages
   ADD COLUMN IF NOT EXISTS booking_window_days integer NOT NULL DEFAULT 30
     CHECK (booking_window_days BETWEEN 1 AND 180);
 
--- Migration: bestehende Landings mit Calendly-URL bleiben auf 'calendly' (Default).
--- Landings ohne Calendly-URL + ohne verknüpfte Fasttrack: 'off' (kein bisheriger Terminfluss).
-UPDATE public.landing_pages
-   SET booking_mode = 'off'
- WHERE booking_mode = 'calendly'
-   AND (calendly_url IS NULL OR calendly_url = '')
-   AND linked_fasttrack_landing_id IS NULL
-   AND partner_company_id IS NULL;
 
 -- get_schedule_for_application: nur Landings mit booking_mode='internal' liefern einen Kalender.
 CREATE OR REPLACE FUNCTION public.get_schedule_for_application(p_token text)
