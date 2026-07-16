@@ -647,6 +647,9 @@ document.addEventListener('submit', function(e){
         recruiter_avatar_data_url: branding.recruiter_avatar_data_url || null,
         logo_data_url: logoDataUrl,
         favicon_data_url: faviconDataUrl,
+        booking_mode: branding.booking_mode ?? "calendly",
+        event_description: branding.event_description || null,
+        booking_window_days: Number(branding.booking_window_days ?? 30),
       } as any });
       setEditingId((row as any).id);
       setSlug((row as any).slug);
