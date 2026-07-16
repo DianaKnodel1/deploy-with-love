@@ -151,8 +151,12 @@ export const Route = createFileRoute("/api/public/applications")({
             };
           }
         }
-        const isBroker = d.flow_type === "broker" && !!partner && !d.is_test;
-        const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test;
+        // Booking-Mode pro Landing Page steuert Calendly vs. eigenes System.
+        // 'off' → kein Buchungslink; 'calendly' → Calendly-Flow; 'internal' → eigenes System.
+        const bookingMode: "calendly" | "internal" | "off" =
+          (landingPage?.booking_mode as any) ?? "calendly";
+        const isBroker = d.flow_type === "broker" && !!partner && !d.is_test && bookingMode === "calendly";
+        const useCalendly = !isBroker && !!calendlyOnLanding && !d.is_test && bookingMode === "calendly";
 
         // Tenant-Fallback #3: Landing-Page hat i.d.R. tenant_id → nutzen wenn
         // Origin/Referer nichts gebracht hat.
