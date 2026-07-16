@@ -42,6 +42,8 @@ export const getScheduleForApplicant = createServerFn({ method: "POST" })
       applicant_email: row.applicant_email as string | null,
       recruiter_name: row.recruiter_name as string | null,
       landing_page_id: row.landing_page_id as string | null,
+      event_description: (row.event_description ?? null) as string | null,
+      booking_window_days: (row.booking_window_days ?? 30) as number,
     };
   });
 
