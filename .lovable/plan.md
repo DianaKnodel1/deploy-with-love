@@ -1,64 +1,38 @@
+## Ziel
+Das Portal soll nach jedem Deploy stabil starten und der Landing-Generator darf nicht mehr regelmäßig mit „Unauthorized: Invalid token“ / „Liste laden fehlgeschlagen“ hängen bleiben.
 
-# Fix: Login geht ans falsche Backend
+## Was im Log auffällt
+- Der Build läuft durch.
+- Der Auth-Attacher-Guard läuft durch, also wurde `src/start.ts` diesmal nicht wieder falsch überschrieben.
+- Danach ist `portal.service` nicht stabil aktiv, weil Port `3000` offenbar noch belegt ist.
+- Zusätzlich gibt es alte Chunk-Datei-Fehler (`ENOENT ... .output/server/_ssr/...mjs`). Das passt zu einem nicht-atomaren Deploy: Browser/Server referenzieren während oder kurz nach dem Build alte Hash-Dateien, die schon ersetzt wurden.
+- Es fehlt auf dem Portal-Server `SUPABASE_SERVICE_ROLE_KEY`; einige Admin-Funktionen importieren den Admin-Client noch auf Modulebene. Dadurch kann der Server bei bestimmten Routen/Server-Funktionen unnötig hart fehlschlagen.
 
-## Diagnose
+## Plan
+1. **Deploy-Skript robust machen**
+   - Vor dem Restart prüfen, ob Port `3000` noch von einem alten Prozess belegt ist.
+   - Falls ja: sauber stoppen, kurz warten, notfalls gezielt den alten Listener beenden.
+   - Nach Restart nicht nur `systemctl is-active`, sondern auch einen lokalen HTTP-Healthcheck ausführen.
 
-Zwei getrennte Ursachen — beide müssen behoben werden:
+2. **Nicht-atomare `.output`-Deploys entschärfen**
+   - Build zuerst in einen separaten Release-/Temp-Ordner schreiben oder die alte `.output` erst ersetzen, wenn der neue Build vollständig fertig ist.
+   - Damit verschwinden die `ENOENT reading ... old-hash.mjs` Fehler, die beim Überschreiben laufender Builds entstehen.
 
-1. **Build crasht mit „heap out of memory"** in `deploy.sh` bei `bun run build`. Wegen `&&`-Kette wird `systemctl restart portal` nie ausgeführt → der laufende Prozess (PID 2619816, seit ~1h) benutzt weiter die alte `.env` mit den Lovable-Cloud-URLs → Login geht an `uwtiyxphaoczcodntshl.supabase.co` statt an `api.mb-portal.com`.
-2. **`.env.production` unvollständig**: Grep-Output zeigt nur `VITE_SUPABASE_URL` + `SUPABASE_URL`. In den Logs steht `Missing Supabase environment variable(s): SUPABASE_SERVICE_ROLE_KEY`. Es fehlen mindestens Service-Role-Key, Publishable-Key und Project-ID.
+3. **Admin-Client-Imports korrigieren**
+   - Module-level Imports von `@/integrations/supabase/client.server` in Server-Fn-Dateien entfernen.
+   - Stattdessen `supabaseAdmin` nur innerhalb der jeweiligen `.handler()` laden, nachdem der Admin geprüft wurde.
+   - Betroffene Dateien: `admin-employees.functions.ts`, `admin-delete.functions.ts`, `admin-contract.functions.ts`, `contract-pdf.functions.ts`, `email-log-ack.functions.ts`.
 
-## Schritte (auf Server 124 ausführen)
+4. **Guard gegen Rückfall ergänzen**
+   - Einen zweiten Build-Guard hinzufügen, der verhindert, dass `client.server` wieder auf Modulebene in `.functions.ts` importiert wird.
+   - So bricht der Deploy künftig früh ab, statt live mit Auth-/Runtime-Fehlern zu starten.
 
-### 1) Inhalt von `.env.production` vollständig prüfen
-```bash
-cd /opt/apps/portal
-grep -vE '^\s*(#|$)' .env.production | sed 's/=.*/=***/'
-```
-Erwartet werden mindestens: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_ID`. Was fehlt, aus der bekannten `.env`-Version auf **Backend 123** ergänzen.
+5. **Portal-Server-Konfiguration absichern**
+   - `setup-server2.sh`/Deploy-Hinweise so anpassen, dass alle nötigen Runtime-Variablen im `portal.service` landen.
+   - Falls der Service-Role-Key auf dem Portal bewusst nicht liegen soll, dann müssen die wenigen Funktionen, die ihn wirklich brauchen, anders abgesichert/ausgelagert werden. Für die aktuellen Admin-Aktionen wird er aber verwendet.
 
-### 2) `.env` = vollständige Produktion
-```bash
-cp .env .env.oldcloud.$(date +%s)     # sichern
-cp .env.production .env                # aktive Datei ersetzen
-grep -cE '^SUPABASE_|^VITE_SUPABASE_' .env   # muss ≥ 6 zeigen
-```
-
-### 3) Build-OOM entschärfen
-`deploy.sh` bereits um `NODE_OPTIONS="--max-old-space-size=4096"` erweitert — reicht offenbar nicht. Hochziehen:
-```bash
-# einmalig für diesen Build
-NODE_OPTIONS="--max-old-space-size=8192" ./deploy.sh
-```
-Falls Server < 8 GB RAM: `swapon --show` prüfen, ggf. 4 GB Swap anlegen (`fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile`). Danach `deploy.sh` persistent auf `--max-old-space-size=8192` anheben.
-
-### 4) Restart & Verifikation
-```bash
-systemctl restart portal
-systemctl status portal --no-pager | head -20
-
-# Prozess hat jetzt neue URL?
-for pid in $(pgrep -f bun); do
-  cat /proc/$pid/environ 2>/dev/null | tr '\0' '\n' | grep SUPABASE_URL=
-done
-
-# Bundle hat keine alten Cloud-Referenzen mehr?
-curl -s http://127.0.0.1:3000/ -o /tmp/local.html
-grep -oE "uwtiyxphaoczcodntshl|api\.mb-portal\.com" /tmp/local.html | sort -u
-```
-Erwartet: nur noch `api.mb-portal.com`, KEIN `uwtiyxphaoczcodntshl`.
-
-### 5) Login testen
-Browser → DevTools Console:
-```js
-localStorage.clear(); sessionStorage.clear(); location.reload();
-```
-Danach mit `admin@admin.de` + neuem Passwort einloggen.
-
-## Fallback wenn Build weiter OOM'd
-
-Build **außerhalb** des Servers möglich? Dann lokal/CI bauen und nur `.output/` per `scp` auf 124 kopieren — spart RAM auf der Produktions-Kiste. Alternativ: `bun run build` in kleinere Schritte splitten (Vite ohne Sourcemaps → `vite build --minify=esbuild` ohne `--sourcemap`).
-
-## Was ich sonst brauche
-
-Nach Schritt 1 bitte den (maskierten) Variablen-Output schicken — damit ich sehe, welche Keys in `.env.production` wirklich fehlen, bevor wir bauen.
+6. **Nach Umsetzung verifizieren**
+   - Prüfen, dass der Build-Guard greift.
+   - Prüfen, dass `start.ts` weiterhin nur den robusten Bearer-Attacher nutzt.
+   - Prüfen, dass keine kritischen Module-level Admin-Client-Imports mehr vorhanden sind.
+   - Dann kannst du mit einem kurzen Deploy-Befehl testen; falls Port 3000 belegt ist, soll das Skript ihn selbst reparieren.
