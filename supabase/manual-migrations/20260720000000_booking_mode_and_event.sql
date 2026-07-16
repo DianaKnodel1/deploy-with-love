@@ -1,222 +1,66 @@
--- APPLY MANUALLY on Backend 123:
--- docker exec -i supabase-db psql -U postgres -d postgres < supabase/manual-migrations/20260720000000_booking_mode_and_event.sql
--- ============================================================================
--- Booking-Mode pro Landing Page (Calendly ↔ Eigenes System ↔ Aus)
--- - landing_pages.booking_mode:   'calendly' | 'internal' | 'off'
--- - landing_pages.event_description: HTML/Text für Slot-Picker
--- - landing_pages.booking_window_days: Vorschau-Fenster (Default 30)
--- - Backfill: existierende Landings behalten Calendly (Option A)
---   → internal, wenn bereits ein aktiver availability_schedule existiert
---   → calendly, wenn calendly_url gesetzt
---   → off sonst
--- - get_schedule_for_application / book_appointment_by_token respektieren
---   ab jetzt booking_mode = 'internal' (sonst kein Schedule).
--- - get_free_appointment_slots übernimmt landing.booking_window_days als Cap.
--- ============================================================================
+-- Booking-Mode + Event-Metadaten pro Landing Page.
+-- 'calendly' (Default = bestehendes Verhalten), 'internal' = eigenes System, 'off' = kein Termin.
+
+DO $$ BEGIN
+  CREATE TYPE public.landing_booking_mode AS ENUM ('calendly', 'internal', 'off');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 ALTER TABLE public.landing_pages
-  ADD COLUMN IF NOT EXISTS booking_mode text NOT NULL DEFAULT 'calendly',
+  ADD COLUMN IF NOT EXISTS booking_mode public.landing_booking_mode NOT NULL DEFAULT 'calendly',
   ADD COLUMN IF NOT EXISTS event_description text,
-  ADD COLUMN IF NOT EXISTS booking_window_days int NOT NULL DEFAULT 30;
-
-ALTER TABLE public.landing_pages
-  DROP CONSTRAINT IF EXISTS landing_pages_booking_mode_check;
-ALTER TABLE public.landing_pages
-  ADD CONSTRAINT landing_pages_booking_mode_check
-    CHECK (booking_mode IN ('calendly','internal','off'));
-
-ALTER TABLE public.landing_pages
-  DROP CONSTRAINT IF EXISTS landing_pages_booking_window_days_check;
-ALTER TABLE public.landing_pages
-  ADD CONSTRAINT landing_pages_booking_window_days_check
+  ADD COLUMN IF NOT EXISTS booking_window_days integer NOT NULL DEFAULT 30
     CHECK (booking_window_days BETWEEN 1 AND 180);
 
-COMMENT ON COLUMN public.landing_pages.booking_mode IS
-  'Termin-Buchungsmodus: calendly | internal | off. Steuert applications.ts + RPCs.';
-COMMENT ON COLUMN public.landing_pages.event_description IS
-  'Beschreibung, die dem Bewerber im Slot-Picker angezeigt wird. Text oder einfaches HTML. Platzhalter: {firmenname}, {portal_url}, {recruiter}.';
-COMMENT ON COLUMN public.landing_pages.booking_window_days IS
-  'Wie viele Tage im Voraus Bewerber Termine buchen dürfen. Default 30.';
-
--- Backfill (idempotent) — nur wenn Spalte gerade neu ist bleiben alle auf Default 'calendly'
-UPDATE public.landing_pages lp
-   SET booking_mode = 'internal'
- WHERE booking_mode = 'calendly'
-   AND EXISTS (
-     SELECT 1 FROM public.availability_schedules s
-      WHERE s.landing_page_id = lp.id AND s.active
-   );
-
+-- Migration: bestehende Landings mit Calendly-URL bleiben auf 'calendly' (Default).
+-- Landings ohne Calendly-URL + ohne verknüpfte Fasttrack: 'off' (kein bisheriger Terminfluss).
 UPDATE public.landing_pages
    SET booking_mode = 'off'
  WHERE booking_mode = 'calendly'
-   AND (calendly_url IS NULL OR btrim(calendly_url) = '');
+   AND (calendly_url IS NULL OR calendly_url = '')
+   AND linked_fasttrack_landing_id IS NULL
+   AND partner_company_id IS NULL;
 
--- ---------------------------------------------------------------------------
--- get_schedule_for_application — respektiert booking_mode='internal'
--- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.get_schedule_for_application(_magic_token text)
-RETURNS TABLE(
+-- get_schedule_for_application: nur Landings mit booking_mode='internal' liefern einen Kalender.
+CREATE OR REPLACE FUNCTION public.get_schedule_for_application(p_token text)
+RETURNS TABLE (
   schedule_id uuid,
-  slot_duration_minutes int,
-  timezone text,
-  max_days_ahead int,
-  min_notice_hours int,
-  tenant_name text,
-  applicant_first_name text,
-  applicant_email text,
-  recruiter_name text,
   landing_page_id uuid,
+  slot_duration_minutes int,
+  buffer_minutes int,
+  timezone text,
   event_description text,
-  firmenname text,
-  partner_logo_url text
+  booking_window_days int
 )
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  WITH app_row AS (
-    SELECT *
-      FROM public.applications app
-     WHERE app.magic_token = _magic_token
-       AND (app.magic_token_expires_at IS NULL OR app.magic_token_expires_at > now())
+  WITH app AS (
+    SELECT a.source_landing_id, a.target_landing_id,
+           lp_src.linked_fasttrack_landing_id AS src_linked
+      FROM public.applications a
+      LEFT JOIN public.landing_pages lp_src ON lp_src.id = a.source_landing_id
+     WHERE a.magic_token = p_token
+       AND (a.magic_token_expires_at IS NULL OR a.magic_token_expires_at > now())
      LIMIT 1
   ),
-  candidate_landings AS (
-    SELECT 1 AS ord, target_landing_id AS landing_page_id FROM app_row WHERE target_landing_id IS NOT NULL
+  candidates AS (
+    SELECT target_landing_id AS lp_id, 1 AS prio FROM app WHERE target_landing_id IS NOT NULL
     UNION ALL
-    SELECT 2 AS ord, source_landing_id AS landing_page_id FROM app_row WHERE source_landing_id IS NOT NULL
-  ),
-  schedule_pick AS (
-    SELECT cl.landing_page_id, s.id, s.slot_duration_minutes, s.timezone,
-           LEAST(s.max_days_ahead, lp.booking_window_days) AS max_days_ahead,
-           s.min_notice_hours
-      FROM candidate_landings cl
-      JOIN public.landing_pages lp ON lp.id = cl.landing_page_id
-      JOIN public.availability_schedules s
-        ON s.landing_page_id = cl.landing_page_id
-       AND s.active
-     WHERE lp.booking_mode = 'internal'
-     ORDER BY cl.ord
-     LIMIT 1
-  ),
-  landing_pick AS (
-    SELECT COALESCE(
-      (SELECT landing_page_id FROM schedule_pick),
-      (SELECT target_landing_id FROM app_row),
-      (SELECT source_landing_id FROM app_row)
-    ) AS landing_page_id
+    SELECT src_linked, 2 FROM app WHERE src_linked IS NOT NULL
+    UNION ALL
+    SELECT source_landing_id, 3 FROM app WHERE source_landing_id IS NOT NULL
   )
-  SELECT sp.id,
-         sp.slot_duration_minutes,
-         sp.timezone,
-         sp.max_days_ahead,
-         sp.min_notice_hours,
-         t.name,
-         split_part(app.full_name, ' ', 1),
-         app.email,
-         COALESCE(lp.recruiter_name, 'Ihr Ansprechpartner'),
-         lp.id,
-         lp.event_description,
-         COALESCE(lp.branding->>'firmenname', lp.intermediate_company_name),
-         COALESCE(lp.logo_url, lp.branding->>'logo_image')
-    FROM app_row app
-    LEFT JOIN landing_pick pick ON true
-    LEFT JOIN public.landing_pages lp ON lp.id = pick.landing_page_id
-    LEFT JOIN schedule_pick sp ON true
-    LEFT JOIN public.tenants t ON t.id = app.tenant_id
-   LIMIT 1;
+  SELECT s.id, lp.id, s.slot_duration_minutes, s.buffer_minutes, s.timezone,
+         lp.event_description, lp.booking_window_days
+    FROM candidates c
+    JOIN public.landing_pages lp ON lp.id = c.lp_id
+    JOIN public.availability_schedules s
+      ON s.landing_page_id = lp.id AND s.active = true
+   WHERE lp.booking_mode = 'internal'
+   ORDER BY c.prio
+   LIMIT 1
 $$;
 
-REVOKE ALL ON FUNCTION public.get_schedule_for_application(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.get_schedule_for_application(text)
-  TO anon, authenticated, service_role;
-
--- ---------------------------------------------------------------------------
--- book_appointment_by_token — respektiert booking_mode='internal'
--- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.book_appointment_by_token(
-  _magic_token text,
-  _starts_at   timestamptz,
-  _applicant_timezone text DEFAULT NULL
-) RETURNS TABLE(appointment_id uuid, cancel_token uuid, starts_at timestamptz, ends_at timestamptz, error text)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  app          public.applications%ROWTYPE;
-  sch          public.availability_schedules%ROWTYPE;
-  ends_at_v    timestamptz;
-  new_id       uuid;
-  new_token    uuid;
-  existing_id  uuid;
-BEGIN
-  SELECT * INTO app
-    FROM public.applications
-   WHERE magic_token = _magic_token
-     AND (magic_token_expires_at IS NULL OR magic_token_expires_at > now())
-   LIMIT 1;
-  IF NOT FOUND THEN
-    appointment_id := NULL; cancel_token := NULL; starts_at := NULL; ends_at := NULL;
-    error := 'application_not_found'; RETURN NEXT; RETURN;
-  END IF;
-
-  SELECT s.* INTO sch
-    FROM (
-      SELECT 1 AS ord, app.target_landing_id AS landing_page_id WHERE app.target_landing_id IS NOT NULL
-      UNION ALL
-      SELECT 2 AS ord, app.source_landing_id AS landing_page_id WHERE app.source_landing_id IS NOT NULL
-    ) candidates
-    JOIN public.landing_pages lp
-      ON lp.id = candidates.landing_page_id
-     AND lp.booking_mode = 'internal'
-    JOIN public.availability_schedules s
-      ON s.landing_page_id = candidates.landing_page_id
-     AND s.active
-   ORDER BY candidates.ord
-   LIMIT 1;
-  IF NOT FOUND THEN
-    error := 'no_schedule_configured'; RETURN NEXT; RETURN;
-  END IF;
-
-  ends_at_v := _starts_at + make_interval(mins => sch.slot_duration_minutes);
-
-  SELECT id INTO existing_id
-    FROM public.interview_appointments
-   WHERE application_id = app.id AND status = 'scheduled'
-   LIMIT 1;
-  IF existing_id IS NOT NULL THEN
-    error := 'already_scheduled'; RETURN NEXT; RETURN;
-  END IF;
-
-  BEGIN
-    INSERT INTO public.interview_appointments
-      (tenant_id, application_id, schedule_id, starts_at, ends_at, applicant_timezone)
-    VALUES
-      (app.tenant_id, app.id, sch.id, _starts_at, ends_at_v, _applicant_timezone)
-    RETURNING id, cancel_token INTO new_id, new_token;
-  EXCEPTION WHEN exclusion_violation THEN
-    error := 'slot_taken'; RETURN NEXT; RETURN;
-  END;
-
-  UPDATE public.applications
-     SET booking_status = 'scheduled',
-         scheduled_at   = _starts_at,
-         updated_at     = now()
-   WHERE id = app.id;
-
-  appointment_id := new_id;
-  cancel_token   := new_token;
-  starts_at      := _starts_at;
-  ends_at        := ends_at_v;
-  error          := NULL;
-  RETURN NEXT;
-END $$;
-
-REVOKE ALL ON FUNCTION public.book_appointment_by_token(text, timestamptz, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.book_appointment_by_token(text, timestamptz, text)
-  TO anon, authenticated, service_role;
-
-NOTIFY pgrst, 'reload schema';
+GRANT EXECUTE ON FUNCTION public.get_schedule_for_application(text) TO anon, authenticated;
