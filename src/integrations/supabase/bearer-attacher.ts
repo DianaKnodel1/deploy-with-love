@@ -4,6 +4,7 @@
 // regelmäßig vor geschützten Calls und hängt nie bewusst einen abgelaufenen
 // Token an. Das verhindert "Unauthorized: Invalid token" nach Deploy/Idle.
 import { createMiddleware } from '@tanstack/react-start';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from './client';
 
 const REFRESH_EVERY_MS = 30_000;
@@ -26,7 +27,7 @@ async function waitForStoredSession() {
 
   if (!isBrowser()) return null;
 
-  return await new Promise<typeof first.data.session>((resolve) => {
+  return await new Promise<Session | null>((resolve) => {
     let done = false;
     let subscription: { unsubscribe: () => void } | null = null;
 
@@ -40,13 +41,12 @@ async function waitForStoredSession() {
 
     const timer = window.setTimeout(() => finish(null), SESSION_WAIT_MS);
 
-    supabase.auth.onAuthStateChange((event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         finish(session);
       }
-    }).then(({ data }) => {
-      subscription = data.subscription;
-    }).catch(() => finish(null));
+    });
+    subscription = data.subscription;
   });
 }
 
