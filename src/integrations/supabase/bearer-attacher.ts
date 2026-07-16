@@ -31,7 +31,7 @@ async function waitForStoredSession() {
     let done = false;
     let subscription: { unsubscribe: () => void } | null = null;
 
-    const finish = (session: typeof first.data.session) => {
+    const finish = (session: Session | null) => {
       if (done) return;
       done = true;
       window.clearTimeout(timer);
