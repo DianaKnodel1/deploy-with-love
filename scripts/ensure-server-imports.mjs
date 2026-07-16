@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
 
@@ -15,7 +15,7 @@ function walk(dir) {
   return out;
 }
 
-const files = walk(join(root, 'src')).map((file) => file.slice(root.length + 1));
+const files = walk(join(root, 'src')).map((file) => relative(root, file));
 
 const offenders = [];
 
