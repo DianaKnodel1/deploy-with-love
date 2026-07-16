@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const Schema = z.object({
   user_id: z.string().uuid(),
@@ -26,6 +25,7 @@ export const requestContractResign = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => Schema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
 
     const { data: profile, error: pErr } = await sb

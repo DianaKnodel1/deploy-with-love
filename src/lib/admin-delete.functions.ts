@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const DeleteSchema = z.object({
   user_id: z.string().uuid(),
@@ -30,6 +29,7 @@ export const deleteEmployeeAccount = createServerFn({ method: "POST" })
     }
 
     const uid = data.user_id;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
 
     // 1) Storage-Cleanup (vor DB-Delete, damit Buckets sauber sind)
@@ -88,6 +88,7 @@ export const deleteApplication = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => DeleteAppSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
     const { data: app, error: fetchErr } = await sb
       .from("applications")
@@ -126,6 +127,7 @@ export const deleteOrphanApplications = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CleanupSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
     const cutoff = new Date(Date.now() - data.older_than_days * 86_400_000).toISOString();
 
@@ -171,6 +173,7 @@ export const purgeInactivePeople = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => PurgeSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
 
     // 1) Aktive Mitarbeiter (nie anfassen) + Admins (Selbstschutz)
@@ -284,6 +287,7 @@ export const bulkDeleteApplications = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => BulkAppsSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
     let deleted = 0;
     const failures: { chunk_start: number; error: string }[] = [];
@@ -316,6 +320,7 @@ export const bulkDeleteEmployees = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => BulkUsersSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
     let deleted = 0;
     const failures: { user_id: string; error: string }[] = [];

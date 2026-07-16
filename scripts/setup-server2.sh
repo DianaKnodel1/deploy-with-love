@@ -97,6 +97,7 @@ Type=simple
 WorkingDirectory=$PROJECT_DIR
 EnvironmentFile=$PROJECT_DIR/.env
 ExecStart=/usr/local/bin/bun run start
+Environment=PORTAL_BUILD_DIR=$PROJECT_DIR/.current
 Restart=always
 RestartSec=5
 User=root

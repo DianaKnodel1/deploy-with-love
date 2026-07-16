@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { applyEmploymentStartDate, formatGermanDate, resolveContractPlaceholders } from "@/lib/contract-utils";
 
 function extractSignatureStoragePath(value: string | null): string | null {
@@ -12,7 +11,7 @@ function extractSignatureStoragePath(value: string | null): string | null {
   return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
-async function downloadSignatureBytes(path: string | null): Promise<{ bytes: Uint8Array; kind: "png" | "jpg" } | null> {
+async function downloadSignatureBytes(supabaseAdmin: any, path: string | null): Promise<{ bytes: Uint8Array; kind: "png" | "jpg" } | null> {
   if (!path) return null;
   const storagePath = extractSignatureStoragePath(path);
   if (storagePath) {
@@ -37,7 +36,7 @@ async function downloadSignatureBytes(path: string | null): Promise<{ bytes: Uin
   return null;
 }
 
-async function createSignatureSignedUrl(value: string | null): Promise<string | null> {
+async function createSignatureSignedUrl(supabaseAdmin: any, value: string | null): Promise<string | null> {
   if (!value) return null;
   const storagePath = extractSignatureStoragePath(value);
   if (storagePath) {
@@ -51,6 +50,7 @@ export const generateContractPdf = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ contractId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Verify ownership via RLS-scoped client
     const { data: contract, error: cErr } = await context.supabase
@@ -183,7 +183,7 @@ export const generateContractPdf = createServerFn({ method: "POST" })
     const sigY = y - sigImgHeight;
 
     // Employee signature (left)
-    const empSig = await downloadSignatureBytes(contract.signature_image_url);
+    const empSig = await downloadSignatureBytes(supabaseAdmin, contract.signature_image_url);
     if (empSig) {
       try {
         const img = empSig.kind === "jpg" ? await pdf.embedJpg(empSig.bytes) : await pdf.embedPng(empSig.bytes);
@@ -197,7 +197,7 @@ export const generateContractPdf = createServerFn({ method: "POST" })
     }
 
     // Company signature (right)
-    const compSig = await downloadSignatureBytes(tenant?.company_signature_url ?? null);
+    const compSig = await downloadSignatureBytes(supabaseAdmin, tenant?.company_signature_url ?? null);
     if (compSig) {
       try {
         const img = compSig.kind === "jpg" ? await pdf.embedJpg(compSig.bytes) : await pdf.embedPng(compSig.bytes);
@@ -260,6 +260,7 @@ export const getContractSignatureUrls = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ contractId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: contract } = await context.supabase
       .from("contracts")
       .select("id, user_id, tenant_id, signature_image_url, pdf_url")
@@ -273,10 +274,10 @@ export const getContractSignatureUrls = createServerFn({ method: "POST" })
       .eq("id", contract.tenant_id!)
       .maybeSingle();
 
-    const employeeUrl = await createSignatureSignedUrl(contract.signature_image_url);
+    const employeeUrl = await createSignatureSignedUrl(supabaseAdmin, contract.signature_image_url);
 
     const compRaw = tenant?.company_signature_url ?? null;
-    const companyUrl = await createSignatureSignedUrl(compRaw);
+    const companyUrl = await createSignatureSignedUrl(supabaseAdmin, compRaw);
 
     const pdfUrl = contract.pdf_url
       ? (await supabaseAdmin.storage.from("documents").createSignedUrl(contract.pdf_url, 60 * 5)).data?.signedUrl ?? null
