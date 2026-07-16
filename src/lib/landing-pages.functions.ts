@@ -173,6 +173,9 @@ export const saveLandingPage = createServerFn({ method: "POST" })
       interview_voice_id: data.interview_voice_id ?? null,
       interview_system_prompt: data.interview_system_prompt ?? null,
       linked_fasttrack_landing_id: data.linked_fasttrack_landing_id ?? null,
+      booking_mode: data.booking_mode ?? "calendly",
+      event_description: data.event_description ?? null,
+      booking_window_days: data.booking_window_days ?? 30,
     };
     if (logo_url) payload.logo_url = logo_url;
     if (favicon_url) payload.favicon_url = favicon_url;
