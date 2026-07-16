@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CreateSchema = z.object({
   email: z.string().email(),
@@ -27,6 +26,7 @@ export const createEmployeeAccount = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CreateSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
 
     // Tenant des Admins ermitteln
@@ -110,6 +110,7 @@ export const updateEmployeeEmployment = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => UpdateEmpSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = supabaseAdmin as any;
     const { error } = await sb
       .from("profiles")

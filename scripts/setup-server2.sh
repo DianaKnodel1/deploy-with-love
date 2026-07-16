@@ -87,6 +87,13 @@ cd "$PROJECT_DIR"
 bun install --frozen-lockfile
 bun run build
 
+mkdir -p "$PROJECT_DIR/.releases"
+FIRST_RELEASE="$PROJECT_DIR/.releases/$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$FIRST_RELEASE"
+cp -a "$PROJECT_DIR/.output" "$FIRST_RELEASE/.output"
+ln -sfn "$FIRST_RELEASE" "$PROJECT_DIR/.current.tmp"
+mv -Tf "$PROJECT_DIR/.current.tmp" "$PROJECT_DIR/.current"
+
 cat > /etc/systemd/system/portal.service <<EOF
 [Unit]
 Description=Mitarbeiter-/Admin-Portal (TanStack Start)
@@ -97,6 +104,7 @@ Type=simple
 WorkingDirectory=$PROJECT_DIR
 EnvironmentFile=$PROJECT_DIR/.env
 ExecStart=/usr/local/bin/bun run start
+Environment=PORTAL_BUILD_DIR=$PROJECT_DIR/.current
 Restart=always
 RestartSec=5
 User=root

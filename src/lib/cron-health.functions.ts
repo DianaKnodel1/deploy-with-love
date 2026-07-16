@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data, error } = await ctx.supabase
@@ -8,6 +7,11 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
     .eq("user_id", ctx.userId).eq("role", "admin").maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Nicht autorisiert");
+}
+
+async function getSupabaseAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
 }
 
 export type CronStatus = {
@@ -31,7 +35,7 @@ export const getCronHealth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
 
     const latest = async (table: string, col: string): Promise<string | null> => {
       const { data } = await sb.from(table).select(col).order(col, { ascending: false }).limit(1).maybeSingle();

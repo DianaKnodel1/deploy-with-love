@@ -12,19 +12,20 @@ import { Readable } from "node:stream";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(here, "..");
+const buildRoot = process.env.PORTAL_BUILD_DIR ? resolve(process.env.PORTAL_BUILD_DIR) : rootDir;
 
 const buildCandidates = [
   {
-    handlerPath: resolve(rootDir, "dist", "server", "index.mjs"),
-    clientDir: resolve(rootDir, "dist", "client"),
+    handlerPath: resolve(buildRoot, "dist", "server", "index.mjs"),
+    clientDir: resolve(buildRoot, "dist", "client"),
   },
   {
-    handlerPath: resolve(rootDir, "dist", "server", "server.js"),
-    clientDir: resolve(rootDir, "dist", "client"),
+    handlerPath: resolve(buildRoot, "dist", "server", "server.js"),
+    clientDir: resolve(buildRoot, "dist", "client"),
   },
   {
-    handlerPath: resolve(rootDir, ".output", "server", "index.mjs"),
-    clientDir: resolve(rootDir, ".output", "public"),
+    handlerPath: resolve(buildRoot, ".output", "server", "index.mjs"),
+    clientDir: resolve(buildRoot, ".output", "public"),
   },
 ];
 

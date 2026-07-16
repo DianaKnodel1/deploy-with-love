@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data, error } = await ctx.supabase
@@ -9,6 +8,11 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
     .eq("user_id", ctx.userId).eq("role", "admin").maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Nicht autorisiert");
+}
+
+async function getSupabaseAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
 }
 
 export type ReminderLogRow = {
@@ -37,7 +41,7 @@ export const listReminderLog = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => ListInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
 
     let q = sb.from("reminder_log").select("id,sent_at,email,tenant_id,reminder_type,status,attempt,error", { count: "exact" });
 
@@ -66,7 +70,7 @@ export const getReminderHealth = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ tenant_id: z.string().uuid().optional().nullable() }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const sb = supabaseAdmin as any;
+    const sb = await getSupabaseAdmin();
 
     // Letzter Log-Eintrag (irgendein Status)
     let lastQ = sb.from("reminder_log").select("sent_at").order("sent_at", { ascending: false }).limit(1);
