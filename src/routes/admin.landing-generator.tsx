@@ -1298,15 +1298,15 @@ document.addEventListener('submit', function(e){
                       />
                       <p className="text-[10px] text-muted-foreground mt-1">Default 30 Tage.</p>
                     </Field>
-                    <Field label="Event-Beschreibung (Slot-Picker & Bestätigungsmail)">
+                    <Field label="Event-Beschreibung (im Slot-Picker angezeigt)">
                       <textarea
-                        className="w-full min-h-[120px] px-3 py-2 rounded border border-input bg-background text-sm"
+                        className="w-full min-h-[140px] px-3 py-2 rounded border border-input bg-background text-sm"
                         value={branding.event_description}
                         onChange={(e) => setBranding((b) => ({ ...b, event_description: e.target.value }))}
                         placeholder={"Für das Bewerbungsgespräch zu Ihrem neuen Minijob.\n\nDas Bewerbungsgespräch findet unter folgendem Link statt, bitte stellen Sie sicher, dass Sie 5 Minuten vorher anwesend sind.\n\nhttps://portal…/bewerbung"}
                       />
                       <p className="text-[10px] text-muted-foreground mt-1">
-                        Wird im Slot-Picker sowie in der Terminbestätigung angezeigt. HR-Foto und Partner-Logo werden automatisch aus dem Branding oben übernommen.
+                        Wird nur im Slot-Picker angezeigt (nicht in der Bestätigungsmail). HR-Foto und Partner-Logo kommen automatisch aus dem Branding oben.
                       </p>
                     </Field>
                   </>
