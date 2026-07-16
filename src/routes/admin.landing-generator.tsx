@@ -1261,7 +1261,6 @@ document.addEventListener('submit', function(e){
                   >
                     <option value="calendly">Calendly (extern)</option>
                     <option value="internal">Eigenes Buchungssystem</option>
-                    <option value="off">Deaktiviert (kein Termin)</option>
                   </select>
                   <p className="text-[10px] text-muted-foreground mt-1">
                     <strong>Eigenes System</strong> benötigt einen aktiven Kalender unter <a href="/admin/vermittlung" className="underline">Vermittlung → Verfügbarkeiten</a> für diese Landing Page (oder verknüpfte Fast-Track-Page).
