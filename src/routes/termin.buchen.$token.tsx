@@ -144,6 +144,11 @@ function BookingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {s.event_description && (
+              <div className="mb-5 rounded-md border border-border bg-muted/40 p-4 text-sm whitespace-pre-wrap leading-relaxed">
+                {s.event_description}
+              </div>
+            )}
             <div className="flex items-center justify-between mb-4">
               <Button
                 variant="outline"
